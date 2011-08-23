@@ -25,9 +25,9 @@ NVCC_ARCH=-arch=sm_20
 help:
 	@echo Make using the following arguments
 	@echo "  make DEFINE='-DEnableCUDA' GPU"
-	@echo "  make DEFINE='-DEnableCUDA -DEnableStreams' GPU for async functionality"
-	@echo "  make CPU for CPU only code"
-	@echo "  make DEFINE='-DEnableCUDA -DEnableOPENGL' GPUGL for OPENGL, dont use it for simulations"
+	@echo "  make DEFINE='-DEnableCUDA -DEnableStreams' GPU # for async functionality"
+	@echo "  make CPU # for CPU-only code"
+	@echo "  make DEFINE='-DEnableCUDA -DEnableOPENGL' GPUGL # for OPENGL; don't use it for simulations"
 
 # compile this with  "make DEFINE=-DEnableCUDA GPU"
 # compile this with  "make DEFINE=-DEnableCUDA -DEnableStreams GPU" for async functionality
