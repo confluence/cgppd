@@ -1,2 +1,10 @@
 2g33_CA_full.pdb
 2g33_full.vdb
+.*\.kate-swp
+.*~
+.*/obj/.*
+.*/output/.*
+.*\.cubin
+REMCDockingGPU
+REMCDockingGPU_OpenGL
+REMCDockingCPU
