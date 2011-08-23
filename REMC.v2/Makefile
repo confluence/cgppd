@@ -21,6 +21,8 @@ CFLAGS=-fno-omit-frame-pointer -O2 #-ffast-math #
 #NVCC_COMPILER_FLAGS=-g
 NVCC_ARCH=-arch=sm_20
 
+COMMON_OBJS=clean.o AminoAcid.o AminoAcids.o Link.o main.o Molecule.o Quaternion.o Replica.o Residue.o TorsionalLookupMatrix.o vector3f.o
+
 #if using ubuntu: link to -lgslcblas for gsl rng types
 help:
 	@echo Make using the following arguments
@@ -34,17 +36,17 @@ help:
 1:
 	make DEFINE='-DEnableCUDA' GPU
 
-GPU: clean.o AminoAcid.o AminoAcids.o Link.o main.o CudaFunctions.co Molecule.o Quaternion.o Replica.o Residue.o TorsionalLookupMatrix.o vector3f.o
+GPU: ${COMMON_OBJS} CudaFunctions.co
 	@echo Linking GPU Executable: REMCDockingGPU
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o REMCDockingGPU obj/*.o ${LINKS}
 
 # compile this with  DEFINE=-DEnableCUDA -DEnableOPENGL GPU
-GPUGL: clean.o AminoAcid.o AminoAcids.o Camera.o Link.o main.o CudaFunctions.co Molecule.o Quaternion.o Replica.o Residue.o TorsionalLookupMatrix.o vector3f.o
+GPUGL: ${COMMON_OBJS} Camera.o CudaFunctions.co
 	@echo Linking GPU Executable: REMCDockingGPU_OpenGL
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o REMCDockingGPU_OpenGL obj/*.o ${LINKS} -lglut -lGL -lGLU
 
 
-CPU: clean.o AminoAcid.o AminoAcids.o Camera.o Link.o main.o Molecule.o Quaternion.o Replica.o Residue.o TorsionalLookupMatrix.o vector3f.o
+CPU: ${COMMON_OBJS} Camera.o
 	@echo Linking CPU Executable: REMCDockingCPU
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o REMCDockingCPU obj/*.o ${LINKS}
 
