@@ -34,7 +34,7 @@ help:
 1:
 	make DEFINE='-DEnableCUDA' GPU
 
-GPU: obj clean.o AminoAcid.o AminoAcids.o Link.o main.o CudaFunctions.co Molecule.o Quaternion.o Replica.o Residue.o TorsionalLookupMatrix.o vector3f.o
+GPU: clean.o AminoAcid.o AminoAcids.o Link.o main.o CudaFunctions.co Molecule.o Quaternion.o Replica.o Residue.o TorsionalLookupMatrix.o vector3f.o
 	@echo Linking GPU Executable: REMCDockingGPU
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o REMCDockingGPU obj/*.o ${LINKS}
 
