@@ -34,7 +34,7 @@ help:
 	@echo "  make CPU # for CPU-only code"
 	@echo "  make DEFINE='-DEnableCUDA -DEnableOPENGL' GPUGL # for OPENGL; don't use it for simulations"
 
-.PHONY: help clean 1 obj
+.PHONY: help clean 1
 
 GPU: ${COMMON_OBJS} obj/CudaFunctions.o #CudaFunctions.cubin
 	@echo Linking GPU Executable: REMCDockingGPU
