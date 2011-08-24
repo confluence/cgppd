@@ -34,7 +34,7 @@ help:
 	@echo "  make CPU # for CPU-only code"
 	@echo "  make DEFINE='-DEnableCUDA -DEnableOPENGL' GPUGL # for OPENGL; don't use it for simulations"
 
-.PHONY: help clean 1
+.PHONY: help clean 1 obj
 
 GPU: ${COMMON_OBJS} obj/CudaFunctions.o #CudaFunctions.cubin
 	@echo Linking GPU Executable: REMCDockingGPU
@@ -58,52 +58,53 @@ test: tests/testReplica.cpp tests/testMolecule.cpp
 #	g++ ${INCLUDE} ${DEFINE} ${CFLAGS} -o DRMS obj/*.o -lpthread -lgsl -lglut
 #	rm -f drms.o
 
-obj/AminoAcid.o: src/AminoAcid.cpp src/AminoAcid.h
+obj/AminoAcid.o: obj/.d src/AminoAcid.cpp src/AminoAcid.h
 	${COMPILER} ${CFLAGS} -c src/AminoAcid.cpp -o obj/AminoAcid.o
 
-obj/AminoAcids.o: src/AminoAcids.cpp src/AminoAcids.h src/AminoAcid.h
+obj/AminoAcids.o: obj/.d src/AminoAcids.cpp src/AminoAcids.h src/AminoAcid.h
 	${COMPILER} ${CFLAGS} -c src/AminoAcids.cpp -o obj/AminoAcids.o
 
-obj/Camera.o: src/Camera.cpp src/Camera.h src/vector3f.h
+obj/Camera.o: obj/.d src/Camera.cpp src/Camera.h src/vector3f.h
 	${COMPILER} ${CFLAGS} -c src/Camera.cpp -o obj/Camera.o
 
-obj/Link.o: src/Link.cpp src/Link.h
+obj/Link.o: obj/.d src/Link.cpp src/Link.h
 	${COMPILER} ${CFLAGS} -c src/Link.cpp -o obj/Link.o
 
-obj/main.o: src/main.cpp src/definitions.h
+obj/main.o: obj/.d src/main.cpp src/definitions.h
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/main.cpp -o obj/main.o
 
-obj/Molecule.o: src/Molecule.cpp src/Molecule.h
+obj/Molecule.o: obj/.d src/Molecule.cpp src/Molecule.h
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/Molecule.cpp -o obj/Molecule.o
 
-obj/Quaternion.o: src/Quaternion.cpp src/Quaternion.h
+obj/Quaternion.o: obj/.d src/Quaternion.cpp src/Quaternion.h
 	${COMPILER} ${CFLAGS} -c src/Quaternion.cpp -o obj/Quaternion.o
 
-obj/Replica.o: src/Replica.cpp src/Replica.h src/vector3f.h
+obj/Replica.o: obj/.d src/Replica.cpp src/Replica.h src/vector3f.h
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/Replica.cpp -o obj/Replica.o
 
-obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
+obj/CudaFunctions.o: obj/.d src/CudaFunctions.cu src/CudaFunctions.h
 	@echo Making CUDA files.
 	nvcc ${NVCC_ARCH} ${NVCC_COMPILER_FLAGS} ${INCLUDE} ${DEFINE} -c src/CudaFunctions.cu -o obj/CudaFunctions.o
 
 # CudaFunctions.cubin:
 # 	nvcc ${NVCC_COMPILER_FLAGS} ${INCLUDE} ${DEFINE} -cubin src/CudaFunctions.cu
 
-obj/Residue.o: src/Residue.cpp src/Residue.h src/vector3f.h
+obj/Residue.o: obj/.d src/Residue.cpp src/Residue.h src/vector3f.h
 	${COMPILER} ${CFLAGS} -c src/Residue.cpp -o obj/Residue.o
 
-obj/TorsionalLookupMatrix.o: src/TorsionalLookupMatrix.cpp
+obj/TorsionalLookupMatrix.o: obj/.d src/TorsionalLookupMatrix.cpp src/TorsionalLookupMatrix.h
 	${COMPILER} ${CFLAGS} -c src/TorsionalLookupMatrix.cpp -o obj/TorsionalLookupMatrix.o
 
-obj/vector3f.o: src/vector3f.cpp src/vector3f.h
+obj/vector3f.o: obj/.d src/vector3f.cpp src/vector3f.h
 	${COMPILER} ${CFLAGS} -c src/vector3f.cpp -o obj/vector3f.o
 
-# configure:
-# 	mkdir obj
+obj/.d:
+	@mkdir -p obj
+	@touch obj/.d
 
 clean:
 	@echo Cleaning...
-	@rm -f obj/*
+	@rm -rf obj
 	@rm -f GPUGL GPU CPU test
 # 	@rm -f *.cubin
 	@echo Done.
