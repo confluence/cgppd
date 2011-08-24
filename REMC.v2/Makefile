@@ -51,7 +51,7 @@ CPU: ${COMMON_OBJS} obj/Camera.o
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o CPU obj/*.o ${LINKS}
 
 test: tests/testReplica.cpp tests/testMolecule.cpp
-	${COMPILER} -I/usr/include/unittest++ -Isrc ${DEFINE} -o test tests/*.cpp -lUnitTest++
+	${COMPILER} ${INCLUDE} -I/usr/include/unittest++ -Isrc ${DEFINE} ${CFLAGS} ${LIBS} -o test tests/*.cpp ${LINKS} -lUnitTest++
 
 #DRMS: AminoAcid.o AminoAcids.o Camera.o Link.o Molecule.o Quaternion.o Replica.co Residue.o rngfunctions.o TorsionalLookupMatrix.o vector3f.o drms.o
 #	@echo Making DRMS Executable: DRMS

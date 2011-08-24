@@ -5,6 +5,7 @@
 .*/obj/.*
 .*/output/.*
 .*\.cubin
-REMCDockingGPU
-REMCDockingGPU_OpenGL
-REMCDockingCPU
+^REMC.v2/GPU$
+^REMC.v2/GPUGL$
+^REMC.v2/CPU$
+^REMC.v2/test$
