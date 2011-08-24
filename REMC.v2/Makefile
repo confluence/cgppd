@@ -36,12 +36,12 @@ help:
 
 .PHONY: help clean 1
 
-GPU: ${COMMON_OBJS} obj/CudaFunctions.o CudaFunctions.cubin
+GPU: ${COMMON_OBJS} obj/CudaFunctions.o #CudaFunctions.cubin
 	@echo Linking GPU Executable: REMCDockingGPU
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o GPU obj/*.o ${LINKS}
 
 # compile this with  DEFINE=-DEnableCUDA -DEnableOPENGL GPU
-GPUGL: ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o CudaFunctions.cubin
+GPUGL: ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o #CudaFunctions.cubin
 	@echo Linking GPU Executable: REMCDockingGPU_OpenGL
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o GPUGL obj/*.o ${LINKS} -lglut -lGL -lGLU
 
@@ -86,8 +86,8 @@ obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
 	@echo Making CUDA files.
 	nvcc ${NVCC_ARCH} ${NVCC_COMPILER_FLAGS} ${INCLUDE} ${DEFINE} -c src/CudaFunctions.cu -o obj/CudaFunctions.o
 
-CudaFunctions.cubin:
-	nvcc ${NVCC_COMPILER_FLAGS} ${INCLUDE} ${DEFINE} -cubin src/CudaFunctions.cu
+# CudaFunctions.cubin:
+# 	nvcc ${NVCC_COMPILER_FLAGS} ${INCLUDE} ${DEFINE} -cubin src/CudaFunctions.cu
 
 obj/Residue.o: src/Residue.cpp src/Residue.h src/vector3f.h
 	${COMPILER} ${CFLAGS} -c src/Residue.cpp -o obj/Residue.o
@@ -105,7 +105,7 @@ clean:
 	@echo Cleaning...
 	@rm -f obj/*
 	@rm -f GPUGL GPU CPU test
-	@rm -f *.cubin
+# 	@rm -f *.cubin
 	@echo Done.
 
 # clean.o:
