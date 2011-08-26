@@ -70,16 +70,17 @@ obj/Camera.o: obj/.d src/Camera.cpp src/Camera.h src/vector3f.h
 obj/Link.o: obj/.d src/Link.cpp src/Link.h
 	${COMPILER} ${CFLAGS} -c src/Link.cpp -o obj/Link.o
 
-obj/main.o: obj/.d src/main.cpp src/definitions.h
+obj/main.o: obj/.d src/main.cpp src/definitions.h src/AminoAcid.h src/TorsionalLookupMatrix.h src/AminoAcids.h src/Replica.h src/vector3f.h src/Quaternion.h src/Molecule.h src/Residue.h src/Link.h src/cudaExterns.h
+
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/main.cpp -o obj/main.o
 
-obj/Molecule.o: obj/.d src/Molecule.cpp src/Molecule.h
+obj/Molecule.o: obj/.d src/Molecule.cpp src/Molecule.h src/definitions.h src/AminoAcids.h src/AminoAcid.h src/vector3f.h src/Quaternion.h src/TorsionalLookupMatrix.h src/Residue.h src/Link.h
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/Molecule.cpp -o obj/Molecule.o
 
-obj/Quaternion.o: obj/.d src/Quaternion.cpp src/Quaternion.h
+obj/Quaternion.o: obj/.d src/Quaternion.cpp src/Quaternion.h src/vector3f.h
 	${COMPILER} ${CFLAGS} -c src/Quaternion.cpp -o obj/Quaternion.o
 
-obj/Replica.o: obj/.d src/Replica.cpp src/Replica.h src/vector3f.h
+obj/Replica.o: obj/.d src/Replica.cpp src/Replica.h src/vector3f.h src/definitions.h src/Quaternion.h src/Molecule.h src/AminoAcids.h src/AminoAcid.h src/TorsionalLookupMatrix.h src/Residue.h src/Link.h
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/Replica.cpp -o obj/Replica.o
 
 obj/CudaFunctions.o: obj/.d src/CudaFunctions.cu src/CudaFunctions.h
@@ -89,10 +90,10 @@ obj/CudaFunctions.o: obj/.d src/CudaFunctions.cu src/CudaFunctions.h
 # CudaFunctions.cubin:
 # 	nvcc ${NVCC_COMPILER_FLAGS} ${INCLUDE} ${DEFINE} -cubin src/CudaFunctions.cu
 
-obj/Residue.o: obj/.d src/Residue.cpp src/Residue.h src/vector3f.h
+obj/Residue.o: obj/.d src/Residue.cpp src/Residue.h src/vector3f.h src/AminoAcids.h src/AminoAcid.h src/definitions.h
 	${COMPILER} ${CFLAGS} -c src/Residue.cpp -o obj/Residue.o
 
-obj/TorsionalLookupMatrix.o: obj/.d src/TorsionalLookupMatrix.cpp src/TorsionalLookupMatrix.h
+obj/TorsionalLookupMatrix.o: obj/.d src/TorsionalLookupMatrix.cpp src/TorsionalLookupMatrix.h src/AminoAcids.h src/AminoAcid.h src/definitions.h
 	${COMPILER} ${CFLAGS} -c src/TorsionalLookupMatrix.cpp -o obj/TorsionalLookupMatrix.o
 
 obj/vector3f.o: obj/.d src/vector3f.cpp src/vector3f.h
