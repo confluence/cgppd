@@ -50,7 +50,8 @@ CPU: ${COMMON_OBJS} obj/Camera.o
 	@echo Linking CPU Executable: REMCDockingCPU
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o CPU obj/*.o ${LINKS}
 
-test: tests/testReplica.cpp tests/testMolecule.cpp
+# TODO: split these out to have separate dependencies?
+test: ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/all.cpp tests/testReplica.cpp tests/testMolecule.cpp
 	${COMPILER} ${INCLUDE} -I/usr/include/unittest++ -Isrc ${DEFINE} ${CFLAGS} ${LIBS} -o test tests/*.cpp ${LINKS} -lUnitTest++
 
 #DRMS: AminoAcid.o AminoAcids.o Camera.o Link.o Molecule.o Quaternion.o Replica.co Residue.o rngfunctions.o TorsionalLookupMatrix.o vector3f.o drms.o
