@@ -21,7 +21,7 @@ CFLAGS=-fno-omit-frame-pointer -O2 #-ffast-math #
 #NVCC_COMPILER_FLAGS=-g
 NVCC_ARCH=-arch=sm_20
 
-COMMON_OBJS=obj/AminoAcid.o obj/AminoAcids.o obj/Link.o obj/main.o obj/Molecule.o obj/Quaternion.o obj/Replica.o obj/Residue.o obj/TorsionalLookupMatrix.o obj/vector3f.o
+COMMON_OBJS=obj/AminoAcid.o obj/AminoAcids.o obj/Link.o obj/Molecule.o obj/Quaternion.o obj/Replica.o obj/Residue.o obj/TorsionalLookupMatrix.o obj/vector3f.o
 
 1:
 	make DEFINE='-DEnableCUDA -DEnableOPENGL' GPUGL test
@@ -36,23 +36,23 @@ help:
 
 .PHONY: help clean 1
 
-GPU: ${COMMON_OBJS} obj/CudaFunctions.o #CudaFunctions.cubin
-	@echo Linking GPU Executable: REMCDockingGPU
+GPU: obj/main.o ${COMMON_OBJS} obj/CudaFunctions.o #CudaFunctions.cubin
+	@echo Linking GPU Executable: GPU
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o GPU obj/*.o ${LINKS}
 
 # compile this with  DEFINE=-DEnableCUDA -DEnableOPENGL GPU
-GPUGL: ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o #CudaFunctions.cubin
-	@echo Linking GPU Executable: REMCDockingGPU_OpenGL
+GPUGL: obj/main.o ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o #CudaFunctions.cubin
+	@echo Linking GPU Executable: GPUGL
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o GPUGL obj/*.o ${LINKS} -lglut -lGL -lGLU
 
 
-CPU: ${COMMON_OBJS} obj/Camera.o
-	@echo Linking CPU Executable: REMCDockingCPU
+CPU: obj/main.o ${COMMON_OBJS} obj/Camera.o
+	@echo Linking CPU Executable: CPU
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o CPU obj/*.o ${LINKS}
 
 # TODO: split these out to have separate dependencies?
 test: ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/all.cpp tests/testReplica.cpp tests/testMolecule.cpp
-	${COMPILER} ${INCLUDE} -I/usr/include/unittest++ -Isrc ${DEFINE} ${CFLAGS} ${LIBS} -o test tests/*.cpp ${LINKS} -lUnitTest++
+	${COMPILER} ${INCLUDE} -I/usr/include/unittest++ -Isrc ${DEFINE} ${CFLAGS} ${LIBS} -o test ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/*.cpp ${LINKS} -lUnitTest++ -lglut -lGL -lGLU
 
 #DRMS: AminoAcid.o AminoAcids.o Camera.o Link.o Molecule.o Quaternion.o Replica.co Residue.o rngfunctions.o TorsionalLookupMatrix.o vector3f.o drms.o
 #	@echo Making DRMS Executable: DRMS
