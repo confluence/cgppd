@@ -104,9 +104,9 @@
 #define OUTPUT_LEVEL		   1
 
 #ifdef EnableOPENGL			//set here to override the makefile
-	#define GLVIS 1
+#define GLVIS 1
 #else
-	#define GLVIS 0
+#define GLVIS 0
 #endif
 
 #define GL_AXES 			1
@@ -118,9 +118,9 @@
 #define CHECKPOINTFREQUENCY 10000
 
 #ifdef EnableCUDA			//set here to override the makefile
-	#define USING_CUDA 1
+#define USING_CUDA 1
 #else
-	#define USING_CUDA 0
+#define USING_CUDA 0
 #endif
 
 #define COMPENSATE_KERNEL_SUM	  0
@@ -129,54 +129,54 @@
 //#define USING_CUDA 1
 
 #if USING_CUDA
-	#define PERFORM_GPU_AND_CPU_E  0  // do both cpu and gpu sums for comparison
+#define PERFORM_GPU_AND_CPU_E  0  // do both cpu and gpu sums for comparison
 
-	#define GPU_COUNT          		1
-	#define USING_TILE_KERNEL  		1
-	#define CUDA_E      	  		1	// use cuda to do the energy summations (vs cpu if not included)
-	#define PARALLEL_SUM			0
+#define GPU_COUNT          		1
+#define USING_TILE_KERNEL  		1
+#define CUDA_E      	  		1	// use cuda to do the energy summations (vs cpu if not included)
+#define PARALLEL_SUM			0
 
-	#define SHARED_MEM				0
-	#define CONST_MEM				1
-	#define GLOBAL_MEM				2
-	#define TEXTURE_MEM				3
+#define SHARED_MEM				0
+#define CONST_MEM				1
+#define GLOBAL_MEM				2
+#define TEXTURE_MEM				3
 
-	#define LJ_LOOKUP_METHOD        TEXTURE_MEM // type of memory to use for LJ lookups
-	#define METADATA_MEMORY			SHARED_MEM  // type of memory to use for residue metadata
-	#define POSITIONDATA_MEMORY		SHARED_MEM  // type of memory to use for residue position data
+#define LJ_LOOKUP_METHOD        TEXTURE_MEM // type of memory to use for LJ lookups
+#define METADATA_MEMORY			SHARED_MEM  // type of memory to use for residue metadata
+#define POSITIONDATA_MEMORY		SHARED_MEM  // type of memory to use for residue position data
 
-	#define USE_LOOP_UNROLL	          0
-	#define CULL_LOWER_TRIANGULAR_SUM 1		// only computer the upper triangular sum for the summations, saves 0.5*n(n-1) work
-	#ifdef EnableStreams
-		#define CUDA_STREAMS 1
-	#else
-		#define CUDA_STREAMS 0
-	#endif
+#define USE_LOOP_UNROLL	          0
+#define CULL_LOWER_TRIANGULAR_SUM 1		// only computer the upper triangular sum for the summations, saves 0.5*n(n-1) work
+#ifdef EnableStreams
+#define CUDA_STREAMS 1
+#else
+#define CUDA_STREAMS 0
+#endif
 
 
-	#define CUDA_MC		               0	// use cuda to do the MC operations
+#define CUDA_MC		               0	// use cuda to do the MC operations
 
-	#define TILE_DIM 			64 // block size for looping kernel, must be a power of 2 <= 512
-	#define REDUCTION_BLOCK_DIM		128   // block size for reductions
+#define TILE_DIM 			64 // block size for looping kernel, must be a power of 2 <= 512
+#define REDUCTION_BLOCK_DIM		128   // block size for reductions
 
-	#define BLOCK_SIZE 				22  // N*N <= 512
-	#if BLOCK_SIZE <= 4
-		#define SHARED_MEM_RESULT_SIZE	16 		// [nearest power of 2 > BLOCK_SIZE]^2
-	#elif BLOCK_SIZE <= 5
-		#define SHARED_MEM_RESULT_SIZE	32
-	#elif BLOCK_SIZE <= 8
-		#define SHARED_MEM_RESULT_SIZE	64
-	#elif BLOCK_SIZE <= 11
-		#define SHARED_MEM_RESULT_SIZE	128
-	#elif BLOCK_SIZE <= 16
-		#define SHARED_MEM_RESULT_SIZE	256
-	#elif BLOCK_SIZE <= 22						//sqrt 512 == 22.something
-		#define SHARED_MEM_RESULT_SIZE	512
-	#endif
+#define BLOCK_SIZE 				22  // N*N <= 512
+#if BLOCK_SIZE <= 4
+#define SHARED_MEM_RESULT_SIZE	16 		// [nearest power of 2 > BLOCK_SIZE]^2
+#elif BLOCK_SIZE <= 5
+#define SHARED_MEM_RESULT_SIZE	32
+#elif BLOCK_SIZE <= 8
+#define SHARED_MEM_RESULT_SIZE	64
+#elif BLOCK_SIZE <= 11
+#define SHARED_MEM_RESULT_SIZE	128
+#elif BLOCK_SIZE <= 16
+#define SHARED_MEM_RESULT_SIZE	256
+#elif BLOCK_SIZE <= 22						//sqrt 512 == 22.something
+#define SHARED_MEM_RESULT_SIZE	512
+#endif
 #endif // USING_CUDA 1
 
 #if GLVIS
-	void GlutDisplay();
+void GlutDisplay();
 #endif
 
 #include <iostream>
@@ -185,45 +185,45 @@ class Replica;
 
 struct SimulationData
 {
-	long index;
-	Replica *replica;
-	int replicaCount;
-	int GPUID;
-	int threads;
-	int streams;
-	int MCsteps;
-	int REsteps;
-	int sampleFrequency;
-	int sampleStartsAfter;
-	float bound;
-	int * waitingThreadCount;
-	int * conformationsBound;
-	FILE * fractionBound;
-	FILE * boundConformations;
+    long index;
+    Replica *replica;
+    int replicaCount;
+    int GPUID;
+    int threads;
+    int streams;
+    int MCsteps;
+    int REsteps;
+    int sampleFrequency;
+    int sampleStartsAfter;
+    float bound;
+    int * waitingThreadCount;
+    int * conformationsBound;
+    FILE * fractionBound;
+    FILE * boundConformations;
 };
 
 struct argdata
 {
-	int threads;
-	int streams;
-	int gpus;
-	int MCsteps;
-	int REsteps;
-	int replicas;
-	float bound;
-	int sampleFrequency;
-	int sampleStartsAfter;
-	char prependageString[256];
-	char file[256];
-	char logfile[256];
-	bool inputFile;
-	int nonCrowders;
-	float temperatureMin;
-	float temperatureMax;
-	int pid;
-	char checkpointfilename[256];
-	bool resume;
-	int currentStep;
+    int threads;
+    int streams;
+    int gpus;
+    int MCsteps;
+    int REsteps;
+    int replicas;
+    float bound;
+    int sampleFrequency;
+    int sampleStartsAfter;
+    char prependageString[256];
+    char file[256];
+    char logfile[256];
+    bool inputFile;
+    int nonCrowders;
+    float temperatureMin;
+    float temperatureMax;
+    int pid;
+    char checkpointfilename[256];
+    bool resume;
+    int currentStep;
 };
 
 #endif /*DEFINITIONS_H_*/
