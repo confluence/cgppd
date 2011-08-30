@@ -12,17 +12,19 @@ using namespace std;
 class AminoAcid
 {
 public:
-	AminoAcid();
-	virtual ~AminoAcid();
-	char name[20];
-	char sname[4];
-	char shortSymbol;
-	float vanderWaalRadius;
-	float electrostaticCharge;
-	int index;
-	char *getSNAME();
-	char *getName();
-	char getShortSymbol() { return shortSymbol;} ;
+    AminoAcid();
+    virtual ~AminoAcid();
+    char name[20];
+    char sname[4];
+    char shortSymbol;
+    float vanderWaalRadius;
+    float electrostaticCharge;
+    int index;
+    char *getSNAME();
+    char *getName();
+    char getShortSymbol() {
+        return shortSymbol;
+    } ;
 };
 /*
 AminoAcid *AminoAcidData;

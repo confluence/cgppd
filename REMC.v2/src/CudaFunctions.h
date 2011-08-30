@@ -65,35 +65,35 @@ void unbindLJTexture2D ();
 #endif
 
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
-	texture<float, 1, cudaReadModeElementType> LJTexture;
-	//texture<float, 2, cudaReadModeElementType> LJTexture2D;
+texture<float, 1, cudaReadModeElementType> LJTexture;
+//texture<float, 2, cudaReadModeElementType> LJTexture2D;
 #elif LJ_LOOKUP_METHOD == CONST_MEM
-	__constant__ float const_LJPotentialData[AA_COUNT*AA_COUNT];  // store the LJ postentials in constant memory
+__constant__ float const_LJPotentialData[AA_COUNT*AA_COUNT];  // store the LJ postentials in constant memory
 #elif LJ_LOOKUP_METHOD == GLOBAL_MEM || LJ_LOOKUP_METHOD == SHARED_MEM
-	float *LJPotentialData;  			// store the LJ postentials in global memory
+float *LJPotentialData;  			// store the LJ postentials in global memory
 #endif
 
 
 // configure the threads to load into shared memory, ensures, minimum work done.
 #if LJ_LOOKUP_METHOD == SHARED_MEM
-	#if TILE_DIM == 32
-		#define SM_LOAD_SIZE 50	// sizeof(float)*20*20 / 32 = 50
-	#elif TILE_DIM == 64
-		#define SM_LOAD_SIZE 25	// sizeof(float)*20*20 / 64 = 25
-	#elif TILE_DIM == 128
-		#define SM_LOAD_SIZE 13	// sizeof(float)*20*20 / 128 = 12.5, round up and pad, 13*128= 1664 shared mem used
-	#elif TILE_DIM == 256
-		#define SM_LOAD_SIZE 7	// sizeof(float)*20*20 / 256 = 6.25, round up and pad, 7*256= 1792 shared mem used
-	#elif TILE_DIM == 512
-		#define SM_LOAD_SIZE 4	// sizeof(float)*20*20 / 64 = 3.125, -> 4*512 => 2048
-	#endif
+#if TILE_DIM == 32
+#define SM_LOAD_SIZE 50	// sizeof(float)*20*20 / 32 = 50
+#elif TILE_DIM == 64
+#define SM_LOAD_SIZE 25	// sizeof(float)*20*20 / 64 = 25
+#elif TILE_DIM == 128
+#define SM_LOAD_SIZE 13	// sizeof(float)*20*20 / 128 = 12.5, round up and pad, 13*128= 1664 shared mem used
+#elif TILE_DIM == 256
+#define SM_LOAD_SIZE 7	// sizeof(float)*20*20 / 256 = 6.25, round up and pad, 7*256= 1792 shared mem used
+#elif TILE_DIM == 512
+#define SM_LOAD_SIZE 4	// sizeof(float)*20*20 / 64 = 3.125, -> 4*512 => 2048
+#endif
 #endif
 
 #if METADATA_MEMORY == TEXTURE_MEM
-	texture<float4, 1, cudaReadModeElementType> residueMetaTex;
+texture<float4, 1, cudaReadModeElementType> residueMetaTex;
 #endif
 #if POSITIONDATA_MEMORY == TEXTURE_MEM
-	texture<float4, 1, cudaReadModeElementType> residuePositionTex;
+texture<float4, 1, cudaReadModeElementType> residuePositionTex;
 #endif
 
 

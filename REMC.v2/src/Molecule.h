@@ -17,25 +17,29 @@ using namespace std;
 
 struct charStruct
 {
-	char * data;
-	const char * c_str() { return data; };
+    char * data;
+    const char * c_str() {
+        return data;
+    };
 };
 
 class Molecule
 {
-	public:
+public:
 
-	Molecule();
-	~Molecule();
-	Molecule(const Molecule& m);
-	Molecule operator = (const Molecule& m) { return Molecule(m); };
-	void deleteResidues();
-	void init(AminoAcid residues[], char *description, char *data);
-	bool initFromPDB(const char* pdbfilename);
-	void copy(const Molecule& m);
-	void saveBeforeStateChange(const Molecule* m);
-	void undoStateChange(const Molecule* m);
-	void reserveResidueSpace(int size);
+    Molecule();
+    ~Molecule();
+    Molecule(const Molecule& m);
+    Molecule operator = (const Molecule& m) {
+        return Molecule(m);
+    };
+    void deleteResidues();
+    void init(AminoAcid residues[], char *description, char *data);
+    bool initFromPDB(const char* pdbfilename);
+    void copy(const Molecule& m);
+    void saveBeforeStateChange(const Molecule* m);
+    void undoStateChange(const Molecule* m);
+    void reserveResidueSpace(int size);
     void shallowCopy(Molecule & r);
     bool update(AminoAcid AminoAcids[]);
     bool checkCollisions(const Molecule & m);
@@ -69,8 +73,10 @@ class Molecule
     bool update();
     float getMoleculeRoleIdentifier();
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
-	bool amIACrowder;
-	bool isCrowder() { return amIACrowder; };
+    bool amIACrowder;
+    bool isCrowder() {
+        return amIACrowder;
+    };
 
     float getVolume();
     float calculateVolume();
@@ -88,11 +94,11 @@ class Molecule
     Vector3f center;
     int index;
     float volume;
-	//    int length;
-	//    float temperature;
-	//    short label;
+    //    int length;
+    //    float temperature;
+    //    short label;
     float moleculeRoleIdentifier;
-	
+
 
     float translationalStep;
     float rotationalStep;
@@ -116,16 +122,16 @@ class Molecule
     vector<charStruct> SHEET;
     vector<charStruct> TURN;
     vector<charStruct> CRYST1;
-	vector<charStruct> ORIGX1;
-	vector<charStruct> ORIGX2;
-	vector<charStruct> ORIGX3;
-	vector<charStruct> SCALE1;
-	vector<charStruct> SCALE2;
-	vector<charStruct> SCALE3;
-	vector<charStruct> MASTER;*/
+    vector<charStruct> ORIGX1;
+    vector<charStruct> ORIGX2;
+    vector<charStruct> ORIGX3;
+    vector<charStruct> SCALE1;
+    vector<charStruct> SCALE2;
+    vector<charStruct> SCALE3;
+    vector<charStruct> MASTER;*/
 
-	private:
-		float EchargedMenbrane(float distanceToMembrane,float temperature);
+private:
+    float EchargedMenbrane(float distanceToMembrane,float temperature);
 
 };
 
