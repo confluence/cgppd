@@ -102,5 +102,4 @@ TEST_FIXTURE(ReplicaFixture, TestReplica)
 }
 
 // TODO: check timers -- decouple from printing
-// TODO: stop printing random stuff in replica?
 //         replicas[i].printTimers();

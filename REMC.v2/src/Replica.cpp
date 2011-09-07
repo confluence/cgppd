@@ -1173,11 +1173,10 @@ void Replica::countNonCrowdingResidues()
     for (int m=0; m<moleculeCount; m++)
     {
         if (molecules[m].moleculeRoleIdentifier >= 0)
-        {   nonCrowderResidues += molecules[m].residueCount;
-            //cout << "nonCrowderResidues += " << molecules[m].residueCount <<endl;
+        {
+            nonCrowderResidues += molecules[m].residueCount;
         }
     }
-    cout << "counted : " << nonCrowderResidues << " complex residues" << endl;
 }
 
 void Replica::audit()
