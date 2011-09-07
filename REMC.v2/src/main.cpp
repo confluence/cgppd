@@ -1743,6 +1743,7 @@ int main(int argc, char **argv)
         printf("%2d: %3d %12.3f A^3 %s\n",i , initialReplica.molecules[i].residueCount, initialReplica.molecules[i].getVolume(),initialReplica.molecules[i].filename);
     }
     initialReplica.countNonCrowdingResidues();
+    printf("counted : %3d complex residues\n",initialReplica.nonCrowderResidues);
 
 #if INCLUDE_TIMERS
     initialReplica.initTimers();
