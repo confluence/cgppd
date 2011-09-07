@@ -79,7 +79,6 @@ TEST_FIXTURE(ReplicaFixture, TestReplica)
 
         replicas[i].initTimers();
         replicas[i].countNonCrowdingResidues();
-        replicas[i].E();
 
         replicas[i].setDeviceLJPotentials(ljp_t);
         replicas[i].setBlockSize(TILE_DIM);
@@ -97,9 +96,10 @@ TEST_FIXTURE(ReplicaFixture, TestReplica)
         CHECK_CLOSE(gpu, results[i].gpu, e);
         CHECK_CLOSE(gpu_nc, results[i].gpu_nc, e);
 
-        replicas[i].FreeDevice();
-    }
-}
 
 // TODO: check timers -- decouple from printing
 //         replicas[i].printTimers();
+
+        replicas[i].FreeDevice();
+    }
+}
