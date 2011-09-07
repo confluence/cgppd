@@ -8,7 +8,6 @@ struct ReplicaFixture
     ReplicaFixture()
     {
         cuInit(0);
-        cout.precision(8);
 
         aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
         aminoAcidData.loadLJPotentialData(LJPDSOURCE);
@@ -39,7 +38,7 @@ struct ReplicaFixture
     }
 
     AminoAcids aminoAcidData;
-    Replica exampleReplicas[10];
+    Replica replicas[10];
     char *egnames;
     float * ljp_t;
     float testboxdim;
@@ -47,33 +46,61 @@ struct ReplicaFixture
 
 TEST_FIXTURE(ReplicaFixture, TestReplica)
 {
-    for (int i = 1; i<=10; i++)
+    struct ExpectedResult {
+        float cpu;
+        float cpu_nc;
+        float gpu;
+        float gpu_nc;
+    };
+
+    ExpectedResult results[10] = {
+        { -0.293705,  -0.293705,  -0.293705,  -0.293705},
+        { -1.056291,  -1.056291,  -1.056291,  -1.056291},
+        {-10.277430, -10.277433, -10.277432, -10.277432},
+        { -7.580391,  -7.580381,  -7.580392,  -7.580392},
+        {  0.000104,   0.000104,   0.000104,   0.000104},
+        { -5.562237,  -5.562236,  -5.562238,  -5.562238},
+        { -5.480217,  -5.480216,  -5.480219,  -5.480219},
+        {-10.711965, -10.711964, -10.711965, -10.711965},
+        { -9.900360,  -9.900360,  -9.900360,  -9.900360},
+        { -8.527747,  -8.527744,  -8.527748,  -8.527748}
+    };
+
+    for (int i = 0; i<=9; i++)
     {
-        exampleReplicas[i-1].aminoAcids = aminoAcidData;
-        exampleReplicas[i-1].label = i;
-        exampleReplicas[i-1].setBoundingValue(testboxdim);
-        sprintf(egnames,"data/conf%d/1a.pdb",i);
-        exampleReplicas[i-1].loadMolecule(egnames);
-        sprintf(egnames,"data/conf%d/1b.pdb",i);
-        exampleReplicas[i-1].loadMolecule(egnames);
-        exampleReplicas[i-1].initTimers();
-        uint cpu_E_timer;
-        exampleReplicas[i-1].countNonCrowdingResidues();
-        exampleReplicas[i-1].E();
+        replicas[i].aminoAcids = aminoAcidData;
+        replicas[i].label = i+1;
+        replicas[i].setBoundingValue(testboxdim);
 
-        exampleReplicas[i-1].setDeviceLJPotentials(ljp_t);
-        exampleReplicas[i-1].setBlockSize(TILE_DIM);
-        exampleReplicas[i-1].ReplicaDataToDevice();
-        ///cout << "CPU execution time: " << cutGetTimerValue(cpu_E_timer)/100.0f << "ms"<<  endl;
-        uint gpu_E_timer;
-        double r = exampleReplicas[i-1].EonDevice();
-        double r2 = exampleReplicas[i-1].EonDeviceNC();
+        sprintf(egnames,"data/conf%d/1a.pdb",i+1);
+        replicas[i].loadMolecule(egnames);
+        sprintf(egnames,"data/conf%d/1b.pdb",i+1);
+        replicas[i].loadMolecule(egnames);
 
-        double cpu_ee = exampleReplicas[i-1].E();
-        double cpu_ee2 = exampleReplicas[i-1].E(&exampleReplicas[i-1].molecules[0],&exampleReplicas[i-1].molecules[1]);
+        replicas[i].initTimers();
+        replicas[i].countNonCrowdingResidues();
+        replicas[i].E();
 
-        printf ("CPU (CPUnc), GPU (NC), diff(diff): %13f (%13f), %13f (%13f)    \n",cpu_ee,cpu_ee2,r,r2,abs(cpu_ee-r),abs(cpu_ee2-r2));
-        //exampleReplicas[i-1].printTimers();
-        exampleReplicas[i-1].FreeDevice();
+        replicas[i].setDeviceLJPotentials(ljp_t);
+        replicas[i].setBlockSize(TILE_DIM);
+        replicas[i].ReplicaDataToDevice();
+
+        double gpu = replicas[i].EonDevice();
+        double gpu_nc = replicas[i].EonDeviceNC();
+
+        double cpu = replicas[i].E();
+        double cpu_nc = replicas[i].E(&replicas[i].molecules[0],&replicas[i].molecules[1]);
+
+        float e = 0.000001;
+        CHECK_CLOSE(cpu, results[i].cpu, e);
+        CHECK_CLOSE(cpu_nc, results[i].cpu_nc, e);
+        CHECK_CLOSE(gpu, results[i].gpu, e);
+        CHECK_CLOSE(gpu_nc, results[i].gpu_nc, e);
+
+        replicas[i].FreeDevice();
     }
 }
+
+// TODO: check timers -- decouple from printing
+// TODO: stop printing random stuff in replica?
+//         replicas[i].printTimers();

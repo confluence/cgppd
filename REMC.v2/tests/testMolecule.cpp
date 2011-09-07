@@ -1,6 +1,6 @@
 #include <UnitTest++.h>
 #include <Molecule.h>
 
-TEST(TestMolecule) {
+// TEST(TestMolecule) {
 //     CHECK(false);
-}
+// }
