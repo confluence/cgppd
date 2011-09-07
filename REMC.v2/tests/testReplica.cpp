@@ -5,6 +5,12 @@
 
 struct ReplicaFixture
 {
+    AminoAcids aminoAcidData;
+    Replica replicas[10];
+    char *egnames;
+    float * ljp_t;
+    float testboxdim;
+
     ReplicaFixture()
     {
         cuInit(0);
@@ -36,12 +42,6 @@ struct ReplicaFixture
 #endif
         cout.flush();
     }
-
-    AminoAcids aminoAcidData;
-    Replica replicas[10];
-    char *egnames;
-    float * ljp_t;
-    float testboxdim;
 };
 
 TEST_FIXTURE(ReplicaFixture, TestReplica)
