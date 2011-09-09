@@ -41,23 +41,23 @@ void Replica::initTimers()
 {
     //timers for profiling the cuda functions
     replicaMCTimer = 0;
-    replicaMCCounter = 0;
+//     replicaMCCounter = 0;
 
     replicaToGPUTimer = 0;
-    replicaToGPUCounter = 0;
+//     replicaToGPUCounter = 0;
     replicaUpdateGPUTimer = 0;
-    replicaUpdateGPUCounter = 0;
+//     replicaUpdateGPUCounter = 0;
     replicaKernelTimer = 0;
-    replicaKernelCounter = 0;
+//     replicaKernelCounter = 0;
     replicaECUDATimer = 0;
-    replicaECUDACounter = 0;
+//     replicaECUDACounter = 0;
     replicaMoleculeUpdateTimer = 0;
-    replicaMoleculeUpdateCounter = 0;
+//     replicaMoleculeUpdateCounter = 0;
     replicaDeviceMCTimer = 0;
-    replicaDeviceMCCounter = 0;
+//     replicaDeviceMCCounter = 0;
     initGPUMemoryTimer = 0;
-    initGPUMemoryCounter = 0;
-    replicaEHostCounter = 0;
+//     initGPUMemoryCounter = 0;
+//     replicaEHostCounter = 0;
 
 
     CUT_SAFE_CALL( cutCreateTimer(&replicaMCTimer) );
@@ -244,6 +244,12 @@ int Replica::loadMolecule(const char* pdbfilename)
         }
         catch ( char * str ) 	{
             cout << "Exception raised: delete [] molecules failed" << endl;
+        }
+        catch (int n) {
+            cout << "Int exception " << n << endl;
+        }
+        catch (...) {
+            cout << "Default exception" << endl;
         }
 
         molecules = new Molecule[moleculeArraySize];
@@ -610,7 +616,7 @@ inline float distance(Vector3f a,Vector3f b, float _boxdim)
 double Replica::E()
 {
 #if INCLUDE_TIMERS
-    replicaEHostCounter++;
+//     replicaEHostCounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
 #endif
 
@@ -860,7 +866,7 @@ float length(const float4 a, const float4 b)
 float Replica::Eopt()
 {
 #if INCLUDE_TIMERS
-	replicaEHostCounter++;
+// 	replicaEHostCounter++;
 	CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
 #endif
 
@@ -1043,7 +1049,7 @@ float Replica::Eopt()
 float Replica::Eorig()
 {
 #if INCLUDE_TIMERS
-    replicaEHostCounter++;
+//     replicaEHostCounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
 #endif
 
@@ -1077,20 +1083,17 @@ void Replica::printTimers()
 {
 #if INCLUDE_TIMERS
 
-    float ave_cputimer=cutGetTimerValue(replicaEHostTimer)/(replicaEHostCounter==0 ? 1: float(replicaEHostCounter));
-    float ave_gputimer=cutGetTimerValue(replicaECUDATimer)/(replicaECUDACounter==0 ? 1: float(replicaECUDACounter));
+    cout << "Timer values (ms)" << endl;
+    cout << "Total(ms)   \tAverage(ms)  \t Action" << endl;
 
-    cout << "Timer count and values (ms)" << endl;
-    cout << "Count\tTotal(ms)   \tAverage(ms)  \t Action" << endl;
-
-    printf("%5d\t%12.6f\t%12.6f\t Replica to GPU (init & transfer)\n"	,replicaToGPUCounter,			cutGetTimerValue(replicaToGPUTimer),			cutGetTimerValue(replicaToGPUTimer)/(replicaToGPUCounter==0 ? 1: float(replicaToGPUCounter)));
-    printf("%5d\t%12.6f\t%12.6f\t Replica Update on GPU (transter)\n"	,replicaUpdateGPUCounter,		cutGetTimerValue(replicaUpdateGPUTimer),		cutGetTimerValue(replicaUpdateGPUTimer)/(replicaUpdateGPUCounter==0 ? 1: float(replicaUpdateGPUCounter)));
-    printf("%5d\t%12.6f\t%12.6f\t Kernel Timer (computation)\n"			,replicaECUDACounter,			cutGetTimerValue(replicaECUDATimer),			cutGetTimerValue(replicaECUDATimer)/(replicaECUDACounter==0 ? 1: float(replicaECUDACounter)));
-    printf("%5d\t%12.6f\t%12.6f\t Host Timer (computation)\n"			,replicaEHostCounter,			cutGetTimerValue(replicaEHostTimer),			cutGetTimerValue(replicaEHostTimer)/(replicaEHostCounter==0 ? 1: float(replicaEHostCounter)));
-    printf("%5d\t%12.6f\t%12.6f\t Update Molecule on GPU (transfer)\n"	,replicaMoleculeUpdateCounter,	cutGetTimerValue(replicaMoleculeUpdateTimer),	cutGetTimerValue(replicaMoleculeUpdateTimer)/(replicaMoleculeUpdateCounter==0 ? 1: float(replicaMoleculeUpdateCounter)));
-    printf("%5d\t%12.6f\t%12.6f\t Mutation of GPU (computation) \n"		,replicaDeviceMCCounter,		cutGetTimerValue(replicaDeviceMCTimer),			cutGetTimerValue(replicaDeviceMCTimer)/(replicaDeviceMCCounter==0 ? 1: float(replicaDeviceMCCounter)));
-    printf("%5d\t%12.6f\t%12.6f\t GPU Memory Initialisation (malloc)\n"	,initGPUMemoryCounter,			cutGetTimerValue(initGPUMemoryTimer),			cutGetTimerValue(initGPUMemoryTimer)/(initGPUMemoryCounter==0 ? 1: float(initGPUMemoryCounter)));
-    printf("Kernel Speedup:  %0.1fx\n", ave_cputimer/ave_gputimer);
+    printf("%12.6f\t%12.6f\t Replica to GPU (init & transfer)\n",   cutGetTimerValue(replicaToGPUTimer),            cutGetAverageTimerValue(replicaToGPUTimer));
+    printf("%12.6f\t%12.6f\t Replica Update on GPU (transter)\n",   cutGetTimerValue(replicaUpdateGPUTimer),        cutGetAverageTimerValue(replicaUpdateGPUTimer));
+    printf("%12.6f\t%12.6f\t Kernel Timer (computation)\n",         cutGetTimerValue(replicaECUDATimer),            cutGetAverageTimerValue(replicaECUDATimer));
+    printf("%12.6f\t%12.6f\t Host Timer (computation)\n",           cutGetTimerValue(replicaEHostTimer),            cutGetAverageTimerValue(replicaEHostTimer));
+    printf("%12.6f\t%12.6f\t Update Molecule on GPU (transfer)\n",  cutGetTimerValue(replicaMoleculeUpdateTimer),   cutGetAverageTimerValue(replicaMoleculeUpdateTimer));
+    printf("%12.6f\t%12.6f\t Mutation of GPU (computation) \n",     cutGetTimerValue(replicaDeviceMCTimer),         cutGetAverageTimerValue(replicaDeviceMCTimer));
+    printf("%12.6f\t%12.6f\t GPU Memory Initialisation (malloc)\n", cutGetTimerValue(initGPUMemoryTimer),           cutGetAverageTimerValue(initGPUMemoryTimer));
+    printf("Kernel Speedup:  %0.1fx\n", cutGetAverageTimerValue(replicaEHostTimer)/cutGetAverageTimerValue(replicaECUDATimer));
 
 #else
 
@@ -1332,8 +1335,8 @@ void Replica::MCSearchAcceptReject()
 void Replica::ReplicaDataToDevice()
 {
 #if INCLUDE_TIMERS
-    replicaToGPUCounter++;
-    initGPUMemoryCounter++;
+//     replicaToGPUCounter++;
+//     initGPUMemoryCounter++;
     CUT_SAFE_CALL(cutStartTimer(initGPUMemoryTimer));
 #endif
 
@@ -1454,7 +1457,7 @@ void Replica::ReplicaDataToHost()
 {
 
 #if INCLUDE_TIMERS
-    replicaToHostCounter++;
+//     replicaToHostCounter++;
     CUT_SAFE_CALL(cutStartTimer(replicaToHostTimer));
 #endif
     int residueCount = 0;
@@ -1510,7 +1513,7 @@ void Replica::UpdateDeviceData()
         ReplicaDataToDevice();
     }
 #if INCLUDE_TIMERS
-    replicaUpdateGPUCounter++;
+//     replicaUpdateGPUCounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaUpdateGPUTimer) );
 #endif
     // works only if the replica is already on the device
@@ -1559,7 +1562,7 @@ void Replica::MoleculeDataToDevice(int MoleculeID)
         ReplicaDataToDevice();
     }
 #if INCLUDE_TIMERS
-    replicaMoleculeUpdateCounter++;
+//     replicaMoleculeUpdateCounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaMoleculeUpdateTimer) );
 #endif
 
@@ -1602,7 +1605,7 @@ void Replica::MoleculeDataToDevice(int MoleculeID)
 void Replica::EonDeviceAsync()
 {
 #if INCLUDE_TIMERS
-    replicaECUDACounter++;
+//     replicaECUDACounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
 #endif
 #if CUDA_STREAMS
@@ -1625,7 +1628,7 @@ void Replica::EonDeviceAsync()
 double Replica::EonDevice()
 {
 #if INCLUDE_TIMERS
-    replicaECUDACounter++;
+//     replicaECUDACounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
 #endif
 
