@@ -13,7 +13,7 @@ COMPILER=g++
 
 #DEFINE=-DEnableOPENGL -DEnableCUDA -DEnableStreams
 ### + debug symbols
-#CFLAGS=-g
+# CFLAGS=-g
 CFLAGS=-fno-omit-frame-pointer -O2 #-ffast-math #
 
 ### the following line enables debug output and emulation
