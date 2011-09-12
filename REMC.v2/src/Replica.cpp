@@ -238,18 +238,11 @@ int Replica::loadMolecule(const char* pdbfilename)
         Molecule *new_molecules = new Molecule[moleculeArraySize];
         if (moleculeCount > 0)
             memcpy(new_molecules,molecules,sizeof(Molecule)*moleculeCount);
-
         try	{
             delete [] molecules;    // free existing array before forgetting about it
         }
         catch ( char * str ) 	{
             cout << "Exception raised: delete [] molecules failed" << endl;
-        }
-        catch (int n) {
-            cout << "Int exception " << n << endl;
-        }
-        catch (...) {
-            cout << "Default exception" << endl;
         }
 
         molecules = new Molecule[moleculeArraySize];

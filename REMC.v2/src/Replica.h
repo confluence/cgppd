@@ -290,25 +290,25 @@ public:
 #if INCLUDE_TIMERS
     //timers for profiling the cuda functions
     uint replicaMCTimer;
-    uint replicaMCCounter;
+//     uint replicaMCCounter;
     uint replicaToGPUTimer;
-    uint replicaToGPUCounter;
+//     uint replicaToGPUCounter;
     uint replicaToHostTimer;
-    uint replicaToHostCounter;
+//     uint replicaToHostCounter;
     uint replicaUpdateGPUTimer;
-    uint replicaUpdateGPUCounter;
+//     uint replicaUpdateGPUCounter;
     uint replicaKernelTimer;
-    uint replicaKernelCounter;
+//     uint replicaKernelCounter;
     uint replicaECUDATimer;
-    uint replicaECUDACounter;
+//     uint replicaECUDACounter;
     uint replicaMoleculeUpdateTimer;
-    uint replicaMoleculeUpdateCounter;
+//     uint replicaMoleculeUpdateCounter;
     uint replicaDeviceMCTimer;
-    uint replicaDeviceMCCounter;
+//     uint replicaDeviceMCCounter;
     uint initGPUMemoryTimer;
-    uint initGPUMemoryCounter;
+//     uint initGPUMemoryCounter;
     uint replicaEHostTimer;
-    uint replicaEHostCounter;
+//     uint replicaEHostCounter;
     bool timersInit;
 #endif
 
