@@ -2,6 +2,7 @@
 #include <Replica.h>
 #include <cutil.h>
 #include <cutil_inline.h>
+#include "definitions.h"
 
 struct ReplicaFixture
 {
@@ -13,6 +14,12 @@ struct ReplicaFixture
 
     ReplicaFixture()
     {
+        argdata parameters;
+        parameters.pid = int(getpid());
+        parameters.inputFile = false;
+        // what does this do?!
+        memset(parameters.prependageString,0,256);
+
         cuInit(0);
 
         aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
@@ -46,6 +53,7 @@ struct ReplicaFixture
 
 TEST_FIXTURE(ReplicaFixture, TestReplica)
 {
+
     struct ExpectedResult {
         float cpu;
         float cpu_nc;
