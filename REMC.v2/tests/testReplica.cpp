@@ -14,12 +14,6 @@ struct ReplicaFixture
 
     ReplicaFixture()
     {
-        argdata parameters;
-        parameters.pid = int(getpid());
-        parameters.inputFile = false;
-        // what does this do?!
-        memset(parameters.prependageString,0,256);
-
         cuInit(0);
 
         aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
@@ -79,6 +73,8 @@ TEST_FIXTURE(ReplicaFixture, TestReplica)
         replicas[i].aminoAcids = aminoAcidData;
         replicas[i].label = i+1;
         replicas[i].setBoundingValue(testboxdim);
+
+        replicas[i].reserveConiguousMoleculeArray(30);
 
         sprintf(egnames,"data/conf%d/1a.pdb",i+1);
         replicas[i].loadMolecule(egnames);
