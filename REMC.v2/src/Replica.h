@@ -33,7 +33,7 @@ public:
     ~Replica();
     Replica(const Replica& r);
     void setAminoAcidData(AminoAcids a);
-    void reserveConiguousMoleculeArray(int size);
+    void reserveContiguousMoleculeArray(int size);
     void initRNGs();
     void freeRNGs();
     void copy(const Replica& r); 						// assignment copy, duplicate it.

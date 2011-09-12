@@ -74,7 +74,7 @@ TEST_FIXTURE(ReplicaFixture, TestReplica)
         replicas[i].label = i+1;
         replicas[i].setBoundingValue(testboxdim);
 
-        replicas[i].reserveConiguousMoleculeArray(2);
+        replicas[i].reserveContiguousMoleculeArray(2);
 
         sprintf(egnames,"data/conf%d/1a.pdb",i+1);
         replicas[i].loadMolecule(egnames);
