@@ -1683,6 +1683,7 @@ int main(int argc, char **argv)
             exampleReplicas[i-1].aminoAcids = aminoAcidData;
             exampleReplicas[i-1].label = i;
             exampleReplicas[i-1].setBoundingValue(testboxdim);
+            exampleReplicas[i-1].reserveConiguousMoleculeArray(2);
             sprintf(egnames,"data/conf%d/1a.pdb",i);
             exampleReplicas[i-1].loadMolecule(egnames);
             sprintf(egnames,"data/conf%d/1b.pdb",i);
