@@ -716,7 +716,7 @@ void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundCo
 
 void initLattice(Replica *initialReplica)
 {
-    /*initialReplica->reserveConiguousMoleculeArray(2);
+    /*initialReplica->reserveContiguousMoleculeArray(2);
     float interMolecularSpacing = BOUNDING_VALUE / 2 - 1;
     nonCrowderMolecules.clear();
     //initialReplica->loadMolecule("data/conf1/1a.pdb");
@@ -1683,7 +1683,7 @@ int main(int argc, char **argv)
             exampleReplicas[i-1].aminoAcids = aminoAcidData;
             exampleReplicas[i-1].label = i;
             exampleReplicas[i-1].setBoundingValue(testboxdim);
-            exampleReplicas[i-1].reserveConiguousMoleculeArray(2);
+            exampleReplicas[i-1].reserveContiguousMoleculeArray(2);
             sprintf(egnames,"data/conf%d/1a.pdb",i);
             exampleReplicas[i-1].loadMolecule(egnames);
             sprintf(egnames,"data/conf%d/1b.pdb",i);
@@ -1724,7 +1724,7 @@ int main(int argc, char **argv)
     Replica initialReplica;
     initialReplica.setAminoAcidData(aminoAcidData);
     initialReplica.setBoundingValue(BOUNDING_VALUE);
-    initialReplica.reserveConiguousMoleculeArray(30);
+    initialReplica.reserveContiguousMoleculeArray(30);
     //if there is an input file load its contents here
     if (parameters.inputFile)
     {

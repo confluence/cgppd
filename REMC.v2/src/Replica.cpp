@@ -219,7 +219,7 @@ void Replica::copy(const Replica &r)
 #endif
 }
 
-void Replica::reserveConiguousMoleculeArray(int size)
+void Replica::reserveContiguousMoleculeArray(int size)
 {
     if (moleculeCount != 0)
     {
