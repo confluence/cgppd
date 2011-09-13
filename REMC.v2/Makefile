@@ -3,7 +3,6 @@ LIBS=-L/$(HOME)/NVIDIA_GPU_Computing_SDK/C/lib -L/usr/lib64/nvidia-current -L/us
 LINKS=-lpthread -lgsl -lgslcblas -lcudart -lcutil -lcuda
 #TAU_MAKEFILE=$(HOME)/tau2/x86_64/lib/Makefile.tau-pthread-pdt
 #COMPILER=tau_cxx.sh -tau_makefile=${TAU_MAKEFILE} -optPDTInst
-#COMPILER=g++-4.3
 COMPILER=g++
 #config for zero.ch.cam.ac.uk
 #INCLUDE=-I/usr/local/shared/rhel-4.5/x86_64/cuda/2.3/include -I/usr/local/shared/rhel-4.5/x86_64/cuda/2.3/C/common/inc -I/$(HOME)/include
