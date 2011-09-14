@@ -41,24 +41,13 @@ void Replica::initTimers()
 {
     //timers for profiling the cuda functions
     replicaMCTimer = 0;
-//     replicaMCCounter = 0;
-
     replicaToGPUTimer = 0;
-//     replicaToGPUCounter = 0;
     replicaUpdateGPUTimer = 0;
-//     replicaUpdateGPUCounter = 0;
     replicaKernelTimer = 0;
-//     replicaKernelCounter = 0;
     replicaECUDATimer = 0;
-//     replicaECUDACounter = 0;
     replicaMoleculeUpdateTimer = 0;
-//     replicaMoleculeUpdateCounter = 0;
     replicaDeviceMCTimer = 0;
-//     replicaDeviceMCCounter = 0;
     initGPUMemoryTimer = 0;
-//     initGPUMemoryCounter = 0;
-//     replicaEHostCounter = 0;
-
 
     CUT_SAFE_CALL( cutCreateTimer(&replicaMCTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&replicaToGPUTimer) );
@@ -609,7 +598,6 @@ inline float distance(Vector3f a,Vector3f b, float _boxdim)
 double Replica::E()
 {
 #if INCLUDE_TIMERS
-//     replicaEHostCounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
 #endif
 
@@ -859,7 +847,6 @@ float length(const float4 a, const float4 b)
 float Replica::Eopt()
 {
 #if INCLUDE_TIMERS
-// 	replicaEHostCounter++;
 	CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
 #endif
 
@@ -1042,7 +1029,6 @@ float Replica::Eopt()
 float Replica::Eorig()
 {
 #if INCLUDE_TIMERS
-//     replicaEHostCounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
 #endif
 
@@ -1328,8 +1314,6 @@ void Replica::MCSearchAcceptReject()
 void Replica::ReplicaDataToDevice()
 {
 #if INCLUDE_TIMERS
-//     replicaToGPUCounter++;
-//     initGPUMemoryCounter++;
     CUT_SAFE_CALL(cutStartTimer(initGPUMemoryTimer));
 #endif
 
@@ -1450,7 +1434,6 @@ void Replica::ReplicaDataToHost()
 {
 
 #if INCLUDE_TIMERS
-//     replicaToHostCounter++;
     CUT_SAFE_CALL(cutStartTimer(replicaToHostTimer));
 #endif
     int residueCount = 0;
@@ -1506,7 +1489,6 @@ void Replica::UpdateDeviceData()
         ReplicaDataToDevice();
     }
 #if INCLUDE_TIMERS
-//     replicaUpdateGPUCounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaUpdateGPUTimer) );
 #endif
     // works only if the replica is already on the device
@@ -1555,7 +1537,6 @@ void Replica::MoleculeDataToDevice(int MoleculeID)
         ReplicaDataToDevice();
     }
 #if INCLUDE_TIMERS
-//     replicaMoleculeUpdateCounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaMoleculeUpdateTimer) );
 #endif
 
@@ -1598,7 +1579,6 @@ void Replica::MoleculeDataToDevice(int MoleculeID)
 void Replica::EonDeviceAsync()
 {
 #if INCLUDE_TIMERS
-//     replicaECUDACounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
 #endif
 #if CUDA_STREAMS
@@ -1621,7 +1601,6 @@ void Replica::EonDeviceAsync()
 double Replica::EonDevice()
 {
 #if INCLUDE_TIMERS
-//     replicaECUDACounter++;
     CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
 #endif
 

@@ -7,8 +7,7 @@
 struct ReplicaFixture
 {
     AminoAcids aminoAcidData;
-    Replica replicas[10];
-    char *egnames;
+    Replica replica;
     float * ljp_t;
     float testboxdim;
 
@@ -18,9 +17,6 @@ struct ReplicaFixture
 
         aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
         aminoAcidData.loadLJPotentialData(LJPDSOURCE);
-
-        // get values for the example conformations
-        egnames = new char[60];
 
         cudaMalloc((void**)&ljp_t,LJArraySize);
         cutilCheckMsg("Failed to cudaMalloc");
@@ -37,6 +33,10 @@ struct ReplicaFixture
 
     ~ReplicaFixture()
     {
+        if (replica.replicaIsOnDevice)
+        {
+            replica.FreeDevice();
+        }
         cudaFree(ljp_t);
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
         unbindLJTexture();
@@ -47,15 +47,45 @@ struct ReplicaFixture
 
 TEST_FIXTURE(ReplicaFixture, TestReplica)
 {
+    replica.aminoAcids = aminoAcidData;
+    replica.label = 1;
+    replica.setBoundingValue(testboxdim);
 
-    struct ExpectedResult {
+    replica.reserveContiguousMoleculeArray(2);
+
+    replica.loadMolecule("data/conf1/1a.pdb");
+    replica.loadMolecule("data/conf1/1b.pdb");
+
+    replica.initTimers();
+    replica.countNonCrowdingResidues();
+
+    replica.setDeviceLJPotentials(ljp_t);
+    replica.setBlockSize(TILE_DIM);
+    replica.ReplicaDataToDevice();
+
+    double gpu = replica.EonDevice();
+    double gpu_nc = replica.EonDeviceNC();
+
+    double cpu = replica.E();
+    double cpu_nc = replica.E(&replica.molecules[0],&replica.molecules[1]);
+
+    //TODO: add some actual unit tests
+}
+
+TEST_FIXTURE(ReplicaFixture, TestTenReplicas)
+{
+    Replica replicas[10];
+    char *test_molecule_file = new char[60];
+
+    struct ExpectedResult
+    {
         float cpu;
         float cpu_nc;
         float gpu;
         float gpu_nc;
     };
 
-    ExpectedResult results[10] = {
+    ExpectedResult expected_results[10] = {
         { -0.293705,  -0.293705,  -0.293705,  -0.293705},
         { -1.056291,  -1.056291,  -1.056291,  -1.056291},
         {-10.277430, -10.277433, -10.277432, -10.277432},
@@ -68,7 +98,10 @@ TEST_FIXTURE(ReplicaFixture, TestReplica)
         { -8.527747,  -8.527744,  -8.527748,  -8.527748}
     };
 
-    for (int i = 0; i<=9; i++)
+    float expected_averages [7] = {0.029f, 0.0f, 0.271f, 0.981f, 0.0f, 0.0f, 0.09f};
+    int exceeded_averages [7] = {0, 0, 0, 0, 0, 0, 0};
+
+    for (int i = 0; i < 10; i++)
     {
         replicas[i].aminoAcids = aminoAcidData;
         replicas[i].label = i+1;
@@ -76,10 +109,10 @@ TEST_FIXTURE(ReplicaFixture, TestReplica)
 
         replicas[i].reserveContiguousMoleculeArray(2);
 
-        sprintf(egnames,"data/conf%d/1a.pdb",i+1);
-        replicas[i].loadMolecule(egnames);
-        sprintf(egnames,"data/conf%d/1b.pdb",i+1);
-        replicas[i].loadMolecule(egnames);
+        sprintf(test_molecule_file,"data/conf%d/1a.pdb",i+1);
+        replicas[i].loadMolecule(test_molecule_file);
+        sprintf(test_molecule_file,"data/conf%d/1b.pdb",i+1);
+        replicas[i].loadMolecule(test_molecule_file);
 
         replicas[i].initTimers();
         replicas[i].countNonCrowdingResidues();
@@ -95,15 +128,36 @@ TEST_FIXTURE(ReplicaFixture, TestReplica)
         double cpu_nc = replicas[i].E(&replicas[i].molecules[0],&replicas[i].molecules[1]);
 
         float e = 0.000001;
-        CHECK_CLOSE(cpu, results[i].cpu, e);
-        CHECK_CLOSE(cpu_nc, results[i].cpu_nc, e);
-        CHECK_CLOSE(gpu, results[i].gpu, e);
-        CHECK_CLOSE(gpu_nc, results[i].gpu_nc, e);
+        CHECK_CLOSE(expected_results[i].cpu, cpu, e);
+        CHECK_CLOSE(expected_results[i].cpu_nc, cpu_nc, e);
+        CHECK_CLOSE(expected_results[i].gpu, gpu, e);
+        CHECK_CLOSE(expected_results[i].gpu_nc, gpu_nc, e);
 
+        float averages[7];
 
-// TODO: check timers -- decouple from printing
-//         replicas[i].printTimers();
+        averages[0] = cutGetAverageTimerValue(replicas[i].replicaToGPUTimer);
+        averages[1] = cutGetAverageTimerValue(replicas[i].replicaUpdateGPUTimer);
+        averages[2] = cutGetAverageTimerValue(replicas[i].replicaECUDATimer);
+        averages[3] = cutGetAverageTimerValue(replicas[i].replicaEHostTimer);
+        averages[4] = cutGetAverageTimerValue(replicas[i].replicaMoleculeUpdateTimer);
+        averages[5] = cutGetAverageTimerValue(replicas[i].replicaDeviceMCTimer);
+        averages[6] = cutGetAverageTimerValue(replicas[i].initGPUMemoryTimer);
+
+        for (int j = 0; j < 7; j++)
+        {
+            if (averages[j] > expected_averages[j] + 0.01)
+            {
+                exceeded_averages[j]++;
+            }
+        }
 
         replicas[i].FreeDevice();
     }
+
+    for (int j = 0; j < 7; j++)
+    {
+        // ignore one or two outliers
+        CHECK(exceeded_averages[j] <= 2);
+    }
 }
+
