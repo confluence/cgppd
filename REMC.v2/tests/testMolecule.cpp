@@ -11,7 +11,7 @@ struct MoleculeFixture
     {
         molecule.AminoAcidsData = aminoAcidData;
         molecule.index = 0;
-        molecule.initFromPDB("data/conf1/1a.pdb");
+        molecule.initFromPDB("tests/1UBQ.pdb");
     }
 
     ~MoleculeFixture()
@@ -20,5 +20,5 @@ struct MoleculeFixture
 };
 
 TEST_FIXTURE(MoleculeFixture, TestMolecule) {
-    CHECK_EQUAL(24, molecule.residueCount);
+    CHECK_EQUAL(76, molecule.residueCount);
 }
