@@ -193,46 +193,7 @@ void Molecule::saveAsPDB(const char* filename)
     fprintf(output,"REMARK %s \n",filename);
     fprintf(output,"REMARK Translation relative to input Q(w,x,y,z): %f %f %f %f\n",rotation.w,rotation.x,rotation.y,rotation.z);
     fprintf(output,"REMARK Rotation relative to input +P(x,y,z): %f %f %f\n",center.x,center.y,center.z);
-    /*
-    	for (size_t i=0;i<COMPND.size();i++)
-    		fprintf(output,"%s \n",COMPND[i].c_str());
-    	for (size_t i=0;i<SOURCE.size();i++)
-    		fprintf(output,"%s \n",SOURCE[i].c_str());
-    	for (size_t i=0;i<KEYWDS.size();i++)
-    		fprintf(output,"%s \n",KEYWDS[i].c_str());
-    	for (size_t i=0;i<EXPDTA.size();i++)
-    		fprintf(output,"%s \n",EXPDTA[i].c_str());
-    	for (size_t i=0;i<AUTHOR.size();i++)
-    		fprintf(output,"%s \n",AUTHOR[i].c_str());
-    	for (size_t i=0;i<REVDAT.size();i++)
-    		fprintf(output,"%s \n",REVDAT[i].c_str());
-    	for (size_t i=0;i<REMARK.size();i++)
-    		fprintf(output,"%s \n",REMARK[i].c_str());
-    	for (size_t i=0;i<SEQRES.size();i++)
-    		fprintf(output,"%s \n",SEQRES[i].c_str());
-    	for (size_t i=0;i<HELIX.size();i++)
-    		fprintf(output,"%s \n",HELIX[i].c_str());
-    	for (size_t i=0;i<SHEET.size();i++)
-    		fprintf(output,"%s \n",SHEET[i].c_str());
-    	for (size_t i=0;i<TURN.size();i++)
-    		fprintf(output,"%s \n",TURN[i].c_str());
-    	for (size_t i=0;i<CRYST1.size();i++)
-    		fprintf(output,"%s \n",CRYST1[i].c_str());
-    	for (size_t i=0;i<ORIGX1.size();i++)
-    		fprintf(output,"%s \n",ORIGX1[i].c_str());
-    	for (size_t i=0;i<ORIGX2.size();i++)
-    		fprintf(output,"%s \n",ORIGX2[i].c_str());
-    	for (size_t i=0;i<ORIGX3.size();i++)
-    		fprintf(output,"%s \n",ORIGX3[i].c_str());
-    	for (size_t i=0;i<SCALE1.size();i++)
-    		fprintf(output,"%s \n",SCALE1[i].c_str());
-    	for (size_t i=0;i<SCALE2.size();i++)
-    		fprintf(output,"%s \n",SCALE2[i].c_str());
-    	for (size_t i=0;i<SCALE3.size();i++)
-    		fprintf(output,"%s \n",SCALE3[i].c_str());
-    	for (size_t i=0;i<MASTER.size();i++)
-    		fprintf(output,"%s \n",MASTER[i].c_str());
-    */
+
     size_t i=0;
     int itemcount = 0;
     while (i<residueCount)
@@ -241,7 +202,6 @@ void Molecule::saveAsPDB(const char* filename)
         fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',AminoAcidsData.get(Residues[i].aminoAcidIndex).getSNAME(),Residues[i].chainId,Residues[i].resSeq,' ',Residues[i].position.x,Residues[i].position.y,Residues[i].position.z,1.0f,1.0f);
         i++;
     }
-    //fprintf(output,"TER   %5d      %3s %C%4d \n",++itemcount,AminoAcidsData.get(Residues[i].aminoAcidIndex).getSNAME(),Residues[i].chainId,Residues[i].resSeq);
 
     fprintf(output,"END \n");
     fflush(output);
@@ -255,8 +215,6 @@ void Molecule::setPosition(Vector3f v)
     position = v;
     for (size_t i=0; i<residueCount; i++)
     {
-        //Residues[i].position = Residues[i].relativePosition + center;
-
         // more efficient to do it this way than with the overloaded +
         Residues[i].position.x = Residues[i].relativePosition.x + center.x;
         Residues[i].position.y = Residues[i].relativePosition.y + center.y;
@@ -269,25 +227,7 @@ bool Molecule::rotate(const Vector3double Raxis, const double angle)
     cout << "REMOVE CALL TO: Molecule::rotate(Vector3double Raxis, double angle)" << endl;
     return rotateQ(Raxis, angle);
 
-    // old method
-    /*
-    double sina = sin(angle/2.0);
-    double cosa = cos(angle/2.0);
-
-    Quaternion q(cosa,sina*Raxis.x,sina*Raxis.y,sina*Raxis.z);
-
-    // track the global change from initial conditions.
-    //xAxis = q.rotateVector(xAxis);
-    //yAxis = q.rotateVector(yAxis);
-    //zAxis = q.rotateVector(zAxis);
-
-    for (size_t i=0;i<residueCount;i++)
-    {
-    	Residues[i].relativePosition = q.rotateVector(Residues[i].relativePosition); // 15 ops
-    	Residues[i].position = Residues[i].relativePosition + center;
-    }
-
-    return true;*/
+    //TODO: delete this entirely
 }
 
 bool Molecule::rotateQ(const Vector3double Raxis, const double angle)
@@ -301,33 +241,8 @@ bool Molecule::rotateQ(const Vector3double Raxis, const double angle)
     q.normalize();
     rotation = q * rotation;
 
-
-    /*for (size_t i=0;i<residueCount;i++)
-    {
-    	Residues[i].relativePosition = q.rotateVector(Residues[i].relativePosition); // 15 ops
-    	Residues[i].position = Residues[i].relativePosition + center;
-    }*/
-
-
-    //reduced overhead, no call to rotatevector, the following intialization only occurs once, vs residueCount times
-
-    /*double w2 = q.w*q.w;
-    double x2 = q.x*q.x;
-    double y2 = q.y*q.y;
-    double z2 = q.z*q.z;
-    double wx = q.w*q.x;
-    double wy = q.w*q.y;
-    double wz = q.w*q.z;
-    double xy = q.x*q.y;
-    double xz = q.x*q.z;
-    double yz = q.y*q.z;*/
-
     for (size_t i=0; i<residueCount; i++)
     {
-        //Residues[i].relativePosition.x = Residues[i].relativePosition.x*(w2+x2-y2-z2) + (Residues[i].relativePosition.y*(xy-wz) + Residues[i].relativePosition.z*(wy+xz))*2.0;
-        //Residues[i].relativePosition.y = (Residues[i].relativePosition.x*(wz+xy) + Residues[i].relativePosition.z*(yz-wx))*2.0 + Residues[i].relativePosition.y*(w2-x2+y2-z2);
-        //Residues[i].relativePosition.z = (Residues[i].relativePosition.x*(xz-wy) + Residues[i].relativePosition.y*(yz+wx))*2.0 + Residues[i].relativePosition.z*(w2-x2-y2+z2);
-
         Residues[i].relativePosition = q.rotateVector(Residues[i].relativePosition);
         Residues[i].position.x = Residues[i].relativePosition.x + center.x;
         Residues[i].position.y = Residues[i].relativePosition.y + center.y;
@@ -371,67 +286,6 @@ int Molecule::getLength()
     return residueCount;
 }
 
-/*pdb line types
- * RECORD TYPE       DESCRIPTION
---------------------------------------------------------------------------------
-ANISOU            Anisotropic temperature factors.
-
-ATOM              Atomic coordinate records for standard groups.
-
-CISPEP            Identification of peptide residues in cis conformation.
-
-CONECT            Connectivity records.
-
-DBREF             Reference to the entry in the sequence database(s).
-
-HELIX             Identification of helical substructures.
-
-HET               Identification of non-standard groups or residues (heterogens)
-
-HETSYN            Synonymous compound names for heterogens.
-
-HYDBND            Identification of hydrogen bonds.
-
-LINK              Identification of inter-residue bonds.
-
-MODRES            Identification of modifications to standard residues.
-
-MTRIXn            Transformations expressing non-crystallographic symmetry
-                  (n = 1, 2, or 3).  There may be multiple sets of these records.
-
-REVDAT            Revision date and related information.
-
-SEQADV            Identification of conflicts between PDB and the named sequence
-                  database.
-
-SEQRES            Primary sequence of backbone residues.
-
-SHEET             Identification of sheet substructures.
-
-SIGATM            Standard deviations of atomic parameters.
-
-SIGUIJ            Standard deviations of anisotropic temperature factors.
-
-SITE              Identification of groups comprising important sites.
-
-SLTBRG            Identification of salt bridges
-
-SSBOND            Identification of disulfide bonds.
-
-TURN              Identification of turns.
-
-TVECT             Translation vector for infinite covalently connected
-                  structures.
-
-FORMUL            Chemical formula of non-standard groups.
-
-HETATM            Atomic coordinate records for heterogens.
-
-HETNAM            Compound name of the heterogens.
-*/
-
-// we are considering structures like: helix, turn and sheet
-
 bool Molecule::initFromPDB(const char* pdbfilename)
 {
     vector<Residue> vResidues;
@@ -441,8 +295,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     hasFilename = true;
     filename = new char[256];
     strcpy(filename,pdbfilename);
-    //HEADER.data = new char[strlen(pdbfilename)+1];
-    //strcpy(HEADER.data,pdbfilename);
 
     ifstream input(pdbfilename);
     if (!input.good())
@@ -463,188 +315,11 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         strncpy(tmpLine,line,strlen(line));
         char *token = strtok(tmpLine," ");
 
-        /*	mandatory records and records that are of structural importance
-        	HEADER                  Mandatory
-        	TITLE                   Mandatory
-        	COMPND                  Mandatory
-        	SOURCE                  Mandatory
-        	KEYWDS                  Mandatory
-        	EXPDTA                  Mandatory
-        	AUTHOR                  Mandatory
-        	REVDAT                  Mandatory
-        	REMARK 2                Mandatory
-        	REMARK 3                Mandatory
-        	SEQRES                  Optional       Mandatory if ATOM records exist.
-        	HELIX                   Optional
-        	SHEET                   Optional
-        	TURN                    Optional
-        	SSBOND                  Optional       Mandatory if disulfide bond is present.
-        	LINK                    Optional
-        	HYDBND                  Optional
-        	CRYST1                  Mandatory
-        	ORIGX1 ORIGX2 ORIGX3    Mandatory
-        	SCALE1 SCALE2 SCALE3    Mandatory
-        	ATOM                    Optional       Mandatory if standard residues exist.
-        	TER                     Optional       Mandatory if ATOM records exist.
-        	MASTER                  Mandatory
-        	END                     Mandatory
-        */
         bool quit = false;
         while (!quit && token != NULL)
         {
-            //cout << "\"" << token << "\"" << endl;
-            /*if (strcmp(token,"HEADER")==0)
+            if (strcmp(token,"ATOM")==0)
             {
-            	delete [] HEADER.data;
-            	HEADER.data = new char[strlen(line)+1];
-            	strcpy(HEADER.data,line);
-            }
-            else if (strcmp(token,"TITLE")==0)
-            {
-            	delete [] TITLE.data;
-            	TITLE.data = new char[strlen(line)+1];
-            	strcpy(TITLE.data,line);
-
-            }
-            else if (strcmp(token,"COMPND")==0)
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	COMPND.push_back(tmp);
-            }
-            else if (strcmp(token,"SOURCE")==0)
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	SOURCE.push_back(tmp);
-            }
-            else if (strcmp(token,"KEYWDS")==0)
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	KEYWDS.push_back(tmp);
-            }
-            else if (strcmp(token,"AUTHOR")==0)
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	AUTHOR.push_back(tmp);
-            }
-            else if (strcmp(token,"REVDAT")==0)
-            {
-            	// we ignore revdat as it doesnt affect our model, refer to orignal molecure for it.
-            }
-            else if (strcmp(token,"REMARK")==0)
-            {
-            	// types REMARK 2 and 3
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	REMARK.push_back(tmp);
-            }
-            else if (strcmp(token,"SEQRES")==0)  // Optional,Mandatory if ATOM records exist.
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	SEQRES.push_back(tmp);
-            }
-            else if (strcmp(token,"HELIX")==0)  // Optional
-            {
-            	// I store helix information and register it in the links section of the molecule because it determines the flexability of the link.
-            	// it is assumed in the kim model that tertiary structures like helices  do not change in docking
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	HELIX.push_back(tmp);
-            	// revisit this variable after we have read the whole file.
-            }
-            else if (strcmp(token,"SHEET")==0) // Optional
-            {
-            	// as above with helix
-            	// tertiary structures like sheets do not change in docking either
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	SHEET.push_back(tmp);
-            	// revisit this variable after we have read the whole file.
-            }
-            else if (strcmp(token,"TURN")==0)  // Optional
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	TURN.push_back(tmp);
-            	// revisit this variable after we have read the whole file.
-            }
-
-            // We dont use the following detail, but that can be added if you need them
-
-            else if (strcmp(token,"SSBOND")) // Optional,Mandatory if disulfide bond is present.
-            {
-
-            }
-            else if (strcmp(token,"LINK"))  // Optional
-            {
-
-            }
-            else if (strcmp(token,"HYDBND"))  // Optional
-            {
-
-            }
-
-            else if (strcmp(token,"CRYST1")==0)
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	CRYST1.push_back(tmp);
-            }
-            else if (strncmp(token,"ORIGX",5)==0) // ORIGX1 ORIGX2 ORIGX3
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	if (strncmp(token,"ORIGX1",6)==0) ORIGX1.push_back(tmp);
-            	if (strncmp(token,"ORIGX2",6)==0) ORIGX2.push_back(tmp);
-            	if (strncmp(token,"ORIGX3",6)==0) ORIGX3.push_back(tmp);
-
-            }
-            else if (strncmp(token,"SCALE",5)==0) // SCALE1 SCALE2 SCALE3
-            {
-            	charStruct tmp;
-            	tmp.data = new char[85];
-            	strncpy(tmp.data,line,84);
-            	if (strncmp(token,"SCALE1",6)==0) SCALE1.push_back(tmp);
-            	if (strncmp(token,"SCALE2",6)==0) SCALE2.push_back(tmp);
-            	if (strncmp(token,"SCALE3",6)==0) SCALE3.push_back(tmp);
-
-            }
-            else*/
-            if (strcmp(token,"ATOM")==0) // Optional,Mandatory if standard residues exist
-            {
-                /*
-                1-6 			"ATOM  "
-                7 - 11         Integer         serial        Atom serial number.
-                13 - 16        Atom            name          Atom name.
-                17             Character       altLoc        Alternate location indicator.
-                18 - 20        Residue name    resName       Residue name.
-                22             Character       chainID       Chain identifier.
-                23 - 26        Integer         resSeq        Residue sequence number.
-                27             AChar           iCode         Code for insertion of residues.
-                31 - 38        Real(8.3)       x             Orthogonal coordinates for X in
-                39 - 46        Real(8.3)       y             Orthogonal coordinates for Y in
-                47 - 54        Real(8.3)       z             Orthogonal coordinates for Z in
-                55 - 60        Real(6.2)       occupancy     Occupancy.
-                61 - 66        Real(6.2)       tempFactor    Temperature factor.
-                73 - 76        LString(4)      segID         Segment identifier, left-justified.
-                77 - 78        LString(2)      element       Element symbol, right-justified.
-                79 - 80        LString(2)      charge        Charge on the atom.
-                */
                 int serial(0);
                 char name[5] = {' '};
                 char altLoc = ' ';
@@ -771,24 +446,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 
             token = NULL;
         }
-
-        //process, HELIX, SHEET and TURN information
-        /* // not needed for rigid bodys
-         * //HELIX
-         * for (size_t i=0;i<HELIX.size();i++)
-         * {
-         *
-         * }
-         * //SHEET
-         * for (size_t i=0;i<SHEET.size();i++)
-         * {
-         *
-         * }
-         * //TURN
-         * for (size_t i=0;i<TURN.size();i++)
-         * {
-         * }
-         */
     }
     input.close();
 
