@@ -4,16 +4,6 @@
 #include "AminoAcids.h"
 #include "definitions.h"
 
-struct simpleResidue
-{
-    Vector3f position;
-    int aminoAcidIndex;  		// stores the index of the amino acid for lookup
-    float electrostaticCharge;
-    float vanderWaalRadius;
-    float temperature;
-    int identifier;					// -2 padder, -1 == crowder, [0..n] residue belonging to molecule
-};
-
 class Residue
 {
 
