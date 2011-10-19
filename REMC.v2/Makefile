@@ -52,7 +52,7 @@ CPU: obj/main.o ${COMMON_OBJS} obj/Camera.o
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o CPU obj/*.o ${LINKS}
 
 # TODO: split these out to have separate dependencies?
-test: ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/all.cpp tests/testReplica.cpp tests/testMolecule.cpp
+test: ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/all.cpp tests/testTenReplicas.cpp tests/testReplica.cpp tests/testMolecule.cpp
 	${COMPILER} ${INCLUDE} -I/usr/include/unittest++ -Isrc ${DEFINE} ${CFLAGS} ${LIBS} -o test ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/*.cpp ${LINKS} -lUnitTest++ -lglut -lGL -lGLU
 
 #DRMS: AminoAcid.o AminoAcids.o Camera.o Link.o Molecule.o Quaternion.o Replica.co Residue.o rngfunctions.o TorsionalLookupMatrix.o vector3f.o drms.o
