@@ -222,14 +222,6 @@ void Molecule::setPosition(Vector3f v)
     }
 }
 
-bool Molecule::rotate(const Vector3double Raxis, const double angle)
-{
-    cout << "REMOVE CALL TO: Molecule::rotate(Vector3double Raxis, double angle)" << endl;
-    return rotateQ(Raxis, angle);
-
-    //TODO: delete this entirely
-}
-
 bool Molecule::rotateQ(const Vector3double Raxis, const double angle)
 {
     double sina = sin(angle/2.0);

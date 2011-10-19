@@ -50,7 +50,6 @@ public:
     void setPosition(Vector3f v);
     bool translate(Vector3f v);
     void setRotation(Quaternion q);
-    bool rotate(const Vector3double Raxis, const double angle);
     bool rotateQ(const Vector3double Raxis, const double angle);
     bool mutate(const int type, const int position, const float amount);
     float Ebond();
