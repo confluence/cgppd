@@ -1,54 +1,64 @@
-#include <UnitTest++.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/extensions/HelperMacros.h>
 #include <Replica.h>
 #include <cutil.h>
 #include <cutil_inline.h>
 #include "definitions.h"
 
-struct TenReplicasFixture
+class TestTenReplicas : public CppUnit::TestFixture
 {
+    CPPUNIT_TEST_SUITE(TestTenReplicas);
+    CPPUNIT_TEST(testSanity);
+    CPPUNIT_TEST_SUITE_END();
+
+private:
     AminoAcids aminoAcidData;
     Replica replicas[10];
     char *test_molecule_file;
     float * ljp_t;
     float testboxdim;
 
-    TenReplicasFixture()
-    {
-        cuInit(0);
-
-        aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
-        aminoAcidData.loadLJPotentialData(LJPDSOURCE);
-
-        cudaMalloc((void**)&ljp_t,LJArraySize);
-        cutilCheckMsg("Failed to cudaMalloc");
-        copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
-
-        // set box dimensions
-        testboxdim = 118.4f;
-        CUDA_setBoxDimension(testboxdim);
-
-        test_molecule_file = new char[60];
-
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-        bindLJTexture(ljp_t);
-#endif
-    }
-
-    ~TenReplicasFixture()
-    {
-        cudaFree(ljp_t);
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-        unbindLJTexture();
-#endif
-        cout.flush();
-    }
+public:
+    void setUp();
+    void testSanity();
+    void tearDown();
 };
 
-TEST_FIXTURE(TenReplicasFixture, TestTenReplicas)
-{
-//     Replica replicas[10];
-//     char *test_molecule_file = new char[60];
+CPPUNIT_TEST_SUITE_REGISTRATION(TestTenReplicas);
 
+void TestTenReplicas::setUp()
+{
+    cuInit(0);
+
+    aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
+    aminoAcidData.loadLJPotentialData(LJPDSOURCE);
+
+    cudaMalloc((void**)&ljp_t,LJArraySize);
+    cutilCheckMsg("Failed to cudaMalloc");
+    copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
+
+    // set box dimensions
+    testboxdim = 118.4f;
+    CUDA_setBoxDimension(testboxdim);
+
+    test_molecule_file = new char[60];
+
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    bindLJTexture(ljp_t);
+#endif
+}
+
+void TestTenReplicas::tearDown()
+{
+    cudaFree(ljp_t);
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    unbindLJTexture();
+#endif
+    cout.flush();
+}
+
+void TestTenReplicas::testSanity()
+{
     struct ExpectedResult
     {
         float cpu;
@@ -100,10 +110,10 @@ TEST_FIXTURE(TenReplicasFixture, TestTenReplicas)
         double cpu_nc = replicas[i].E(&replicas[i].molecules[0],&replicas[i].molecules[1]);
 
         float e = 0.000001;
-        CHECK_CLOSE(expected_results[i].cpu, cpu, e);
-        CHECK_CLOSE(expected_results[i].cpu_nc, cpu_nc, e);
-        CHECK_CLOSE(expected_results[i].gpu, gpu, e);
-        CHECK_CLOSE(expected_results[i].gpu_nc, gpu_nc, e);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu, e);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu_nc, cpu_nc, e);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu, e);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu_nc, gpu_nc, e);
 
         float averages[7];
 
@@ -129,7 +139,6 @@ TEST_FIXTURE(TenReplicasFixture, TestTenReplicas)
     for (int j = 0; j < 7; j++)
     {
         // ignore one or two outliers
-        CHECK(exceeded_averages[j] <= 2);
+        CPPUNIT_ASSERT(exceeded_averages[j] <= 2);
     }
 }
-

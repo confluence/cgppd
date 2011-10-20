@@ -1,6 +1,8 @@
 INCLUDE=-I/$(HOME)/NVIDIA_GPU_Computing_SDK/C/common/inc -I/usr/include/nvidia-current/cuda -I/usr/local/cuda/include
+TEST_INCLUDE=-I/usr/include/cppunit/ -Isrc
 LIBS=-L/$(HOME)/NVIDIA_GPU_Computing_SDK/C/lib -L/usr/lib64/nvidia-current -L/usr/local/cuda/lib64  -L/usr/lib64
 LINKS=-lpthread -lgsl -lgslcblas -lcudart -lcutil -lcuda
+TEST_LINKS=-lcppunit
 #TAU_MAKEFILE=$(HOME)/tau2/x86_64/lib/Makefile.tau-pthread-pdt
 #COMPILER=tau_cxx.sh -tau_makefile=${TAU_MAKEFILE} -optPDTInst
 COMPILER=g++
@@ -53,7 +55,7 @@ CPU: obj/main.o ${COMMON_OBJS} obj/Camera.o
 
 # TODO: split these out to have separate dependencies?
 test: ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/all.cpp tests/testTenReplicas.cpp tests/testReplica.cpp tests/testMolecule.cpp
-	${COMPILER} ${INCLUDE} -I/usr/include/unittest++ -Isrc ${DEFINE} ${CFLAGS} ${LIBS} -o test ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/*.cpp ${LINKS} -lUnitTest++ -lglut -lGL -lGLU
+	${COMPILER} ${INCLUDE} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o test ${COMMON_OBJS} obj/Camera.o obj/CudaFunctions.o tests/*.cpp ${LINKS} ${TEST_LINKS} -lglut -lGL -lGLU
 
 #DRMS: AminoAcid.o AminoAcids.o Camera.o Link.o Molecule.o Quaternion.o Replica.co Residue.o rngfunctions.o TorsionalLookupMatrix.o vector3f.o drms.o
 #	@echo Making DRMS Executable: DRMS
