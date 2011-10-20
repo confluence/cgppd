@@ -43,6 +43,7 @@ void TestReplica::setUp()
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     bindLJTexture(ljp_t);
 #endif
+
     replica.aminoAcids = aminoAcidData;
     replica.label = 1;
     replica.setBoundingValue(testboxdim);
@@ -68,14 +69,21 @@ void TestReplica::tearDown()
 
 void TestReplica::testCopy()
 {
-//     replica.setDeviceLJPotentials(ljp_t);
-//     replica.setBlockSize(TILE_DIM);
-//     replica.ReplicaDataToDevice();
-//
-//     Replica replica_copy;
-//     replica_copy.copy(*replica);
-//
-//     double original_E = replica.EonDevice();
+    replica.initTimers();
+    replica.countNonCrowdingResidues();
+
+    replica.setDeviceLJPotentials(ljp_t);
+    replica.setBlockSize(TILE_DIM);
+    replica.ReplicaDataToDevice();
+
+    CPPUNIT_ASSERT(true);
+
+    Replica replica_copy;
+    replica_copy.copy(replica);
+    replica_copy.initTimers();
+
+    double original_E = replica.EonDevice();
+//// TODO: this is probably a bad copy test; see what is actually copied.  CUDA stuff also has to be replicated?
 //     double copy_E = replica_copy.EonDevice();
 //
 //     CPPUNIT_ASSERT_DOUBLES_EQUAL(original_E, copy_E, 0.000001);
