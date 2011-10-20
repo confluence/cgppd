@@ -57,7 +57,7 @@ TEST_FIXTURE(TenReplicasFixture, TestTenReplicas)
         float gpu_nc;
     };
 
-    ExpectedResult expected_results[10] = {
+    static const ExpectedResult expected_results[10] = {
         { -0.293705,  -0.293705,  -0.293705,  -0.293705},
         { -1.056291,  -1.056291,  -1.056291,  -1.056291},
         {-10.277430, -10.277433, -10.277432, -10.277432},
@@ -70,8 +70,8 @@ TEST_FIXTURE(TenReplicasFixture, TestTenReplicas)
         { -8.527747,  -8.527744,  -8.527748,  -8.527748}
     };
 
-    float expected_averages [7] = {0.029f, 0.0f, 0.271f, 0.981f, 0.0f, 0.0f, 0.09f};
-    int exceeded_averages [7] = {0, 0, 0, 0, 0, 0, 0};
+    static const float expected_averages [7] = {0.029f, 0.0f, 0.271f, 0.981f, 0.0f, 0.0f, 0.09f};
+    static int exceeded_averages [7] = {0, 0, 0, 0, 0, 0, 0};
 
     for (int i = 0; i < 10; i++)
     {
