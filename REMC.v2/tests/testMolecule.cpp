@@ -37,4 +37,9 @@ TEST_FIXTURE(MoleculeFixture, TestInitFromPDB) {
     }
 
     CHECK_ARRAY_EQUAL(expected_sequence, got_sequence, expected_size);
+
+    static const float expected_centre[3] = {30.442894736842103, 29.00898684210527, 15.5163947368421};
+    float got_centre[3] = {molecule.center.x, molecule.center.y, molecule.center.z};
+
+    CHECK_ARRAY_CLOSE(expected_centre, got_centre, 3, 0.00001);
 }
