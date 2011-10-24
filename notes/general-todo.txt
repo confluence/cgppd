@@ -1,0 +1,21 @@
+REPLICA:
+
+MAIN:
+
+* Split up main.cpp into definitions, functions and just the main function, so that it can be unit tested.
+* delete Replica::freeLJpotentials, Replica::setLJpotentials
+* Remove audit
+* difference between nonCrowderResidues and nonCrowderCount
+
+UNIT TESTS:
+
+MOLECULE:
+
+* delete commented-out PDB stuff
+* delete Molecule::rotate
+* make Molecule::rotateQ call Molecule::setRotation ?
+
+MISC:
+
+* Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
+* Make CPU version compile -- fix flag mismatch

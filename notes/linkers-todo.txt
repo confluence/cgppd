@@ -1,0 +1,18 @@
+General:
+* Add preprocessor directive for linkers
+
+Setup:
+* Need to load information about which residues are in the linker
+* Uncomment link stuff
+* Torsion angles?
+* Use occupancy column to mark flexible linkers? Try to autodetect from secondary structure?
+
+Potential calculation:
+* Uncomment extra terms
+* Link to main potential calculation
+
+MC moves:
+* local linker bead translation
+* crankshaft move
+* domain translation
+* domain rotation about linker bead
