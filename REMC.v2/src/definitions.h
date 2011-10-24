@@ -125,8 +125,7 @@
 
     #define COMPENSATE_KERNEL_SUM	  0
 
-    // override for the above definition
-    //#define USING_CUDA 1
+    #define FLEXIBLE_LINKS  1
 
     #if USING_CUDA
         #define PERFORM_GPU_AND_CPU_E  0  // do both cpu and gpu sums for comparison
