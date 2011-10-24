@@ -69,22 +69,18 @@ void TestReplica::tearDown()
 
 void TestReplica::testCopy()
 {
-    replica.initTimers();
-    replica.countNonCrowdingResidues();
-
-    replica.setDeviceLJPotentials(ljp_t);
-    replica.setBlockSize(TILE_DIM);
-    replica.ReplicaDataToDevice();
-
-    CPPUNIT_ASSERT(true);
-
     Replica replica_copy;
     replica_copy.copy(replica);
-    replica_copy.initTimers();
 
-    double original_E = replica.EonDevice();
-//// TODO: this is probably a bad copy test; see what is actually copied.  CUDA stuff also has to be replicated?
-//     double copy_E = replica_copy.EonDevice();
-//
-//     CPPUNIT_ASSERT_DOUBLES_EQUAL(original_E, copy_E, 0.000001);
+    CPPUNIT_ASSERT_EQUAL(replica.label, replica_copy.label);
+    CPPUNIT_ASSERT_EQUAL(replica.temperature, replica_copy.temperature);
+    CPPUNIT_ASSERT_EQUAL(replica.maxMoleculeSize, replica_copy.maxMoleculeSize);
+    CPPUNIT_ASSERT_EQUAL(replica.boundingValue, replica_copy.boundingValue);
+    CPPUNIT_ASSERT_EQUAL(replica.residueCount, replica_copy.residueCount);
+    CPPUNIT_ASSERT_EQUAL(replica.moleculeCount, replica_copy.moleculeCount);
+    CPPUNIT_ASSERT_EQUAL(replica.nonCrowderCount, replica_copy.nonCrowderCount);
+    CPPUNIT_ASSERT_EQUAL(replica.nonCrowderResidues, replica_copy.nonCrowderResidues);
+    CPPUNIT_ASSERT_EQUAL(replica.potential, replica_copy.potential);
+    CPPUNIT_ASSERT_EQUAL(replica.blockSize, replica_copy.blockSize);
+    CPPUNIT_ASSERT_EQUAL(replica.sharedMemSize, replica_copy.sharedMemSize);
 }
