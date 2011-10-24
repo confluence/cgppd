@@ -1652,7 +1652,7 @@ void Replica::FreeDevice()
 
 #if CUDA_MC
     cudaFree(device_moleculeCenters);
-    cudaFree(device_moleculeLenghts);
+    cudaFree(device_moleculeLengths);
     cudaFree(device_translationVector);
     cudaFree(device_reverseTranslationVector);
     cudaFree(device_rotationVector);
@@ -1676,7 +1676,7 @@ bool Replica::rotateOnDevice(int moleculeID, Vector3f rvector, float amount)
     host_rotationVector->w = amount;
     CUDA_memcpy_to_device_async(device_rotationVector,&host_rotationVector,sizeof(float4),cudaStream);
 
-    CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeID], &device_moleculeLenghts[moleculeID], molecules[moleculeID].length, device_rotationVector, &device_moleculeCenters[moleculeID], cudaStream);
+    CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeID], &device_moleculeLengths[moleculeID], molecules[moleculeID].length, device_rotationVector, &device_moleculeCenters[moleculeID], cudaStream);
 
     // create the undo vector while its busy
     host_reverseRotationVector->x = rvector.x;
@@ -1699,7 +1699,7 @@ bool Replica::translateOnDevice(int moleculeID, Vector3f translation)
 
 //  CUDA_translateMolecule (float4 *residuePositions, int *startPosition, int *moleculeLength, int moleculeLength, int *moleculeId, float4* translation, cudaStream_t stream)
 
-    CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeID], &device_moleculeLenghts[moleculeID], molecules[moleculeID].length, device_translationVector, &device_moleculeCenters[moleculeID], cudaStream);
+    CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeID], &device_moleculeLengths[moleculeID], molecules[moleculeID].length, device_translationVector, &device_moleculeCenters[moleculeID], cudaStream);
 
     // create the undo vector while its busy
     host_reverseTranslationVector->x = -translation.x;
@@ -1714,11 +1714,11 @@ void Replica::cudaRollbackMutation()
 {
     if (lastMutationWasATranslate)
     {
-        CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[lastMutatedMolecule], &device_moleculeLenghts[lastMutatedMolecule], molecules[lastMutatedMolecule].length, device_reverseTranslationVector,&device_moleculeCenters[lastMutatedMolecule], cudaStream);
+        CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[lastMutatedMolecule], &device_moleculeLengths[lastMutatedMolecule], molecules[lastMutatedMolecule].length, device_reverseTranslationVector,&device_moleculeCenters[lastMutatedMolecule], cudaStream);
     }
     else
     {
-        CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[lastMutatedMolecule], &device_moleculeLenghts[lastMutatedMolecule], molecules[lastMutatedMolecule].length, device_reverseRotationVector,&device_moleculeCenters[lastMutatedMolecule], cudaStream);
+        CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[lastMutatedMolecule], &device_moleculeLengths[lastMutatedMolecule], molecules[lastMutatedMolecule].length, device_reverseRotationVector,&device_moleculeCenters[lastMutatedMolecule], cudaStream);
     }
 }
 #endif // CUDA MC
