@@ -209,7 +209,7 @@ public:
 
 
 #if CUDA_MC
-    int *device_moleculeLenghts;
+    int *device_moleculeLengths;
     float4 *device_moleculeCenters;				// rotational centers of each molecule
 
     float4 *device_translationVector;
