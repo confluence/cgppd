@@ -281,7 +281,9 @@ int Molecule::getLength()
 bool Molecule::initFromPDB(const char* pdbfilename)
 {
     vector<Residue> vResidues;
-    //vector<Link> vLinks;
+#ifdef FLEXIBLE_LINKS
+    vector<Link> vLinks;
+#endif
 
     chainCount = 1; // there must be at least one
     hasFilename = true;
@@ -392,7 +394,9 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 if (strcmp(name,"CA") == 0) // it is a CA atom. center of our bead
                 {
                     Residue R;
-                    //Link L;
+#ifdef FLEXIBLE_LINKS
+                    Link L;
+#endif
                     R.aminoAcidIndex = AminoAcidsData.getAminoAcidIndex(resName);
                     R.electrostaticCharge = float(AminoAcidsData.get(R.aminoAcidIndex).electrostaticCharge);// * E_charge;
                     R.vanderWaalRadius = AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius;// * E_charge;
@@ -404,30 +408,22 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                     R.relativePosition = Vector3f(0,0,0);
                     R.chainId = chainID;
                     R.resSeq = resSeq;
-                    /*
-                    		  			if (vResidues.size()>0)
-                    		  			{
-                    		  				//R.relativePosition= R.position-vResidues[vResidues.size()-1].position;
-                    		  				L.Angle = (float) R.relativePosition.angle(vResidues[vResidues.size()-1].relativePosition);
-                    		  				//cout << L.Angle << endl;
-                    		  				L.TorsionAngle = 0; // twist relative to previous bead, not availiable from this atm
-                    		  				L.BondLength = R.relativePosition.magnitude(); // distance between this and the previous bead
-                    		  				//cout << "Link: angle=" << L.Angle << " terminal=" << L.terminal << endl;
-                    		  			}
-                    */
-
                     //R.sasa = 1.0f;
                     //R.vanderWaalRadius = float(AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius);
                     R.moleculeID = index;
                     vResidues.push_back(R);
-                    //vLinks.push_back(L);
+#ifdef FLEXIBLE_LINKS
+                    vLinks.push_back(L);
+#endif
                 }
 
             }
             else if (strcmp(token,"TER")==0) // Optional,Mandatory if ATOM records exist.
             {
                 chainCount++;
-                //vLinks[vLinks.size()-1].terminal = true;
+#ifdef FLEXIBLE_LINKS
+                vLinks[vLinks.size()-1].terminal = true;
+#endif
             }
             else if (strcmp(token,"END")==0)
             {
@@ -435,22 +431,21 @@ bool Molecule::initFromPDB(const char* pdbfilename)
             }
 
             token = NULL;
+//             token = strtok(NULL," ");
         }
     }
     input.close();
 
 
     // copy the resides and links read into the arrays.
-    Residues = new Residue[vResidues.size()];
     residueCount = vResidues.size();
-    //	Links = new Link[vLinks.size()];
-    //	linkCount = vLinks.size();
+    Residues = new Residue[residueCount];
 
     // set the residues and accumulate the positions to determine the center of the molecule
-    for(size_t r=0; r<residueCount; r++)
+    for(size_t r = 0; r < residueCount; r++)
     {
         Residue R = vResidues[r];
-        memcpy (&Residues[r],&R,sizeof(R));
+        memcpy (&Residues[r], &R, sizeof(R));
         center.x += R.position.x;
         center.y += R.position.y;
         center.z += R.position.z;
@@ -460,7 +455,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     center = center / residueCount;
 
     // set the relative positions of all residues
-    for(size_t r=0; r<residueCount; r++)
+    for(size_t r = 0; r < residueCount; r++)
     {
         Residues[r].relativePosition.x = Residues[r].position.x - center.x;
         Residues[r].relativePosition.y = Residues[r].position.y - center.y;
@@ -470,13 +465,25 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     calculateSASA();
     calculateVolume();
 
-    /*
-    for(size_t l=0;l<linkCount;l++)
+#ifdef FLEXIBLE_LINKS
+    linkCount = vLinks.size() - 1;
+    Links = new Link[linkCount];
+
+    for(size_t l = 0; l < linkCount; l++)
     {
-    	Link L = vLinks[l];
-    	memcpy (&Links[l],&L,sizeof(L));
+//         cout << l << endl;
+        Link L = vLinks[l];
+        //TODO is this the same relative position?!
+//         cout << Residues[l + 1].relativePosition.magnitude() << ", " << Residues[l].relativePosition.magnitude() << endl;
+        L.Angle = (float) Residues[l + 1].relativePosition.angle(Residues[l].relativePosition);
+//         cout << L.Angle << endl;
+        L.TorsionAngle = 0; // twist relative to previous bead; TODO
+//         cout << L.TorsionAngle << endl;
+        L.BondLength = Residues[l + 1].relativePosition.magnitude(); // TODO: is this right?
+//         cout << L.BondLength << endl;
+        memcpy (&Links[l], &L, sizeof(L));
     }
-    */
+#endif
 
     return true;
 }
@@ -504,89 +511,89 @@ float Molecule::calculateVolume()
     return volume;
 }
 
+#ifdef FLEXIBLE_LINKS
 
-
-/*
 // total bond energy for this molecule
 float Molecule::Ebond()
 {
-	float ebond = 0;
-	for (size_t i=1; i<residueCount; i++)
-	{
-		float rmag = float((Residues[i].position-Residues[i-1].position).magnitude());  // reduces the number of sqrts by 1
-		// eqn 9: kim2008
-		ebond += (rmag - R0*Angstrom)*(rmag - R0*Angstrom);
-	}
-	return 0.5 * K_spring * ebond;   // reduce ops by multiplying at the end by constants.
+    float ebond = 0;
+    for (size_t i=1; i<residueCount; i++)
+    {
+        float rmag = float((Residues[i].position-Residues[i-1].position).magnitude());  // reduces the number of sqrts by 1
+        // eqn 9: kim2008
+        ebond += (rmag - R0*Angstrom)*(rmag - R0*Angstrom);
+    }
+    return 0.5 * K_spring * ebond;   // reduce ops by multiplying at the end by constants.
 }
 
 // total angular bond energy for this molecule
 float Molecule::Eangle()
 {
-	double eangle = 0;
-	Vector3f ab;
-	Vector3f cb;
-	float theta;
+    double eangle = 0;
+    Vector3f ab;
+    Vector3f cb;
+    float theta;
 
-	for (size_t i=1; i<residueCount-1; i++)
-	{
-		ab = Residues[i-1].position - Residues[i].position;
-		cb = Residues[i+1].position - Residues[i].position;
-		theta = ab.angle(cb);
+    for (size_t i=1; i<residueCount-1; i++)
+    {
+        ab = Residues[i-1].position - Residues[i].position;
+        cb = Residues[i+1].position - Residues[i].position;
+        theta = ab.angle(cb);
 
-		// eqn 10: kim2008
-		eangle *= (exp(-GammaAngle * (KAlpha*(theta-ThetaAlpha)*(theta-ThetaAlpha) + EpsilonAlpha)) +
-					exp(-GammaAngle * (KBeta *(theta-ThetaBeta) *(theta-ThetaBeta))) );
-	}
+        // eqn 10: kim2008
+        eangle *= (exp(-GammaAngle * (KAlpha*(theta-ThetaAlpha)*(theta-ThetaAlpha) + EpsilonAlpha)) +
+                    exp(-GammaAngle * (KBeta *(theta-ThetaBeta) *(theta-ThetaBeta))) );
+    }
 
-	return -GammaAngle*log(eangle);
+    return -GammaAngle*log(eangle);
 }
 
 //torsional potential for the molecule
 float Molecule::Etorsion()
 {
-	float etorsion = 0;
-	uint i=0;
-	int n;
-	while (i<residueCount-4)
-	{
-		if (Links[i+3].terminal)
-		{
-			i+=4;
-		}
-		else
-		{
-			n = 1;
-			etorsion += (1+cos(n*Links[i].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
-			n++;
-			etorsion += (1+cos(n*Links[i+1].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
-			n++;
-			etorsion += (1+cos(n*Links[i+2].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
-			n++;
-			etorsion += (1+cos(n*Links[i+3].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
-		}
-		i++;
-	}
-	return etorsion;
+    float etorsion = 0;
+    uint i=0;
+    int n;
+    while (i<residueCount-4)
+    {
+        if (Links[i+3].terminal)
+        {
+            i+=4;
+        }
+        else
+        {
+            n = 1;
+            etorsion += (1+cos(n*Links[i].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
+            n++;
+            etorsion += (1+cos(n*Links[i+1].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
+            n++;
+            etorsion += (1+cos(n*Links[i+2].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
+            n++;
+            etorsion += (1+cos(n*Links[i+3].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
+        }
+        i++;
+    }
+    return etorsion;
 }
 
-float Molecule::Emembrane()
-{
-	float membranePotential = 0;
-	for (size_t i=0; i<residueCount; i++)
-	{
-		membranePotential += Residues[i].electrostaticCharge * EchargedMenbrane(Residues[i].position.y,temperature) +
-							 0.05f*pow((Zreference/Residues[i].position.y),12.0f);
-	}
-	return membranePotential;
-}
+#endif
 
-// interaction potential between negatively charged membrane and a residue
-// in: residue distance, temperature
-float Molecule::EchargedMenbrane(float z, float T)
-{
-	float MembraneAlpha = (float)(exp((ephi0/(2.0f*K_b*T))-1.0f) / (exp(ephi0/(2.0f*K_b*T))+1.0f));
-	float Psi = 2.0f*K_b*T/E_charge*log((1.0f+MembraneAlpha*exp(-kappa*z))/(1.0f-MembraneAlpha*exp(-kappa*z)));
-	return Psi;
-}
-*/
+// float Molecule::Emembrane()
+// {
+//     float membranePotential = 0;
+//     for (size_t i=0; i<residueCount; i++)
+//     {
+//         membranePotential += Residues[i].electrostaticCharge * EchargedMembrane(Residues[i].position.y,temperature) +
+//                              0.05f*pow((Zreference/Residues[i].position.y),12.0f);
+//     }
+//     return membranePotential;
+// }
+//
+// // interaction potential between negatively charged membrane and a residue
+// // in: residue distance, temperature
+// float Molecule::EchargedMembrane(float z, float T)
+// {
+//     float MembraneAlpha = (float)(exp((ephi0/(2.0f*K_b*T))-1.0f) / (exp(ephi0/(2.0f*K_b*T))+1.0f));
+//     float Psi = 2.0f*K_b*T/E_charge*log((1.0f+MembraneAlpha*exp(-kappa*z))/(1.0f-MembraneAlpha*exp(-kappa*z)));
+//     return Psi;
+// }
