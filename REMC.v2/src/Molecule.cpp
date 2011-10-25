@@ -296,7 +296,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     }
 
     char line[512] = {' '};
-    char tmpLine[512] = {' '};
 #ifdef VERY_VERBOSE
     //cout << "\tParsing: " << pdbfilename << "\n";
 #endif
@@ -304,8 +303,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     while (!input.eof())
     {
         input.getline(line,512);
-        strncpy(tmpLine,line,strlen(line));
-        char *token = strtok(tmpLine," ");
+        char *token = strtok(line," ");
 
         bool quit = false;
         while (!quit && token != NULL)
