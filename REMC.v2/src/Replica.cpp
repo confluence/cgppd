@@ -160,7 +160,8 @@ void Replica::copy(const Replica &r)
     nonCrowderCount = r.nonCrowderCount;
     nonCrowderResidues = r.nonCrowderResidues;
 
-    if (molecules != NULL && moleculeCount != r.moleculeCount )
+//     if (molecules != NULL && moleculeCount != r.moleculeCount )
+    if (moleculeCount != 0 && moleculeCount != r.moleculeCount )
     {
         try
         {
