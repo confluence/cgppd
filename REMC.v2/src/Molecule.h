@@ -55,7 +55,7 @@ public:
     float Ebond();
     float Eangle();
     float Etorsion();
-    float Emembrane();
+//     float Emembrane();
     Residue *getResidues();
     Link *getLinks();
     Vector3f getPosition();
@@ -82,10 +82,12 @@ public:
     float calculateSASA();
 
     AminoAcids AminoAcidsData;
-    //    TorsionalLookupMatrix torsions;
     Residue *Residues;
     int residueCount;
-    //    Link *Links;
+#ifdef FLEXIBLE_LINKS
+    Link *Links;
+    TorsionalLookupMatrix torsions;
+#endif
     size_t linkCount;
     size_t chainCount;
     Vector3f position;
@@ -107,30 +109,9 @@ public:
     Vector3f yAxis;
     Vector3f zAxis;
     Vector3f translation;
-    /*charStruct HEADER;
-    charStruct TITLE;
-    vector<charStruct> COMPND;
-    vector<charStruct> SOURCE;
-    vector<charStruct> KEYWDS;
-    vector<charStruct> EXPDTA;
-    vector<charStruct> AUTHOR;
-    vector<charStruct> REVDAT;
-    vector<charStruct> REMARK;
-    vector<charStruct> SEQRES;
-    vector<charStruct> HELIX;
-    vector<charStruct> SHEET;
-    vector<charStruct> TURN;
-    vector<charStruct> CRYST1;
-    vector<charStruct> ORIGX1;
-    vector<charStruct> ORIGX2;
-    vector<charStruct> ORIGX3;
-    vector<charStruct> SCALE1;
-    vector<charStruct> SCALE2;
-    vector<charStruct> SCALE3;
-    vector<charStruct> MASTER;*/
 
 private:
-    float EchargedMenbrane(float distanceToMembrane,float temperature);
+//     float EchargedMembrane(float distanceToMembrane,float temperature);
 
 };
 

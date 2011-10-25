@@ -65,7 +65,10 @@ public:
     int loadMolecule(const char *pdbfilename, Vector3f position, Vector3double rotationAxis, double rotationAmount);
 
     AminoAcids aminoAcids;
-    //TorsionalLookupMatrix torsions;
+
+#ifdef FLEXIBLE_LINKS
+    TorsionalLookupMatrix torsions;
+#endif
 
     Residue * contiguousResidues;
     int contiguousResiduesSize;
