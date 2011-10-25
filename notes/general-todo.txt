@@ -6,6 +6,7 @@ MAIN:
 * delete Replica::freeLJpotentials, Replica::setLJpotentials
 * Remove audit
 * difference between nonCrowderResidues and nonCrowderCount
+* recordCrowders not used
 
 UNIT TESTS:
 
@@ -14,8 +15,9 @@ MOLECULE:
 * delete commented-out PDB stuff
 * delete Molecule::rotate
 * make Molecule::rotateQ call Molecule::setRotation ?
+* make pdb parser no-END-proof
 
 MISC:
 
 * Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
-* Make CPU version compile -- fix flag mismatch
+* Make CPU version compile -- fix flag mismatch.  Total mess.
