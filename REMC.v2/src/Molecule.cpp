@@ -297,145 +297,92 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         exit(0);
     }
 
-    char line[512] = {' '};
 #ifdef VERY_VERBOSE
     //cout << "\tParsing: " << pdbfilename << "\n";
 #endif
+
     // for eachline in the file
-    while (!input.eof())
+    char line[512] = {' '};
+    bool reached_end_marker = false;
+    while (!reached_end_marker && !input.eof())
     {
         input.getline(line,512);
-        char *token = strtok(line," ");
 
-        bool quit = false;
-        while (!quit && token != NULL)
+        if (strncmp(line, "ATOM", 4) == 0)
         {
-            if (strcmp(token,"ATOM")==0)
+            char name[5] = {' '};
+
+            char field[9] = {' '};
+
+            strncpy(field,line+12,4);
+            sscanf (field,"%s",name);
+
+            // push the atom onto the vector of our structure if it is a CA
+            if (strcmp(name, "CA") == 0) // it is a CA atom. center of our bead
             {
-                int serial(0);
-                char name[5] = {' '};
-                char altLoc = ' ';
                 char resName[4] = {' '};
                 char chainID = ' ';
                 int resSeq(0);
-                char iCode = ' ';
                 float x(0);
                 float y(0);
                 float z(0);
-                float occupancy(0);
-                float tempFactor(0);
-                char segID[5] = {' '};
-                char element[3] = {' '};
-                char charge[3] = {' '};
 
-                char tmp[6] = {' '};
+                strncpy(field,line+17,3);
+                sscanf (field,"%s",resName);
 
-                // parse serial
-                strncpy(tmp,line+6,4);
-                sscanf (tmp,"%d",&serial);
+                strncpy(field,line+21,1);
+                sscanf (field,"%c",&chainID);
 
-                // parse name
-                strncpy(tmp,line+12,4);
-                sscanf (tmp,"%s",name);
+                strncpy(field,line+22,4);
+                sscanf (field,"%d",&resSeq);
 
-                //parse altLoc, has to be this char if present
-                altLoc = line[16];
+                strncpy (field,line+30,8);
+                sscanf (field,"%f",&x);
 
-                // parse resName
-                strncpy(tmp,line+17,3);
-                sscanf (tmp,"%s",resName);
-                //cout << "resName" << resName << endl;
+                strncpy (field,line+38,8);
+                sscanf (field,"%f",&y);
 
-                strncpy(tmp,line+21,1);
-                sscanf (tmp,"%c",&chainID);
+                strncpy (field,line+46,8);
+                sscanf (field,"%f",&z);
 
-                // parse resName
-                strncpy(tmp,line+22,4);
-                sscanf (tmp,"%d",&resSeq);
-
-                strncpy(tmp,line+26,1);
-                sscanf (tmp,"%c",&iCode);
-
-                // parse x, y, z
-                char tmpVals[36]  = {' '};
-
-                //strncpy(tmpVals,line+30,35);
-                //char *tmptokens = strtok(tmpVals," ");
-                strncpy (tmpVals,line+30,8);
-                //	sscanf (tmpVals,"%8.3f%8.3f%8.3f%6.2f%6.2f",&x,&y,&z,&occupancy,&tempFactor);
-                sscanf (tmpVals,"%f",&x);
-                //tmptokens = strtok(NULL," ");
-                strncpy (tmpVals,line+38,8);
-                sscanf (tmpVals,"%f",&y);
-                strncpy (tmpVals,line+46,8);
-                //tmptokens = strtok(NULL," ");
-                sscanf (tmpVals,"%f",&z);
-                strncpy (tmpVals,line+54,6);
-                //tmptokens = strtok(NULL," ");
-                sscanf (tmpVals,"%f",&occupancy);
-                strncpy (tmpVals,line+60,6);
-                //tmptokens = strtok(NULL," ");
-                sscanf (tmpVals,"%f",&tempFactor);
-
-                if (strlen(line)>=80)
+                Residue R;
+#ifdef FLEXIBLE_LINKS
+                Link L;
+#endif
+                R.aminoAcidIndex = AminoAcidsData.getAminoAcidIndex(resName);
+                R.electrostaticCharge = float(AminoAcidsData.get(R.aminoAcidIndex).electrostaticCharge);// * E_charge;
+                R.vanderWaalRadius = AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius;// * E_charge;
+                if (R.vanderWaalRadius != AminoAcidsData.get(R.aminoAcidIndex).vanderWaalRadius)
                 {
-                    // parse segID
-                    strncpy(tmp,line+72,4);
-                    sscanf (tmp,"%s",segID);
-                    // parse element
-                    strncpy(tmp,line+76,2);
-                    sscanf (tmp,"%s",element);
-                    // parse charge
-                    strncpy(tmp,line+78,2);
-                    sscanf (tmp,"%s",charge);
+                    cout << R.aminoAcidIndex << " differing vdw radii" << endl;
                 }
 
-                // push the atom onto the vector of our structure if it is a CA
-                if (strcmp(name,"CA") == 0) // it is a CA atom. center of our bead
-                {
-                    Residue R;
+                R.position = Vector3f(x,y,z);
+                R.relativePosition = Vector3f(0,0,0);
+                R.chainId = chainID;
+                R.resSeq = resSeq;
+                //R.sasa = 1.0f;
+                //R.vanderWaalRadius = float(AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius);
+                R.moleculeID = index;
+                vResidues.push_back(R);
 #ifdef FLEXIBLE_LINKS
-                    Link L;
-#endif
-                    R.aminoAcidIndex = AminoAcidsData.getAminoAcidIndex(resName);
-                    R.electrostaticCharge = float(AminoAcidsData.get(R.aminoAcidIndex).electrostaticCharge);// * E_charge;
-                    R.vanderWaalRadius = AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius;// * E_charge;
-                    if (R.vanderWaalRadius != AminoAcidsData.get(R.aminoAcidIndex).vanderWaalRadius)
-                    {
-                        cout << R.aminoAcidIndex << " differing vdw radii" << endl;
-                    }
-                    R.position = Vector3f(x,y,z);
-                    R.relativePosition = Vector3f(0,0,0);
-                    R.chainId = chainID;
-                    R.resSeq = resSeq;
-                    //R.sasa = 1.0f;
-                    //R.vanderWaalRadius = float(AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius);
-                    R.moleculeID = index;
-                    vResidues.push_back(R);
-#ifdef FLEXIBLE_LINKS
-                    vLinks.push_back(L);
-#endif
-                }
-
-            }
-            else if (strcmp(token,"TER")==0) // Optional,Mandatory if ATOM records exist.
-            {
-                chainCount++;
-#ifdef FLEXIBLE_LINKS
-                vLinks[vLinks.size()-1].terminal = true;
+                vLinks.push_back(L);
 #endif
             }
-            else if (strcmp(token,"END")==0)
-            {
-                quit = true;
-            }
-
-            token = NULL;
-//             token = strtok(NULL," ");
+        }
+        else if (strncmp(line, "TER", 3) == 0) // Optional,Mandatory if ATOM records exist.
+        {
+            chainCount++;
+#ifdef FLEXIBLE_LINKS
+            vLinks[vLinks.size()-1].terminal = true;
+#endif
+        }
+        else if (strncmp(line, "END", 3) == 0)
+        {
+            reached_end_marker = true;
         }
     }
     input.close();
-
 
     // copy the resides and links read into the arrays.
     residueCount = vResidues.size();
