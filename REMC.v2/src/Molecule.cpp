@@ -460,12 +460,15 @@ float Molecule::calculateVolume()
 
 #ifdef FLEXIBLE_LINKS
 
+//TODO: some of these are calculated for the entire molecule, not just linker residues.
+
 // total bond energy for this molecule
 float Molecule::Ebond()
 {
     float ebond = 0;
     for (size_t i=1; i<residueCount; i++)
     {
+        // TODO: cache bond length on linker; iterate over linkers
         float rmag = float((Residues[i].position-Residues[i-1].position).magnitude());  // reduces the number of sqrts by 1
         // eqn 9: kim2008
         ebond += (rmag - R0*Angstrom)*(rmag - R0*Angstrom);
@@ -483,6 +486,7 @@ float Molecule::Eangle()
 
     for (size_t i=1; i<residueCount-1; i++)
     {
+        // TODO: cache this on the residue; iterate over residues inside flexible linker
         ab = Residues[i-1].position - Residues[i].position;
         cb = Residues[i+1].position - Residues[i].position;
         theta = ab.angle(cb);

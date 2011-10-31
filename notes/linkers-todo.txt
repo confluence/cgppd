@@ -1,18 +1,21 @@
-General:
-* Add preprocessor directive for linkers
-
 Setup:
-* Need to load information about which residues are in the linker
-* Uncomment link stuff
-* Torsion angles?
-* Use occupancy column to mark flexible linkers? Try to autodetect from secondary structure?
+* Use occupancy column to mark flexible linkers
 
 Potential calculation:
-* Uncomment extra terms
+* Limit bond, angle and torsion components to linker residues only?
+* precalculate; store on links and residues -- in fact, can cache entire potential result!
+** I guess everything can be stored on the link
+** calculate once at the start
+** set flags to determine if an update is required, in case of overlap after several local MC steps
+** update each value once if necessary before potential calculation
+** make potential calculations use cached values
+
+* calculate standard potentials between linker beads?  Currently only done between molecules?
+
 * Link to main potential calculation
 
 MC moves:
-* local linker bead translation
-* crankshaft move
-* domain translation
-* domain rotation about linker bead
+* local linker bead translation -- update two bond lengths, three bond angles, four torsions
+* crankshaft move -- update three bond angles and four torsions
+* domain translation -- no local updates
+* domain rotation about linker bead -- update torsions and angles near edge bead

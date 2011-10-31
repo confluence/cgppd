@@ -20,5 +20,4 @@ Residue::Residue(const Residue & r)
     isCrowder = r.isCrowder;
     chainId = r.chainId;
     resSeq = r.resSeq;
-
 }
