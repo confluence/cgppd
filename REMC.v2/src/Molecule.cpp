@@ -571,20 +571,32 @@ float Molecule::Eangle()
 float Molecule::Etorsion()
 {
     float e_torsion = 0.0;
-    float torsion_angle;
+
+    Vector3f e_a;
+    Vector3f epsilon_1;
+    Vector3f epsilon_2;
+    float phi;
+
     int r1;
     int r2;
     // TODO: iterate over flexible links only
-    for (size_t i = 2; i < linkCount - 1; i++)
+    for (size_t i = 1; i < linkCount - 1; i++)
     {
         if (Links[i].update_e_torsion)
         {
-            // TODO: calculate torsion angle here
+            // TODO: check if this calculation is correct, especially the sign.
+            // TODO: is this the most efficient way?
+            e_a = (Residues[i+1].position - Residues[i].position).normalize();
+            epsilon_1 = e_a.cross(Residues[i-1].position - Residues[i].position);
+            epsilon_2 = e_a.cross(Residues[i+2].position - Residues[i+1].position);
+            phi = acos(epsilon_1.dot(epsilon_2).normalize());
             // eqn 11: kim2008
-            Links[i].e_torsion = (1 + cos(torsion_angle - torsions.getSigma(r1, r2, 1))) * torsions.getV(r1, r2, 1) +
-                                 (1 + cos(2 * torsion_angle - torsions.getSigma(r1, r2, 2))) * torsions.getV(r1, r2, 2) +
-                                 (1 + cos(3 * torsion_angle - torsions.getSigma(r1, r2, 3))) * torsions.getV(r1, r2, 3) +
-                                 (1 + cos(4 * torsion_angle - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
+            r1 = Residues[i].aminoAcidIndex;
+            r2 = Residues[i+1].aminoAcidIndex;
+            Links[i].e_torsion = (1 + cos(phi - torsions.getSigma(r1, r2, 1))) * torsions.getV(r1, r2, 1) +
+                                 (1 + cos(2 * phi - torsions.getSigma(r1, r2, 2))) * torsions.getV(r1, r2, 2) +
+                                 (1 + cos(3 * phi - torsions.getSigma(r1, r2, 3))) * torsions.getV(r1, r2, 3) +
+                                 (1 + cos(4 * phi - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
             Links[i].update_e_torsion = false;
         }
         e_torsion += Links[i].e_torsion;

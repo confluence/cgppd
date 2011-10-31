@@ -12,10 +12,8 @@ UNIT TESTS:
 
 MOLECULE:
 
-* delete commented-out PDB stuff
 * delete Molecule::rotate
 * make Molecule::rotateQ call Molecule::setRotation ?
-* make pdb parser no-END-proof
 
 MISC:
 
