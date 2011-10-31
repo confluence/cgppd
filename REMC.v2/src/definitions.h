@@ -45,6 +45,7 @@
     // pseudo angle constants
 
     #define GammaAngle 		0.1f		// mol/kcal
+    #define GammaAngleReciprocal    10.0f
     #define EpsilonAlpha	4.3f		// kcal/mol
     #define ThetaAlpha		1.6f 		// radians
     #define ThetaBeta		2.27f 		// radians
