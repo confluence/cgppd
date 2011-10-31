@@ -1,16 +1,17 @@
 Setup:
 * Use occupancy column to mark flexible linkers
+* What do we do about multiple chains?
+* Cache flexible linker indices?
 
 Potential calculation:
 * Limit bond, angle and torsion components to linker residues only?
-* precalculate; store on links and residues -- in fact, can cache entire potential result!
-** I guess everything can be stored on the link
-** calculate once at the start
-** set flags to determine if an update is required, in case of overlap after several local MC steps
-** update each value once if necessary before potential calculation
-** make potential calculations use cached values
+* need torsion angle calculation
+* verify that the four-term Etorsion calculation is applied *for each link*
 
 * calculate standard potentials between linker beads?  Currently only done between molecules?
+** in fact, probably need to do this for whole molecule?
+** clarify > 3 residues apart thing
+** re-read thesis
 
 * Link to main potential calculation
 
