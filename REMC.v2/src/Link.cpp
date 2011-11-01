@@ -2,10 +2,6 @@
 
 Link::Link()
 {
-    Angle = 0.0;
-    BondLength = 0.0;
-    TorsionAngle = 0.0;
-
     e_bond = 0.0;
     e_angle = 0.0;
     e_torsion = 0.0;
@@ -24,10 +20,6 @@ Link::~Link()
 
 Link::Link(const Link & l)
 {
-    Angle = l.Angle;
-    BondLength = l.BondLength;
-    TorsionAngle = l.TorsionAngle;
-
     e_bond = l.e_bond;
     e_angle = l.e_angle;
     e_torsion = l.e_torsion;
