@@ -10,11 +10,6 @@ public:
     Link operator = (Link l);
 
     //private:
-    // TODO: these will probably be deprecated in favour of cached potential components
-    float Angle;  // angular displacement relative to previous bead
-    float TorsionAngle; // twist relative to previous bead
-    float BondLength; // distance between this and the previous bead
-
     // Cached energy potential values
 
     /* Bond-stretching potential for this link, before multiplication by
@@ -24,7 +19,8 @@ public:
      * by gamma angle, which are performed on the final product over all links.
      * TODO: consider moving this to the residue object. */
     float e_angle;
-    float e_torsion; // torsion-angle potential for this link
+    /* Torsion-angle potential for this link. */
+    float e_torsion;
 
     // These are set to 1 if local MC moves necessitate an update of the cached values
     bool update_e_bond;

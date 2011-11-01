@@ -346,9 +346,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 sscanf (field,"%f",&z);
 
                 Residue R;
-#ifdef FLEXIBLE_LINKS
-                Link L;
-#endif
+
                 R.aminoAcidIndex = AminoAcidsData.getAminoAcidIndex(resName);
                 R.electrostaticCharge = float(AminoAcidsData.get(R.aminoAcidIndex).electrostaticCharge);// * E_charge;
                 R.vanderWaalRadius = AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius;// * E_charge;
@@ -365,7 +363,10 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 //R.vanderWaalRadius = float(AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius);
                 R.moleculeID = index;
                 vResidues.push_back(R);
+
 #ifdef FLEXIBLE_LINKS
+                Link L;
+                // TODO use occupancy to indicate flexibility
                 vLinks.push_back(L);
 #endif
             }
@@ -418,16 +419,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 
     for(size_t l = 0; l < linkCount; l++)
     {
-//         cout << l << endl;
         Link L = vLinks[l];
-        //TODO is this the same relative position?!
-//         cout << Residues[l + 1].relativePosition.magnitude() << ", " << Residues[l].relativePosition.magnitude() << endl;
-        L.Angle = (float) Residues[l + 1].relativePosition.angle(Residues[l].relativePosition);
-//         cout << L.Angle << endl;
-        L.TorsionAngle = 0; // twist relative to previous bead; TODO
-//         cout << L.TorsionAngle << endl;
-        L.BondLength = Residues[l + 1].relativePosition.magnitude(); // TODO: is this right?
-//         cout << L.BondLength << endl;
         memcpy (&Links[l], &L, sizeof(L));
     }
 #endif
