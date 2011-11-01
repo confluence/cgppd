@@ -589,7 +589,7 @@ float Molecule::Etorsion()
             e_a = (Residues[i+1].position - Residues[i].position).normalize();
             epsilon_1 = e_a.cross(Residues[i-1].position - Residues[i].position);
             epsilon_2 = e_a.cross(Residues[i+2].position - Residues[i+1].position);
-            phi = acos(epsilon_1.dot(epsilon_2).normalize());
+            phi = acos(epsilon_1.dot(epsilon_2)/(epsilon_1.magnitude() * epsilon_2.magnitude()));
             // eqn 11: kim2008
             r1 = Residues[i].aminoAcidIndex;
             r2 = Residues[i+1].aminoAcidIndex;
