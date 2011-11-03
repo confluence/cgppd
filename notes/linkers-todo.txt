@@ -1,19 +1,16 @@
-Setup:
+Read from PDB:
 * Use occupancy column to mark flexible linkers
-* What do we do about multiple chains?
 * Cache flexible linker indices?
 
 Potential calculation:
-* Limit bond, angle and torsion components to linker residues only?
-* need torsion angle calculation
-* verify that the four-term Etorsion calculation is applied *for each link*
+* What do we do about multiple chains?  Need to consider boundary between chains if there are two adjacent linkers on different chains
+* Limit bond, angle and torsion components to linker residues only
+* Add linker potential calculations to main potential calculation
 
-* calculate standard potentials between linker beads?  Currently only done between molecules?
-** in fact, probably need to do this for whole molecule?
-** clarify > 3 residues apart thing
-** re-read thesis
-
-* Link to main potential calculation
+Change to main potential calculation:
+** iterate over domains / linkers, not residues -- how will this affect the GPU code?
+** no calculation within rigid domain necessary
+** calculate potential within linker as described in 2008 paper (on CPU)
 
 MC moves:
 * local linker bead translation -- update two bond lengths, three bond angles, four torsions
