@@ -326,6 +326,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 float x(0);
                 float y(0);
                 float z(0);
+                float occupancy;
 
                 strncpy(field,line+17,3);
                 sscanf (field,"%s",resName);
@@ -344,6 +345,9 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 
                 strncpy (field,line+46,8);
                 sscanf (field,"%f",&z);
+
+                strncpy (field,line+54,6);
+                sscanf (field,"%f",&occupancy);
 
                 Residue R;
 
@@ -366,7 +370,8 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 
 #ifdef FLEXIBLE_LINKS
                 Link L;
-                // TODO use occupancy to indicate flexibility
+                // occupancy set to 1 on a residue indicates that the following link is flexible.
+                L.flexible = bool(occupancy);
                 vLinks.push_back(L);
 #endif
             }
