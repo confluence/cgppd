@@ -1,10 +1,7 @@
 Read from PDB:
-* Use occupancy column to mark flexible linkers
-* Cache flexible linker indices?
+* Make custom PDB file for test case
 
 Potential calculation:
-* What do we do about multiple chains?  Need to consider boundary between chains if there are two adjacent linkers on different chains
-* Limit bond, angle and torsion components to linker residues only
 * Add linker potential calculations to main potential calculation
 
 Change to main potential calculation:
