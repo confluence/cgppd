@@ -2,6 +2,7 @@ Read from PDB:
 * Make custom PDB file for test case
 
 Potential calculation:
+* Do LJ / DH calculation within linker
 * Add linker potential calculations to main potential calculation
 
 Change to main potential calculation:

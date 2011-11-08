@@ -460,22 +460,21 @@ float Molecule::calculateVolume()
 
 #ifdef FLEXIBLE_LINKS
 
-//TODO: calculate these just for the flexible linker residues
+// TODO: add comments
 
-// total bond energy for this molecule
-// float Molecule::Ebond()
-// {
-//     float ebond = 0;
-//     for (size_t i=1; i<residueCount; i++)
-//     {
-//         float rmag = float((Residues[i].position-Residues[i-1].position).magnitude());  // reduces the number of sqrts by 1
-//         // eqn 9: kim2008
-//         ebond += (rmag - R0*Angstrom)*(rmag - R0*Angstrom);
-//     }
-//     return 0.5 * K_spring * ebond;   // reduce ops by multiplying at the end by constants.
-// }
+float Molecule::E()
+{
+}
 
-float Molecule::Ebond()
+float Molecule::E_LJ()
+{
+}
+
+float Molecule::E_DH()
+{
+}
+
+float Molecule::E_bond()
 {
     float e_bond = 0.0;
     for (size_t i=0; i < linkCount; i++)
@@ -495,29 +494,7 @@ float Molecule::Ebond()
     return 0.5 * K_spring * e_bond;
 }
 
-// total angular bond energy for this molecule
-// float Molecule::Eangle()
-// {
-//     double eangle = 0;
-//     Vector3f ab;
-//     Vector3f cb;
-//     float theta;
-//
-//     for (size_t i=1; i<residueCount-1; i++)
-//     {
-//         ab = Residues[i-1].position - Residues[i].position;
-//         cb = Residues[i+1].position - Residues[i].position;
-//         theta = ab.angle(cb);
-//
-//         // eqn 10: kim2008
-//         eangle *= (exp(-GammaAngle * (KAlpha*(theta-ThetaAlpha)*(theta-ThetaAlpha) + EpsilonAlpha)) +
-//                     exp(-GammaAngle * (KBeta *(theta-ThetaBeta) *(theta-ThetaBeta))) );
-//     }
-//
-//     return -GammaAngle*log(eangle);
-// }
-
-float Molecule::Eangle()
+float Molecule::E_angle()
 {
     double e_angle = 1.0;
     Vector3f ab;
@@ -546,35 +523,7 @@ float Molecule::Eangle()
     return -GammaAngleReciprocal * log(e_angle);
 }
 
-//torsional potential for the molecule
-// float Molecule::Etorsion()
-// {
-//     float etorsion = 0;
-//     uint i=0;
-//     int n;
-//     while (i<residueCount-4)
-//     {
-//         if (Links[i+3].terminal)
-//         {
-//             i+=4;
-//         }
-//         else
-//         {
-//             n = 1;
-//             etorsion += (1+cos(n*Links[i].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
-//             n++;
-//             etorsion += (1+cos(n*Links[i+1].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
-//             n++;
-//             etorsion += (1+cos(n*Links[i+2].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
-//             n++;
-//             etorsion += (1+cos(n*Links[i+3].TorsionAngle - torsions.getSigma(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n)))*torsions.getV(Residues[i+1].aminoAcidIndex,Residues[i+2].aminoAcidIndex,n);
-//         }
-//         i++;
-//     }
-//     return etorsion;
-// }
-
-float Molecule::Etorsion()
+float Molecule::E_torsion()
 {
     float e_torsion = 0.0;
 
@@ -615,23 +564,3 @@ float Molecule::Etorsion()
 }
 
 #endif
-
-// float Molecule::Emembrane()
-// {
-//     float membranePotential = 0;
-//     for (size_t i=0; i<residueCount; i++)
-//     {
-//         membranePotential += Residues[i].electrostaticCharge * EchargedMembrane(Residues[i].position.y,temperature) +
-//                              0.05f*pow((Zreference/Residues[i].position.y),12.0f);
-//     }
-//     return membranePotential;
-// }
-//
-// // interaction potential between negatively charged membrane and a residue
-// // in: residue distance, temperature
-// float Molecule::EchargedMembrane(float z, float T)
-// {
-//     float MembraneAlpha = (float)(exp((ephi0/(2.0f*K_b*T))-1.0f) / (exp(ephi0/(2.0f*K_b*T))+1.0f));
-//     float Psi = 2.0f*K_b*T/E_charge*log((1.0f+MembraneAlpha*exp(-kappa*z))/(1.0f-MembraneAlpha*exp(-kappa*z)));
-//     return Psi;
-// }
