@@ -52,10 +52,6 @@ public:
     void setRotation(Quaternion q);
     bool rotateQ(const Vector3double Raxis, const double angle);
     bool mutate(const int type, const int position, const float amount);
-    float Ebond();
-    float Eangle();
-    float Etorsion();
-//     float Emembrane();
     Residue *getResidues();
     Link *getLinks();
     Vector3f getPosition();
@@ -87,6 +83,12 @@ public:
 #ifdef FLEXIBLE_LINKS
     Link *Links;
     TorsionalLookupMatrix torsions;
+    float E();
+    float E_LJ();
+    float E_DH();
+    float E_bond();
+    float E_angle();
+    float E_torsion();
 #endif
     size_t linkCount;
     size_t chainCount;
