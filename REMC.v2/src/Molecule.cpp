@@ -477,7 +477,7 @@ float Molecule::E_DH()
 float Molecule::E_bond()
 {
     float e_bond = 0.0;
-    for (size_t i=0; i < linkCount; i++)
+    for (size_t i = 0; i < linkCount; i++)
     {
         /* Bond length calculated for every flexible link. */
         if (Links[i].flexible) {
@@ -485,6 +485,7 @@ float Molecule::E_bond()
             {
                 // eqn 9: kim2008
                 float rmag = float((Residues[i+1].position - Residues[i].position).magnitude());  // reduces the number of sqrts by 1
+                Links[i].pseudo_bond = rmag;
                 Links[i].e_bond = (rmag - R0 * Angstrom) * (rmag - R0 * Angstrom);
                 Links[i].update_e_bond = false;
             }
@@ -501,9 +502,9 @@ float Molecule::E_angle()
     Vector3f cb;
     float theta;
 
-    for (size_t i=1; i < linkCount; i++)
+    for (size_t i = 1; i < linkCount; i++)
     {
-        /* Bond length calculated for residue before every flexible link and
+        /* Angle calculated for residue before every flexible link and
          * first residue after flexible link, unless we are at the beginning or
          * end of a chain or the molecule. */
         if (Links[i].flexible && !Links[i-1].terminal || Links[i-1].flexible && !Links[i].terminal) {
@@ -512,6 +513,7 @@ float Molecule::E_angle()
                 ab = Residues[i-1].position - Residues[i].position;
                 cb = Residues[i+1].position - Residues[i].position;
                 theta = ab.angle(cb);
+                Links[i].pseudo_angle = theta;
                 // eqn 10: kim2008
                 Links[i].e_angle = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
                             exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
@@ -527,9 +529,10 @@ float Molecule::E_torsion()
 {
     float e_torsion = 0.0;
 
-    Vector3f e_a;
-    Vector3f epsilon_1;
-    Vector3f epsilon_2;
+    Vector3f b1;
+    Vector3f b2;
+    Vector3f b3;
+    Vector3f b2xb3;
     float phi;
 
     int r1;
@@ -542,12 +545,15 @@ float Molecule::E_torsion()
         if (Links[i].flexible && !Links[i-1].terminal && !Links[i+1].terminal) {
             if (Links[i].update_e_torsion)
             {
-                // TODO: check if this calculation is correct, especially the sign.
                 // TODO: is this the most efficient way?
-                e_a = (Residues[i+1].position - Residues[i].position).normalize();
-                epsilon_1 = e_a.cross(Residues[i-1].position - Residues[i].position);
-                epsilon_2 = e_a.cross(Residues[i+2].position - Residues[i+1].position);
-                phi = acos(epsilon_1.dot(epsilon_2)/(epsilon_1.magnitude() * epsilon_2.magnitude()));
+
+                b1 = Residues[i].position - Residues[i-1].position;
+                b2 = Residues[i+1].position - Residues[i].position;
+                b3 = Residues[i+2].position - Residues[i+1].position;
+                b2xb3 = b2.cross(b3);
+                phi = atan2((b2.magnitude() * b1.dot(b2xb3)), b1.cross(b2).dot(b2xb3));
+
+                Links[i].pseudo_torsion = phi;
                 // eqn 11: kim2008
                 r1 = Residues[i].aminoAcidIndex;
                 r2 = Residues[i+1].aminoAcidIndex;
