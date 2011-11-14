@@ -9,7 +9,11 @@ public:
     Link(const Link& l);
     Link operator = (Link l);
 
-    //private:
+    /* These values are only cached so that they can be checked by unit tests. */
+    float pseudo_bond;
+    float pseudo_angle;
+    float pseudo_torsion;
+
     // Cached energy potential values
 
     /* Bond-stretching potential for this link, before multiplication by
