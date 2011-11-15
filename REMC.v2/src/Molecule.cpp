@@ -113,11 +113,6 @@ void Molecule::reserveResidueSpace(int size)
     Residues = new Residue[size];
 }
 
-float Molecule::getMoleculeRoleIdentifier()
-{
-    return moleculeRoleIdentifier;
-}
-
 void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
 {
     this->moleculeRoleIdentifier = moleculeRoleIdentifier;
@@ -255,27 +250,6 @@ void Molecule::setRotation(Quaternion q)
         Residues[i].position.y = Residues[i].relativePosition.y + center.y;
         Residues[i].position.z = Residues[i].relativePosition.z + center.z;
     }
-}
-
-Vector3f Molecule::getPosition()
-{
-    return position;
-
-}
-
-int Molecule::getIndex()
-{
-    return index;
-}
-
-Quaternion Molecule::getRotation()
-{
-    return rotation;
-}
-
-int Molecule::getLength()
-{
-    return residueCount;
 }
 
 bool Molecule::initFromPDB(const char* pdbfilename)
@@ -471,7 +445,8 @@ float Molecule::E(AminoAcids *a)
     double DH_constant_component =  DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f ;
 
     // TODO: apply this to residues joined by flexible links only
-    for (size_t i = 0; i < residueCount; i++)
+    // TODO: revisit caching indices of flexible segments somehow
+    for (size_t i = 0; i < linkCount; i++)
     {
         for (size_t j = i + 1; j < residueCount; j++)
         {
