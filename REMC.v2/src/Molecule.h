@@ -83,9 +83,7 @@ public:
 #ifdef FLEXIBLE_LINKS
     Link *Links;
     TorsionalLookupMatrix torsions;
-    float E();
-    float E_LJ();
-    float E_DH();
+    float E(AminoAcids *a);
     float E_bond();
     float E_angle();
     float E_torsion();
