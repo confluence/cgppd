@@ -4,9 +4,9 @@
 class Segment
 {
 public:
-    int start;
-    int end;
-    bool flexible;
+    int start; // index of starting residue
+    int end; // index of ending residue
+    bool flexible; // this segment is a flexible linker
 
     Segment();
 };
