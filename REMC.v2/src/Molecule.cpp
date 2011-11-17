@@ -401,33 +401,55 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     linkCount = vLinks.size() - 1;
     Links = new Link[linkCount];
     vector<Segment> vSegments;
+    vector<size_t> vFlexibleSegmentIndices;
 
     for(size_t l = 0; l < linkCount; l++)
     {
         Link L = vLinks[l];
         memcpy (&Links[l], &L, sizeof(L));
 
-        //TODO: segment vector
+        // End last segment
+        if (l && L.flexible != vLinks[l-1].flexible || L.dummy)
+        {
+            vSegments.back().end = l;
+        }
 
-//         if (!l || L.dummy || L.flexible != vLinks[l-1].flexible)
-//         {
-//             Segment S;
-//
-//             if ()
-//             {
-//             }
-//             else if ()
-//             {
-//             }
-//             else
-//             {
-//             }
-//
-//             vSegments.push_back(S);
-//         }
+        // Start new segment
+        if (!l || L.flexible != vLinks[l-1].flexible || vLinks[l-1].dummy)
+        {
+            Segment S;
+            S.start = l;
+            S.flexible = L.flexible;
+            vSegments.push_back(S);
+            if (S.flexible) {
+                vFlexibleSegmentIndices.push_back(vSegments.size() - 1);
+            }
+        }
+
+        // End last segment at end of molecule
+        if (l == linkCount - 1)
+        {
+            vSegments.back().end = linkCount;
+        }
     }
 
-    //TODO: segment array
+    segmentCount = vSegments.size();
+    Segments = new Segment[segmentCount];
+
+    for (size_t s = 0; s < segmentCount; s++)
+    {
+        Segment S = vSegments[s];
+        memcpy (&Segments[s], &S, sizeof(S));
+    }
+
+    linkerCount = vFlexibleSegmentIndices.size();
+    Linkers = new Segment*[linkerCount];
+
+    for (size_t s = 0; s < linkerCount; s++)
+    {
+        Linkers[s] = &Segments[vFlexibleSegmentIndices[s]];
+    }
+
 #endif
 
     return true;

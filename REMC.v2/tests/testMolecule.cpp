@@ -62,6 +62,8 @@ void TestMolecule::testPDBCentre()
 class TestLinkerPotentials : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestLinkerPotentials);
+    CPPUNIT_TEST(testPDBSequence);
+    CPPUNIT_TEST(testSegments);
     CPPUNIT_TEST(testPseudoBonds);
     CPPUNIT_TEST(testPseudoAngles);
     CPPUNIT_TEST(testPseudoTorsions);
@@ -74,6 +76,7 @@ private:
 public:
     void setUp();
     void testPDBSequence();
+    void testSegments();
     void testPseudoBonds();
     void testPseudoAngles();
     void testPseudoTorsions();
@@ -95,6 +98,7 @@ void TestLinkerPotentials::testPDBSequence()
 {
     const int expected_size = 10;
     CPPUNIT_ASSERT_EQUAL(expected_size, molecule.residueCount);
+    CPPUNIT_ASSERT_EQUAL(expected_size - 1, molecule.linkCount);
 
     char expected_sequence_names[expected_size][4] = {"ASP","ARG","VAL","TYR","ILE","HIS","PRO","PHE","HIS","LEU"};
     int expected;
@@ -107,6 +111,19 @@ void TestLinkerPotentials::testPDBSequence()
         got = molecule.Residues[i].aminoAcidIndex;
         CPPUNIT_ASSERT_EQUAL(expected, got);
     }
+}
+
+void TestLinkerPotentials::testSegments()
+{
+    CPPUNIT_ASSERT_EQUAL(1, molecule.segmentCount);
+    CPPUNIT_ASSERT_EQUAL(1, molecule.linkerCount);
+
+    CPPUNIT_ASSERT_EQUAL(0, molecule.Segments[0].start);
+    CPPUNIT_ASSERT_EQUAL(9, molecule.Segments[0].end);
+    CPPUNIT_ASSERT_EQUAL(true, molecule.Segments[0].flexible);
+
+    CPPUNIT_ASSERT_EQUAL(0, molecule.Linkers[0]->start);
+    CPPUNIT_ASSERT_EQUAL(9, molecule.Linkers[0]->end);
 }
 
 void TestLinkerPotentials::testPseudoBonds()

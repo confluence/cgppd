@@ -3,6 +3,7 @@
 
 class Segment
 {
+public:
     int start;
     int end;
     bool flexible;

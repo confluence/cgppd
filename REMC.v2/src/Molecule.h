@@ -50,15 +50,17 @@ public:
     Residue *Residues;
     int residueCount;
 #ifdef FLEXIBLE_LINKS
+    int linkCount;
+    int segmentCount;
+    int linkerCount;
     Link *Links;
-    Segment *Segments;
-    Segment *Linkers;
+    Segment *Segments; // Boundaries of all domains and linkers
+    Segment **Linkers; // Boundaries of all flexible linkers (pointers into Segments array)
     TorsionalLookupMatrix torsions;
-    float E();
+    float E(); // TODO: combine into single method
     float E_bond();
     float E_angle();
     float E_torsion();
-    size_t linkCount;
 #endif
     size_t chainCount;
     Vector3f position;

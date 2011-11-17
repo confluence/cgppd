@@ -24,7 +24,7 @@ CFLAGS=-fno-omit-frame-pointer -O2
 #NVCC_COMPILER_FLAGS=-g
 NVCC_ARCH=-arch=sm_20
 
-COMMON_OBJS=obj/AminoAcid.o obj/AminoAcids.o obj/Link.o obj/Molecule.o obj/Quaternion.o obj/Replica.o obj/Residue.o obj/TorsionalLookupMatrix.o obj/vector3f.o
+COMMON_OBJS=obj/AminoAcid.o obj/AminoAcids.o obj/Link.o obj/Segment.o obj/Molecule.o obj/Quaternion.o obj/Replica.o obj/Residue.o obj/TorsionalLookupMatrix.o obj/vector3f.o
 
 1:
 	make DEFINE='-DEnableCUDA -DEnableOPENGL' GPUGL test
@@ -73,6 +73,9 @@ obj/Camera.o: obj/.d src/Camera.cpp src/Camera.h src/vector3f.h
 
 obj/Link.o: obj/.d src/Link.cpp src/Link.h
 	${COMPILER} ${CFLAGS} -c src/Link.cpp -o obj/Link.o
+
+obj/Segment.o: obj/.d src/Segment.cpp src/Segment.h
+	${COMPILER} ${CFLAGS} -c src/Segment.cpp -o obj/Segment.o
 
 obj/main.o: obj/.d src/main.cpp src/definitions.h src/AminoAcid.h src/TorsionalLookupMatrix.h src/AminoAcids.h src/Replica.h src/vector3f.h src/Quaternion.h src/Molecule.h src/Residue.h src/Link.h src/cudaExterns.h
 
