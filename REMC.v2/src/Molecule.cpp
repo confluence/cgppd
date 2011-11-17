@@ -259,7 +259,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     vector<Residue> vResidues;
 #ifdef FLEXIBLE_LINKS
     vector<Link> vLinks;
-    vector<Segment> vSegments;
 #endif
 
     chainCount = 1; // there must be at least one
@@ -401,6 +400,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 #ifdef FLEXIBLE_LINKS
     linkCount = vLinks.size() - 1;
     Links = new Link[linkCount];
+    vector<Segment> vSegments;
 
     for(size_t l = 0; l < linkCount; l++)
     {
@@ -408,6 +408,23 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         memcpy (&Links[l], &L, sizeof(L));
 
         //TODO: segment vector
+
+//         if (!l || L.dummy || L.flexible != vLinks[l-1].flexible)
+//         {
+//             Segment S;
+//
+//             if ()
+//             {
+//             }
+//             else if ()
+//             {
+//             }
+//             else
+//             {
+//             }
+//
+//             vSegments.push_back(S);
+//         }
     }
 
     //TODO: segment array
@@ -444,7 +461,7 @@ float Molecule::calculateVolume()
 // TODO: add comments
 // TODO: do all these calculations in one loop?
 
-float Molecule::E(AminoAcids *a)
+float Molecule::E()
 {
     double epotential = 0.0f;
     double LJAccumulator = 0.0f;
@@ -467,7 +484,7 @@ float Molecule::E(AminoAcids *a)
             }
 
             /* Calculate LJ-type potential for each residue pair. */
-            float Eij(lambda * (a->LJpotentials[Residues[i].aminoAcidIndex][Residues[j].aminoAcidIndex] - e0));
+            float Eij(lambda * (AminoAcidsData.LJpotentials[Residues[i].aminoAcidIndex][Residues[j].aminoAcidIndex] - e0));
             float sigmaij(0.5f * (Residues[i].vanderWaalRadius + Residues[j].vanderWaalRadius));
             double LJtmp(powf(sigmaij / r, 6.0f)); //sigT*sigT*sigT*sigT*sigT*sigT;
             double LJ(-4.0f * Eij * LJtmp * (LJtmp - 1.0f));

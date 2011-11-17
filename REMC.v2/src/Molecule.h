@@ -54,7 +54,7 @@ public:
     Segment *Segments;
     Segment *Linkers;
     TorsionalLookupMatrix torsions;
-    float E(AminoAcids *a);
+    float E();
     float E_bond();
     float E_angle();
     float E_torsion();
