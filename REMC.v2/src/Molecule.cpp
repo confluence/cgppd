@@ -7,13 +7,15 @@ Molecule::Molecule()
     translationalStep = INITIAL_TRANSLATIONAL_STEP;
     rotationalStep = INITIAL_ROTATIONAL_STEP;
     residueCount = 0;
-    linkCount = 0;
     moleculeRoleIdentifier = 0.0f;
     index = -2;
     rotation = Quaternion(1.0f,0,0,0);
     volume = 0.0f;
     hasFilename = false;
     amIACrowder = false;
+#ifdef FLEXIBLE_LINKS
+    linkCount = 0;
+#endif
 }
 
 Molecule::~Molecule()
@@ -257,6 +259,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     vector<Residue> vResidues;
 #ifdef FLEXIBLE_LINKS
     vector<Link> vLinks;
+    vector<Segment> vSegments;
 #endif
 
     chainCount = 1; // there must be at least one
@@ -355,7 +358,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
             chainCount++;
 #ifdef FLEXIBLE_LINKS
             // The last link isn't a real link
-            vLinks.back().terminal = true;
+            vLinks.back().dummy = true;
             // Set it to non-flexible regardless of the occupancy of the last residue
             vLinks.back().flexible = false;
 #endif
@@ -403,7 +406,11 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     {
         Link L = vLinks[l];
         memcpy (&Links[l], &L, sizeof(L));
+
+        //TODO: segment vector
     }
+
+    //TODO: segment array
 #endif
 
     return true;
@@ -506,7 +513,7 @@ float Molecule::E_angle()
         /* Angle calculated for residue before every flexible link and
          * first residue after flexible link, unless we are at the beginning or
          * end of a chain or the molecule. */
-        if (Links[i].flexible && !Links[i-1].terminal || Links[i-1].flexible && !Links[i].terminal) {
+        if (Links[i].flexible && !Links[i-1].dummy || Links[i-1].flexible && !Links[i].dummy) {
             if (Links[i].update_e_angle)
             {
                 ab = Residues[i-1].position - Residues[i].position;
@@ -541,7 +548,7 @@ float Molecule::E_torsion()
     {
         /* Torsion calculated for each flexible link except first, last, and
          * first/last of chain. */
-        if (Links[i].flexible && !Links[i-1].terminal && !Links[i+1].terminal) {
+        if (Links[i].flexible && !Links[i-1].dummy && !Links[i+1].dummy) {
             if (Links[i].update_e_torsion)
             {
                 // TODO: is this the most efficient way?

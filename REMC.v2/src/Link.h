@@ -31,8 +31,8 @@ public:
     bool update_e_angle;
     bool update_e_torsion;
 
-    float flexible; // 0 (inflexible) or 1 (flexible): determines fixed tertiary structures
-    bool terminal; // true if a new chain starts from this link;
+    float flexible; // true if this link is part of a felxible linker rather than a rigid domain
+    bool dummy; // not actually a link; the space between the last residue of a chain and the first residue of the next
 };
 
 #endif /*LINK_H_*/

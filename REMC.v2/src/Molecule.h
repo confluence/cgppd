@@ -52,13 +52,14 @@ public:
 #ifdef FLEXIBLE_LINKS
     Link *Links;
     Segment *Segments;
+    Segment *Linkers;
     TorsionalLookupMatrix torsions;
     float E(AminoAcids *a);
     float E_bond();
     float E_angle();
     float E_torsion();
-#endif
     size_t linkCount;
+#endif
     size_t chainCount;
     Vector3f position;
     Quaternion rotation;
@@ -75,10 +76,6 @@ public:
     Vector3f yAxis;
     Vector3f zAxis;
     Vector3f translation;
-
-private:
-//     float EchargedMembrane(float distanceToMembrane,float temperature);
-
 };
 
 #endif /*MOLECULE_H_*/
