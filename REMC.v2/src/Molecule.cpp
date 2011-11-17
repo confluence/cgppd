@@ -490,33 +490,37 @@ float Molecule::E()
     double DHAccumulator = 0.0f;
     double DH_constant_component =  DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f ;
 
-    // TODO: apply this to residues joined by flexible links only
-    // TODO: revisit caching indices of flexible segments somehow
-    for (size_t i = 0; i < linkCount; i++)
+    // Calculate within each linker only (potential between domains done by main calculation)
+    for (size_t s = 0; s < linkerCount; s++)
     {
-        for (size_t j = i + 1; j < residueCount; j++)
+        for (size_t i = Linkers[s]->start; i <= Linkers[s]->end; i++)
         {
-            // TODO: do we need to wrap around the bounding box for this calculation?
-            double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
-
-            /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429). */
-            if (j - i >= 4)
+            for (size_t j = i + 1; j <= Linkers[s]->end; j++)
             {
-                DHAccumulator += (Residues[i].electrostaticCharge * Residues[j].electrostaticCharge * expf(-r / Xi) / r);
-            }
+                // TODO: do we need to wrap around the bounding box for this calculation?
+                double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
 
-            /* Calculate LJ-type potential for each residue pair. */
-            float Eij(lambda * (AminoAcidsData.LJpotentials[Residues[i].aminoAcidIndex][Residues[j].aminoAcidIndex] - e0));
-            float sigmaij(0.5f * (Residues[i].vanderWaalRadius + Residues[j].vanderWaalRadius));
-            double LJtmp(powf(sigmaij / r, 6.0f)); //sigT*sigT*sigT*sigT*sigT*sigT;
-            double LJ(-4.0f * Eij * LJtmp * (LJtmp - 1.0f));
-            if (Eij > 0.0f && r < sigmaij * 1.122462048309372981433533049679f)  // attractive pairs
-            {
-                LJ = -LJ + 2.0f * Eij;
+                /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429). */
+                if (j - i >= 4)
+                {
+                    DHAccumulator += (Residues[i].electrostaticCharge * Residues[j].electrostaticCharge * expf(-r / Xi) / r);
+                }
+
+                /* Calculate LJ-type potential for each residue pair. */
+                float Eij(lambda * (AminoAcidsData.LJpotentials[Residues[i].aminoAcidIndex][Residues[j].aminoAcidIndex] - e0));
+                float sigmaij(0.5f * (Residues[i].vanderWaalRadius + Residues[j].vanderWaalRadius));
+                double LJtmp(powf(sigmaij / r, 6.0f)); //sigT*sigT*sigT*sigT*sigT*sigT;
+                double LJ(-4.0f * Eij * LJtmp * (LJtmp - 1.0f));
+                if (Eij > 0.0f && r < sigmaij * 1.122462048309372981433533049679f)  // attractive pairs
+                {
+                    LJ = -LJ + 2.0f * Eij;
+                }
+                LJAccumulator += LJ;
             }
-            LJAccumulator += LJ;
         }
     }
+    epotential = ( DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR ) * KBTConversionFactor;
+    return epotential;
 }
 
 float Molecule::E_bond()
