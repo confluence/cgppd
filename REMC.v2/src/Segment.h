@@ -5,6 +5,7 @@ class Segment
 {
     int start;
     int end;
+    bool flexible;
 
     Segment();
 };

@@ -16,7 +16,7 @@ Link::Link()
     update_e_torsion = true;
 
     flexible = false;
-    terminal = false;
+    dummy = false;
 }
 
 Link::~Link()
@@ -38,7 +38,7 @@ Link::Link(const Link & l)
     update_e_torsion = l.update_e_torsion;
 
     flexible = l.flexible;
-    terminal = l.terminal;
+    dummy = l.dummy;
 }
 
 Link Link::operator =(Link l)
