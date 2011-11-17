@@ -31,7 +31,7 @@ public:
     bool update_e_angle;
     bool update_e_torsion;
 
-    float flexible; // true if this link is part of a felxible linker rather than a rigid domain
+    float flexible; // true if this link is part of a flexible linker rather than a rigid domain
     bool dummy; // not actually a link; the space between the last residue of a chain and the first residue of the next
 };
 
