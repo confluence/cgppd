@@ -490,11 +490,19 @@ float Molecule::E()
     double DHAccumulator = 0.0f;
     double DH_constant_component =  DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f ;
 
+    double e_bond = 0.0;
+    double e_angle = 1.0;
+    double e_torsion = 0.0;
+
     // Calculate within each linker only (potential between domains done by main calculation)
     for (size_t s = 0; s < linkerCount; s++)
     {
-        for (size_t i = Linkers[s]->start; i <= Linkers[s]->end; i++)
+        int start = Linkers[s]->start;
+        int end = Linkers[s]->end;
+
+        for (size_t i = start; i <= end; i++)
         {
+            // LJ and DH
             for (size_t j = i + 1; j <= Linkers[s]->end; j++)
             {
                 // TODO: do we need to wrap around the bounding box for this calculation?
@@ -516,6 +524,67 @@ float Molecule::E()
                     LJ = -LJ + 2.0f * Eij;
                 }
                 LJAccumulator += LJ;
+            }
+
+            // Pseudo-bond
+            if (i < end)
+            {
+                if (Links[i].update_e_bond)
+                {
+                    // eqn 9: kim2008
+                    // TODO: can we save this calculation from the previous loop?
+                    float rmag = float((Residues[i+1].position - Residues[i].position).magnitude());  // reduces the number of sqrts by 1
+                    Links[i].pseudo_bond = rmag;
+                    Links[i].e_bond = (rmag - R0 * Angstrom) * (rmag - R0 * Angstrom);
+                    Links[i].update_e_bond = false;
+                }
+                e_bond += Links[i].e_bond;
+            }
+
+            if (!Links[i-1].dummy && !Links[i+1].dummy)
+            {
+
+                // Pseudo-angle
+                if (i > 0 && i < linkCount)
+                {
+                    if (Links[i].update_e_angle)
+                    {
+                        Vector3f ab = Residues[i-1].position - Residues[i].position;
+                        Vector3f cb = Residues[i+1].position - Residues[i].position;
+                        double theta = ab.angle(cb);
+                        Links[i].pseudo_angle = theta;
+                        // eqn 10: kim2008
+                        Links[i].e_angle = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
+                                    exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
+                        Links[i].update_e_angle = false;
+                    }
+                    e_angle *= Links[i].e_angle;
+                }
+
+                // Pseudo-torsion
+                if (i > 1 && i < linkCount - 1)
+                {
+                    if (Links[i].update_e_torsion)
+                    {
+                        // TODO: is this the most efficient way?
+                        Vector3f b1 = Residues[i].position - Residues[i-1].position;
+                        Vector3f b2 = Residues[i+1].position - Residues[i].position;
+                        Vector3f b3 = Residues[i+2].position - Residues[i+1].position;
+                        Vector3f b2xb3 = b2.cross(b3);
+                        double phi = atan2((b2.magnitude() * b1.dot(b2xb3)), b1.cross(b2).dot(b2xb3));
+
+                        Links[i].pseudo_torsion = phi;
+                        // eqn 11: kim2008
+                        int r1 = Residues[i].aminoAcidIndex;
+                        int r2 = Residues[i+1].aminoAcidIndex;
+                        Links[i].e_torsion = (1 + cos(phi - torsions.getSigma(r1, r2, 1))) * torsions.getV(r1, r2, 1) +
+                                            (1 + cos(2 * phi - torsions.getSigma(r1, r2, 2))) * torsions.getV(r1, r2, 2) +
+                                            (1 + cos(3 * phi - torsions.getSigma(r1, r2, 3))) * torsions.getV(r1, r2, 3) +
+                                            (1 + cos(4 * phi - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
+                        Links[i].update_e_torsion = false;
+                    }
+                    e_torsion += Links[i].e_torsion;
+                }
             }
         }
     }
