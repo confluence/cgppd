@@ -57,10 +57,7 @@ public:
     Segment *Segments; // Boundaries of all domains and linkers
     Segment **Linkers; // Boundaries of all flexible linkers (pointers into Segments array)
     TorsionalLookupMatrix torsions;
-    float E(); // TODO: combine into single method
-    float E_bond();
-    float E_angle();
-    float E_torsion();
+    float E();
 #endif
     size_t chainCount;
     Vector3f position;
