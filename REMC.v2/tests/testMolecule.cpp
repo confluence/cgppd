@@ -64,9 +64,7 @@ class TestLinkerPotentials : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(TestLinkerPotentials);
     CPPUNIT_TEST(testPDBSequence);
     CPPUNIT_TEST(testSegments);
-    CPPUNIT_TEST(testPseudoBonds);
-    CPPUNIT_TEST(testPseudoAngles);
-    CPPUNIT_TEST(testPseudoTorsions);
+    CPPUNIT_TEST(testGeometry);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -77,9 +75,7 @@ public:
     void setUp();
     void testPDBSequence();
     void testSegments();
-    void testPseudoBonds();
-    void testPseudoAngles();
-    void testPseudoTorsions();
+    void testGeometry();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestLinkerPotentials);
@@ -126,9 +122,9 @@ void TestLinkerPotentials::testSegments()
     CPPUNIT_ASSERT_EQUAL(9, molecule.Linkers[0]->end);
 }
 
-void TestLinkerPotentials::testPseudoBonds()
+void TestLinkerPotentials::testGeometry()
 {
-    float expected[9] = {
+    float expected_bond_lengths[9] = {
         3.821749687194824,
         3.8273043632507324,
         3.8032095432281494,
@@ -140,17 +136,7 @@ void TestLinkerPotentials::testPseudoBonds()
         3.8045248985290527
     };
 
-    float e_bond = molecule.E_bond();
-
-    for (size_t i = 0; i < molecule.linkCount; i++)
-    {
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected[i], molecule.Links[i].pseudo_bond, 0.00001);
-    }
-}
-
-void TestLinkerPotentials::testPseudoAngles()
-{
-    float expected[9] = {
+    float expected_angles[9] = {
         0.0, // padding for simplicity
         123.56746673583984,
         86.7016830444336,
@@ -162,18 +148,7 @@ void TestLinkerPotentials::testPseudoAngles()
         97.1257095336914,
     };
 
-    float e_angle = molecule.E_angle();
-
-    for (size_t i = 1; i < molecule.linkCount; i++)
-    {
-        // convert degrees (from VMD) to radians
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected[i]/57.29577951308232, molecule.Links[i].pseudo_angle, 0.00001);
-    }
-}
-
-void TestLinkerPotentials::testPseudoTorsions()
-{
-    float expected[9] = {
+    float expected_torsion_angles[9] = {
         0.0, // padding for simplicity
         -165.99693298339844,
         26.120737075805664,
@@ -185,11 +160,16 @@ void TestLinkerPotentials::testPseudoTorsions()
         0.0 // padding for simplicity
     };
 
-    float e_torsion = molecule.E_torsion();
+    double e = molecule.E();
 
-    for (size_t i = 1; i < molecule.linkCount - 1; i++)
+    for (size_t i = 0; i < molecule.linkCount; i++)
     {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_bond_lengths[i], molecule.Links[i].pseudo_bond, 0.00001);
+
         // convert degrees (from VMD) to radians
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected[i]/57.29577951308232, molecule.Links[i].pseudo_torsion, 0.00001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_angles[i]/57.29577951308232, molecule.Links[i].pseudo_angle, 0.00001);
+
+        // convert degrees (from VMD) to radians
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, molecule.Links[i].pseudo_torsion, 0.00001);
     }
 }

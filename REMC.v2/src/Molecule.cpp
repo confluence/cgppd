@@ -541,11 +541,11 @@ float Molecule::E()
                 e_bond += Links[i].e_bond;
             }
 
-            if (!Links[i-1].dummy && !Links[i+1].dummy)
+            if (i > 0 && !Links[i-1].dummy)
             {
 
                 // Pseudo-angle
-                if (i > 0 && i < linkCount)
+                if (i < linkCount)
                 {
                     if (Links[i].update_e_angle)
                     {
@@ -562,7 +562,7 @@ float Molecule::E()
                 }
 
                 // Pseudo-torsion
-                if (i > 1 && i < linkCount - 1)
+                if (i < linkCount - 1 && !Links[i+1].dummy)
                 {
                     if (Links[i].update_e_torsion)
                     {
@@ -588,103 +588,9 @@ float Molecule::E()
             }
         }
     }
-    epotential = ( DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR ) * KBTConversionFactor;
+// TODO: check maths -- -GammaAngleReciprocal * log(e_angle)?
+    epotential = (DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR + 0.5 * K_spring * e_bond + -GammaAngleReciprocal * log(e_angle) + e_torsion) * KBTConversionFactor;
     return epotential;
-}
-
-float Molecule::E_bond()
-{
-    float e_bond = 0.0;
-    for (size_t i = 0; i < linkCount; i++)
-    {
-        /* Bond length calculated for every flexible link. */
-        if (Links[i].flexible) {
-            if (Links[i].update_e_bond)
-            {
-                // eqn 9: kim2008
-                float rmag = float((Residues[i+1].position - Residues[i].position).magnitude());  // reduces the number of sqrts by 1
-                Links[i].pseudo_bond = rmag;
-                Links[i].e_bond = (rmag - R0 * Angstrom) * (rmag - R0 * Angstrom);
-                Links[i].update_e_bond = false;
-            }
-            e_bond += Links[i].e_bond;
-        }
-    }
-    return 0.5 * K_spring * e_bond;
-}
-
-float Molecule::E_angle()
-{
-    double e_angle = 1.0;
-    Vector3f ab;
-    Vector3f cb;
-    float theta;
-
-    for (size_t i = 1; i < linkCount; i++)
-    {
-        /* Angle calculated for residue before every flexible link and
-         * first residue after flexible link, unless we are at the beginning or
-         * end of a chain or the molecule. */
-        if (Links[i].flexible && !Links[i-1].dummy || Links[i-1].flexible && !Links[i].dummy) {
-            if (Links[i].update_e_angle)
-            {
-                ab = Residues[i-1].position - Residues[i].position;
-                cb = Residues[i+1].position - Residues[i].position;
-                theta = ab.angle(cb);
-                Links[i].pseudo_angle = theta;
-                // eqn 10: kim2008
-                Links[i].e_angle = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
-                            exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
-                Links[i].update_e_angle = false;
-            }
-            e_angle *= Links[i].e_angle;
-        }
-    }
-    return -GammaAngleReciprocal * log(e_angle);
-}
-
-float Molecule::E_torsion()
-{
-    float e_torsion = 0.0;
-
-    Vector3f b1;
-    Vector3f b2;
-    Vector3f b3;
-    Vector3f b2xb3;
-    float phi;
-
-    int r1;
-    int r2;
-
-    for (size_t i = 1; i < linkCount - 1; i++)
-    {
-        /* Torsion calculated for each flexible link except first, last, and
-         * first/last of chain. */
-        if (Links[i].flexible && !Links[i-1].dummy && !Links[i+1].dummy) {
-            if (Links[i].update_e_torsion)
-            {
-                // TODO: is this the most efficient way?
-
-                b1 = Residues[i].position - Residues[i-1].position;
-                b2 = Residues[i+1].position - Residues[i].position;
-                b3 = Residues[i+2].position - Residues[i+1].position;
-                b2xb3 = b2.cross(b3);
-                phi = atan2((b2.magnitude() * b1.dot(b2xb3)), b1.cross(b2).dot(b2xb3));
-
-                Links[i].pseudo_torsion = phi;
-                // eqn 11: kim2008
-                r1 = Residues[i].aminoAcidIndex;
-                r2 = Residues[i+1].aminoAcidIndex;
-                Links[i].e_torsion = (1 + cos(phi - torsions.getSigma(r1, r2, 1))) * torsions.getV(r1, r2, 1) +
-                                    (1 + cos(2 * phi - torsions.getSigma(r1, r2, 2))) * torsions.getV(r1, r2, 2) +
-                                    (1 + cos(3 * phi - torsions.getSigma(r1, r2, 3))) * torsions.getV(r1, r2, 3) +
-                                    (1 + cos(4 * phi - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
-                Links[i].update_e_torsion = false;
-            }
-            e_torsion += Links[i].e_torsion;
-        }
-    }
-    return e_torsion;
 }
 
 #endif
