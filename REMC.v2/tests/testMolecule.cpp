@@ -167,7 +167,7 @@ void TestLinkerPotentials::testGeometry()
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_bond_lengths[i], molecule.Links[i].pseudo_bond, 0.00001);
 
         // convert degrees (from VMD) to radians
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_angles[i]/57.29577951308232, molecule.Links[i].pseudo_angle, 0.00001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_angles[i]/57.29577951308232, molecule.Residues[i].pseudo_angle, 0.00001);
 
         // convert degrees (from VMD) to radians
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, molecule.Links[i].pseudo_torsion, 0.00001);

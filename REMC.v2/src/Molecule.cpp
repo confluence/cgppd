@@ -523,11 +523,14 @@ float Molecule::E()
                     for (size_t j = Segments[sj].start; j <= Segments[si].end; j++) {
                         // TODO: do we need to wrap around the bounding box for this calculation?
                         double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
+                        /* Calculate LJ-type potential for each residue pair. */
                         LJ += Residues[i].LJ_component(Residues[j], r, AminoAcidsData);
+                        /* Calculate electrostatic potential for each residue pair. */
                         DH += Residues[i].DH_component(Residues[j], r);
                     }
                 }
             }
+            update_E = false;
         }
 
         LJAccumulator += LJ;
@@ -545,15 +548,14 @@ float Molecule::E()
                     {
                         // TODO: do we need to wrap around the bounding box for this calculation?
                         double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
-
                         /* Calculate LJ-type potential for each residue pair. */
                         Segments[si].LJ += Residues[i].LJ_component(Residues[j], r, AminoAcidsData);
-
                         /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429). */
                         if (j - i >= 4)
                         {
                             Segments[si].DH += Residues[i].DH_component(Residues[j], r);
                         }
+                        Segments[si].update_E = false;
                     }
 
                     LJAccumulator += Segments[si].LJ;
@@ -581,18 +583,18 @@ float Molecule::E()
                     // Pseudo-angle
                     if (i < linkCount)
                     {
-                        if (Links[i].update_e_angle)
+                        if (Residues[i].update_e_angle)
                         {
                             Vector3f ab = Residues[i-1].position - Residues[i].position;
                             Vector3f cb = Residues[i+1].position - Residues[i].position;
                             double theta = ab.angle(cb);
-                            Links[i].pseudo_angle = theta;
+                            Residues[i].pseudo_angle = theta;
                             // eqn 10: kim2008
-                            Links[i].e_angle = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
+                            Residues[i].e_angle = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
                                         exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
-                            Links[i].update_e_angle = false;
+                            Residues[i].update_e_angle = false;
                         }
-                        e_angle *= Links[i].e_angle;
+                        e_angle *= Residues[i].e_angle;
                     }
 
                     // Pseudo-torsion
