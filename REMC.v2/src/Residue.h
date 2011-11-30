@@ -29,6 +29,14 @@ public:
     //AminoAcid aa;
 
 #ifdef FLEXIBLE_LINKS
+    /* This value is only cached so that it can be checked by unit tests. */
+    float pseudo_angle;
+    /* Angle potential for this residue, before natural log and division
+     * by gamma angle, which are performed on the final product over all links.*/
+    float e_angle;
+    // This is set to 1 if local MC moves necessitate an update of the cached value
+    bool update_e_angle;
+
     float LJ_component(const Residue& rj, const double r, const AminoAcids & AminoAcidsData);
     float DH_component(const Residue& rj, const double r);
 #endif

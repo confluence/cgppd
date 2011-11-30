@@ -4,8 +4,10 @@ Read from PDB:
 Potential calculation:
 
 WHAT IS NEEDED:
-* LJ_component and DH_component methods on residue
+* LJ_component and DH_component methods on residue - DONE
 * Consider doing the same for angle (residue) and bond and torsion (linker)? Pass in relevant parameters?
+    * In fact, add a getter, and do everything including updating the cached value in the object
+* similar getter on segment? change update_E to update_LJ and update_DH?
 * Add cross-domain potential to molecule E
 ** Cache and only recalculate if necessary
 * Add molecule E to main potential calculation
