@@ -51,8 +51,6 @@ Molecule::Molecule(const Molecule& m)
     rotation = m.rotation;
     index = m.index;
     volume = m.volume;
-    //temperature = m.temperature;
-    //label = m.label;
     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
     amIACrowder = m.amIACrowder;
     hasFilename = false;
@@ -92,9 +90,7 @@ void Molecule::copy(const Molecule& m)
     rotation = m.rotation;
     volume = m.volume;
 
-    /*index = m.index;
-    temperature = m.temperature;
-    label = m.label;*/
+    index = m.index;
     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
     amIACrowder = m.amIACrowder;
 #ifdef FLEXIBLE_LINKS

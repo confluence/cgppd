@@ -26,10 +26,7 @@ Replica::Replica()
     totalBoundSamples = 0;
     totalSamples = 0;
     paircount = 0;
-    acc_err = 0;
     nonCrowderResidues = 0;
-    //min_rotation = MIN_ROTATION;
-    //min_translation = MIN_TRANSLATION;
     timersInit = false;
     translateStep = INITIAL_TRANSLATIONAL_STEP;
     rotateStep = INITIAL_ROTATIONAL_STEP;
@@ -40,60 +37,51 @@ Replica::Replica()
 void Replica::initTimers()
 {
     //timers for profiling the cuda functions
-    replicaMCTimer = 0;
     replicaToGPUTimer = 0;
     replicaUpdateGPUTimer = 0;
-    replicaKernelTimer = 0;
     replicaECUDATimer = 0;
     replicaMoleculeUpdateTimer = 0;
-    replicaDeviceMCTimer = 0;
     initGPUMemoryTimer = 0;
 
-    CUT_SAFE_CALL( cutCreateTimer(&replicaMCTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&replicaToGPUTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&replicaToHostTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&replicaUpdateGPUTimer) );
-    CUT_SAFE_CALL( cutCreateTimer(&replicaKernelTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&replicaMoleculeUpdateTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&replicaECUDATimer) );
-    CUT_SAFE_CALL( cutCreateTimer(&replicaDeviceMCTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&initGPUMemoryTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&replicaEHostTimer) );
+
     timersInit = true;
 }
 #endif
 
-Replica::Replica(const Replica& r)
-{
-    Replica();
-    label = r.label;
-    temperature = r.temperature;
-    moleculeCount = r.moleculeCount;
-    residueCount = r.residueCount;
-    aminoAcids = r.aminoAcids;
-    molecules = new Molecule[moleculeCount];
-    maxMoleculeSize = r.maxMoleculeSize;
-    nonCrowderCount = r.nonCrowderCount;
-    nonCrowderResidues = r.nonCrowderResidues;
-    for (size_t m=0; m<moleculeCount; m++)
-    {
-        molecules[m] = r.molecules[m];
-        cout << "molecule copy: " << &molecules[m] << " <- " << &r.molecules[m]<< endl;
-    }
-#if USING_CUDA
-    blockSize = r.blockSize;
-    sharedMemSize = r.sharedMemSize;
-    replicaIsOnDevice = false;
-#endif
-
-    paircount = r.paircount;
-    acc_err = 0;
-    min_translation = r.min_translation;
-    min_rotation = r.min_rotation;
-    rotateStep = r.rotateStep;
-    translateStep = r.translateStep;
-    temperatureBeta = r.temperatureBeta;
-}
+// Replica::Replica(const Replica& r)
+// {
+//     Replica();
+//     label = r.label;
+//     temperature = r.temperature;
+//     moleculeCount = r.moleculeCount;
+//     residueCount = r.residueCount;
+//     aminoAcids = r.aminoAcids;
+//     molecules = new Molecule[moleculeCount];
+//     maxMoleculeSize = r.maxMoleculeSize;
+//     nonCrowderCount = r.nonCrowderCount;
+//     nonCrowderResidues = r.nonCrowderResidues;
+//     for (size_t m=0; m<moleculeCount; m++)
+//     {
+//         molecules[m] = r.molecules[m];
+//         cout << "molecule copy: " << &molecules[m] << " <- " << &r.molecules[m]<< endl;
+//     }
+// #if USING_CUDA
+//     blockSize = r.blockSize;
+//     sharedMemSize = r.sharedMemSize;
+//     replicaIsOnDevice = false;
+// #endif
+//
+//     paircount = r.paircount;
+//     rotateStep = r.rotateStep;
+//     translateStep = r.translateStep;
+// }
 
 void Replica::setAminoAcidData(AminoAcids a)
 {
@@ -106,14 +94,11 @@ Replica::~Replica()
 #if INCLUDE_TIMERS
     if (timersInit)
     {
-        CUT_SAFE_CALL( cutDeleteTimer(replicaMCTimer) );
         CUT_SAFE_CALL( cutDeleteTimer(replicaToGPUTimer) );
         CUT_SAFE_CALL( cutDeleteTimer(replicaToHostTimer) );
         CUT_SAFE_CALL( cutDeleteTimer(replicaUpdateGPUTimer) );
-        CUT_SAFE_CALL( cutDeleteTimer(replicaKernelTimer) );
         CUT_SAFE_CALL( cutDeleteTimer(replicaMoleculeUpdateTimer) );
         CUT_SAFE_CALL( cutDeleteTimer(replicaECUDATimer) );
-        CUT_SAFE_CALL( cutDeleteTimer(replicaDeviceMCTimer) );
         CUT_SAFE_CALL( cutDeleteTimer(initGPUMemoryTimer) );
         CUT_SAFE_CALL( cutDeleteTimer(replicaEHostTimer) )
     }
@@ -378,20 +363,17 @@ void Replica::MCSearch(int steps)
 #if OUTOUTPUT_LEVEL >= PRINT_MC_STEP_COUNT
         cout << "Step: " << step << endl;
 #endif
-        //moleculeNo = ((int)(1000.0*_gsl_qrng_get (qrng_moleculeSelection)))%((int)moleculeCount);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng_moleculeSelection,moleculeCount);
 
         uint mutationType = gsl_ran_bernoulli (MCRng,translate_rotate_bernoulli_bias);
 
-        // save the current state so we can role back if it was not a good mutation.
+        // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
 
         switch (mutationType)
         {
         case _rotate:
         {
-            //molecules[moleculeNo].rotateQ(createNormalisedRandomVectord(rng_rotate),rotateStep);
-            //rotateStep = temperatureBeta * gsl_rng_uniform_pos(rng_rotateAmount) * INITIAL_ROTATIONAL_STEP + INITIAL_ROTATIONAL_STEP/2.0f;
             rotate(moleculeNo, rotateStep);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
@@ -402,7 +384,6 @@ void Replica::MCSearch(int steps)
 
         case _translate:
         {
-            //translateStep = temperatureBeta * gsl_rng_uniform_pos(rng_translateAmount) * INITIAL_TRANSLATIONAL_STEP + INITIAL_TRANSLATIONAL_STEP/2.0f;
             translate(moleculeNo, translateStep);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
@@ -424,7 +405,6 @@ void Replica::MCSearch(int steps)
 #if PERFORM_GPU_AND_CPU_E
         float cpu_e(E());
         float err = abs(cpu_e-newPotential)/abs(cpu_e);
-        //acc_err += err;
         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 #endif
 #else // only CPU calls
@@ -473,109 +453,58 @@ void Replica::MCSearch(int steps)
 
 }
 
-bool Replica::savePDB(const char *filename) // saves multiple pdb files per replica
-{
-    char filenameExt[256];
-    char tmp[64];
-    for (size_t i=0; i<moleculeCount; i++)
-    {
-        strcpy (filenameExt,filename);
-        sprintf (tmp,"%02d",int(i));
-        strcat (filenameExt,tmp);
-        strcat (filenameExt,".pdb");
-        molecules[i].saveAsPDB(filenameExt);
-    }
-    return true;
-}
-
-void Replica::saveAsSinglePDB(const char *filename)
-{
-    FILE * output;
-    output = fopen (filename,"w");
-    fprintf(output,"REMARK %s \n",filename);
-    fprintf(output,"REMARK potential: %0.10f \n",float(potential));
-    fprintf(output,"REMARK temperature: %5.1f \n",temperature);
-
-    for (size_t i=0; i<moleculeCount; i++)
-    {
-        fprintf(output,"REMARK Molecule: %d\n",int(i));
-        fprintf(output,"REMARK Rotation relative to input Q(w,x,y,z): %f %f %f %f\n",molecules[i].rotation.w,molecules[i].rotation.x,molecules[i].rotation.y,molecules[i].rotation.z);
-        fprintf(output,"REMARK Centriod position P(x,y,z): %f %f %f\n",molecules[i].center.x,molecules[i].center.y,molecules[i].center.z);
-    }
-
-    char chainId = 'A';
-    int itemcount = 0;
-    int lastSeqNo = 0;
-    for (size_t m=0; m<moleculeCount; m++)
-    {
-        size_t i=0;
-        while (i<molecules[m].residueCount)
-        {
-            itemcount++;
-            fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',aminoAcids.get(molecules[m].Residues[i].aminoAcidIndex).getSNAME(),chainId,molecules[m].Residues[i].resSeq,' ',molecules[m].Residues[i].position.x,molecules[m].Residues[i].position.y,molecules[m].Residues[i].position.z,1.0f,1.0f);
-            lastSeqNo = molecules[m].Residues[i].resSeq;
-            i++;
-        }
-        fprintf(output,"TER   %5d      %3s %C%4d \n",itemcount,aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(),chainId,lastSeqNo);
-        chainId++;
-        fflush(output);
-    }
-    fprintf(output,"END \n");
-    fflush(output);
-    fclose(output);
-}
+// bool Replica::savePDB(const char *filename) // saves multiple pdb files per replica
+// {
+//     char filenameExt[256];
+//     char tmp[64];
+//     for (size_t i=0; i<moleculeCount; i++)
+//     {
+//         strcpy (filenameExt,filename);
+//         sprintf (tmp,"%02d",int(i));
+//         strcat (filenameExt,tmp);
+//         strcat (filenameExt,".pdb");
+//         molecules[i].saveAsPDB(filenameExt);
+//     }
+//     return true;
+// }
+//
+// void Replica::saveAsSinglePDB(const char *filename)
+// {
+//     FILE * output;
+//     output = fopen (filename,"w");
+//     fprintf(output,"REMARK %s \n",filename);
+//     fprintf(output,"REMARK potential: %0.10f \n",float(potential));
+//     fprintf(output,"REMARK temperature: %5.1f \n",temperature);
+//
+//     for (size_t i=0; i<moleculeCount; i++)
+//     {
+//         fprintf(output,"REMARK Molecule: %d\n",int(i));
+//         fprintf(output,"REMARK Rotation relative to input Q(w,x,y,z): %f %f %f %f\n",molecules[i].rotation.w,molecules[i].rotation.x,molecules[i].rotation.y,molecules[i].rotation.z);
+//         fprintf(output,"REMARK Centriod position P(x,y,z): %f %f %f\n",molecules[i].center.x,molecules[i].center.y,molecules[i].center.z);
+//     }
+//
+//     char chainId = 'A';
+//     int itemcount = 0;
+//     int lastSeqNo = 0;
+//     for (size_t m=0; m<moleculeCount; m++)
+//     {
+//         size_t i=0;
+//         while (i<molecules[m].residueCount)
+//         {
+//             itemcount++;
+//             fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',aminoAcids.get(molecules[m].Residues[i].aminoAcidIndex).getSNAME(),chainId,molecules[m].Residues[i].resSeq,' ',molecules[m].Residues[i].position.x,molecules[m].Residues[i].position.y,molecules[m].Residues[i].position.z,1.0f,1.0f);
+//             lastSeqNo = molecules[m].Residues[i].resSeq;
+//             i++;
+//         }
+//         fprintf(output,"TER   %5d      %3s %C%4d \n",itemcount,aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(),chainId,lastSeqNo);
+//         chainId++;
+//         fflush(output);
+//     }
+//     fprintf(output,"END \n");
+//     fflush(output);
+//     fclose(output);
+// }
 // simulation evaluations
-
-inline float Replica::phi(Residue& i, Residue& j)
-{
-    // eps prevents division by zero
-    float r = EPS + sqrt( (i.position.x-j.position.x)*(i.position.x-j.position.x)+(i.position.y-j.position.y)*(i.position.y-j.position.y)+(i.position.z-j.position.z)*(i.position.z-j.position.z));
-
-    // first do the lennard jones pair interactions
-    float LJ = 0.0f;
-    float DH = 0.0f;
-#if REPULSIVE_CROWDING
-    if(i.aminoAcidIndex==CROWDER_IDENTIFIER || j.aminoAcidIndex==CROWDER_IDENTIFIER)
-    {
-        //float ctmp = 6.0f/r;
-        //LJ = ctmp*ctmp*ctmp*ctmp*ctmp*ctmp;
-        LJ = powf(6.0f/r,12.0f);
-    }
-    else
-    {
-#endif
-        float Eij = lambda*(aminoAcids.LJpotentials[i.aminoAcidIndex][j.aminoAcidIndex] - e0);
-
-        // sigmaij is the average atomic radius determined by the van der waal radius in kim2008
-        float sigmaij = 0.5f * ( i.vanderWaalRadius + j.vanderWaalRadius );
-        //float r0 = sigmaij*1.122462048309372981433533049679f; //pow(2.0,(1.0/6.0));
-        float sigT = sigmaij / r ;
-        float LJtmp = sigT*sigT*sigT*sigT*sigT*sigT;
-        if (Eij<0.0f)  // attractive pairs
-        {
-            LJ = 4.0f*abs(Eij)*( LJtmp*(LJtmp-1.0f));
-        }
-        else 	// repulsive pairs
-        {
-            //if (r<r0)
-            if (r<sigmaij*1.122462048309372981433533049679f)
-            {
-                LJ = 4.0f*Eij*( LJtmp*(LJtmp-1.0f)) + 2.0f*Eij;
-            }
-            else // r >= r0
-            {
-                LJ = -4.0f*Eij*( LJtmp*(LJtmp-1.0f));
-            }
-        }
-        // do the debye huckel long range intereactions
-        float DH_constant_component =  1.602176487f * 1.602176487f * DH_CONVERSION_FACTOR;
-        DH = i.electrostaticCharge * j.electrostaticCharge * expf(-r/Xi) / r * DH_constant_component;
-
-#if REPULSIVE_CROWDING
-    }
-#endif
-    return (LJ * LJ_CONVERSION_FACTOR + DH); // convert to kcal/mol
-}
 
 inline float crowderPairPotential(const float r)
 {
@@ -738,52 +667,6 @@ double Replica::E()
 #endif
     return epotential;
 }
-/*
-inline float Replica::fullPotentialLoop(const uint y, const uint x, const uint cacheTile, double * LJacc, double * DHacc )
-{
-	for (uint xi=x;xi<x+cacheTile,xi < residueCount; xi++)
-		if (xi > y && contiguousResidues[y].moleculeID != contiguousResidues[xi].moleculeID)
-		{
-			#if REPULSIVE_CROWDING
-			if(contiguousResidues[xi].aminoAcidIndex = CROWDER_IDENTIFIER)
-			{
-				LJacc[0] += crowderPairPotential(scalar_distance(contiguousResidues[y].position,contiguousResidues[xi].position) + EPS);
-			}
-			else
-			{
-			#endif
-
-				float r(scalar_distance(contiguousResidues[y].position,contiguousResidues[xi].position) + EPS);
-				DHacc[0] += (contiguousResidues[y].electrostaticCharge * contiguousResidues[xi].electrostaticCharge * expf(-r/Xi) / r);
-
-				// first do the lennard jones pair interactions
-				float Eij(lambda*(aminoAcids.LJpotentials[contiguousResidues[y].aminoAcidIndex][contiguousResidues[xi].aminoAcidIndex] - e0));
-				// sigmaij is the average atomic radius determined by the van der waal radius in kim2008
-				float sigmaij(0.5f * ( contiguousResidues[y].vanderWaalRadius + contiguousResidues[xi].vanderWaalRadius ));
-				//float r0 = powf(2.0f,(1.0f/6.0f));
-				//float sigT = sigmaij / r ;
-				float LJtmp(powf( sigmaij / r,6.0f)); //sigT*sigT*sigT*sigT*sigT*sigT;
-
-				float LJ(-4.0f*Eij*LJtmp*(LJtmp-1.0f));
-				//LJAccumulator += -4.0f*Eij*LJtmp*(LJtmp-1.0f);
-				if (Eij>0.0f && r<sigmaij*1.122462048309372981433533049679f)  // attractive pairs
-				{
-					LJ = -LJ + 2.0f*Eij;
-				}
-				LJacc[0] += LJ;
-
-			#if REPULSIVE_CROWDING
-			}
-			#endif
-		}
-}
-
-inline float Replica::crowderLoop(const uint y, const uint x, const uint cacheTile, double * LJacc)
-{
-	for (uint xi=x;xi<x+cacheTile,xi < residueCount;xi++)
-		if (contiguousResidues[y].moleculeID != contiguousResidues[xi].moleculeID)
-			(*LJacc) += crowderPairPotential(scalar_distance(contiguousResidues[y].position,contiguousResidues[xi].position) + EPS);
-}*/
 
 float Replica::E(Molecule *a,Molecule *b)
 {
@@ -822,243 +705,6 @@ float Replica::E(Molecule *a,Molecule *b)
     return epotential;
 }
 
-float Replica::geometricDistance(Molecule *a,Molecule *b, float cutoff)
-{
-    float minimum = (a->center - b->center).magnitude();
-    float tmp;
-    for (size_t mi=0; mi<a->residueCount; mi++)
-    {
-        for (size_t mj=0; mj<b->residueCount; mj++)
-        {
-            tmp = Vector3f(a->Residues[mi].position - b->Residues[mj].position).magnitude();
-            if (tmp < minimum)
-                minimum = tmp;
-        }
-    }
-    return minimum;
-}
-
-/*
-float length(const float4 a, const float4 b)
-{
-	return sqrtf((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z));
-}
-
-// evaluate the conformations  energy
-float Replica::Eopt()
-{
-#if INCLUDE_TIMERS
-	CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
-#endif
-
-	float epotential(0.0f);
-
-	float DHAccumulator= 0.0f;
-	float LJAccumulator= 0.0f;
-
-	for (size_t tx=0; tx<residueCount;tx++)
-	{
-		for (size_t ty=tx+1; ty<residueCount;ty++)
-		{
-			float4 rIp = host_float4_residuePositions[tx];
-			float4 rJp = host_float4_residuePositions[ty];
-
-			if (rIp.w == rJp.w)		// same molecule
-			{
-				// residueIp.w == residueJp.w means that they are the same molecule
-				// if either is -1 then its a padding residue and must be ignored
-			}
-			else
-			{
-
-				float4 rIm = host_float4_residueMeta[tx];
-				float4 rJm = host_float4_residueMeta[ty];
-
-				float r = length(rIp,rJp) + EPS;  // add eps so that r is never 0, can happen in a collision
-
-
-				//if there are crowders the LJ is replaced by the repulsive formula.
-				float LJ(0);   // needs to be here for scoping issues
-				float DH(0);
-
-				#if REPULSIVE_CROWDING
-				if (rIm.w == CROWDER_IDENTIFIER || rJm.w == CROWDER_IDENTIFIER) // repulsive crowder interaction
-				{
-					LJ = (6.0f*6.0f*6.0f*6.0f*6.0f*6.0f)/(r*r*r*r*r*r);  // powf(6.0f/r,6);
-				}
-				else  // normal LJ interaction
-				{
-				#endif
-					// do the debye huckel long range intereactions
-					DH = rIm.y * rJm.y * 1.602176487f * 1.602176487f * expf(-r/Xi) / r;
-					float sigmaij = (rIm.z + rJm.z ) * 0.5f;
-					float Eij = lambda*(aminoAcids.LJpotentials[int(rIm.x)][int(rJm.x)] - e0);
-
-
-					// sigmaij is the average atomic radius determined by the van der waals radius in kim2008
-					//float r0 = sigmaij*1.122462048309372981433533049679f; //pow(2.0,(1.0/6.0));
-					// the following 2 lines are needed for preserving numerical accuracy on a cpu. not needed on GPU
-					//float LJtmp = powf(sigmaij/r, 6.0f);
-					float LJtmp = (sigmaij*sigmaij*sigmaij*sigmaij*sigmaij*sigmaij)/(r*r*r*r*r*r);
-
-					LJ = -4.0f*Eij*LJtmp*(LJtmp-1.0f);
-					if (Eij>0.0f)  // attractive pairs
-					{
-						//if (r<r0)
-						if (r<sigmaij*1.122462048309372981433533049679f)
-						{
-							LJ = -LJ + 2.0f*Eij;
-						}
-					}
-				#if REPULSIVE_CROWDING
-				}  // end conditional branch for LJ or repulsive short-range energy
-				#endif
-				//epotential += LJ * LJ_CONVERSION_FACTOR + DH; // convert to kcal/mol
-				DHAccumulator += DH;
-				LJAccumulator += LJ;
-			}
-		}
-	}
-	//epotential *= KBTConversionFactor;
-	epotential = (DHAccumulator * DH_CONVERSION_FACTOR + LJAccumulator * LJ_CONVERSION_FACTOR) * KBTConversionFactor;
-	//cout << "opt:  " << epotential << endl;
-	//cout << DHAccumulator * DH_CONVERSION_FACTOR * KBTConversionFactor << " " <<  LJAccumulator * LJ_CONVERSION_FACTOR * KBTConversionFactor << endl;
-
-	/*
-	float epotential = 0.0f;
-
-	float LJtot = 0.0f;
-	float DHtot = 0.0f;
-
-	//float LJAccumulator = 0.0f;
-	//float DHAccumulator = 0.0f;
-	float DH_constant_component =  1.602176487f * 1.602176487f * DH_CONVERSION_FACTOR;
-
-	float r;
-
-	#define	 CPU_STRIDE 16
-
-	int gridDim = contiguousResiduesSize/CPU_STRIDE;
-
-	//Residue ResArrX[CPU_STRIDE];
-	//Residue ResArrY[CPU_STRIDE];
-	//memcpy (&ResArrX,contiguousResidues+gx*CPU_STRIDE,CPU_STRIDE);
-	/memcpy (&ResArrY,contiguousResidues+gy*CPU_STRIDE,CPU_STRIDE);
-
-	for (size_t gx=0; gx<gridDim;gx++)
-	{
-		for (size_t gy=gx; gy<gridDim;gy++)
-		{
-
-			float LJAccumulator = 0.0f;
-			float DHAccumulator = 0.0f;
-
-			for (int x=0;x<CPU_STRIDE;x++)   // go through the first set
-			{
-				int gxx = gx*CPU_STRIDE+x;
-
-				bool xcrowd = ((contiguousResidues+gxx)->aminoAcidIndex == CROWDER_IDENTIFIER);
-
-				if ((contiguousResidues+gxx)->aminoAcidIndex != PADDER_IDENTIFIER)  // its a padder -> ignore
-				{
-					for (int y=0; y<CPU_STRIDE;y++)
-					{
-						int gyy = gy*CPU_STRIDE+y;
-
-						if ((contiguousResidues+gyy)->aminoAcidIndex != PADDER_IDENTIFIER)  // not a padder or crowder
-						{
-							if ((contiguousResidues+gxx)->moleculeID!=(contiguousResidues+gyy)->moleculeID) // if they are different molecules
-							{
-								#if REPULSIVE_CROWDING
-								if (xcrowd || (contiguousResidues+gyy)->aminoAcidIndex == CROWDER_IDENTIFIER) // one is a crowder
-								{
-									r = EPS + sqrt( ((contiguousResidues+gxx)->position.x-(contiguousResidues+gyy)->position.x)*((contiguousResidues+gxx)->position.x-(contiguousResidues+gyy)->position.x)+((contiguousResidues+gxx)->position.y-(contiguousResidues+gyy)->position.y)*((contiguousResidues+gxx)->position.y-(contiguousResidues+gyy)->position.y)+((contiguousResidues+gxx)->position.z-(contiguousResidues+gyy)->position.z)*((contiguousResidues+gxx)->position.z-(contiguousResidues+gyy)->position.z));
-									LJAccumulator += powf(6.0f/r,6.0f);
-									// only use repulsive force
-									//DHAccumulator += iRes.electrostaticCharge * jRes.electrostaticCharge * expf(-r/Xi) / r;
-								}
-								else
-								#endif //REPULSIVE_CROWDING
-								{
-									r = EPS + sqrt( ((contiguousResidues+gxx)->position.x-(contiguousResidues+gyy)->position.x)*((contiguousResidues+gxx)->position.x-(contiguousResidues+gyy)->position.x)+((contiguousResidues+gxx)->position.y-(contiguousResidues+gyy)->position.y)*((contiguousResidues+gxx)->position.y-(contiguousResidues+gyy)->position.y)+((contiguousResidues+gxx)->position.z-(contiguousResidues+gyy)->position.z)*((contiguousResidues+gxx)->position.z-(contiguousResidues+gyy)->position.z));
-									DHAccumulator += (contiguousResidues+gxx)->electrostaticCharge * (contiguousResidues+gyy)->electrostaticCharge * expf(-r/Xi) / r;
-
-									// first do the lennard jones pair interactions
-									float Eij = lambda*(aminoAcids.LJpotentials[(contiguousResidues+gxx)->aminoAcidIndex][(contiguousResidues+gyy)->aminoAcidIndex] - e0);
-									// sigmaij is the average atomic radius determined by the van der waal radius in kim2008
-									float sigmaij = 0.5f * ( (contiguousResidues+gxx)->vanderWaalRadius + (contiguousResidues+gyy)->vanderWaalRadius );
-									//float r0 = powf(2.0f,(1.0f/6.0f));
-									//float sigT = sigmaij / r ;
-									float LJtmp = powf( sigmaij / r,6.0f); //sigT*sigT*sigT*sigT*sigT*sigT;
-
-									float LJ = -4.0f*Eij*LJtmp*(LJtmp-1.0f);
-									//LJAccumulator += -4.0f*Eij*LJtmp*(LJtmp-1.0f);
-									if (Eij>0.0f && r<sigmaij*1.122462048309372981433533049679f)  // attractive pairs
-									{
-										LJ = -LJ + 2.0f*Eij;
-									}
-									LJAccumulator += LJ;
-								}
-							}
-						}
-					}
-				}
-
-			}
-			if (gx==gy)
-			{
-				LJtot += 0.5f*LJAccumulator;
-				DHtot += 0.5f*DHAccumulator;
-			}
-			else
-			{
-				LJtot += LJAccumulator;
-				DHtot += DHAccumulator;
-			}
-		}
-	}
-	epotential = ( DHtot * DH_constant_component + LJtot * LJ_CONVERSION_FACTOR ) * KBTConversionFactor;
-
-	cout << DHtot * DH_constant_component * KBTConversionFactor << " " <<  LJtot * LJ_CONVERSION_FACTOR * KBTConversionFactor << endl;*/
-/*#if INCLUDE_TIMERS
-	CUT_SAFE_CALL( cutStopTimer(replicaEHostTimer) );
-#endif
-	return epotential;
-}
-*/
-// evaluate conformations energy with optimizations
-float Replica::Eorig()
-{
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
-#endif
-
-    float epotential = 0.0f;
-
-    // between each residue do the LJ and DH potentials
-    // do summation for LJ and DH potentials
-    for (size_t mI=0; mI<moleculeCount; mI++)
-    {
-        for (size_t mJ=mI+1; mJ<moleculeCount; mJ++)
-        {
-            for (size_t mi=0; mi<molecules[mI].residueCount; mi++)
-            {
-                for (size_t mj=0; mj<molecules[mJ].residueCount; mj++)
-                {
-                    if (mI!=mJ) //mj == mi && ) // if this is the same molecule, the same residue cannot be compared to itself, do nothing
-                    {
-                        epotential += phi(molecules[mI].Residues[mi],molecules[mJ].Residues[mj]);
-                    }
-                }
-            }
-        }
-    }
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaEHostTimer) );
-#endif
-    return epotential * KBTConversionFactor;
-}
-
 void Replica::printTimers()
 {
 #if INCLUDE_TIMERS
@@ -1071,7 +717,6 @@ void Replica::printTimers()
     printf("%12.6f\t%12.6f\t Kernel Timer (computation)\n",         cutGetTimerValue(replicaECUDATimer),            cutGetAverageTimerValue(replicaECUDATimer));
     printf("%12.6f\t%12.6f\t Host Timer (computation)\n",           cutGetTimerValue(replicaEHostTimer),            cutGetAverageTimerValue(replicaEHostTimer));
     printf("%12.6f\t%12.6f\t Update Molecule on GPU (transfer)\n",  cutGetTimerValue(replicaMoleculeUpdateTimer),   cutGetAverageTimerValue(replicaMoleculeUpdateTimer));
-    printf("%12.6f\t%12.6f\t Mutation of GPU (computation) \n",     cutGetTimerValue(replicaDeviceMCTimer),         cutGetAverageTimerValue(replicaDeviceMCTimer));
     printf("%12.6f\t%12.6f\t GPU Memory Initialisation (malloc)\n", cutGetTimerValue(initGPUMemoryTimer),           cutGetAverageTimerValue(initGPUMemoryTimer));
     printf("Kernel Speedup:  %0.1fx\n", cutGetAverageTimerValue(replicaEHostTimer)/cutGetAverageTimerValue(replicaECUDATimer));
 
@@ -1084,16 +729,6 @@ void Replica::printTimers()
 
 #if USING_CUDA
 // all functions following this line are dependent on CUDA
-
-void Replica::initialiseDeviceLJPotentials()
-{
-    copyLJPotentialDataToDevice (device_LJPotentials, &aminoAcids);
-}
-
-int Replica::getBlockSize()
-{
-    return blockSize;
-}
 
 void Replica::setBlockSize(int blockSize)
 {
@@ -1110,46 +745,6 @@ void Replica::setBlockSize(int blockSize)
     sharedMemSize *= blockSize;
 }
 
-int Replica::getDataSetSize()
-{
-    return dataSetSize;
-}
-
-void Replica::setDataSetSize(int dataSetSize)
-{
-    this->dataSetSize = dataSetSize;
-}
-
-int Replica::getPaddedSize()
-{
-    return paddedSize;
-}
-
-void Replica::setPaddedSize(int paddedSize)
-{
-    this->paddedSize = paddedSize;
-}
-
-int Replica::getGridSize()
-{
-    return gridSize;
-}
-
-void Replica::setGridSize(int gridSize)
-{
-    this->gridSize = gridSize;
-}
-
-int Replica::getResultSize()
-{
-    return resultSize;
-}
-
-void Replica::setResultSize(int resultSize)
-{
-    this->resultSize = resultSize;
-}
-
 void Replica::countNonCrowdingResidues()
 {
     nonCrowderResidues = 0;
@@ -1160,11 +755,6 @@ void Replica::countNonCrowdingResidues()
             nonCrowderResidues += molecules[m].residueCount;
         }
     }
-}
-
-void Replica::audit()
-{
-    countNonCrowdingResidues();
 }
 
 #if CUDA_STREAMS
@@ -1222,16 +812,11 @@ float Replica::SumGridResults()
 }
 #endif
 
-// deleted: see code prior to 26/11/2010
-
 #if CUDA_STREAMS
 
 // 1/3 of the above function, does the mutation on the gpu asynchronously
 void Replica::MCSearchMutate()
 {
-    //float translateStep = INITIAL_TRANSLATIONAL_STEP;
-    //double rotateStep = INITIAL_ROTATIONAL_STEP;
-
     oldPotential = potential;
 
     uint moleculeNo = (int) gsl_rng_uniform_int(rng_moleculeSelection,moleculeCount);
@@ -1239,7 +824,7 @@ void Replica::MCSearchMutate()
 
     uint mutationType = gsl_ran_bernoulli (MCRng,translate_rotate_bernoulli_bias);
 
-    // save the current state so we can role back if it was not a good mutation.
+    // save the current state so we can roll back if it was not a good mutation.
     savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
 
     switch (mutationType)
@@ -1424,11 +1009,6 @@ void Replica::ReplicaDataToDevice()
 void Replica::setLJpotentials(float *ljp)
 {
     device_LJPotentials = ljp;
-}
-
-void Replica::freeLJpotentials()
-{
-    cudaFree(device_LJPotentials);
 }
 
 void Replica::ReplicaDataToHost()
@@ -1790,7 +1370,3 @@ bool Replica::sample(SimulationData *data, int current_step, float boundEnergyTh
     return isBound;
 }
 
-void Replica::save(char* filename)
-{
-    cout << " *** INSERT SAVECODE CODE HERE *** " << endl;
-}

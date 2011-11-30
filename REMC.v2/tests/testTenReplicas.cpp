@@ -80,8 +80,8 @@ void TestTenReplicas::testSanity()
         { -8.511853,  -8.511852,  -8.511855,  -8.511855}
     };
 
-    static const float expected_averages [7] = {0.029f, 0.0f, 0.271f, 0.981f, 0.0f, 0.0f, 0.09f};
-    static int exceeded_averages [7] = {0, 0, 0, 0, 0, 0, 0};
+    static const float expected_averages [6] = {0.029f, 0.0f, 0.271f, 0.981f, 0.0f, 0.09f};
+    static int exceeded_averages [6] = {0, 0, 0, 0, 0, 0};
 
     for (int i = 0; i < 10; i++)
     {
@@ -115,17 +115,16 @@ void TestTenReplicas::testSanity()
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu, e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu_nc, gpu_nc, e);
 
-        float averages[7];
+        float averages[6];
 
         averages[0] = cutGetAverageTimerValue(replicas[i].replicaToGPUTimer);
         averages[1] = cutGetAverageTimerValue(replicas[i].replicaUpdateGPUTimer);
         averages[2] = cutGetAverageTimerValue(replicas[i].replicaECUDATimer);
         averages[3] = cutGetAverageTimerValue(replicas[i].replicaEHostTimer);
         averages[4] = cutGetAverageTimerValue(replicas[i].replicaMoleculeUpdateTimer);
-        averages[5] = cutGetAverageTimerValue(replicas[i].replicaDeviceMCTimer);
-        averages[6] = cutGetAverageTimerValue(replicas[i].initGPUMemoryTimer);
+        averages[5] = cutGetAverageTimerValue(replicas[i].initGPUMemoryTimer);
 
-        for (int j = 0; j < 7; j++)
+        for (int j = 0; j < 6; j++)
         {
             if (averages[j] > expected_averages[j] + 0.01)
             {
@@ -136,7 +135,7 @@ void TestTenReplicas::testSanity()
         replicas[i].FreeDevice();
     }
 
-    for (int j = 0; j < 7; j++)
+    for (int j = 0; j < 6; j++)
     {
         // ignore one or two outliers
         CPPUNIT_ASSERT(exceeded_averages[j] <= 2);
