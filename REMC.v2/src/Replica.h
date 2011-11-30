@@ -31,35 +31,24 @@ class Replica
 public:
     Replica();
     ~Replica();
-    Replica(const Replica& r);
+//     Replica(const Replica& r);
     void setAminoAcidData(AminoAcids a);
     void reserveContiguousMoleculeArray(int size);
     void initRNGs();
     void freeRNGs();
     void copy(const Replica& r); 						// assignment copy, duplicate it.
-    //bool checkCollisions();							// check that molecules dont collide (for loading and explicit moves/rotates)
-    //bool translateMolecule(int moleculeIndex);
-    //bool rotateMolecule(int moleculeIndex);
 
-    void audit(); // makes sure everything is correct before simulations
     void exchangeReplicas(Replica &r);
 
-    float f(double& surfaceAccessableSolventAreaRatio);
-    float phi(Residue& i, Residue& j);
     double E();
-    double Ef();
 
-    float E_sse(); // using sse
-    float E_tile(); // using tile subdivision
     float E(Molecule *a,Molecule *b);   // use for fraction bound calcs
-    float Eopt();  // cuda like optimisations to E
-    float Eorig();
 
     // the search method that mutates the replicas molecules.
     void MCSearch(int steps);//, Replica * replaceReplica);
 
-    bool savePDB(const char *filename); // save multiple pdb files per replica
-    void saveAsSinglePDB(const char *filename); //save one pdb, each molecule is given a chain id from A upward
+//     bool savePDB(const char *filename); // save multiple pdb files per replica
+//     void saveAsSinglePDB(const char *filename); //save one pdb, each molecule is given a chain id from A upward
 
     int loadMolecule(const char *pdbfilename);
     int loadMolecule(const char *pdbfilename, Vector3f position, Vector3double rotationAxis, double rotationAmount);
@@ -78,55 +67,36 @@ public:
     int residueCount;
 
     float boundingValue;
-    void setBoundingValue(float value) {
+    void setBoundingValue(float value) { // TODO: eliminate this setter
         boundingValue = value;
     };
-    inline float getBoundingValue() {
-        return boundingValue;
-    };
-
-
-    float fullPotentialLoop(const uint y, const uint x, const uint cacheTile, double * LJacc, double * DHacc );
-    float crowderLoop(const uint y, const uint x, const uint cacheTile, double * LJacc);
-
-
 
     float temperature;
-    float temperatureBeta;
     short label;
     double potential;
-    float E_DH;
-    float E_LJ;
-    float min_rotation;
-    float min_translation;
 
     float translateStep;
     double rotateStep;
 
-    void setTranslateStep(float t) {
+    void setTranslateStep(float t) { // TODO: eliminate this setter
         translateStep = t;
     }
-    void setRotateStep(double r) {
+    void setRotateStep(double r) { // TODO: eliminate this setter
         rotateStep = r;
     }
-    void setTemperature(float t) {
+    void setTemperature(float t) { // TODO: eliminate this setter
         temperature = t;
     }
-    void setTemperatureBeta(float t) {
-        temperatureBeta = t;
-    }
-    void setLabel(short l) {
+    void setLabel(short l) { // TODO: eliminate this setter
         label = l;
     }
 
     // rngs for this object
-    gsl_rng * replacePRN;		// random number generator, replace if in/not in the boltzman dist
     gsl_rng * rng_translate;	// the translation vector rngs
     gsl_rng * rng_translateAmount;	// the translation vector rngs
     gsl_rng * rng_rotate;		// the rotation vector rng
     gsl_rng * rng_rotateAmount;	// the translation vector rngs
     gsl_rng * rng_moleculeSelection; // molecule selection rng
-    gsl_rng * RERng;  // used for replica exchange
     gsl_rng * MCRng;  // used to determine what change to make
     gsl_rng * MCKbRng;	// boltzmann acceptance rng in MC
 
@@ -140,9 +110,6 @@ public:
     int totalAcceptReject;
     int totalAccept;
 
-
-    bool recordCrowders;
-
     int boundSamples;
     int samplesSinceLastExchange;
 
@@ -150,50 +117,19 @@ public:
     int totalSamples;
 
     bool sample(SimulationData *data, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex);
-    float geometricDistance(Molecule *a,Molecule *b, float cutoff);
-    void save(char* filename);
-
-    float setTemperatureBeta() {
-        temperatureBeta = temperature/300.0f;
-        return temperatureBeta;
-    };
-    float getTemperatureBeta() {
-        return temperatureBeta;
-    };
-
-
 
     int countpairs();
     int paircount;
-    float acc_err;
 
 #if USING_CUDA
 
     float4 *device_float4_residuePositions; // x,y,z,w == position.x,position.y,position.z,id
     float4 *device_float4_residueMeta;		// x,y,z,w == index,charge,vdwr,temperature
 
-
-    /*float *d_x;
-    float *d_y;
-    float *d_z;
-    int *d_id;*/
-
     float4 *host_float4_residuePositions;
     float4 *host_float4_residueMeta;
 
-    /*float *h_x;
-    float *h_y;
-    float *h_z;
-    int *h_id;*/
-
-
     float *device_LJPotentials;
-
-    float4 *molecule1_pos;
-    float4 *molecule2_pos;
-    float4 *molecule1_meta;
-    float4 *molecule2_meta;
-
 
     int *device_residueCount;
     int *device_moleculeCount;
@@ -225,48 +161,29 @@ public:
     float4 *host_reverseRotationVector;
 
     bool rotateOnDevice(int moleculeID, Vector3f vector, float amount);
-    bool rotateOnDeviceM(int moleculeID, RotationalMatrix);
     bool translateOnDevice(int moleculeID, Vector3f translation);
     bool lastMutationWasATranslate;
-    Vector3f reverseTranslate;
-    RotationalMatrix reverseRotationalMatrix;
     int lastMutatedMolecule;
     void cudaRollbackMutation();
-    // do all the mc functions on the device at once
-    void MCSearchOnDevice(int steps);
 #endif
 
     void ReplicaDataToDevice();	// copy the replica to the device
-    void initialiseDeviceLJPotentials();
-    float * getDeviceLJPotentials() {
-        return device_LJPotentials;
-    };
-    void setDeviceLJPotentials(float * ljp) {
+
+    void setDeviceLJPotentials(float * ljp) { // TODO: eliminate this setter
         device_LJPotentials = ljp;
     }
-    void ReplicaDataToHost();
-    void UpdateDeviceData();
+    void ReplicaDataToHost(); // TODO: Never used? Remove?
+    void UpdateDeviceData(); // TODO: Never used? Remove?
     void MoleculeDataToDevice(int MoleculeID); // update a molecule on the device
-    void MoleculeDataToDeviceAsync(int MoleculeID); // update a molecule on the device
     double EonDevice();
     double EonDeviceNC();
     void EonDeviceAsync();
-    void setLJpotentials(float *ljp);
-    int getBlockSize();
+    void setLJpotentials(float *ljp); // TODO: eliminate this setter
     void setBlockSize(int blockSize);
-    int getDataSetSize();
-    void setDataSetSize(int dataSetSize);
-    int getPaddedSize();
-    void setPaddedSize(int paddedSize);
-    int getGridSize();
-    void setGridSize(int gridSize);
-    int getResultSize();
-    void setResultSize(int resultSize);
+
     void countNonCrowdingResidues();
 
     void FreeDevice();
-    void freeLJpotentials();
-
 
 #if CUDA_STREAMS
     cudaStream_t cudaStream;
@@ -283,23 +200,17 @@ public:
     void MCSearchMutate();
     void MCSearchEvaluate();
     void MCSearchAcceptReject();
-
 #endif
-
-
 
 #endif
 
 #if INCLUDE_TIMERS
     //timers for profiling the cuda functions
-    uint replicaMCTimer;
     uint replicaToGPUTimer;
     uint replicaToHostTimer;
     uint replicaUpdateGPUTimer;
-    uint replicaKernelTimer;
     uint replicaECUDATimer;
     uint replicaMoleculeUpdateTimer;
-    uint replicaDeviceMCTimer;
     uint initGPUMemoryTimer;
     uint replicaEHostTimer;
     bool timersInit;
@@ -315,13 +226,8 @@ public:
 
 
 private:
-    size_t molecules_max_size;
     void rotate(const int m, const double step);
     void translate(const int m, const float step);
 };
-
-//void bindLJtoTexture(int GPUID, float *ljp);
-//void FreeLJfromTexture(int GPUID);
-
 
 #endif /*REPLICA_H_*/

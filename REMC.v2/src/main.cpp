@@ -1179,7 +1179,6 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 
         // changed to geometric sequence
         replica[i].setTemperature(parameters->temperatureMin * pow(geometricTemperature,int(i)));
-        replica[i].setTemperatureBeta(replica[i].temperature/300.0f);
 
         replica[i].setRotateStep(MIN_ROTATION * pow(geometricRotation,int(i)));
         replica[i].setTranslateStep(MIN_TRANSLATION * pow(geometricTranslate,int(i)));
@@ -1693,7 +1692,6 @@ int main(int argc, char **argv)
             exampleReplicas[i-1].countNonCrowdingResidues();
             exampleReplicas[i-1].E();
 
-            //printf ("%10.6f %10.6f %10.6f\n",exampleReplicas[i-1].potential,exampleReplicas[i-1].E_LJ,exampleReplicas[i-1].E_DH);
             //show that cuda returns the same energys for each
             // make sure the replicas know where to find the data, as the use it for calling cuda kernels
             exampleReplicas[i-1].setDeviceLJPotentials(ljp_t);
@@ -1876,7 +1874,6 @@ int main(int argc, char **argv)
         cout << "Output files will be prefixed by " << parameters.prependageString << "_" << parameters.pid << endl;
         REMCSimulation(&initialReplica,&parameters);
 #if OUTPUT_LEVEL > 0
-        //printf("%d %0.20f\n",replica[0].countpairs(),replica[0].acc_err/float(parameters.MCsteps));
         cout << endl << "Simulation done" << endl;
 #endif
 
