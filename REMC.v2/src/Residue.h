@@ -27,6 +27,11 @@ public:
     int resSeq;
     int moleculeID;
     //AminoAcid aa;
+
+#ifdef FLEXIBLE_LINKS
+    float LJ_component(const Residue& rj, const double r, const AminoAcids & AminoAcidsData);
+    float DH_component(const Residue& rj, const double r);
+#endif
 };
 
 

@@ -52,12 +52,16 @@ public:
 #ifdef FLEXIBLE_LINKS
     int linkCount;
     int segmentCount;
-    int linkerCount;
+//     int linkerCount;
     Link *Links;
     Segment *Segments; // Boundaries of all domains and linkers
-    Segment **Linkers; // Boundaries of all flexible linkers (pointers into Segments array)
+//     Segment **Linkers; // Boundaries of all flexible linkers (pointers into Segments array)
     TorsionalLookupMatrix torsions;
     float E();
+
+    double LJ; // cached inter-segment LJ component of this molecule
+    double DH; // cached inter-segment DH component of this molecule
+    bool update_E; // LJ and DH values need to be updated
 #endif
     size_t chainCount;
     Vector3f position;
