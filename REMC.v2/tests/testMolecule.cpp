@@ -112,14 +112,14 @@ void TestLinkerPotentials::testPDBSequence()
 void TestLinkerPotentials::testSegments()
 {
     CPPUNIT_ASSERT_EQUAL(1, molecule.segmentCount);
-    CPPUNIT_ASSERT_EQUAL(1, molecule.linkerCount);
+//     CPPUNIT_ASSERT_EQUAL(1, molecule.linkerCount);
 
     CPPUNIT_ASSERT_EQUAL(0, molecule.Segments[0].start);
     CPPUNIT_ASSERT_EQUAL(9, molecule.Segments[0].end);
     CPPUNIT_ASSERT_EQUAL(true, molecule.Segments[0].flexible);
 
-    CPPUNIT_ASSERT_EQUAL(0, molecule.Linkers[0]->start);
-    CPPUNIT_ASSERT_EQUAL(9, molecule.Linkers[0]->end);
+//     CPPUNIT_ASSERT_EQUAL(0, molecule.Linkers[0]->start);
+//     CPPUNIT_ASSERT_EQUAL(9, molecule.Linkers[0]->end);
 }
 
 void TestLinkerPotentials::testGeometry()

@@ -1,21 +1,28 @@
+EVERYWHERE
+
+* replace 1.122462048309372981433533049679f with r0 definition
+
 REPLICA:
 
-MAIN:
-
-* Split up main.cpp into definitions, functions and just the main function, so that it can be unit tested.
+* Duplication between phi function and E function -- use new method on residue (unit test!)
+* Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
 * delete Replica::freeLJpotentials, Replica::setLJpotentials
 * Remove audit
 * difference between nonCrowderResidues and nonCrowderCount
 * recordCrowders not used
 
+MAIN:
+
+* Split up main.cpp into definitions, functions and just the main function, so that it can be unit tested.
+
 UNIT TESTS:
 
 MOLECULE:
 
+* Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
 * delete Molecule::rotate
 * make Molecule::rotateQ call Molecule::setRotation ?
 
 MISC:
 
-* Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
 * Make CPU version compile -- fix flag mismatch.  Total mess.
