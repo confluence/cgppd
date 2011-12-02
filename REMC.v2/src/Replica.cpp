@@ -524,6 +524,14 @@ inline float distance(Vector3f a,Vector3f b, float _boxdim)
     return sqrtf(Xab*Xab+Yab*Yab+Zab*Zab);
 }
 
+void kahan_sum(double &potential, const double p_ij, double &c)
+{
+    double y(p_ij - c);
+    double t(potential + y);
+    c = (t - potential) - y;
+    potential = t;
+}
+
 // evaluate the conformations  energy
 double Replica::E()
 {
@@ -539,19 +547,6 @@ double Replica::E()
 #if COMPENSATE_KERNEL_SUM
     double c_lj(0.0f);
     double c_dh(0.0f);
-
-    /*
-    function kahanSum(input)
-     var potential = 0
-     var c = 0
-     for i = 0 to blockdim-1
-      y = Pij - c
-      t = potential + y
-      c = (t - potential) - y
-      potential = t
-     next i
-    return sum
-    */
 #endif
 
 #define iRes molecules[mI].Residues[mi]
@@ -569,20 +564,20 @@ double Replica::E()
                 {
                     for (size_t mj=0; mj<molecules[mJ].residueCount; mj++)
                     {
-                        //r = EPS + sqrtf( (iRes.position.x-jRes.position.x)*(iRes.position.x-jRes.position.x)+(iRes.position.y-jRes.position.y)*(iRes.position.y-jRes.position.y)+(iRes.position.z-jRes.position.z)*(iRes.position.z-jRes.position.z));
-                        //LJAccumulator += (46656.0 / pow(r,6));
-                        //LJAccumulator += crowderPairPotential(scalar_distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position)+ EPS);
-#if COMPENSATE_KERNEL_SUM
-                        double 	y(crowderPairPotential(distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position,boundingValue)+ EPS) - c_lj);
-                        double t(LJAccumulator + y);
-                        c_lj = (t-LJAccumulator)-y;
-                        LJAccumulator = t;
-#else
+                        // TODO: I assume cutoff applies to both sums. Why EPS here and not below?
                         float r(distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position,boundingValue) + EPS);
                         if (r<const_repulsive_cutoff)
+                        {
+#if COMPENSATE_KERNEL_SUM
+//                         double 	y(crowderPairPotential(distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position,boundingValue)+ EPS) - c_lj);
+//                         double t(LJAccumulator + y);
+//                         c_lj = (t-LJAccumulator)-y;
+//                         LJAccumulator = t;
+                            kahan_sum(LJAccumulator, crowderPairPotential(r), c_lj);
+#else
                             LJAccumulator += crowderPairPotential(r);
 #endif
-
+                        }
                     }
                 }
             }
@@ -621,41 +616,27 @@ double Replica::E()
                         {
 
                             double r(distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position,boundingValue) + EPS);
+                            double DH(molecules[mI].Residues[mi].DH_component(molecules[mJ].Residues[mj], r));
 #if COMPENSATE_KERNEL_SUM
-                            double y = (iRes.electrostaticCharge * jRes.electrostaticCharge * expf(-r/Xi) / r) - c_dh;
-                            double t = DHAccumulator + y;
-                            c_dh = (t-DHAccumulator)-y;
-                            DHAccumulator = t;
+//                             double y = DH - c_dh;
+//                             double t = DHAccumulator + y;
+//                             c_dh = (t-DHAccumulator)-y;
+//                             DHAccumulator = t;
+                            kahan_sum(DHAccumulator, DH, c_dh);
 #else
-                            DHAccumulator += (iRes.electrostaticCharge * jRes.electrostaticCharge * expf(-r/Xi) / r);
+                            DHAccumulator += DH;
 #endif
-
-                            // first do the lennard jones pair interactions, put first to overlap the fetch woth the calcualtion of r
-                            float Eij(lambda*(aminoAcids.LJpotentials[iRes.aminoAcidIndex][jRes.aminoAcidIndex] - e0));
-
-
-                            // sigmaij is the average atomic radius determined by the van der waal radius in kim2008
-                            float sigmaij(0.5f * ( iRes.vanderWaalRadius + jRes.vanderWaalRadius ));
-                            //float r0 = powf(2.0f,(1.0f/6.0f));
-                            //float sigT = sigmaij / r ;
-                            double LJtmp(powf( sigmaij / r,6.0f)); //sigT*sigT*sigT*sigT*sigT*sigT;
-
-                            double LJ(-4.0f*Eij*LJtmp*(LJtmp-1.0f));
-                            //LJAccumulator += -4.0f*Eij*LJtmp*(LJtmp-1.0f);
-                            if (Eij>0.0f && r<sigmaij*1.122462048309372981433533049679f)  // attractive pairs
-                            {
-                                LJ = -LJ + 2.0f*Eij;
-                            }
+                            double LJ(molecules[mI].Residues[mi].LJ_component(molecules[mJ].Residues[mj], r, aminoAcids));
 
 #if COMPENSATE_KERNEL_SUM
-                            y = LJ - c_lj;
-                            t = LJAccumulator + y;
-                            c_lj = (t-LJAccumulator)-y;
-                            LJAccumulator = t;
+//                             y = LJ - c_lj;
+//                             t = LJAccumulator + y;
+//                             c_lj = (t-LJAccumulator)-y;
+//                             LJAccumulator = t;
+                            kahan_sum(LJAccumulator, LJ, c_lj);
 #else
                             LJAccumulator += LJ;
 #endif
-
                         }
                     }
             }
@@ -694,7 +675,7 @@ float Replica::E(Molecule *a,Molecule *b)
             float sigmaij = 0.5f * ( aRes.vanderWaalRadius + bRes.vanderWaalRadius );
             float LJtmp = powf( sigmaij / r,6.0f); //sigT*sigT*sigT*sigT*sigT*sigT;
             float LJ = -4.0f*Eij*LJtmp*(LJtmp-1.0f);
-            if (Eij>0.0f && r<sigmaij*1.122462048309372981433533049679f)  // attractive pairs
+            if (Eij>0.0f && r<sigmaij*r0_constant)  // attractive pairs
             {
                 LJ = -LJ + 2.0f*Eij;
             }
