@@ -926,8 +926,8 @@ void *MCthreadableFunction(void *arg)
 
     cudaStream_t streams[16];   // reserve 16 stream slots but create only as many as needed
     // the stream/replica ration must be a whole number otherwise there will be lots of waste, ie dormant streams etc
-    int streamsAvailiablePerThread = data->streams/data->threads;
-    int replicasPerStream = int(ceil(float(replicasInThisThread)/float(streamsAvailiablePerThread)));
+    int streamsAvailablePerThread = data->streams/data->threads;
+    int replicasPerStream = int(ceil(float(replicasInThisThread)/float(streamsAvailablePerThread)));
     int streamsPerThread  = replicasInThisThread/replicasPerStream;
 
     for (int is=0; is<streamsPerThread; is++)
@@ -1117,8 +1117,8 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
     int checkpointFrequency = CHECKPOINTFREQUENCY; // in resteps steps
 
     int threadCount = parameters->threads;
-    int availiableStreams = parameters->streams;
-    int availiableGpus = parameters->gpus;
+    int availableStreams = parameters->streams;
+    int availableGpus = parameters->gpus;
     int waitingThreads = 0;
     int conformationsBound = 0;
     FILE *boundConformationsFile;
@@ -1128,8 +1128,8 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 
 
 #if USING_CUDA
-    cudaGetDeviceCount(&availiableGpus);
-    if (availiableGpus>1) cout << availiableGpus << " GPUs availiable" << endl;
+    cudaGetDeviceCount(&availableGpus);
+    if (availableGpus>1) cout << availiableGpus << " GPUs availiable" << endl;
     //cutilCheckMsg("");
 #endif
 
@@ -1292,8 +1292,8 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 #endif
 
     //if there are multiple gpus then associate here
-    if (parameters->gpus > availiableGpus)
-        parameters->gpus = availiableGpus;
+    if (parameters->gpus > availableGpus)
+        parameters->gpus = availableGpus;
 
     int gpuid = 0; // the first device, increment per thread
 
@@ -1351,7 +1351,7 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
         data[i].replicaCount = parameters->replicas;
         data[i].index = i;
         data[i].threads = threadCount;
-        data[i].streams = availiableStreams;///threadCount; //determines the number of streams available
+        data[i].streams = availableStreams;///threadCount; //determines the number of streams available
         data[i].MCsteps = parameters->MCsteps;
         data[i].REsteps = parameters->REsteps;
         data[i].sampleFrequency = parameters->sampleFrequency;
@@ -1551,7 +1551,7 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStopTimer(RELoopTimer) );
     printf("Simulation Timers\n");
-    printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"  	,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters->REsteps),parameters->MCsteps,parameters->replicas,threadCount,availiableStreams);
+    printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"  	,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters->REsteps),parameters->MCsteps,parameters->replicas,threadCount,availableStreams);
     printf("Simulation:     %10.5f ms  (%d exchanges)\n"	,cutGetTimerValue(RELoopTimer),parameters->REsteps);
     cutDeleteTimer(RELoopTimer);
     cutDeleteTimer(MCLoopTimer);
