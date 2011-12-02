@@ -727,6 +727,18 @@ void Replica::printTimers()
 #endif
 }
 
+void Replica::countNonCrowdingResidues()
+{
+    nonCrowderResidues = 0;
+    for (int m=0; m<moleculeCount; m++)
+    {
+        if (molecules[m].moleculeRoleIdentifier >= 0)
+        {
+            nonCrowderResidues += molecules[m].residueCount;
+        }
+    }
+}
+
 #if USING_CUDA
 // all functions following this line are dependent on CUDA
 
@@ -743,18 +755,6 @@ void Replica::setBlockSize(int blockSize)
     sharedMemSize += sizeof(float4);
 #endif
     sharedMemSize *= blockSize;
-}
-
-void Replica::countNonCrowdingResidues()
-{
-    nonCrowderResidues = 0;
-    for (int m=0; m<moleculeCount; m++)
-    {
-        if (molecules[m].moleculeRoleIdentifier >= 0)
-        {
-            nonCrowderResidues += molecules[m].residueCount;
-        }
-    }
 }
 
 #if CUDA_STREAMS
@@ -1316,16 +1316,19 @@ bool Replica::sample(SimulationData *data, int current_step, float boundEnergyTh
     // in the case of all molecules being of interest then just use the potential
     if (moleculeCount != nonCrowderCount)
     {
+#if USING_CUDA
         nonCrowderPotential = EonDeviceNC(); // do on GPU, no stream support, can be implemented in 3mins if stream samlping is fixed.
-
+#else
         // if there are crowders and molecules of interest the only use the energy of the interesting ones
-        /*for (int i=0;i<nonCrowderCount;i++)
+        // TODO: does this work?! Are all the NC molecules at the front of the list?
+        for (int i=0;i<nonCrowderCount;i++)
         {
-        	for (int j=i+1;j<nonCrowderCount;j++)
-        	{
-        			nonCrowderPotential += E(&molecules[i],&molecules[j]); // CPU failsafe
-        	}
-        }*/
+            for (int j=i+1;j<nonCrowderCount;j++)
+            {
+                nonCrowderPotential += E(&molecules[i],&molecules[j]); // CPU failsafe
+            }
+        }
+#endif
     }
     else
     {
