@@ -1129,7 +1129,7 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 
 #if USING_CUDA
     cudaGetDeviceCount(&availableGpus);
-    if (availableGpus>1) cout << availiableGpus << " GPUs availiable" << endl;
+    if (availableGpus>1) cout << availableGpus << " GPUs available" << endl;
     //cutilCheckMsg("");
 #endif
 
