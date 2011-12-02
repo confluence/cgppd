@@ -32,27 +32,29 @@ void TestTenReplicas::setUp()
 
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
+    testboxdim = 118.4f;
+    test_molecule_file = new char[60];
 
+#if USING_CUDA
     cudaMalloc((void**)&ljp_t,LJArraySize);
     cutilCheckMsg("Failed to cudaMalloc");
     copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
 
     // set box dimensions
-    testboxdim = 118.4f;
     CUDA_setBoxDimension(testboxdim);
-
-    test_molecule_file = new char[60];
-
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     bindLJTexture(ljp_t);
+#endif
 #endif
 }
 
 void TestTenReplicas::tearDown()
 {
+#if USING_CUDA
     cudaFree(ljp_t);
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     unbindLJTexture();
+#endif
 #endif
     cout.flush();
 }
@@ -99,21 +101,24 @@ void TestTenReplicas::testSanity()
         replicas[i].initTimers();
         replicas[i].countNonCrowdingResidues();
 
+#if USING_CUDA
         replicas[i].setDeviceLJPotentials(ljp_t);
         replicas[i].setBlockSize(TILE_DIM);
         replicas[i].ReplicaDataToDevice();
-
-        double gpu = replicas[i].EonDevice();
-        double gpu_nc = replicas[i].EonDeviceNC();
-
-        double cpu = replicas[i].E();
-        double cpu_nc = replicas[i].E(&replicas[i].molecules[0],&replicas[i].molecules[1]);
+#endif
 
         float e = 0.000001;
+        double cpu = replicas[i].E();
+        double cpu_nc = replicas[i].E(&replicas[i].molecules[0],&replicas[i].molecules[1]);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu, e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu_nc, cpu_nc, e);
+
+#if USING_CUDA
+        double gpu = replicas[i].EonDevice();
+        double gpu_nc = replicas[i].EonDeviceNC();
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu, e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu_nc, gpu_nc, e);
+#endif
 
         float averages[6];
 
@@ -132,7 +137,9 @@ void TestTenReplicas::testSanity()
             }
         }
 
+#if USING_CUDA
         replicas[i].FreeDevice();
+#endif
     }
 
     for (int j = 0; j < 6; j++)

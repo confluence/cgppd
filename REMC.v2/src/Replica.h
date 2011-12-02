@@ -121,6 +121,9 @@ public:
     int countpairs();
     int paircount;
 
+    int nonCrowderResidues; // the number of non crowder residues for fast bound configurations test
+    void countNonCrowdingResidues();
+
 #if USING_CUDA
 
     float4 *device_float4_residuePositions; // x,y,z,w == position.x,position.y,position.z,id
@@ -138,7 +141,6 @@ public:
 
     int blockSize;
     int dataSetSize;	// size of the data on gpu including padding residues
-    int nonCrowderResidues;	// the number of non crowder residues for fast bound configurations test
     int paddedSize;		// size taken in gpu memory because of alignment padding
     int gridSize;
     int resultSize;
@@ -180,8 +182,6 @@ public:
     void EonDeviceAsync();
     void setLJpotentials(float *ljp); // TODO: eliminate this setter
     void setBlockSize(int blockSize);
-
-    void countNonCrowdingResidues();
 
     void FreeDevice();
 

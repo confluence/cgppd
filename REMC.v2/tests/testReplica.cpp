@@ -27,21 +27,22 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TestReplica);
 
 void TestReplica::setUp()
 {
-    cuInit(0);
-
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
+    testboxdim = 118.4f;
 
+#if USING_CUDA
+    cuInit(0);
     cudaMalloc((void**)&ljp_t,LJArraySize);
     cutilCheckMsg("Failed to cudaMalloc");
     copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
 
     // set box dimensions
-    testboxdim = 118.4f;
     CUDA_setBoxDimension(testboxdim);
 
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     bindLJTexture(ljp_t);
+#endif
 #endif
 
     replica.aminoAcids = aminoAcidData;
@@ -56,6 +57,7 @@ void TestReplica::setUp()
 
 void TestReplica::tearDown()
 {
+#if USING_CUDA
     if (replica.replicaIsOnDevice)
     {
         replica.FreeDevice();
@@ -63,6 +65,7 @@ void TestReplica::tearDown()
     cudaFree(ljp_t);
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     unbindLJTexture();
+#endif
 #endif
     cout.flush();
 }
@@ -81,6 +84,8 @@ void TestReplica::testCopy()
     CPPUNIT_ASSERT_EQUAL(replica.nonCrowderCount, replica_copy.nonCrowderCount);
     CPPUNIT_ASSERT_EQUAL(replica.nonCrowderResidues, replica_copy.nonCrowderResidues);
     CPPUNIT_ASSERT_EQUAL(replica.potential, replica_copy.potential);
+#if USING_CUDA
     CPPUNIT_ASSERT_EQUAL(replica.blockSize, replica_copy.blockSize);
     CPPUNIT_ASSERT_EQUAL(replica.sharedMemSize, replica_copy.sharedMemSize);
+#endif
 }
