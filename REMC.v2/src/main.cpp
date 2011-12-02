@@ -180,7 +180,7 @@ void printHelp(bool badArg)
     cout << "\t-e|--resteps x:  How many replica exhanges to perform" << endl;
     cout << "\t-r|--replicas x: How many replicas" << endl;
     cout << "\t-o|--output x:   The output prefix for files created by the simulation" << endl;
-    cout << "\t-b|--boundry x:  The bounding box edge length" << endl;
+    cout << "\t-b|--boundary x:  The bounding box edge length" << endl;
     cout << "\t-t0|--tmax x: 	The temperature of the highest replica" << endl;
     cout << "\t-t1|--tmin x:    The temperature of the lowest replica" << endl;
     cout << "\t-t1|--tmin x:    The temperature of the lowest replica" << endl;
@@ -323,7 +323,7 @@ bool getArgs(argdata * d, int argc, char **argv)
             strcpy(d->logfile,argv[i+1]);
             i+=2;
         }
-        else if (strcmp(argv[i],"-b")==0 || strcmp(argv[i],"--boundry")==0)
+        else if (strcmp(argv[i],"-b")==0 || strcmp(argv[i],"--boundary")==0)
         {
             if (i+1>=argc)
                 printHelp(true);
@@ -473,7 +473,7 @@ void loadArgsFromFile(argdata * parameters, Replica *initialReplica)
                     token = strtok(NULL," ");
                     parameters->temperatureMin = atof(token);
                 }
-                if (strcmp(token,"boundry")==0)
+                if (strcmp(token,"boundary")==0)
                 {
                     token = strtok(NULL," ");
                     parameters->bound = atof(token);
