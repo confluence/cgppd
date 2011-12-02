@@ -335,7 +335,7 @@ void Replica::translate(const int m, const float translateStep)
         cout << "  - Reject: Replica "<< label << "/Molecule " << moleculeNo <<  " : falls outside bounding sphere" << endl;
 #endif
     }
-#elif BOUNDING_METHOD == PERIODIC_BOUNDRY 	// periodic boundary conditions
+#elif BOUNDING_METHOD == PERIODIC_BOUNDARY 	// periodic boundary conditions
     Vector3f newPosition = molecules[m].center + translateVector;
     newPosition.x = fmod(newPosition.x+boundingValue,boundingValue);
     newPosition.y = fmod(newPosition.y+boundingValue,boundingValue);

@@ -410,7 +410,7 @@ void GlutDisplay()
     for(size_t m=0; m<GLreplica->moleculeCount; m++)
     {
         positionS = GLreplica->molecules[m].center;
-#if BOUNDING_METHOD == PERIODIC_BOUNDRY
+#if BOUNDING_METHOD == PERIODIC_BOUNDARY
         positionS = positionS + Vector3f(-lindim,-lindim,-lindim);
 #endif
 

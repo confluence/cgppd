@@ -63,8 +63,8 @@
     #define BOUNDING_RADIUS		100.0f   // angstrom. size of sphere for spherical boundary conditions
     #define BOUNDING_VALUE		150.0f   // size of box edge for periodic conditions
     #define BOUNDING_SPHERE  	0
-    #define PERIODIC_BOUNDRY 	1
-    #define BOUNDING_METHOD	  	PERIODIC_BOUNDRY
+    #define PERIODIC_BOUNDARY 	1
+    #define BOUNDING_METHOD	  	PERIODIC_BOUNDARY
     #define MEMBRANE_PRESENT 0 // use membrane calculations, molecule 0 is the embedded molecule in this case.
 
     #define REPULSIVE_CROWDING 	0
