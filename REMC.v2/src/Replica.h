@@ -40,6 +40,7 @@ public:
 
     void exchangeReplicas(Replica &r);
 
+    void kahan_sum(double potential, double p_ij, double &c);
     double E();
 
     float E(Molecule *a,Molecule *b);   // use for fraction bound calcs

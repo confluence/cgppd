@@ -23,6 +23,7 @@
     #define LJ_CONVERSION_FACTOR 0.3507221006079f  // 1/(KBTConversionFactor)^2
     #define DH_CONVERSION_FACTOR BTU_to_J //10e7f //2.0f
     #define CF KBTConversionFactor
+    #define r0_constant 1.122462048309372981433533049679f // constant factor of r0_ij in LJ calculation
 
     //#define LJPDSOURCE 	"data/pair_potentials_BT"
     //#define e0			0.0372f		// K_b T : experimental fitted value, see [K & B 2008], BT model
