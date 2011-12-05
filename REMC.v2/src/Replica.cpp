@@ -551,18 +551,18 @@ double Replica::E()
 #define iRes molecules[mI].Residues[mi]
 #define jRes molecules[mJ].Residues[mj]
 
-    for (size_t mI = 0; mI < moleculeCount; mI++)
+    for (size_t mI=0; mI<moleculeCount; mI++)
     {
-        for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
-        {
-            for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
-            {
-                for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
-                {
-                    double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
 #if REPULSIVE_CROWDING
-                    if (molecules[mI].moleculeRoleIdentifier == CROWDER_IDENTIFIER || molecules[mJ].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
+        if (molecules[mI].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
+        {
+            for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
+            {
+                for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
+                {
+                    for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                     {
+                        float r(distance(iRes.position, jRes.position, boundingValue) + EPS);
                         if (r < const_repulsive_cutoff)
                         {
 #if COMPENSATE_KERNEL_SUM
@@ -572,24 +572,57 @@ double Replica::E()
 #endif
                         }
                     }
-                    else
-                    {
-#endif
-                        double DH(iRes.DH_component(jRes, r));
-                        double LJ(iRes.LJ_component(jRes, r, aminoAcids));
-#if COMPENSATE_KERNEL_SUM
-                        kahan_sum(DHAccumulator, DH, c_dh);
-                        kahan_sum(LJAccumulator, LJ, c_lj);
-#else
-                        DHAccumulator += DH;
-                        LJAccumulator += LJ;
-#endif
-#if REPULSIVE_CROWDING
-                    }
-#endif
                 }
             }
         }
+        else
+#endif
+            for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
+            {
+
+#if REPULSIVE_CROWDING
+                if (molecules[mJ].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
+                {
+                    for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
+                    {
+                        for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
+                        {
+                            float r(distance(iRes.position, jRes.position, boundingValue) + EPS);
+                            if (r < const_repulsive_cutoff) {
+#if COMPENSATE_KERNEL_SUM
+                                kahan_sum(LJAccumulator, crowderPairPotential(r), c_lj);
+#else
+                                LJAccumulator += crowderPairPotential(r);
+                            }
+#endif
+                        }
+                    }
+                }
+                else
+#endif
+
+                    for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
+                    {
+                        for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
+                        {
+
+                            double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
+                            double DH(iRes.DH_component(jRes, r));
+#if COMPENSATE_KERNEL_SUM
+                            kahan_sum(DHAccumulator, DH, c_dh);
+#else
+                            DHAccumulator += DH;
+#endif
+                            double LJ(iRes.LJ_component(jRes, r, aminoAcids));
+
+#if COMPENSATE_KERNEL_SUM
+                            kahan_sum(LJAccumulator, LJ, c_lj);
+#else
+                            LJAccumulator += LJ;
+#endif
+                        }
+                    }
+            }
     }
 
     epotential = (LJAccumulator * LJ_CONVERSION_FACTOR + DHAccumulator * DH_constant_component) * KBTConversionFactor;
