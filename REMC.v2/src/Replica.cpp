@@ -562,7 +562,7 @@ double Replica::E()
                 {
                     for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                     {
-                        float r(distance(iRes.position, jRes.position, boundingValue) + EPS);
+                        double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
                         if (r < const_repulsive_cutoff)
                         {
 #if COMPENSATE_KERNEL_SUM
@@ -587,7 +587,7 @@ double Replica::E()
                     {
                         for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                         {
-                            float r(distance(iRes.position, jRes.position, boundingValue) + EPS);
+                            double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
                             if (r < const_repulsive_cutoff) {
 #if COMPENSATE_KERNEL_SUM
                                 kahan_sum(LJAccumulator, crowderPairPotential(r), c_lj);
@@ -608,18 +608,15 @@ double Replica::E()
 
                             double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
                             double DH(iRes.DH_component(jRes, r));
+                            double LJ(iRes.LJ_component(jRes, r, aminoAcids));
 #if COMPENSATE_KERNEL_SUM
                             kahan_sum(DHAccumulator, DH, c_dh);
-#else
-                            DHAccumulator += DH;
-#endif
-                            double LJ(iRes.LJ_component(jRes, r, aminoAcids));
-
-#if COMPENSATE_KERNEL_SUM
                             kahan_sum(LJAccumulator, LJ, c_lj);
 #else
+                            DHAccumulator += DH;
                             LJAccumulator += LJ;
 #endif
+
                         }
                     }
             }
