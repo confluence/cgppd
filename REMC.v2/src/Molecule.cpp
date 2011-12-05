@@ -494,23 +494,25 @@ float Molecule::calculateVolume()
 // TODO: add comments
 // TODO: do all these calculations in one loop?
 
-float Molecule::E()
+Molecule_E Molecule::E()
 {
-    double epotential = 0.0f;
-    double LJAccumulator = 0.0f;
-    double DHAccumulator = 0.0f;
-    double DH_constant_component =  DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f ;
+//     double epotential = 0.0f;
+/*    double LJAccumulator = 0.0f;
+    double DHAccumulator = 0.0f;*/
+//     double DH_constant_component =  DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f ;
 
-    double e_bond = 0.0;
-    double e_angle = 1.0;
-    double e_torsion = 0.0;
+//     double e_bond = 0.0;
+//     double e_angle = 1.0;
+//     double e_torsion = 0.0;
 
-    // Calculate within each linker only (potential between domains done by main calculation)
-    for (size_t si = 0; si < segmentCount; si++)
+    Molecule_E potential = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+    // LJ and DH between segments within molecule
+    if (update_E)
     {
-
-        // LJ and DH between segments within molecule
-        if (update_E)
+        LJ = 0.0f;
+        DH = 0.0f;
+        for (size_t si = 0; si < segmentCount; si++)
         {
             for (size_t sj = si + 1; sj < segmentCount; sj++)
             {
@@ -518,6 +520,7 @@ float Molecule::E()
                 {
                     for (size_t j = Segments[sj].start; j <= Segments[si].end; j++) {
                         // TODO: do we need to wrap around the bounding box for this calculation?
+                        // TODO: kahan sum?
                         double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
                         /* Calculate LJ-type potential for each residue pair. */
                         LJ += Residues[i].LJ_component(Residues[j], r, AminoAcidsData);
@@ -526,12 +529,15 @@ float Molecule::E()
                     }
                 }
             }
-            update_E = false;
         }
+        update_E = false;
+    }
 
-        LJAccumulator += LJ;
-        DHAccumulator += DH;
+    potential.LJ += LJ;
+    potential.DH += DH;
 
+    for (size_t si = 0; si < segmentCount; si++)
+    {
         // Flexible linker potentials
         if (Segments[si].flexible)
         {
@@ -554,8 +560,8 @@ float Molecule::E()
                         Segments[si].update_E = false;
                     }
 
-                    LJAccumulator += Segments[si].LJ;
-                    DHAccumulator += Segments[si].DH;
+                    potential.LJ += Segments[si].LJ;
+                    potential.DH += Segments[si].DH;
                 }
 
                 // Pseudo-bond
@@ -565,12 +571,12 @@ float Molecule::E()
                     {
                         // eqn 9: kim2008
                         // TODO: can we save this calculation from the previous loop?
-                        float rmag = float((Residues[i+1].position - Residues[i].position).magnitude());  // reduces the number of sqrts by 1
+                        double rmag = double((Residues[i+1].position - Residues[i].position).magnitude());  // reduces the number of sqrts by 1
                         Links[i].pseudo_bond = rmag;
                         Links[i].e_bond = (rmag - R0 * Angstrom) * (rmag - R0 * Angstrom);
                         Links[i].update_e_bond = false;
                     }
-                    e_bond += Links[i].e_bond;
+                    potential.bond += Links[i].e_bond;
                 }
 
                 if (i > 0 && !Links[i-1].dummy)
@@ -590,7 +596,8 @@ float Molecule::E()
                                         exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
                             Residues[i].update_e_angle = false;
                         }
-                        e_angle *= Residues[i].e_angle;
+                        // TODO: check maths -- -GammaAngleReciprocal * log(e_angle)?
+                        potential.angle *= Residues[i].e_angle;
                     }
 
                     // Pseudo-torsion
@@ -615,15 +622,14 @@ float Molecule::E()
                                                 (1 + cos(4 * phi - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
                             Links[i].update_e_torsion = false;
                         }
-                        e_torsion += Links[i].e_torsion;
+                        potential.torsion += Links[i].e_torsion;
                     }
                 }
             }
         }
     }
-// TODO: check maths -- -GammaAngleReciprocal * log(e_angle)?
-    epotential = (DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR + 0.5 * K_spring * e_bond + -GammaAngleReciprocal * log(e_angle) + e_torsion) * KBTConversionFactor;
-    return epotential;
+
+    return potential;
 }
 
 #endif

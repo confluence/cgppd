@@ -548,10 +548,22 @@ double Replica::E()
     double c_dh(0.0f);
 #endif
 
+#if FLEXIBLE_LINKS
+    Molecule_E mol_e;
+    double bond_accumulator = 0.0f;
+    double angle_accumulator = 0.0f;
+    double torsion_accumulator = 0.0f;
+#if COMPENSATE_KERNEL_SUM
+    double c_b(0.0f);
+    double c_a(0.0f);
+    double c_z(0.0f);
+#endif
+#endif
+
 #define iRes molecules[mI].Residues[mi]
 #define jRes molecules[mJ].Residues[mj]
 
-    for (size_t mI=0; mI<moleculeCount; mI++)
+    for (size_t mI=0; mI < moleculeCount; mI++)
     {
 #if REPULSIVE_CROWDING
         if (molecules[mI].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
@@ -576,10 +588,23 @@ double Replica::E()
             }
         }
         else
+        {
+#endif
+#if FLEXIBLE_LINKS
+            mol_e = molecules[mI].E();
+#if COMPENSATE_KERNEL_SUM
+            kahan_sum(LJAccumulator, mol_e.LJ, c_lj);
+            kahan_sum(DHAccumulator, mol_e.DH, c_dh);
+#else
+            LJAccumulator += mol_e.LJ;
+            DHAccumulator += mol_e.DH;
+            bond_accumulator += mol_e.bond;
+            angle_accumulator += mol_e.angle;
+            torsion_accumulator += mol_e.torsion;
+#endif
 #endif
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
             {
-
 #if REPULSIVE_CROWDING
                 if (molecules[mJ].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
                 {
@@ -599,13 +624,12 @@ double Replica::E()
                     }
                 }
                 else
+                {
 #endif
-
                     for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
                     {
                         for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                         {
-
                             double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
                             double DH(iRes.DH_component(jRes, r));
                             double LJ(iRes.LJ_component(jRes, r, aminoAcids));
@@ -616,11 +640,18 @@ double Replica::E()
                             DHAccumulator += DH;
                             LJAccumulator += LJ;
 #endif
-
                         }
                     }
+#if REPULSIVE_CROWDING
+                }
+#endif
             }
+#if REPULSIVE_CROWDING
+        }
+#endif
     }
+
+//         epotential = (DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR + 0.5 * K_spring * e_bond + -GammaAngleReciprocal * log(e_angle) + e_torsion) * KBTConversionFactor;
 
     epotential = (LJAccumulator * LJ_CONVERSION_FACTOR + DHAccumulator * DH_constant_component) * KBTConversionFactor;
 
@@ -632,35 +663,34 @@ double Replica::E()
 
 float Replica::E(Molecule *a,Molecule *b)
 {
+    // TODO: is there a good reason why these are floats and not doubles?
     float epotential = 0.0f;
     float LJAccumulator = 0.0f;
     float DHAccumulator = 0.0f;
     float DH_constant_component =  1.602176487f * 1.602176487f * DH_CONVERSION_FACTOR;
-    float r;
+
+#if COMPENSATE_KERNEL_SUM
+    float c_lj(0.0f);
+    float c_dh(0.0f);
+#endif
 
 #define aRes a->Residues[mi]
 #define bRes b->Residues[mj]
 
-    for (size_t mi=0; mi<a->residueCount; mi++)
+    for (size_t mi = 0; mi < a->residueCount; mi++)
     {
-        for (size_t mj=0; mj<b->residueCount; mj++)
+        for (size_t mj = 0; mj < b->residueCount; mj++)
         {
-            //r = EPS + sqrt( (aRes.position.x-bRes.position.x)*(aRes.position.x-bRes.position.x)+(aRes.position.y-bRes.position.y)*(aRes.position.y-bRes.position.y)+(aRes.position.z-bRes.position.z)*(aRes.position.z-bRes.position.z));
-            r = EPS + distance(aRes.position,bRes.position,boundingValue);
-
-            DHAccumulator += aRes.electrostaticCharge * bRes.electrostaticCharge * expf(-r/Xi) / r;
-
-            // first do the lennard jones pair interactions
-            float Eij = lambda*(aminoAcids.LJpotentials[aRes.aminoAcidIndex][bRes.aminoAcidIndex] - e0);
-            // sigmaij is the average atomic radius determined by the van der waals radius in kim2008
-            float sigmaij = 0.5f * ( aRes.vanderWaalRadius + bRes.vanderWaalRadius );
-            float LJtmp = powf( sigmaij / r,6.0f); //sigT*sigT*sigT*sigT*sigT*sigT;
-            float LJ = -4.0f*Eij*LJtmp*(LJtmp-1.0f);
-            if (Eij>0.0f && r<sigmaij*r0_constant)  // attractive pairs
-            {
-                LJ = -LJ + 2.0f*Eij;
-            }
+            float r (distance(aRes.position, bRes.position, boundingValue) + EPS);
+            float DH(aRes.DH_component(bRes, r));
+            float LJ(aRes.LJ_component(bRes, r, aminoAcids));
+#if COMPENSATE_KERNEL_SUM
+            kahan_sum(DHAccumulator, DH, c_dh);
+            kahan_sum(LJAccumulator, LJ, c_lj);
+#else
+            DHAccumulator += DH;
             LJAccumulator += LJ;
+#endif
         }
     }
     epotential = ( DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR ) * KBTConversionFactor;
@@ -868,12 +898,7 @@ void Replica::ReplicaDataToDevice()
     // allocate total size needed.
 
     paddedSize = int(ceil(float(residueCount)/float(blockSize)))*blockSize; // reserve a blocksize multiple because it allows for efficient summation
-
     dataSetSize = paddedSize;
-
-
-
-
 
 #if CUDA_STREAMS
     cudaMallocHost((void**)&host_float4_residuePositions,sizeof(float4)*paddedSize);

@@ -11,6 +11,10 @@ WHAT IS NEEDED:
 * similar getter on segment? change update_E to update_LJ and update_DH?
 
 * Add molecule E to main potential calculation
+    * E - DONE
+    * E(a,b)
+    * EonDevice
+    * EonDeviceNC
 
 MC moves:
 * any linker change: main linker E, internal molecule E
