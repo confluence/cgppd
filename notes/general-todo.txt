@@ -17,6 +17,9 @@ MAIN:
 
 UNIT TESTS:
 
+* repulsive crowding
+* kahan sum
+
 MOLECULE:
 
 * Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
