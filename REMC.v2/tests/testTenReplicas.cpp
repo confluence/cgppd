@@ -82,7 +82,7 @@ void TestTenReplicas::testSanity()
         { -8.511853,  -8.511852,  -8.511855,  -8.511855}
     };
 
-    static const float expected_averages [6] = {0.029f, 0.0f, 0.271f, 0.981f, 0.0f, 0.09f};
+    static const float expected_averages [6] = {0.029f, 0.0f, 0.271f, 0.95f, 0.0f, 0.09f};
     static int exceeded_averages [6] = {0, 0, 0, 0, 0, 0};
 
     for (int i = 0; i < 10; i++)

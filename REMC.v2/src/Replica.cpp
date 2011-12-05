@@ -532,11 +532,10 @@ void kahan_sum(double &potential, const double p_ij, double &c)
     potential = t;
 }
 
-// evaluate the conformations  energy
 double Replica::E()
 {
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(replicaEHostTimer) );
+    CUT_SAFE_CALL(cutStartTimer(replicaEHostTimer));
 #endif
 
     double epotential = 0.0f;
@@ -551,100 +550,52 @@ double Replica::E()
 
 #define iRes molecules[mI].Residues[mi]
 #define jRes molecules[mJ].Residues[mj]
-    // between each residue do the LJ and DH potentials
-    // do summation for LJ and DH potentials
-    for (size_t mI=0; mI<moleculeCount; mI++)
+
+    for (size_t mI = 0; mI < moleculeCount; mI++)
     {
-#if REPULSIVE_CROWDING
-        if (molecules[mI].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
+        for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
         {
-            for (size_t mJ=mI+1; mJ<moleculeCount; mJ++)
+            for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
             {
-                for (size_t mi=0; mi<molecules[mI].residueCount; mi++)
+                for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                 {
-                    for (size_t mj=0; mj<molecules[mJ].residueCount; mj++)
+                    double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
+#if REPULSIVE_CROWDING
+                    if (molecules[mI].moleculeRoleIdentifier == CROWDER_IDENTIFIER || molecules[mJ].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
                     {
-                        // TODO: I assume cutoff applies to both sums. Why EPS here and not below?
-                        float r(distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position,boundingValue) + EPS);
-                        if (r<const_repulsive_cutoff)
+                        if (r < const_repulsive_cutoff)
                         {
 #if COMPENSATE_KERNEL_SUM
-//                         double 	y(crowderPairPotential(distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position,boundingValue)+ EPS) - c_lj);
-//                         double t(LJAccumulator + y);
-//                         c_lj = (t-LJAccumulator)-y;
-//                         LJAccumulator = t;
                             kahan_sum(LJAccumulator, crowderPairPotential(r), c_lj);
 #else
                             LJAccumulator += crowderPairPotential(r);
 #endif
                         }
                     }
+                    else
+                    {
+#endif
+                        double DH(iRes.DH_component(jRes, r));
+                        double LJ(iRes.LJ_component(jRes, r, aminoAcids));
+#if COMPENSATE_KERNEL_SUM
+                        kahan_sum(DHAccumulator, DH, c_dh);
+                        kahan_sum(LJAccumulator, LJ, c_lj);
+#else
+                        DHAccumulator += DH;
+                        LJAccumulator += LJ;
+#endif
+#if REPULSIVE_CROWDING
+                    }
+#endif
                 }
             }
         }
-        else
-#endif
-            for (size_t mJ=mI+1; mJ<moleculeCount; mJ++)
-            {
-
-#if REPULSIVE_CROWDING
-                if (molecules[mJ].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
-                {
-                    for (size_t mi=0; mi<molecules[mI].residueCount; mi++)
-                    {
-                        for (size_t mj=0; mj<molecules[mJ].residueCount; mj++)
-                        {
-#if COMPENSATE_KERNEL_SUM
-                            double 	y(crowderPairPotential(scalar_distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position)+ EPS) - c_lj);
-                            double t(LJAccumulator + y);
-                            c_lj = (t-LJAccumulator)-y;
-                            LJAccumulator = t;
-#else
-                            float r(distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position,boundingValue));
-                            if (r<const_repulsive_cutoff)
-                                LJAccumulator += crowderPairPotential(r + EPS);
-#endif
-                        }
-                    }
-                }
-                else
-#endif
-
-                    for (size_t mi=0; mi<molecules[mI].residueCount; mi++)
-                    {
-                        for (size_t mj=0; mj<molecules[mJ].residueCount; mj++)
-                        {
-
-                            double r(distance(molecules[mI].Residues[mi].position,molecules[mJ].Residues[mj].position,boundingValue) + EPS);
-                            double DH(molecules[mI].Residues[mi].DH_component(molecules[mJ].Residues[mj], r));
-#if COMPENSATE_KERNEL_SUM
-//                             double y = DH - c_dh;
-//                             double t = DHAccumulator + y;
-//                             c_dh = (t-DHAccumulator)-y;
-//                             DHAccumulator = t;
-                            kahan_sum(DHAccumulator, DH, c_dh);
-#else
-                            DHAccumulator += DH;
-#endif
-                            double LJ(molecules[mI].Residues[mi].LJ_component(molecules[mJ].Residues[mj], r, aminoAcids));
-
-#if COMPENSATE_KERNEL_SUM
-//                             y = LJ - c_lj;
-//                             t = LJAccumulator + y;
-//                             c_lj = (t-LJAccumulator)-y;
-//                             LJAccumulator = t;
-                            kahan_sum(LJAccumulator, LJ, c_lj);
-#else
-                            LJAccumulator += LJ;
-#endif
-                        }
-                    }
-            }
     }
-    epotential = ( LJAccumulator * LJ_CONVERSION_FACTOR + DHAccumulator * DH_constant_component) * KBTConversionFactor;
+
+    epotential = (LJAccumulator * LJ_CONVERSION_FACTOR + DHAccumulator * DH_constant_component) * KBTConversionFactor;
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaEHostTimer) );
+    CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
 #endif
     return epotential;
 }
