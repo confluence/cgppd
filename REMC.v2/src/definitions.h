@@ -68,8 +68,7 @@
     #define BOUNDING_METHOD	  	PERIODIC_BOUNDARY
     #define MEMBRANE_PRESENT 0 // use membrane calculations, molecule 0 is the embedded molecule in this case.
 
-//     #define REPULSIVE_CROWDING 	0
-    #define REPULSIVE_CROWDING   1
+    #define REPULSIVE_CROWDING 	0
 
     #define REPLICA_COUNT 						20
     #define MC_STEPS 							5000
