@@ -61,10 +61,8 @@ public:
 #ifdef FLEXIBLE_LINKS
     int linkCount;
     int segmentCount;
-//     int linkerCount;
     Link *Links;
     Segment *Segments; // Boundaries of all domains and linkers
-//     Segment **Linkers; // Boundaries of all flexible linkers (pointers into Segments array)
     TorsionalLookupMatrix torsions;
     Molecule_E E();
 
