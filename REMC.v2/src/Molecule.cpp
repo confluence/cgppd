@@ -15,6 +15,7 @@ Molecule::Molecule()
     amIACrowder = false;
 #ifdef FLEXIBLE_LINKS
     linkCount = 0;
+    segmentCount = 0;
     LJ = 0.0f;
     DH = 0.0f;
     update_E = true;
@@ -56,6 +57,7 @@ Molecule::Molecule(const Molecule& m)
     hasFilename = false;
 #ifdef FLEXIBLE_LINKS
     linkCount = m.linkCount;
+    segmentCount = m.segmentCount;
     LJ = m.LJ;
     DH = m.DH;
     update_E = m.update_E;
@@ -95,6 +97,7 @@ void Molecule::copy(const Molecule& m)
     amIACrowder = m.amIACrowder;
 #ifdef FLEXIBLE_LINKS
     linkCount = m.linkCount;
+    segmentCount = m.segmentCount;
     LJ = m.LJ;
     DH = m.DH;
     update_E = m.update_E;
@@ -275,7 +278,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     chainCount = 1; // there must be at least one
     hasFilename = true;
     filename = new char[256];
-    strcpy(filename,pdbfilename);
+    strcpy(filename, pdbfilename);
 
     ifstream input(pdbfilename);
     if (!input.good())
@@ -299,10 +302,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         {
             char name[5] = {' '};
 
-            char field[9] = {' '};
-
-            strncpy(field,line+12,4);
-            sscanf (field,"%s",name);
+            sscanf(line + 12, "%s", name);
 
             // push the atom onto the vector of our structure if it is a CA
             if (strcmp(name, "CA") == 0) // it is a CA atom. center of our bead
@@ -313,28 +313,15 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 float x(0);
                 float y(0);
                 float z(0);
-                float occupancy;
+                float occupancy(0);
 
-                strncpy(field,line+17,3);
-                sscanf (field,"%s",resName);
-
-                strncpy(field,line+21,1);
-                sscanf (field,"%c",&chainID);
-
-                strncpy(field,line+22,4);
-                sscanf (field,"%d",&resSeq);
-
-                strncpy (field,line+30,8);
-                sscanf (field,"%f",&x);
-
-                strncpy (field,line+38,8);
-                sscanf (field,"%f",&y);
-
-                strncpy (field,line+46,8);
-                sscanf (field,"%f",&z);
-
-                strncpy (field,line+54,6);
-                sscanf (field,"%f",&occupancy);
+                sscanf(line + 17, "%s", resName);
+                sscanf(line + 21, "%c", &chainID);
+                sscanf(line + 22, "%d", &resSeq);
+                sscanf(line + 30, "%f", &x);
+                sscanf(line + 38, "%f", &y);
+                sscanf(line + 46, "%f", &z);
+                sscanf(line + 54, "%f", &occupancy);
 
                 Residue R;
 
@@ -412,7 +399,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     linkCount = vLinks.size() - 1;
     Links = new Link[linkCount];
     vector<Segment> vSegments;
-    vector<size_t> vFlexibleSegmentIndices;
 
     for(size_t l = 0; l < linkCount; l++)
     {
@@ -432,9 +418,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
             S.start = l;
             S.flexible = L.flexible;
             vSegments.push_back(S);
-            if (S.flexible) {
-                vFlexibleSegmentIndices.push_back(vSegments.size() - 1);
-            }
         }
 
         // End last segment at end of molecule
@@ -452,14 +435,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         Segment S = vSegments[s];
         memcpy (&Segments[s], &S, sizeof(S));
     }
-
-//     linkerCount = vFlexibleSegmentIndices.size();
-//     Linkers = new Segment*[linkerCount];
-//
-//     for (size_t s = 0; s < linkerCount; s++)
-//     {
-//         Linkers[s] = &Segments[vFlexibleSegmentIndices[s]];
-//     }
 
 #endif
 
@@ -492,20 +467,14 @@ float Molecule::calculateVolume()
 #ifdef FLEXIBLE_LINKS
 
 // TODO: add comments
-// TODO: do all these calculations in one loop?
 
 Molecule_E Molecule::E()
 {
-//     double epotential = 0.0f;
-/*    double LJAccumulator = 0.0f;
-    double DHAccumulator = 0.0f;*/
-//     double DH_constant_component =  DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f ;
-
-//     double e_bond = 0.0;
-//     double e_angle = 1.0;
-//     double e_torsion = 0.0;
+//     cout << "calculating internal E for " << filename << endl;
 
     Molecule_E potential = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+//     cout << "number of segments: " << segmentCount << endl;
 
     // LJ and DH between segments within molecule
     if (update_E)
@@ -532,9 +501,13 @@ Molecule_E Molecule::E()
         }
         update_E = false;
     }
-
     potential.LJ += LJ;
     potential.DH += DH;
+
+//     cout << "inter-domain LJ: " << potential.LJ << endl;
+//     cout << "inter-domain DH: " << potential.DH << endl;
+//
+//     cout << "number of linkers: " << linkerCount << endl;
 
     for (size_t si = 0; si < segmentCount; si++)
     {
@@ -562,6 +535,8 @@ Molecule_E Molecule::E()
 
                     potential.LJ += Segments[si].LJ;
                     potential.DH += Segments[si].DH;
+//                         cout << "segment LJ: " << potential.LJ << endl;
+//                         cout << "segment DH: " << potential.DH << endl;
                 }
 
                 // Pseudo-bond
@@ -577,6 +552,7 @@ Molecule_E Molecule::E()
                         Links[i].update_e_bond = false;
                     }
                     potential.bond += Links[i].e_bond;
+//                         cout << "bond: " << potential.bond << endl;
                 }
 
                 if (i > 0 && !Links[i-1].dummy)
@@ -598,6 +574,7 @@ Molecule_E Molecule::E()
                         }
                         // TODO: check maths -- -GammaAngleReciprocal * log(e_angle)?
                         potential.angle *= Residues[i].e_angle;
+//                             cout << "angle: " << potential.angle << endl;
                     }
 
                     // Pseudo-torsion
@@ -623,6 +600,7 @@ Molecule_E Molecule::E()
                             Links[i].update_e_torsion = false;
                         }
                         potential.torsion += Links[i].e_torsion;
+//                             cout << "torsion: " << potential.torsion << endl;
                     }
                 }
             }
