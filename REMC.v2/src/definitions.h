@@ -127,8 +127,8 @@
 
     #define COMPENSATE_KERNEL_SUM	  0
 
-    #define FLEXIBLE_LINKS  0
-//     #define FLEXIBLE_LINKS  1
+//     #define FLEXIBLE_LINKS  0
+    #define FLEXIBLE_LINKS  1
 
     #if USING_CUDA
         #define PERFORM_GPU_AND_CPU_E  0  // do both cpu and gpu sums for comparison
