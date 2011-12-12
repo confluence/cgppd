@@ -551,12 +551,12 @@ double Replica::E()
 #if FLEXIBLE_LINKS
     Molecule_E mol_e;
     double bond_accumulator = 0.0f;
-    double angle_accumulator = 0.0f;
+    double angle_accumulator = 1.0f;
     double torsion_accumulator = 0.0f;
 #if COMPENSATE_KERNEL_SUM
     double c_b(0.0f);
     double c_a(0.0f);
-    double c_z(0.0f);
+    double c_t(0.0f);
 #endif
 #endif
 
@@ -595,11 +595,14 @@ double Replica::E()
 #if COMPENSATE_KERNEL_SUM
             kahan_sum(LJAccumulator, mol_e.LJ, c_lj);
             kahan_sum(DHAccumulator, mol_e.DH, c_dh);
+            kahan_sum(bond_accumulator, mol_e.bond, c_b);
+            kahan_sum(angle_accumulator, mol_e.angle, c_a);
+            kahan_sum(torsion_accumulator, mol_e.torsion, c_t);
 #else
             LJAccumulator += mol_e.LJ;
             DHAccumulator += mol_e.DH;
             bond_accumulator += mol_e.bond;
-            angle_accumulator += mol_e.angle;
+            angle_accumulator *= mol_e.angle;
             torsion_accumulator += mol_e.torsion;
 #endif
 #endif
@@ -651,9 +654,11 @@ double Replica::E()
 #endif
     }
 
-//         epotential = (DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR + 0.5 * K_spring * e_bond + -GammaAngleReciprocal * log(e_angle) + e_torsion) * KBTConversionFactor;
-
+#if FLEXIBLE_LINKS
+    epotential = (DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR + 0.5 * K_spring * bond_accumulator + -GammaAngleReciprocal * log(angle_accumulator) + torsion_accumulator) * KBTConversionFactor;
+#else
     epotential = (LJAccumulator * LJ_CONVERSION_FACTOR + DHAccumulator * DH_constant_component) * KBTConversionFactor;
+#endif
 
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));

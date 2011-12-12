@@ -208,28 +208,28 @@ Vector3f Molecule::calculateCenter()
     return center;
 }
 
-void Molecule::saveAsPDB(const char* filename)
-{
-    FILE * output;
-    output = fopen (filename,"w");
-    fprintf(output,"REMARK %s \n",filename);
-    fprintf(output,"REMARK Translation relative to input Q(w,x,y,z): %f %f %f %f\n",rotation.w,rotation.x,rotation.y,rotation.z);
-    fprintf(output,"REMARK Rotation relative to input +P(x,y,z): %f %f %f\n",center.x,center.y,center.z);
-
-    size_t i=0;
-    int itemcount = 0;
-    while (i<residueCount)
-    {
-        itemcount++;
-        fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',AminoAcidsData.get(Residues[i].aminoAcidIndex).getSNAME(),Residues[i].chainId,Residues[i].resSeq,' ',Residues[i].position.x,Residues[i].position.y,Residues[i].position.z,1.0f,1.0f);
-        i++;
-    }
-
-    fprintf(output,"END \n");
-    fflush(output);
-    fclose(output);
-
-}
+// void Molecule::saveAsPDB(const char* filename)
+// {
+//     FILE * output;
+//     output = fopen (filename,"w");
+//     fprintf(output,"REMARK %s \n",filename);
+//     fprintf(output,"REMARK Translation relative to input Q(w,x,y,z): %f %f %f %f\n",rotation.w,rotation.x,rotation.y,rotation.z);
+//     fprintf(output,"REMARK Rotation relative to input +P(x,y,z): %f %f %f\n",center.x,center.y,center.z);
+//
+//     size_t i=0;
+//     int itemcount = 0;
+//     while (i<residueCount)
+//     {
+//         itemcount++;
+//         fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',AminoAcidsData.get(Residues[i].aminoAcidIndex).getSNAME(),Residues[i].chainId,Residues[i].resSeq,' ',Residues[i].position.x,Residues[i].position.y,Residues[i].position.z,1.0f,1.0f);
+//         i++;
+//     }
+//
+//     fprintf(output,"END \n");
+//     fflush(output);
+//     fclose(output);
+//
+// }
 
 void Molecule::setPosition(Vector3f v)
 {
@@ -481,11 +481,7 @@ float Molecule::calculateVolume()
 
 Molecule_E Molecule::E()
 {
-//     cout << "calculating internal E for " << filename << endl;
-
     Molecule_E potential = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
-
-//     cout << "number of segments: " << segmentCount << endl;
 
     // LJ and DH between segments within molecule
     if (update_E)
