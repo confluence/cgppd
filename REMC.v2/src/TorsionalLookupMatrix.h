@@ -14,17 +14,15 @@ using namespace std;
 class TorsionalLookupMatrix
 {
 public:
-    TorsionalLookupMatrix();
-    TorsionalLookupMatrix(AminoAcids *a);
-    ~TorsionalLookupMatrix();
-    void setAminoAcidLookupData(AminoAcids &a);
-    double getV(int acidi, int acidj, int n);
-    double getSigma(int acidi, int acidj, int n);
-    bool loadData(char *filename);
-
     double V[20][20][4];
     double Sigma[20][20][4];
-    AminoAcids aminoAcids;
+
+    TorsionalLookupMatrix();
+    ~TorsionalLookupMatrix();
+
+    bool loadData(const char* filename, AminoAcids &aminoAcids);
+    double getV(int acidi, int acidj, int n);
+    double getSigma(int acidi, int acidj, int n);
 };
 
 #endif /*TORSIONALLOOKUPMATRIX_H_*/

@@ -21,18 +21,5 @@ public:
     float electrostaticCharge;
     int index;
     char *getSNAME();
-    char *getName();
-    char getShortSymbol() {
-        return shortSymbol;
-    } ;
 };
-/*
-AminoAcid *AminoAcidData;
-
-bool loadAminoAcidData(AminoAcid data[], char* filename);
-int getAcidIndex(AminoAcid data[], char* name);
-int getAcidIndex(char* name);
-int getAcidIndex(AminoAcid data[], char name);
-void printAcidData(AminoAcid data[]);
-*/
 #endif /*AMINOACID_H_*/

@@ -28,6 +28,15 @@ Molecule::~Molecule()
         delete [] filename;
 };
 
+void Molecule::init_amino_acid_data(AminoAcids &a)
+{
+    AminoAcidsData = a;
+#ifdef FLEXIBLE_LINKS
+//     torsions.setAminoAcidLookupData(AminoAcidsData);
+    torsions.loadData("data/torsional_pair_potentials", a);
+#endif
+}
+
 Molecule::Molecule(const Molecule& m)
 {
     translationalStep = m.translationalStep;
@@ -56,6 +65,7 @@ Molecule::Molecule(const Molecule& m)
     amIACrowder = m.amIACrowder;
     hasFilename = false;
 #ifdef FLEXIBLE_LINKS
+    torsions = m.torsions;
     linkCount = m.linkCount;
     segmentCount = m.segmentCount;
     LJ = m.LJ;
@@ -96,6 +106,7 @@ void Molecule::copy(const Molecule& m)
     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
     amIACrowder = m.amIACrowder;
 #ifdef FLEXIBLE_LINKS
+    torsions = m.torsions;
     linkCount = m.linkCount;
     segmentCount = m.segmentCount;
     LJ = m.LJ;
@@ -472,7 +483,7 @@ Molecule_E Molecule::E()
 {
 //     cout << "calculating internal E for " << filename << endl;
 
-    Molecule_E potential = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    Molecule_E potential = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
 
 //     cout << "number of segments: " << segmentCount << endl;
 
@@ -504,11 +515,6 @@ Molecule_E Molecule::E()
     potential.LJ += LJ;
     potential.DH += DH;
 
-//     cout << "inter-domain LJ: " << potential.LJ << endl;
-//     cout << "inter-domain DH: " << potential.DH << endl;
-//
-//     cout << "number of linkers: " << linkerCount << endl;
-
     for (size_t si = 0; si < segmentCount; si++)
     {
         // Flexible linker potentials
@@ -535,8 +541,6 @@ Molecule_E Molecule::E()
 
                     potential.LJ += Segments[si].LJ;
                     potential.DH += Segments[si].DH;
-//                         cout << "segment LJ: " << potential.LJ << endl;
-//                         cout << "segment DH: " << potential.DH << endl;
                 }
 
                 // Pseudo-bond
@@ -552,7 +556,6 @@ Molecule_E Molecule::E()
                         Links[i].update_e_bond = false;
                     }
                     potential.bond += Links[i].e_bond;
-//                         cout << "bond: " << potential.bond << endl;
                 }
 
                 if (i > 0 && !Links[i-1].dummy)
@@ -574,7 +577,6 @@ Molecule_E Molecule::E()
                         }
                         // TODO: check maths -- -GammaAngleReciprocal * log(e_angle)?
                         potential.angle *= Residues[i].e_angle;
-//                             cout << "angle: " << potential.angle << endl;
                     }
 
                     // Pseudo-torsion
@@ -600,7 +602,6 @@ Molecule_E Molecule::E()
                             Links[i].update_e_torsion = false;
                         }
                         potential.torsion += Links[i].e_torsion;
-//                             cout << "torsion: " << potential.torsion << endl;
                     }
                 }
             }
