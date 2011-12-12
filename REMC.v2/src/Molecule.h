@@ -56,8 +56,11 @@ public:
     float calculateSASA();
 
     AminoAcids AminoAcidsData;
+    void init_amino_acid_data(AminoAcids &a); // TODO: this is a hack; use proper constructors
+
     Residue *Residues;
     int residueCount;
+
 #ifdef FLEXIBLE_LINKS
     int linkCount;
     int segmentCount;

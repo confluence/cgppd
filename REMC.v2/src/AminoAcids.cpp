@@ -12,6 +12,10 @@ AminoAcids::AminoAcids()
     clean = false;
 }
 
+AminoAcids::~AminoAcids()
+{
+}
+
 AminoAcids::AminoAcids(char* inputDataFileAminoAcids, char* inputDataFileLJPotentials)
 {
     clean = loadAminoAcidData(inputDataFileAminoAcids) && loadLJPotentialData(inputDataFileLJPotentials);
@@ -33,9 +37,10 @@ bool AminoAcids::loadAminoAcidData(const char* filename)
     }
 
     int i=0;
-    char * line = new char[256];
+//     char * line = new char[256];
+    char line[256] = {' '};
     input.getline(line,255);
-    cout << endl;
+
     while (!input.eof())
     {
         // ignore # lines
@@ -66,7 +71,7 @@ bool AminoAcids::loadAminoAcidData(const char* filename)
         input.getline(line,255);
     }
     input.close();
-    delete [] line;
+//     delete [] line;
     return true;
 }
 
