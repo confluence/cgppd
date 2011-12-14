@@ -592,17 +592,16 @@ double Replica::E()
 #endif
 #if FLEXIBLE_LINKS
             mol_e = molecules[mI].E();
+            angle_accumulator *= mol_e.angle;
 #if COMPENSATE_KERNEL_SUM
             kahan_sum(LJAccumulator, mol_e.LJ, c_lj);
             kahan_sum(DHAccumulator, mol_e.DH, c_dh);
             kahan_sum(bond_accumulator, mol_e.bond, c_b);
-            kahan_sum(angle_accumulator, mol_e.angle, c_a);
             kahan_sum(torsion_accumulator, mol_e.torsion, c_t);
 #else
             LJAccumulator += mol_e.LJ;
             DHAccumulator += mol_e.DH;
             bond_accumulator += mol_e.bond;
-            angle_accumulator *= mol_e.angle;
             torsion_accumulator += mol_e.torsion;
 #endif
 #endif
@@ -666,17 +665,16 @@ double Replica::E()
     return epotential;
 }
 
-float Replica::E(Molecule *a,Molecule *b)
+double Replica::E(Molecule *a,Molecule *b)
 {
-    // TODO: is there a good reason why these are floats and not doubles?
-    float epotential = 0.0f;
-    float LJAccumulator = 0.0f;
-    float DHAccumulator = 0.0f;
-    float DH_constant_component =  1.602176487f * 1.602176487f * DH_CONVERSION_FACTOR;
+    double epotential = 0.0f;
+    double LJAccumulator = 0.0f;
+    double DHAccumulator = 0.0f;
+    double DH_constant_component =  1.602176487f * 1.602176487f * DH_CONVERSION_FACTOR;
 
 #if COMPENSATE_KERNEL_SUM
-    float c_lj(0.0f);
-    float c_dh(0.0f);
+    double c_lj(0.0f);
+    double c_dh(0.0f);
 #endif
 
 #define aRes a->Residues[mi]
@@ -686,9 +684,9 @@ float Replica::E(Molecule *a,Molecule *b)
     {
         for (size_t mj = 0; mj < b->residueCount; mj++)
         {
-            float r (distance(aRes.position, bRes.position, boundingValue) + EPS);
-            float DH(aRes.DH_component(bRes, r));
-            float LJ(aRes.LJ_component(bRes, r, aminoAcids));
+            double r (distance(aRes.position, bRes.position, boundingValue) + EPS);
+            double DH(aRes.DH_component(bRes, r));
+            double LJ(aRes.LJ_component(bRes, r, aminoAcids));
 #if COMPENSATE_KERNEL_SUM
             kahan_sum(DHAccumulator, DH, c_dh);
             kahan_sum(LJAccumulator, LJ, c_lj);
@@ -698,7 +696,8 @@ float Replica::E(Molecule *a,Molecule *b)
 #endif
         }
     }
-    epotential = ( DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR ) * KBTConversionFactor;
+//     epotential = ( DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR ) * KBTConversionFactor;
+    epotential = (LJAccumulator * LJ_CONVERSION_FACTOR + DHAccumulator * DH_constant_component) * KBTConversionFactor;
     return epotential;
 }
 

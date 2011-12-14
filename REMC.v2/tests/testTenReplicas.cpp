@@ -64,22 +64,21 @@ void TestTenReplicas::testSanity()
     struct ExpectedResult
     {
         float cpu;
-        float cpu_nc;
         float gpu;
         float gpu_nc;
     };
 
     static const ExpectedResult expected_results[10] = {
-        { -0.293705,  -0.293705,  -0.293705,  -0.293705},
-        { -1.056291,  -1.056291,  -1.056291,  -1.056291},
-        {-10.277430, -10.277433, -10.277432, -10.277432},
-        { -7.577059,  -7.577051,  -7.577060,  -7.577060},
-        {  0.000106,   0.000106,   0.000106,   0.000106},
-        { -5.559506,  -5.559506,  -5.559508,  -5.559508},
-        { -5.441210,  -5.441209,  -5.441211,  -5.441211},
-        {-10.657519, -10.657518, -10.657518, -10.657518},
-        { -9.891660,  -9.891660,  -9.891659,  -9.891659},
-        { -8.511853,  -8.511852,  -8.511855,  -8.511855}
+        { -0.293705,  -0.293705,  -0.293705},
+        { -1.056291,  -1.056291,  -1.056291},
+        {-10.277430, -10.277432, -10.277432},
+        { -7.577059,  -7.577060,  -7.577060},
+        {  0.000106,   0.000106,   0.000106},
+        { -5.559506,  -5.559508,  -5.559508},
+        { -5.441210,  -5.441211,  -5.441211},
+        {-10.657519, -10.657518, -10.657518},
+        { -9.891660,  -9.891659,  -9.891659},
+        { -8.511853,  -8.511855,  -8.511855}
     };
 
     static const float expected_averages [6] = {0.029f, 0.0f, 0.271f, 0.95f, 0.0f, 0.09f};
@@ -111,7 +110,7 @@ void TestTenReplicas::testSanity()
         double cpu = replicas[i].E();
         double cpu_nc = replicas[i].E(&replicas[i].molecules[0],&replicas[i].molecules[1]);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu, e);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu_nc, cpu_nc, e);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc, e);
 
 #if USING_CUDA
         double gpu = replicas[i].EonDevice();
