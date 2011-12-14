@@ -6,6 +6,7 @@
 #include <fstream>
 #include <vector>
 #include "Molecule.h"
+#include "Potential.h"
 #include <gsl/gsl_qrng.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>

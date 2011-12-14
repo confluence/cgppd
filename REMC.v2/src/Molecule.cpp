@@ -479,15 +479,13 @@ float Molecule::calculateVolume()
 
 // TODO: add comments
 
-PotentialComponents Molecule::E()
+Potential Molecule::E()
 {
-    PotentialComponents potential = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
+    Potential potential;
 
     // LJ and DH between segments within molecule
     if (update_E)
     {
-        LJ = 0.0f;
-        DH = 0.0f;
         for (size_t si = 0; si < segmentCount; si++)
         {
             for (size_t sj = si + 1; sj < segmentCount; sj++)
@@ -496,20 +494,25 @@ PotentialComponents Molecule::E()
                 {
                     for (size_t j = Segments[sj].start; j <= Segments[si].end; j++) {
                         // TODO: do we need to wrap around the bounding box for this calculation?
-                        // TODO: kahan sum?
                         double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
                         /* Calculate LJ-type potential for each residue pair. */
-                        LJ += Residues[i].LJ_component(Residues[j], r, AminoAcidsData);
+                        potential.increment_LJ(Residues[i].LJ_component(Residues[j], r, AminoAcidsData));
                         /* Calculate electrostatic potential for each residue pair. */
-                        DH += Residues[i].DH_component(Residues[j], r);
+                        potential.increment_DH(Residues[i].DH_component(Residues[j], r));
                     }
                 }
             }
         }
+        // Cache values: use current LJ/DH total
+        LJ = potential.LJ;
+        DH = potential.DH;
         update_E = false;
     }
-    potential.LJ += LJ;
-    potential.DH += DH;
+    else
+    {
+        potential.increment_LJ(LJ);
+        potential.increment_DH(DH);
+    }
 
     for (size_t si = 0; si < segmentCount; si++)
     {
@@ -524,6 +527,7 @@ PotentialComponents Molecule::E()
                     for (size_t j = i + 1; j <= Segments[si].end; j++)
                     {
                         // TODO: do we need to wrap around the bounding box for this calculation?
+                        // TODO: internal kahan sum
                         double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
                         /* Calculate LJ-type potential for each residue pair. */
                         Segments[si].LJ += Residues[i].LJ_component(Residues[j], r, AminoAcidsData);
@@ -534,10 +538,10 @@ PotentialComponents Molecule::E()
                         }
                         Segments[si].update_E = false;
                     }
-
-                    potential.LJ += Segments[si].LJ;
-                    potential.DH += Segments[si].DH;
                 }
+
+                potential.increment_LJ(Segments[si].LJ);
+                potential.increment_DH(Segments[si].DH);
 
                 // Pseudo-bond
                 if (i < Segments[si].end)
@@ -551,7 +555,7 @@ PotentialComponents Molecule::E()
                         Links[i].e_bond = (rmag - R0 * Angstrom) * (rmag - R0 * Angstrom);
                         Links[i].update_e_bond = false;
                     }
-                    potential.bond += Links[i].e_bond;
+                    potential.increment_bond(Links[i].e_bond);
                 }
 
                 if (i > 0 && !Links[i-1].dummy)
@@ -572,7 +576,7 @@ PotentialComponents Molecule::E()
                             Residues[i].update_e_angle = false;
                         }
                         // TODO: check maths -- -GammaAngleReciprocal * log(e_angle)?
-                        potential.angle *= Residues[i].e_angle;
+                        potential.increment_angle(Residues[i].e_angle);
                     }
 
                     // Pseudo-torsion
@@ -597,7 +601,7 @@ PotentialComponents Molecule::E()
                                                 (1 + cos(4 * phi - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
                             Links[i].update_e_torsion = false;
                         }
-                        potential.torsion += Links[i].e_torsion;
+                        potential.increment_torsion(Links[i].e_torsion);
                     }
                 }
             }

@@ -160,7 +160,7 @@ void TestLinkerPotentials::testGeometry()
         0.0 // padding for simplicity
     };
 
-    PotentialComponents e = molecule.E();
+    Potential e = molecule.E();
 //     cout << e.LJ << endl;
 //     cout << e.DH << endl;
 //     cout << e.bond << endl;

@@ -12,6 +12,7 @@
 #include "Residue.h"
 #include "Link.h"
 #include "Segment.h"
+#include "Potential.h"
 
 using namespace std;
 
@@ -58,7 +59,7 @@ public:
     Link *Links;
     Segment *Segments; // Boundaries of all domains and linkers
     TorsionalLookupMatrix torsions;
-    PotentialComponents E();
+    Potential E();
 
     double LJ; // cached inter-segment LJ component of this molecule
     double DH; // cached inter-segment DH component of this molecule
