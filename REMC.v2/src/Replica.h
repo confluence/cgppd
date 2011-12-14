@@ -57,6 +57,7 @@ public:
 
 #ifdef FLEXIBLE_LINKS
     TorsionalLookupMatrix torsions;
+    double internal_molecule_E();
 #endif
 
     Residue * contiguousResidues;
