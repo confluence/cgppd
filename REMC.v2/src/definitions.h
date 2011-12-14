@@ -228,4 +228,13 @@
         int currentStep;
     };
 
+    struct PotentialComponents
+    {
+        double LJ;
+        double DH;
+        double bond;
+        double angle;
+        double torsion;
+    };
+
 #endif /*DEFINITIONS_H_*/
