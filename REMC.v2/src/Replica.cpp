@@ -556,7 +556,7 @@ double Replica::E()
     double c_dh(0.0f);
 
 #if FLEXIBLE_LINKS
-    Molecule_E mol_e;
+    E_components mol_e;
     double bond_accumulator = 0.0f;
     double angle_accumulator = 1.0f;
     double torsion_accumulator = 0.0f;

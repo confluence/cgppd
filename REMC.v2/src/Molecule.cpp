@@ -479,9 +479,9 @@ float Molecule::calculateVolume()
 
 // TODO: add comments
 
-Molecule_E Molecule::E()
+E_components Molecule::E()
 {
-    Molecule_E potential = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
+    E_components potential = {0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
 
     // LJ and DH between segments within molecule
     if (update_E)
