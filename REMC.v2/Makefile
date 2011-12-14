@@ -24,7 +24,7 @@ CFLAGS=-fno-omit-frame-pointer -O2
 #NVCC_COMPILER_FLAGS=-g
 NVCC_ARCH=-arch=sm_20
 
-COMMON_OBJS=obj/AminoAcid.o obj/AminoAcids.o obj/Link.o obj/Segment.o obj/Molecule.o obj/Quaternion.o obj/Replica.o obj/Residue.o obj/TorsionalLookupMatrix.o obj/vector3f.o
+COMMON_OBJS=obj/AminoAcid.o obj/AminoAcids.o obj/Link.o obj/Segment.o obj/Potential.o obj/Molecule.o obj/Quaternion.o obj/Replica.o obj/Residue.o obj/TorsionalLookupMatrix.o obj/vector3f.o
 
 1:
 	make DEFINE='-DEnableCUDA -DEnableOPENGL' GPUGL test
@@ -77,17 +77,20 @@ obj/Link.o: obj/.d src/Link.cpp src/Link.h
 obj/Segment.o: obj/.d src/Segment.cpp src/Segment.h
 	${COMPILER} ${CFLAGS} -c src/Segment.cpp -o obj/Segment.o
 
+obj/Potential.o: obj/.d src/Potential.cpp src/Potential.h
+	${COMPILER} ${CFLAGS} -c src/Potential.cpp -o obj/Potential.o
+
 obj/main.o: obj/.d src/main.cpp src/definitions.h src/AminoAcid.h src/TorsionalLookupMatrix.h src/AminoAcids.h src/Replica.h src/vector3f.h src/Quaternion.h src/Molecule.h src/Residue.h src/Link.h src/cudaExterns.h
 
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/main.cpp -o obj/main.o
 
-obj/Molecule.o: obj/.d src/Molecule.cpp src/Molecule.h src/definitions.h src/AminoAcids.h src/AminoAcid.h src/vector3f.h src/Quaternion.h src/TorsionalLookupMatrix.h src/Residue.h src/Link.h
+obj/Molecule.o: obj/.d src/Molecule.cpp src/Molecule.h src/definitions.h src/AminoAcids.h src/AminoAcid.h src/vector3f.h src/Quaternion.h src/TorsionalLookupMatrix.h src/Residue.h src/Link.h src/Segment.h src/Potential.h
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/Molecule.cpp -o obj/Molecule.o
 
 obj/Quaternion.o: obj/.d src/Quaternion.cpp src/Quaternion.h src/vector3f.h
 	${COMPILER} ${CFLAGS} -c src/Quaternion.cpp -o obj/Quaternion.o
 
-obj/Replica.o: obj/.d src/Replica.cpp src/Replica.h src/vector3f.h src/definitions.h src/Quaternion.h src/Molecule.h src/AminoAcids.h src/AminoAcid.h src/TorsionalLookupMatrix.h src/Residue.h src/Link.h
+obj/Replica.o: obj/.d src/Replica.cpp src/Replica.h src/vector3f.h src/definitions.h src/Quaternion.h src/Molecule.h src/AminoAcids.h src/AminoAcid.h src/TorsionalLookupMatrix.h src/Residue.h src/Link.h src/Potential.h
 	${COMPILER} ${CFLAGS} ${INCLUDE} ${DEFINE} -c src/Replica.cpp -o obj/Replica.o
 
 obj/CudaFunctions.o: obj/.d src/CudaFunctions.cu src/CudaFunctions.h

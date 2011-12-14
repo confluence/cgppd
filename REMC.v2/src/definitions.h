@@ -22,6 +22,7 @@
     #define Xi 10.0f
     #define LJ_CONVERSION_FACTOR 0.3507221006079f  // 1/(KBTConversionFactor)^2
     #define DH_CONVERSION_FACTOR BTU_to_J //10e7f //2.0f
+    #define DH_constant_component (DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f)
     #define CF KBTConversionFactor
     #define r0_constant 1.122462048309372981433533049679f // constant factor of r0_ij in LJ calculation
 
@@ -226,15 +227,6 @@
         char checkpointfilename[256];
         bool resume;
         int currentStep;
-    };
-
-    struct PotentialComponents
-    {
-        double LJ;
-        double DH;
-        double bond;
-        double angle;
-        double torsion;
     };
 
 #endif /*DEFINITIONS_H_*/

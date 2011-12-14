@@ -524,22 +524,22 @@ inline float distance(Vector3f a,Vector3f b, float _boxdim)
     return sqrtf(Xab*Xab+Yab*Yab+Zab*Zab);
 }
 
-inline void kahan_sum(double &potential, const double p_ij, double &c)
-{
-    double y(p_ij - c);
-    double t(potential + y);
-    c = (t - potential) - y;
-    potential = t;
-}
-
-inline void sum(double &potential, const double p_ij, double &c)
-{
-#if COMPENSATE_KERNEL_SUM
-    kahan_sum(potential, p_ij, c);
-#else
-    potential += p_ij;
-#endif
-}
+// inline void kahan_sum(double &potential, const double p_ij, double &c)
+// {
+//     double y(p_ij - c);
+//     double t(potential + y);
+//     c = (t - potential) - y;
+//     potential = t;
+// }
+//
+// inline void sum(double &potential, const double p_ij, double &c)
+// {
+// #if COMPENSATE_KERNEL_SUM
+//     kahan_sum(potential, p_ij, c);
+// #else
+//     potential += p_ij;
+// #endif
+// }
 
 double Replica::E()
 {
@@ -547,23 +547,7 @@ double Replica::E()
     CUT_SAFE_CALL(cutStartTimer(replicaEHostTimer));
 #endif
 
-    double epotential = 0.0f;
-    double LJAccumulator = 0.0f;
-    double DHAccumulator = 0.0f;
-    double DH_constant_component =  DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f ;
-
-    double c_lj(0.0f);
-    double c_dh(0.0f);
-
-#if FLEXIBLE_LINKS
-    PotentialComponents mol_e;
-    double bond_accumulator = 0.0f;
-    double angle_accumulator = 1.0f;
-    double torsion_accumulator = 0.0f;
-
-    double c_b(0.0f);
-    double c_t(0.0f);
-#endif
+Potential potential;
 
 #define iRes molecules[mI].Residues[mi]
 #define jRes molecules[mJ].Residues[mj]
@@ -582,7 +566,7 @@ double Replica::E()
                         double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
                         if (r < const_repulsive_cutoff)
                         {
-                            sum(LJAccumulator, crowderPairPotential(r), c_lj);
+                                potential.increment_LJ(crowderPairPotential(r));
                         }
                     }
                 }
@@ -592,12 +576,7 @@ double Replica::E()
         {
 #endif
 #if FLEXIBLE_LINKS
-            mol_e = molecules[mI].E();
-            angle_accumulator *= mol_e.angle;
-            sum(LJAccumulator, mol_e.LJ, c_lj);
-            sum(DHAccumulator, mol_e.DH, c_dh);
-            sum(bond_accumulator, mol_e.bond, c_b);
-            sum(torsion_accumulator, mol_e.torsion, c_t);
+            potential.increment(molecules[mI].E());
 #endif
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
             {
@@ -611,7 +590,7 @@ double Replica::E()
                             double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
                             if (r < const_repulsive_cutoff)
                             {
-                                sum(LJAccumulator, crowderPairPotential(r), c_lj);
+                                potential.increment_LJ(crowderPairPotential(r));
                             }
                         }
                     }
@@ -626,8 +605,8 @@ double Replica::E()
                             double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
                             double DH(iRes.DH_component(jRes, r));
                             double LJ(iRes.LJ_component(jRes, r, aminoAcids));
-                            sum(DHAccumulator, DH, c_dh);
-                            sum(LJAccumulator, LJ, c_lj);
+                            potential.increment_DH(DH);
+                            potential.increment_LJ(LJ);
                         }
                     }
 #if REPULSIVE_CROWDING
@@ -639,27 +618,17 @@ double Replica::E()
 #endif
     }
 
-#if FLEXIBLE_LINKS
-    epotential = (DHAccumulator * DH_constant_component + LJAccumulator * LJ_CONVERSION_FACTOR + 0.5 * K_spring * bond_accumulator + -GammaAngleReciprocal * log(angle_accumulator) + torsion_accumulator) * KBTConversionFactor;
-#else
-    epotential = (LJAccumulator * LJ_CONVERSION_FACTOR + DHAccumulator * DH_constant_component) * KBTConversionFactor;
-#endif
+    double total(potential.total());
 
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
 #endif
-    return epotential;
+    return total;
 }
 
 double Replica::E(Molecule *a,Molecule *b)
 {
-    double epotential = 0.0f;
-    double LJAccumulator = 0.0f;
-    double DHAccumulator = 0.0f;
-    double DH_constant_component =  1.602176487f * 1.602176487f * DH_CONVERSION_FACTOR;
-
-    double c_lj(0.0f);
-    double c_dh(0.0f);
+    Potential potential;
 
 #define aRes a->Residues[mi]
 #define bRes b->Residues[mj]
@@ -672,13 +641,16 @@ double Replica::E(Molecule *a,Molecule *b)
             double DH(aRes.DH_component(bRes, r));
             double LJ(aRes.LJ_component(bRes, r, aminoAcids));
 
-            sum(DHAccumulator, DH, c_dh);
-            sum(LJAccumulator, LJ, c_lj);
+            potential.increment_DH(DH);
+            potential.increment_LJ(LJ);
         }
     }
+#if FLEXIBLE_LINKS
+    potential.increment(a->E());
+    potential.increment(b->E());
+#endif
 
-    epotential = (LJAccumulator * LJ_CONVERSION_FACTOR + DHAccumulator * DH_constant_component) * KBTConversionFactor;
-    return epotential;
+    return potential.total();
 }
 
 void Replica::printTimers()
