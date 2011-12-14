@@ -2,6 +2,7 @@
 #define POTENTIAL_H_
 #include "definitions.h"
 #include <cmath>
+#include <iostream>
 
 class Potential
 {
@@ -38,6 +39,15 @@ public:
 #endif
     /* Increment all components */
     void increment(const Potential p);
+
+    /* Component totals (for unit tests) */
+    double total_LJ();
+    double total_DH();
+#if FLEXIBLE_LINKS
+    double total_bond();
+    double total_angle();
+    double total_torsion();
+#endif
     /* Output final total */
     double total();
 };

@@ -1,5 +1,7 @@
 #include "Potential.h"
 
+using namespace std;
+
 Potential::Potential()
 {
     LJ = 0.0f;
@@ -78,11 +80,42 @@ void Potential::increment(const Potential p)
 #endif
 }
 
+double Potential::total_LJ()
+{
+    return LJ * LJ_CONVERSION_FACTOR * KBTConversionFactor;
+}
+
+double Potential::total_DH()
+{
+    return DH * DH_constant_component * KBTConversionFactor;
+}
+
+#if FLEXIBLE_LINKS
+double Potential::total_bond()
+{
+//     cout << "bond " << (bond) << endl;
+//     cout << "bond * 0.5 " << (bond * 0.5) << endl;
+//     cout << "bond * 0.5 * K_spring " << (bond * 0.5 * K_spring) << endl;
+//     cout << "bond * 0.5 * K_spring * KBTConversionFactor " << (bond * 0.5 * K_spring * KBTConversionFactor) << endl;
+    return bond * 0.5 * K_spring * KBTConversionFactor;
+}
+
+double Potential::total_angle()
+{
+    return log(angle) * -GammaAngleReciprocal * KBTConversionFactor;
+}
+
+double Potential::total_torsion()
+{
+    return torsion * KBTConversionFactor;
+}
+#endif
+
 double Potential::total()
 {
-// #if FLEXIBLE_LINKS
-//     return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion) * KBTConversionFactor;
-// #else
+#if FLEXIBLE_LINKS
+    return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion) * KBTConversionFactor;
+#else
     return (LJ * LJ_CONVERSION_FACTOR + DH * DH_constant_component) * KBTConversionFactor;
-// #endif
+#endif
 }

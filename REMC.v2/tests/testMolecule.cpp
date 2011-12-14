@@ -161,11 +161,11 @@ void TestLinkerPotentials::testGeometry()
     };
 
     Potential e = molecule.E();
-//     cout << e.LJ << endl;
-//     cout << e.DH << endl;
-//     cout << e.bond << endl;
-//     cout << e.angle << endl;
-//     cout << e.torsion << endl;
+    cout << e.total_LJ() << endl;
+    cout << e.total_DH() << endl;
+    cout << e.total_bond() << endl;
+    cout << e.total_angle() << endl;
+    cout << e.total_torsion() << endl;
 
     for (size_t i = 0; i < molecule.linkCount; i++)
     {
