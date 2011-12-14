@@ -10,6 +10,9 @@ WHAT IS NEEDED:
     * pointers to neighbouring residues -- is this expensive?
 * similar getter on segment? change update_E to update_LJ and update_DH?
 
+* Put kahan sum decision inside function. Still have to pass in individual error values -- messy! Function for each of DH, LJ, bond and torsion?
+* put kahan_sum, sum, distance somewhere accessible to replica and molecule
+
 * Add molecule E to main potential calculation
     * E - DONE
     * E(a,b)
