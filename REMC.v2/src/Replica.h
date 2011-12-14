@@ -43,7 +43,7 @@ public:
     void kahan_sum(double potential, double p_ij, double &c);
     double E();
 
-    float E(Molecule *a,Molecule *b);   // use for fraction bound calcs
+    double E(Molecule *a,Molecule *b);   // use for fraction bound calcs
 
     // the search method that mutates the replicas molecules.
     void MCSearch(int steps);//, Replica * replaceReplica);
