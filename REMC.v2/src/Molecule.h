@@ -15,7 +15,7 @@
 
 using namespace std;
 
-struct Molecule_E
+struct E_components
 {
     double LJ;
     double DH;
@@ -67,7 +67,7 @@ public:
     Link *Links;
     Segment *Segments; // Boundaries of all domains and linkers
     TorsionalLookupMatrix torsions;
-    Molecule_E E();
+    E_components E();
 
     double LJ; // cached inter-segment LJ component of this molecule
     double DH; // cached inter-segment DH component of this molecule
