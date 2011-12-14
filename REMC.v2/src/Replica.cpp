@@ -552,7 +552,7 @@ Potential potential;
 #define iRes molecules[mI].Residues[mi]
 #define jRes molecules[mJ].Residues[mj]
 
-    for (size_t mI=0; mI < moleculeCount; mI++)
+    for (size_t mI = 0; mI < moleculeCount; mI++)
     {
 #if REPULSIVE_CROWDING
         if (molecules[mI].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
@@ -652,6 +652,27 @@ double Replica::E(Molecule *a,Molecule *b)
 
     return potential.total();
 }
+
+
+#if FLEXIBLE_LINKS
+double Replica::internal_molecule_E() {
+    Potential potential;
+
+    for (size_t mI = 0; mI < moleculeCount; mI++)
+    {
+#if REPULSIVE_CROWDING
+        if (molecules[mI].moleculeRoleIdentifier != CROWDER_IDENTIFIER)
+        {
+#endif
+            potential.increment(molecules[mI].E());
+#if REPULSIVE_CROWDING
+        }
+#endif
+    }
+    return potential.total();
+}
+#endif
+
 
 void Replica::printTimers()
 {
@@ -754,7 +775,6 @@ float Replica::SumGridResults()
     for (int i=0; i<resultSize*resultSize; i++)
         potentialSum += kernelResult[i];
 
-
     cudaMemset(device_kernelResult, 0, sizeof(float)*resultSize*resultSize);
     return potentialSum * KBTConversionFactor;
 }
@@ -805,6 +825,9 @@ void Replica::MCSearchAcceptReject()
 {
     //cudaStreamSynchronize(cudaStream);  // sync, newPotential needs to have been returned
     newPotential = SumGridResults();
+#if FLEXIBLE_LINKS
+    newPotential += internal_molecule_E();
+#endif
 
     //cout << "new energy replica[" << temperature << "] = " << newPotential << endl;
 
@@ -1135,6 +1158,10 @@ double Replica::EonDevice()
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
 #endif
+    //TODO add new timer for this
+#if FLEXIBLE_LINKS
+    result += internal_molecule_E();
+#endif
     return result;
 }
 
@@ -1145,6 +1172,11 @@ double Replica::EonDeviceNC()
     //cout << "using " << NCdataSetSize <<  " as non NC size" << endl;
 
     CUDA_EonDeviceNC(device_float4_residuePositions, device_float4_residueMeta, device_residueCount, device_moleculeStartPositions, device_moleculeCount, device_LJPotentials, &result,blockSize,NCdataSetSize,sharedMemSize);
+
+    //TODO add new timer for this
+#if FLEXIBLE_LINKS
+    result += internal_molecule_E();
+#endif
 
     return result;
 }
