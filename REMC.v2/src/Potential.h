@@ -38,7 +38,7 @@ public:
     void increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData, double &sum, double &c);
     void increment_DH(Residue &ri, Residue &rj, const double r, double &sum, double &c);
 #if FLEXIBLE_LINKS
-    void increment_bond(Residue &ri, Link &l, Residue &rj);
+    void increment_bond(Residue &ri, Link &l, Residue &rj, const float bounding_value);
     void increment_angle(Residue &rh, Residue &ri, Residue &rj);
     void increment_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue &rk, TorsionalLookupMatrix &torsions);
 #endif

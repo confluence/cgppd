@@ -479,11 +479,16 @@ float Molecule::calculateVolume()
 
 // TODO: add comments
 
-Potential Molecule::E()
+Potential Molecule::E(const float bounding_value)
 {
     Potential potential;
     double c_lj(0.0f);
     double c_dh(0.0f);
+
+#define iRes Residues[i]
+#define jRes Residues[j]
+#define iSeg Segments[si]
+#define jSeg Segments[sj]
 
     // LJ and DH between segments within molecule
     if (update_LJ_and_DH)
@@ -494,15 +499,15 @@ Potential Molecule::E()
         {
             for (size_t sj = si + 1; sj < segmentCount; sj++)
             {
-                for (size_t i = Segments[si].start; i <= Segments[si].end; i++)
+                for (size_t i = iSeg.start; i <= iSeg.end; i++)
                 {
-                    for (size_t j = Segments[sj].start; j <= Segments[si].end; j++) {
+                    for (size_t j = jSeg.start; j <= iSeg.end; j++) {
                         // TODO: do we need to wrap around the bounding box for this calculation?
-                        double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
+                        double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                        potential.increment_LJ(Residues[i], Residues[j], r, AminoAcidsData, LJ, c_lj);
+                        potential.increment_LJ(iRes, jRes, r, AminoAcidsData, LJ, c_lj);
                         /* Calculate electrostatic potential for each residue pair; increment molecule total. */
-                        potential.increment_DH(Residues[i], Residues[j], r, DH, c_dh);
+                        potential.increment_DH(iRes, jRes, r, DH, c_dh);
                     }
                 }
             }
@@ -519,40 +524,40 @@ Potential Molecule::E()
     for (size_t si = 0; si < segmentCount; si++)
     {
         // Flexible linker potentials
-        if (Segments[si].flexible)
+        if (iSeg.flexible)
         {
-            for (size_t i = Segments[si].start; i <= Segments[si].end; i++)
+            for (size_t i = iSeg.start; i <= iSeg.end; i++)
             {
                 // LJ and DH within linker
-                if (Segments[si].update_LJ_and_DH)
+                if (iSeg.update_LJ_and_DH)
                 {
                     c_lj = 0.0f;
                     c_dh = 0.0f;
-                    Segments[si].LJ = 0.0f;
-                    Segments[si].DH = 0.0f;
-                    for (size_t j = i + 1; j <= Segments[si].end; j++)
+                    iSeg.LJ = 0.0f;
+                    iSeg.DH = 0.0f;
+                    for (size_t j = i + 1; j <= iSeg.end; j++)
                     {
                         // TODO: do we need to wrap around the bounding box for this calculation?
-                        double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
+                        double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment segment total. */
-                        potential.increment_LJ(Residues[i], Residues[j], r, AminoAcidsData, Segments[si].LJ, c_lj);
+                        potential.increment_LJ(iRes, jRes, r, AminoAcidsData, iSeg.LJ, c_lj);
                         /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */
                         if (j - i >= 4)
                         {
-                            potential.increment_DH(Residues[i], Residues[j], r, Segments[si].DH, c_dh);
+                            potential.increment_DH(iRes, jRes, r, iSeg.DH, c_dh);
                         }
-                        Segments[si].update_LJ_and_DH = false;
+                        iSeg.update_LJ_and_DH = false;
                     }
                 }
 
                 /* Add segment totals to potential totals */
-                potential.increment_LJ(Segments[si].LJ);
-                potential.increment_DH(Segments[si].DH);
+                potential.increment_LJ(iSeg.LJ);
+                potential.increment_DH(iSeg.DH);
 
                 // Pseudo-bond
-                if (i < Segments[si].end)
+                if (i < iSeg.end)
                 {
-                    potential.increment_bond(Residues[i], Links[i], Residues[i+1]);
+                    potential.increment_bond(iRes, Links[i], Residues[i+1], bounding_value);
                 }
 
                 if (i > 0 && !Links[i-1].dummy)
@@ -561,13 +566,13 @@ Potential Molecule::E()
                     // Pseudo-angle
                     if (i < linkCount)
                     {
-                        potential.increment_angle(Residues[i-1], Residues[i], Residues[i+1]);
+                        potential.increment_angle(Residues[i-1], iRes, Residues[i+1]);
                     }
 
                     // Pseudo-torsion
                     if (i < linkCount - 1 && !Links[i+1].dummy)
                     {
-                        potential.increment_torsion(Residues[i-1], Residues[i], Links[i], Residues[i+1], Residues[i+2], torsions);
+                        potential.increment_torsion(Residues[i-1], iRes, Links[i], Residues[i+1], Residues[i+2], torsions);
                     }
                 }
             }

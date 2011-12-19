@@ -28,6 +28,8 @@ public:
     int moleculeID;
     //AminoAcid aa;
 
+    double distance(const Residue& r, const float bounding_value);
+
 #ifdef FLEXIBLE_LINKS
     /* This value is only cached so that it can be checked by unit tests. */
     float pseudo_angle;

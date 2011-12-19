@@ -31,3 +31,16 @@ Residue::Residue(const Residue & r)
     update_e_angle = r.update_e_angle;
 #endif
 }
+
+double Residue::distance(const Residue& r, const float bounding_value)
+{
+    float Xab(position.x - r.position.x);
+    float Yab(position.y - r.position.y);
+    float Zab(position.z - r.position.z);
+
+    Xab = Xab - bounding_value * round(Xab / bounding_value);
+    Yab = Yab - bounding_value * round(Yab / bounding_value);
+    Zab = Zab - bounding_value * round(Zab / bounding_value);
+
+    return sqrtf(Xab * Xab + Yab * Yab + Zab * Zab);
+}
