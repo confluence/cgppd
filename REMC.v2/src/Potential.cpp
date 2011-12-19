@@ -60,15 +60,14 @@ void Potential::increment_DH(Residue &ri, Residue &rj, const double r, double &s
 }
 
 #if FLEXIBLE_LINKS
-void Potential::increment_bond(Residue &ri, Link &l, Residue &rj)
+void Potential::increment_bond(Residue &ri, Link &l, Residue &rj, const float bounding_value)
 {
     if (l.update_e_bond)
     {
         // eqn 9: kim2008
-        // TODO: modulo bounding box!
-        double rmag = double((rj.position - ri.position).magnitude());  // reduces the number of sqrts by 1
-        l.pseudo_bond = rmag;
-        l.e_bond = (rmag - R0) * (rmag - R0); // in angstroms
+        double r(rj.distance(ri, bounding_value));
+        l.pseudo_bond = r;
+        l.e_bond = (r - R0) * (r - R0); // in angstroms
         l.update_e_bond = false;
     }
 

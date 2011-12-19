@@ -511,18 +511,18 @@ inline float crowderPairPotential(const float r)
     return powf(6.0f/r,12.0f);
 }
 
-inline float distance(Vector3f a,Vector3f b, float _boxdim)
-{
-    float Xab(a.x-b.x);
-    float Yab(a.y-b.y);
-    float Zab(a.z-b.z);
-
-    Xab = Xab - _boxdim * round(Xab/_boxdim);
-    Yab = Yab - _boxdim * round(Yab/_boxdim);
-    Zab = Zab - _boxdim * round(Zab/_boxdim);
-
-    return sqrtf(Xab*Xab+Yab*Yab+Zab*Zab);
-}
+// inline float distance(Vector3f a,Vector3f b, float _boxdim)
+// {
+//     float Xab(a.x-b.x);
+//     float Yab(a.y-b.y);
+//     float Zab(a.z-b.z);
+//
+//     Xab = Xab - _boxdim * round(Xab/_boxdim);
+//     Yab = Yab - _boxdim * round(Yab/_boxdim);
+//     Zab = Zab - _boxdim * round(Zab/_boxdim);
+//
+//     return sqrtf(Xab*Xab+Yab*Yab+Zab*Zab);
+// }
 
 // inline void kahan_sum(double &potential, const double p_ij, double &c)
 // {
@@ -563,7 +563,7 @@ Potential potential;
                 {
                     for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                     {
-                        double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
+                        double r(iRes.distance(jRes, boundingValue) + EPS);
                         if (r < const_repulsive_cutoff)
                         {
                                 potential.increment_LJ(crowderPairPotential(r));
@@ -576,7 +576,8 @@ Potential potential;
         {
 #endif
 #if FLEXIBLE_LINKS
-            potential.increment(molecules[mI].E());
+            // TODO: won't need to pass this once we have proper constructors!
+            potential.increment(molecules[mI].E(boundingValue));
 #endif
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
             {
@@ -587,7 +588,7 @@ Potential potential;
                     {
                         for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                         {
-                            double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
+                            double r(iRes.distance(jRes, boundingValue) + EPS);
                             if (r < const_repulsive_cutoff)
                             {
                                 potential.increment_LJ(crowderPairPotential(r));
@@ -602,7 +603,7 @@ Potential potential;
                     {
                         for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                         {
-                            double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
+                            double r(iRes.distance(jRes, boundingValue) + EPS);
                             potential.increment_LJ(iRes, jRes, r, aminoAcids);
                             potential.increment_DH(iRes, jRes, r);
                         }
@@ -635,14 +636,14 @@ double Replica::E(Molecule *a,Molecule *b)
     {
         for (size_t mj = 0; mj < b->residueCount; mj++)
         {
-            double r (distance(aRes.position, bRes.position, boundingValue) + EPS);
+            double r(aRes.distance(bRes, boundingValue) + EPS);
             potential.increment_LJ(aRes, bRes, r, aminoAcids);
             potential.increment_DH(aRes, bRes, r);
         }
     }
 #if FLEXIBLE_LINKS
-    potential.increment(a->E());
-    potential.increment(b->E());
+    potential.increment(a->E(boundingValue));
+    potential.increment(b->E(boundingValue));
 #endif
 
     return potential.total();
@@ -659,7 +660,7 @@ double Replica::internal_molecule_E() {
         if (molecules[mI].moleculeRoleIdentifier != CROWDER_IDENTIFIER)
         {
 #endif
-            potential.increment(molecules[mI].E());
+            potential.increment(molecules[mI].E(boundingValue));
 #if REPULSIVE_CROWDING
         }
 #endif

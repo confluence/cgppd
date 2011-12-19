@@ -1,5 +1,4 @@
 Potential:
-* put distance somewhere accessible to replica and molecule -- use wrapped distance everywhere
 * test data: calculate ballpark estimate from rigid E + internal rigid E
 * !!! check performance of CPU NC E with doubles / floats
 

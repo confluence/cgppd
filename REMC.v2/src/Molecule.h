@@ -59,7 +59,7 @@ public:
     Link *Links;
     Segment *Segments; // Boundaries of all domains and linkers
     TorsionalLookupMatrix torsions;
-    Potential E();
+    Potential E(const float bounding_value);
 
     double LJ; // cached inter-segment LJ component of this molecule
     double DH; // cached inter-segment DH component of this molecule

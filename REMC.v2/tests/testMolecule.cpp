@@ -160,7 +160,9 @@ void TestLinkerPotentials::testGeometry()
         0.0 // padding for simplicity
     };
 
-    Potential e = molecule.E();
+    float testboxdim(118.4f);
+
+    Potential e = molecule.E(testboxdim);
     cout << e.total_LJ() << endl;
     cout << e.total_DH() << endl;
     cout << e.total_bond() << endl;
