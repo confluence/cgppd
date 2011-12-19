@@ -8,5 +8,5 @@ Segment::Segment()
 
     LJ = 0.0f;
     DH = 0.0f;
-    update_E = true;
+    update_LJ_and_DH = true;
 }

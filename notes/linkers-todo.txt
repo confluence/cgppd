@@ -1,20 +1,7 @@
-Potential calculation:
-
-WHAT IS NEEDED:
-* LJ_component and DH_component methods on residue - DONE
-* Consider doing the same for angle (residue) and bond and torsion (linker)? Pass in relevant parameters?
-    * In fact, add a getter, and do everything including updating the cached value in the object
-    * pointers to neighbouring residues -- is this expensive?
-* similar getter on segment? change update_E to update_LJ and update_DH?
-
-* put kahan_sum, sum, distance somewhere accessible to replica and molecule
-
-* Add molecule E to main potential calculation
-    * E - DONE
-    * E(a,b) - DONE
-    * EonDevice - DONE
-    * EonDeviceNC - DONE
-    * What about async? MCSearchAcceptReject - DONE
+Potential:
+* put distance somewhere accessible to replica and molecule -- use wrapped distance everywhere
+* test data: calculate ballpark estimate from rigid E + internal rigid E
+* !!! check performance of CPU NC E with doubles / floats
 
 MC moves:
 * any linker change: main linker E, internal molecule E

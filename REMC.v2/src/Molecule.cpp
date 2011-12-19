@@ -18,7 +18,7 @@ Molecule::Molecule()
     segmentCount = 0;
     LJ = 0.0f;
     DH = 0.0f;
-    update_E = true;
+    update_LJ_and_DH = true;
 #endif
 }
 
@@ -70,7 +70,7 @@ Molecule::Molecule(const Molecule& m)
     segmentCount = m.segmentCount;
     LJ = m.LJ;
     DH = m.DH;
-    update_E = m.update_E;
+    update_LJ_and_DH = m.update_LJ_and_DH;
 #endif
 }
 
@@ -111,7 +111,7 @@ void Molecule::copy(const Molecule& m)
     segmentCount = m.segmentCount;
     LJ = m.LJ;
     DH = m.DH;
-    update_E = m.update_E;
+    update_LJ_and_DH = m.update_LJ_and_DH;
 #endif
 }
 
@@ -486,7 +486,7 @@ Potential Molecule::E()
     double c_dh(0.0f);
 
     // LJ and DH between segments within molecule
-    if (update_E)
+    if (update_LJ_and_DH)
     {
         LJ = 0.0f;
         DH = 0.0f;
@@ -508,10 +508,11 @@ Potential Molecule::E()
             }
         }
 
-        update_E = false;
+        update_LJ_and_DH = false;
     }
 
     /* Add molecule totals to potential totals */
+    /* TODO: what impact do side calculations like this have on kahan sum accuracy? */
     potential.increment_LJ(LJ);
     potential.increment_DH(DH);
 
@@ -523,7 +524,7 @@ Potential Molecule::E()
             for (size_t i = Segments[si].start; i <= Segments[si].end; i++)
             {
                 // LJ and DH within linker
-                if (Segments[si].update_E)
+                if (Segments[si].update_LJ_and_DH)
                 {
                     c_lj = 0.0f;
                     c_dh = 0.0f;
@@ -540,7 +541,7 @@ Potential Molecule::E()
                         {
                             potential.increment_DH(Residues[i], Residues[j], r, Segments[si].DH, c_dh);
                         }
-                        Segments[si].update_E = false;
+                        Segments[si].update_LJ_and_DH = false;
                     }
                 }
 
