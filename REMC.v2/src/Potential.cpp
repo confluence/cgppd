@@ -41,6 +41,7 @@ void Potential::sum(double &sum, const double i, double &c)
     sum += i;
 #endif
 }
+
 void Potential::increment_LJ(const double LJ)
 {
     sum(this->LJ, LJ, c_lj);
@@ -93,10 +94,6 @@ double Potential::total_DH()
 #if FLEXIBLE_LINKS
 double Potential::total_bond()
 {
-//     cout << "bond " << (bond) << endl;
-//     cout << "bond * 0.5 " << (bond * 0.5) << endl;
-//     cout << "bond * 0.5 * K_spring " << (bond * 0.5 * K_spring) << endl;
-//     cout << "bond * 0.5 * K_spring * KBTConversionFactor " << (bond * 0.5 * K_spring * KBTConversionFactor) << endl;
     return bond * 0.5 * K_spring * KBTConversionFactor;
 }
 
