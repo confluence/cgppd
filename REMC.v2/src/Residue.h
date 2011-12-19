@@ -36,12 +36,7 @@ public:
     float e_angle;
     // This is set to 1 if local MC moves necessitate an update of the cached value
     bool update_e_angle;
-
-    float LJ_component(const Residue& rj, const double r, const AminoAcids & AminoAcidsData);
-    float DH_component(const Residue& rj, const double r);
 #endif
 };
-
-
 
 #endif

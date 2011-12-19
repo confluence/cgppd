@@ -25,6 +25,101 @@ Potential::~Potential()
 {
 }
 
+void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData)
+{
+    increment_LJ(ri, rj, r, AminoAcidsData, LJ, c_lj);
+}
+
+void Potential::increment_DH(Residue &ri, Residue &rj, const double r)
+{
+    increment_DH(ri, rj, r, DH, c_dh);
+}
+
+void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData, double &sum, double &c)
+{
+    double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
+    // sigmaij is the average atomic radius determined by the van der waal radius in kim2008
+    double sigmaij(0.5f * (ri.vanderWaalRadius + rj.vanderWaalRadius));
+    //float r0 = powf(2.0f,(1.0f/6.0f));
+    //float sigT = sigmaij / r ;
+    double LJtmp(powf(sigmaij / r, 6.0f)); //sigT*sigT*sigT*sigT*sigT*sigT;
+    double LJ(-4.0f * Eij * LJtmp * (LJtmp - 1.0f));
+
+    if (Eij > 0.0f && r < sigmaij * r0_constant)  // attractive pairs
+    {
+        LJ = -LJ + 2.0f * Eij;
+    }
+
+    increment_LJ(sum, LJ, c);
+}
+
+void Potential::increment_DH(Residue &ri, Residue &rj, const double r, double &sum, double &c)
+{
+    double DH (ri.electrostaticCharge * rj.electrostaticCharge * expf(-r / Xi) / r);
+    increment_DH(sum, DH, c);
+}
+
+#if FLEXIBLE_LINKS
+void Potential::increment_bond(Residue &ri, Link &l, Residue &rj)
+{
+    if (l.update_e_bond)
+    {
+        // eqn 9: kim2008
+        // TODO: modulo bounding box!
+        double rmag = double((rj.position - ri.position).magnitude());  // reduces the number of sqrts by 1
+        l.pseudo_bond = rmag;
+        l.e_bond = (rmag - R0) * (rmag - R0); // in angstroms
+        l.update_e_bond = false;
+    }
+
+    increment_bond(l.e_bond);
+}
+
+void Potential::increment_angle(Residue &rh, Residue &ri, Residue &rj)
+{
+    if (ri.update_e_angle)
+    {
+        Vector3f ab = rh.position - ri.position;
+        Vector3f cb = rj.position - ri.position;
+        double theta = ab.angle(cb);
+        ri.pseudo_angle = theta;
+        // eqn 10: kim2008
+        ri.e_angle = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
+                    exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
+
+        ri.update_e_angle = false;
+    }
+
+    increment_angle(ri.e_angle);
+}
+
+void Potential::increment_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue &rk, TorsionalLookupMatrix &torsions)
+{
+    if (l.update_e_torsion)
+    {
+        // TODO: is this the most efficient way?
+        Vector3f b1 = ri.position - rh.position;
+        Vector3f b2 = rj.position - ri.position;
+        Vector3f b3 = rk.position - rj.position;
+        Vector3f b2xb3 = b2.cross(b3);
+        double phi = atan2((b2.magnitude() * b1.dot(b2xb3)), b1.cross(b2).dot(b2xb3));
+
+        l.pseudo_torsion = phi;
+        // eqn 11: kim2008
+        int r1 = ri.aminoAcidIndex;
+        int r2 = rj.aminoAcidIndex;
+        l.e_torsion = (1 + cos(phi - torsions.getSigma(r1, r2, 1))) * torsions.getV(r1, r2, 1) +
+            (1 + cos(2 * phi - torsions.getSigma(r1, r2, 2))) * torsions.getV(r1, r2, 2) +
+            (1 + cos(3 * phi - torsions.getSigma(r1, r2, 3))) * torsions.getV(r1, r2, 3) +
+            (1 + cos(4 * phi - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
+
+        l.update_e_torsion = false;
+    }
+
+    increment_torsion(l.e_torsion);
+}
+#endif
+
 void Potential::kahan_sum(double &sum, const double i, double &c)
 {
     double y(i - c);
@@ -44,12 +139,22 @@ void Potential::sum(double &sum, const double i, double &c)
 
 void Potential::increment_LJ(const double LJ)
 {
-    sum(this->LJ, LJ, c_lj);
+    increment_LJ(this->LJ, LJ, c_lj);
 }
 
 void Potential::increment_DH(const double DH)
 {
-    sum(this->DH, DH, c_dh);
+    increment_DH(this->DH, DH, c_dh);
+}
+
+void Potential::increment_LJ(double &sum, const double LJ, double &c)
+{
+    this->sum(sum, LJ, c);
+}
+
+void Potential::increment_DH(double &sum, const double DH, double &c)
+{
+    this->sum(sum, DH, c);
 }
 
 #if FLEXIBLE_LINKS

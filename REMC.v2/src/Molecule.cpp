@@ -482,10 +482,14 @@ float Molecule::calculateVolume()
 Potential Molecule::E()
 {
     Potential potential;
+    double c_lj(0.0f);
+    double c_dh(0.0f);
 
     // LJ and DH between segments within molecule
     if (update_E)
     {
+        LJ = 0.0f;
+        DH = 0.0f;
         for (size_t si = 0; si < segmentCount; si++)
         {
             for (size_t sj = si + 1; sj < segmentCount; sj++)
@@ -495,24 +499,21 @@ Potential Molecule::E()
                     for (size_t j = Segments[sj].start; j <= Segments[si].end; j++) {
                         // TODO: do we need to wrap around the bounding box for this calculation?
                         double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
-                        /* Calculate LJ-type potential for each residue pair. */
-                        potential.increment_LJ(Residues[i].LJ_component(Residues[j], r, AminoAcidsData));
-                        /* Calculate electrostatic potential for each residue pair. */
-                        potential.increment_DH(Residues[i].DH_component(Residues[j], r));
+                        /* Calculate LJ-type potential for each residue pair; increment molecule total. */
+                        potential.increment_LJ(Residues[i], Residues[j], r, AminoAcidsData, LJ, c_lj);
+                        /* Calculate electrostatic potential for each residue pair; increment molecule total. */
+                        potential.increment_DH(Residues[i], Residues[j], r, DH, c_dh);
                     }
                 }
             }
         }
-        // Cache values: use current LJ/DH total
-        LJ = potential.LJ;
-        DH = potential.DH;
+
         update_E = false;
     }
-    else
-    {
-        potential.increment_LJ(LJ);
-        potential.increment_DH(DH);
-    }
+
+    /* Add molecule totals to potential totals */
+    potential.increment_LJ(LJ);
+    potential.increment_DH(DH);
 
     for (size_t si = 0; si < segmentCount; si++)
     {
@@ -524,38 +525,33 @@ Potential Molecule::E()
                 // LJ and DH within linker
                 if (Segments[si].update_E)
                 {
+                    c_lj = 0.0f;
+                    c_dh = 0.0f;
+                    Segments[si].LJ = 0.0f;
+                    Segments[si].DH = 0.0f;
                     for (size_t j = i + 1; j <= Segments[si].end; j++)
                     {
                         // TODO: do we need to wrap around the bounding box for this calculation?
-                        // TODO: internal kahan sum
                         double r((Residues[i].position - Residues[j].position).magnitude() + EPS);
-                        /* Calculate LJ-type potential for each residue pair. */
-                        Segments[si].LJ += Residues[i].LJ_component(Residues[j], r, AminoAcidsData);
-                        /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429). */
+                        /* Calculate LJ-type potential for each residue pair; increment segment total. */
+                        potential.increment_LJ(Residues[i], Residues[j], r, AminoAcidsData, Segments[si].LJ, c_lj);
+                        /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */
                         if (j - i >= 4)
                         {
-                            Segments[si].DH += Residues[i].DH_component(Residues[j], r);
+                            potential.increment_DH(Residues[i], Residues[j], r, Segments[si].DH, c_dh);
                         }
                         Segments[si].update_E = false;
                     }
                 }
 
+                /* Add segment totals to potential totals */
                 potential.increment_LJ(Segments[si].LJ);
                 potential.increment_DH(Segments[si].DH);
 
                 // Pseudo-bond
                 if (i < Segments[si].end)
                 {
-                    if (Links[i].update_e_bond)
-                    {
-                        // eqn 9: kim2008
-                        // TODO: can we save this calculation from the previous loop?
-                        double rmag = double((Residues[i+1].position - Residues[i].position).magnitude());  // reduces the number of sqrts by 1
-                        Links[i].pseudo_bond = rmag;
-                        Links[i].e_bond = (rmag - R0) * (rmag - R0); // in angstroms
-                        Links[i].update_e_bond = false;
-                    }
-                    potential.increment_bond(Links[i].e_bond);
+                    potential.increment_bond(Residues[i], Links[i], Residues[i+1]);
                 }
 
                 if (i > 0 && !Links[i-1].dummy)
@@ -564,44 +560,13 @@ Potential Molecule::E()
                     // Pseudo-angle
                     if (i < linkCount)
                     {
-                        if (Residues[i].update_e_angle)
-                        {
-                            Vector3f ab = Residues[i-1].position - Residues[i].position;
-                            Vector3f cb = Residues[i+1].position - Residues[i].position;
-                            double theta = ab.angle(cb);
-                            Residues[i].pseudo_angle = theta;
-                            // eqn 10: kim2008
-                            Residues[i].e_angle = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
-                                        exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
-                            Residues[i].update_e_angle = false;
-                        }
-                        // TODO: check maths -- -GammaAngleReciprocal * log(e_angle)?
-                        potential.increment_angle(Residues[i].e_angle);
+                        potential.increment_angle(Residues[i-1], Residues[i], Residues[i+1]);
                     }
 
                     // Pseudo-torsion
                     if (i < linkCount - 1 && !Links[i+1].dummy)
                     {
-                        if (Links[i].update_e_torsion)
-                        {
-                            // TODO: is this the most efficient way?
-                            Vector3f b1 = Residues[i].position - Residues[i-1].position;
-                            Vector3f b2 = Residues[i+1].position - Residues[i].position;
-                            Vector3f b3 = Residues[i+2].position - Residues[i+1].position;
-                            Vector3f b2xb3 = b2.cross(b3);
-                            double phi = atan2((b2.magnitude() * b1.dot(b2xb3)), b1.cross(b2).dot(b2xb3));
-
-                            Links[i].pseudo_torsion = phi;
-                            // eqn 11: kim2008
-                            int r1 = Residues[i].aminoAcidIndex;
-                            int r2 = Residues[i+1].aminoAcidIndex;
-                            Links[i].e_torsion = (1 + cos(phi - torsions.getSigma(r1, r2, 1))) * torsions.getV(r1, r2, 1) +
-                                                (1 + cos(2 * phi - torsions.getSigma(r1, r2, 2))) * torsions.getV(r1, r2, 2) +
-                                                (1 + cos(3 * phi - torsions.getSigma(r1, r2, 3))) * torsions.getV(r1, r2, 3) +
-                                                (1 + cos(4 * phi - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
-                            Links[i].update_e_torsion = false;
-                        }
-                        potential.increment_torsion(Links[i].e_torsion);
+                        potential.increment_torsion(Residues[i-1], Residues[i], Links[i], Residues[i+1], Residues[i+2], torsions);
                     }
                 }
             }
