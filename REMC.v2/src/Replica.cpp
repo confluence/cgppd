@@ -603,10 +603,8 @@ Potential potential;
                         for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                         {
                             double r(distance(iRes.position, jRes.position, boundingValue) + EPS);
-                            double DH(iRes.DH_component(jRes, r));
-                            double LJ(iRes.LJ_component(jRes, r, aminoAcids));
-                            potential.increment_DH(DH);
-                            potential.increment_LJ(LJ);
+                            potential.increment_LJ(iRes, jRes, r, aminoAcids);
+                            potential.increment_DH(iRes, jRes, r);
                         }
                     }
 #if REPULSIVE_CROWDING
@@ -638,11 +636,8 @@ double Replica::E(Molecule *a,Molecule *b)
         for (size_t mj = 0; mj < b->residueCount; mj++)
         {
             double r (distance(aRes.position, bRes.position, boundingValue) + EPS);
-            double DH(aRes.DH_component(bRes, r));
-            double LJ(aRes.LJ_component(bRes, r, aminoAcids));
-
-            potential.increment_DH(DH);
-            potential.increment_LJ(LJ);
+            potential.increment_LJ(aRes, bRes, r, aminoAcids);
+            potential.increment_DH(aRes, bRes, r);
         }
     }
 #if FLEXIBLE_LINKS
