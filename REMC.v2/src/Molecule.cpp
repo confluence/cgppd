@@ -552,7 +552,7 @@ Potential Molecule::E()
                         // TODO: can we save this calculation from the previous loop?
                         double rmag = double((Residues[i+1].position - Residues[i].position).magnitude());  // reduces the number of sqrts by 1
                         Links[i].pseudo_bond = rmag;
-                        Links[i].e_bond = (rmag - R0 * Angstrom) * (rmag - R0 * Angstrom);
+                        Links[i].e_bond = (rmag - R0) * (rmag - R0); // in angstroms
                         Links[i].update_e_bond = false;
                     }
                     potential.increment_bond(Links[i].e_bond);

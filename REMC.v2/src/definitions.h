@@ -42,7 +42,7 @@
     // pseudobond constants
 
     #define K_spring 	378 			// 378 kcal / (mol.A^2)
-    #define R0			3.81f			// reference bond length in atomic units
+    #define R0			3.81f			// reference bond length in angstroms
 
     // pseudo angle constants
 
