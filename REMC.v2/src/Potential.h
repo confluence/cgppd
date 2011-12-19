@@ -32,7 +32,7 @@ public:
     Potential();
     ~Potential();
 
-    /* Calculate components */
+    /* Increment components individually after calculating */
     void increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData);
     void increment_DH(Residue &ri, Residue &rj, const double r);
     void increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData, double &sum, double &c);
@@ -53,6 +53,7 @@ public:
     void increment_angle(const double angle);
     void increment_torsion(const double torsion);
 #endif
+
     /* Increment all components */
     void increment(const Potential p);
 
@@ -64,6 +65,7 @@ public:
     double total_angle();
     double total_torsion();
 #endif
+
     /* Output final total */
     double total();
 };

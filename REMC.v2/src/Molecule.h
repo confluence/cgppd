@@ -63,7 +63,7 @@ public:
 
     double LJ; // cached inter-segment LJ component of this molecule
     double DH; // cached inter-segment DH component of this molecule
-    bool update_E; // LJ and DH values need to be updated
+    bool update_LJ_and_DH; // LJ and DH values need to be updated
 #endif
     size_t chainCount;
     Vector3f position;
