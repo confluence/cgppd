@@ -2,23 +2,30 @@
 
 using namespace std;
 
+#if COMPENSATE_KERNEL_SUM
+KahanTuple::KahanTuple()
+{
+    sum = 0.0f;
+    c = 0.0f;
+}
+#endif // COMPENSATE_KERNEL_SUM
+
 Potential::Potential()
 {
+#if !COMPENSATE_KERNEL_SUM
     LJ = 0.0f;
     DH = 0.0f;
-
-    c_lj =  0.0f;
-    c_dh =  0.0f;
+#endif // not COMPENSATE_KERNEL_SUM
 
 #if FLEXIBLE_LINKS
-    bond = 0.0f;
     /* NB: angle potential is a sum of logs -- we multiply the components and take the log at the end. */
     angle = 1.0f;
-    torsion = 0.0f;
 
-    c_bond =  0.0f;
-    c_torsion =  0.0f;
-#endif
+#if !COMPENSATE_KERNEL_SUM
+    bond = 0.0f;
+    torsion = 0.0f;
+#endif // not COMPENSATE_KERNEL_SUM
+#endif // FLEXIBLE_LINKS
 }
 
 Potential::~Potential()
@@ -27,6 +34,7 @@ Potential::~Potential()
 
 void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData)
 {
+    // TODO: start here; remove c_lj
     increment_LJ(ri, rj, r, AminoAcidsData, LJ, c_lj);
 }
 
