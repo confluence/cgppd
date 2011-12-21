@@ -1,7 +1,7 @@
 Potential:
-* change ifdef FLEXIBLE_LINKS to if
 * test data
 * !!! check performance of CPU NC E with doubles / floats
+* test kahan sums
 
 MC moves:
 * any linker change: main linker E, internal molecule E

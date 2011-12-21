@@ -55,7 +55,7 @@ public:
 
     AminoAcids aminoAcids;
 
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
     TorsionalLookupMatrix torsions;
     double internal_molecule_E();
 #endif

@@ -13,7 +13,7 @@ Molecule::Molecule()
     volume = 0.0f;
     hasFilename = false;
     amIACrowder = false;
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
     linkCount = 0;
     segmentCount = 0;
     LJ = 0.0f;
@@ -31,7 +31,7 @@ Molecule::~Molecule()
 void Molecule::init_amino_acid_data(AminoAcids &a)
 {
     AminoAcidsData = a;
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
 //     torsions.setAminoAcidLookupData(AminoAcidsData);
     torsions.loadData("data/torsional_pair_potentials", a);
 #endif
@@ -64,7 +64,7 @@ Molecule::Molecule(const Molecule& m)
     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
     amIACrowder = m.amIACrowder;
     hasFilename = false;
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
     torsions = m.torsions;
     linkCount = m.linkCount;
     segmentCount = m.segmentCount;
@@ -105,7 +105,7 @@ void Molecule::copy(const Molecule& m)
     index = m.index;
     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
     amIACrowder = m.amIACrowder;
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
     torsions = m.torsions;
     linkCount = m.linkCount;
     segmentCount = m.segmentCount;
@@ -282,7 +282,7 @@ void Molecule::setRotation(Quaternion q)
 bool Molecule::initFromPDB(const char* pdbfilename)
 {
     vector<Residue> vResidues;
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
     vector<Link> vLinks;
 #endif
 
@@ -353,7 +353,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 R.moleculeID = index;
                 vResidues.push_back(R);
 
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
                 Link L;
                 // occupancy set to 1 on a residue indicates that the following link is flexible.
                 L.flexible = bool(occupancy);
@@ -364,7 +364,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         else if (strncmp(line, "TER", 3) == 0) // Optional,Mandatory if ATOM records exist.
         {
             chainCount++;
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
             // The last link isn't a real link
             vLinks.back().dummy = true;
             // Set it to non-flexible regardless of the occupancy of the last residue
@@ -406,7 +406,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     calculateSASA();
     calculateVolume();
 
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
     linkCount = vLinks.size() - 1;
     Links = new Link[linkCount];
     vector<Segment> vSegments;
@@ -475,7 +475,7 @@ float Molecule::calculateVolume()
     return volume;
 }
 
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
 
 // TODO: add comments
 
