@@ -10,10 +10,11 @@
 #if COMPENSATE_KERNEL_SUM
 struct KahanTuple
 {
-    double sum;
+    double * sum;
     double c;
 
     KahanTuple();
+    KahanTuple(&sum);
     ~KahanTuple();
 };
 #endif // COMPENSATE_KERNEL_SUM
@@ -24,8 +25,9 @@ private:
 #if COMPENSATE_KERNEL_SUM
     void kahan_sum(KahanTuple &sum, const double i);
     void sum(KahanTuple &sum, const double i);
-#endif // COMPENSATE_KERNEL_SUM
+#else // if not COMPENSATE_KERNEL_SUM
     void sum(double &sum, const double i);
+#endif // COMPENSATE_KERNEL_SUM
 
 public:
 
@@ -51,14 +53,11 @@ public:
     Potential();
     ~Potential();
 
-    /* Getters */
-    double get_LJ();
-    double get_DH();
-#if FLEXIBLE_LINKS
-    double get_bond();
-    double get_angle();
-    double get_torsion();
-#endif // FLEXIBLE_LINKS
+#if COMPENSATE_KERNEL_SUM
+    double get(const KahanTuple &sum);
+#else // if not COMPENSATE_KERNEL_SUM
+    double get(const double &sum);
+#endif // COMPENSATE_KERNEL_SUM
 
     /* Increment components individually after calculating */
     void increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData);

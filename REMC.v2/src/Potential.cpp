@@ -5,7 +5,14 @@ using namespace std;
 #if COMPENSATE_KERNEL_SUM
 KahanTuple::KahanTuple()
 {
-    sum = 0.0f;
+    double dsum(0.0f);
+    sum = &dsum;
+    c = 0.0f;
+}
+
+KahanTuple::KahanTuple(double &dsum)
+{
+    sum = &dsum;
     c = 0.0f;
 }
 #endif // COMPENSATE_KERNEL_SUM
@@ -32,18 +39,33 @@ Potential::~Potential()
 {
 }
 
+#if COMPENSATE_KERNEL_SUM
+double Potential::get(const KahanTuple &sum)
+{
+    return *sum.sum;
+}
+#else // if not COMPENSATE_KERNEL_SUM
+double Potential::get(const double &sum)
+{
+    return sum;
+}
+#endif // COMPENSATE_KERNEL_SUM
+
 void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData)
 {
-    // TODO: start here; remove c_lj
-    increment_LJ(ri, rj, r, AminoAcidsData, LJ, c_lj);
+    increment_LJ(ri, rj, r, AminoAcidsData, LJ);
 }
 
 void Potential::increment_DH(Residue &ri, Residue &rj, const double r)
 {
-    increment_DH(ri, rj, r, DH, c_dh);
+    increment_DH(ri, rj, r, DH);
 }
 
-void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData, double &sum, double &c)
+#if COMPENSATE_KERNEL_SUM
+void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData, KahanTuple &sum)
+#else // if not COMPENSATE_KERNEL_SUM
+void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData, double &sum)
+#endif // COMPENSATE_KERNEL_SUM
 {
     double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
     // sigmaij is the average atomic radius determined by the van der waal radius in kim2008
@@ -58,13 +80,17 @@ void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const Ami
         LJ = -LJ + 2.0f * Eij;
     }
 
-    increment_LJ(sum, LJ, c);
+    increment_LJ(sum, LJ);
 }
 
-void Potential::increment_DH(Residue &ri, Residue &rj, const double r, double &sum, double &c)
+#if COMPENSATE_KERNEL_SUM
+void Potential::increment_DH(Residue &ri, Residue &rj, const double r, KahanTuple &sum)
+#else // if not COMPENSATE_KERNEL_SUM
+void Potential::increment_DH(Residue &ri, Residue &rj, const double r, double &sum)
+#endif // COMPENSATE_KERNEL_SUM
 {
     double DH (ri.electrostaticCharge * rj.electrostaticCharge * expf(-r / Xi) / r);
-    increment_DH(sum, DH, c);
+    increment_DH(sum, DH);
 }
 
 #if FLEXIBLE_LINKS
@@ -127,47 +153,58 @@ void Potential::increment_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj
 }
 #endif
 
-void Potential::kahan_sum(double &sum, const double i, double &c)
+#if COMPENSATE_KERNEL_SUM
+void Potential::kahan_sum(KahanTuple &k, const double i)
 {
-    double y(i - c);
-    double t(sum + y);
-    c = (t - sum) - y;
-    sum = t;
+    double y(i - k.c);
+    double t(*k.sum + y);
+    k.c = (t - *k.sum) - y;
+    *k.sum = t;
 }
 
-void Potential::sum(double &sum, const double i, double &c)
+void Potential::sum(KahanTuple &sum, const double i)
 {
-#if COMPENSATE_KERNEL_SUM
-    kahan_sum(sum, i, c);
-#else
-    sum += i;
-#endif
+    kahan_sum(sum, i);
 }
+#else // if not COMPENSATE_KERNEL_SUM
+void Potential::sum(double &sum, const double i)
+{
+    sum += i;
+}
+#endif // COMPENSATE_KERNEL_SUM
 
 void Potential::increment_LJ(const double LJ)
 {
-    increment_LJ(this->LJ, LJ, c_lj);
+    increment_LJ(this->LJ, LJ);
 }
 
 void Potential::increment_DH(const double DH)
 {
-    increment_DH(this->DH, DH, c_dh);
+    increment_DH(this->DH, DH);
 }
 
-void Potential::increment_LJ(double &sum, const double LJ, double &c)
+#if COMPENSATE_KERNEL_SUM
+void Potential::increment_LJ(KahanTuple &sum, const double LJ)
+#else // if not COMPENSATE_KERNEL_SUM
+void Potential::increment_LJ(double &sum, const double LJ)
+#endif // COMPENSATE_KERNEL_SUM
 {
-    this->sum(sum, LJ, c);
+    this->sum(sum, LJ);
 }
 
-void Potential::increment_DH(double &sum, const double DH, double &c)
+#if COMPENSATE_KERNEL_SUM
+void Potential::increment_DH(KahanTuple &sum, const double DH)
+#else // if not COMPENSATE_KERNEL_SUM
+void Potential::increment_DH(double &sum, const double DH)
+#endif // COMPENSATE_KERNEL_SUM
 {
-    this->sum(sum, DH, c);
+    this->sum(sum, DH);
 }
 
 #if FLEXIBLE_LINKS
 void Potential::increment_bond(const double bond)
 {
-    sum(this->bond, bond, c_bond);
+    sum(this->bond, bond);
 }
 
 void Potential::increment_angle(const double angle)
@@ -177,36 +214,36 @@ void Potential::increment_angle(const double angle)
 
 void Potential::increment_torsion(const double torsion)
 {
-    sum(this->torsion, torsion, c_torsion);
+    sum(this->torsion, torsion);
 }
 #endif
 
 void Potential::increment(const Potential p)
 {
-    sum(LJ, p.LJ, c_lj);
-    sum(DH, p.DH, c_dh);
+    sum(LJ, get(p.LJ));
+    sum(DH, get(p.DH));
 
 #if FLEXIBLE_LINKS
-    sum(bond, p.bond, c_bond);
+    sum(bond, get(p.bond));
     angle *= p.angle;
-    sum(torsion, p.torsion, c_torsion);
+    sum(torsion, get(p.torsion));
 #endif
 }
 
 double Potential::total_LJ()
 {
-    return LJ * LJ_CONVERSION_FACTOR * KBTConversionFactor;
+    return get(LJ) * LJ_CONVERSION_FACTOR * KBTConversionFactor;
 }
 
 double Potential::total_DH()
 {
-    return DH * DH_constant_component * KBTConversionFactor;
+    return get(DH) * DH_constant_component * KBTConversionFactor;
 }
 
 #if FLEXIBLE_LINKS
 double Potential::total_bond()
 {
-    return bond * 0.5 * K_spring * KBTConversionFactor;
+    return get(bond) * 0.5 * K_spring * KBTConversionFactor;
 }
 
 double Potential::total_angle()
@@ -216,15 +253,15 @@ double Potential::total_angle()
 
 double Potential::total_torsion()
 {
-    return torsion * KBTConversionFactor;
+    return get(torsion) * KBTConversionFactor;
 }
 #endif
 
 double Potential::total()
 {
 #if FLEXIBLE_LINKS
-    return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion) * KBTConversionFactor;
+    return (get(DH) * DH_constant_component + get(LJ) * LJ_CONVERSION_FACTOR + get(bond) * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + get(torsion)) * KBTConversionFactor;
 #else
-    return (LJ * LJ_CONVERSION_FACTOR + DH * DH_constant_component) * KBTConversionFactor;
+    return (get(LJ) * LJ_CONVERSION_FACTOR + get(DH) * DH_constant_component) * KBTConversionFactor;
 #endif
 }

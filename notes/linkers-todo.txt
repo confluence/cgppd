@@ -1,5 +1,6 @@
 Potential:
-* test data: calculate ballpark estimate from rigid E + internal rigid E
+* change ifdef FLEXIBLE_LINKS to if
+* test data
 * !!! check performance of CPU NC E with doubles / floats
 
 MC moves:

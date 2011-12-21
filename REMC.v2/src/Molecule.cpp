@@ -482,8 +482,6 @@ float Molecule::calculateVolume()
 Potential Molecule::E(const float bounding_value)
 {
     Potential potential;
-    double c_lj(0.0f);
-    double c_dh(0.0f);
 
 #define iRes Residues[i]
 #define jRes Residues[j]
@@ -495,6 +493,13 @@ Potential Molecule::E(const float bounding_value)
     {
         LJ = 0.0f;
         DH = 0.0f;
+#if COMPENSATE_KERNEL_SUM
+        KahanTuple mol_LJ(LJ);
+        KahanTuple mol_DH(DH);
+#else
+        double& mol_LJ = LJ;
+        double& mol_DH = DH;
+#endif
         for (size_t si = 0; si < segmentCount; si++)
         {
             for (size_t sj = si + 1; sj < segmentCount; sj++)
@@ -502,12 +507,11 @@ Potential Molecule::E(const float bounding_value)
                 for (size_t i = iSeg.start; i <= iSeg.end; i++)
                 {
                     for (size_t j = jSeg.start; j <= iSeg.end; j++) {
-                        // TODO: do we need to wrap around the bounding box for this calculation?
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                        potential.increment_LJ(iRes, jRes, r, AminoAcidsData, LJ, c_lj);
+                        potential.increment_LJ(iRes, jRes, r, AminoAcidsData, mol_LJ);
                         /* Calculate electrostatic potential for each residue pair; increment molecule total. */
-                        potential.increment_DH(iRes, jRes, r, DH, c_dh);
+                        potential.increment_DH(iRes, jRes, r, mol_DH);
                     }
                 }
             }
@@ -531,20 +535,24 @@ Potential Molecule::E(const float bounding_value)
                 // LJ and DH within linker
                 if (iSeg.update_LJ_and_DH)
                 {
-                    c_lj = 0.0f;
-                    c_dh = 0.0f;
                     iSeg.LJ = 0.0f;
                     iSeg.DH = 0.0f;
+#if COMPENSATE_KERNEL_SUM
+                    KahanTuple seg_LJ(iSeg.LJ);
+                    KahanTuple seg_DH(iSeg.DH);
+#else
+                    double& seg_LJ = iSeg.LJ;
+                    double& seg_DH = iSeg.DH;
+#endif
                     for (size_t j = i + 1; j <= iSeg.end; j++)
                     {
-                        // TODO: do we need to wrap around the bounding box for this calculation?
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment segment total. */
-                        potential.increment_LJ(iRes, jRes, r, AminoAcidsData, iSeg.LJ, c_lj);
+                        potential.increment_LJ(iRes, jRes, r, AminoAcidsData, seg_LJ);
                         /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */
                         if (j - i >= 4)
                         {
-                            potential.increment_DH(iRes, jRes, r, iSeg.DH, c_dh);
+                            potential.increment_DH(iRes, jRes, r, seg_DH);
                         }
                         iSeg.update_LJ_and_DH = false;
                     }
