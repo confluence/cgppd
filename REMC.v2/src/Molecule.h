@@ -53,7 +53,7 @@ public:
     Residue *Residues;
     int residueCount;
 
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
     int linkCount;
     int segmentCount;
     Link *Links;

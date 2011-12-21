@@ -30,7 +30,7 @@ public:
 
     double distance(const Residue& r, const float bounding_value);
 
-#ifdef FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS
     /* This value is only cached so that it can be checked by unit tests. */
     float pseudo_angle;
     /* Angle potential for this residue, before natural log and division
