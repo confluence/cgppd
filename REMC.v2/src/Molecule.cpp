@@ -491,15 +491,9 @@ Potential Molecule::E(const float bounding_value)
     // LJ and DH between segments within molecule
     if (update_LJ_and_DH)
     {
-        LJ = 0.0f;
-        DH = 0.0f;
-#if COMPENSATE_KERNEL_SUM
-        KahanTuple mol_LJ(LJ);
-        KahanTuple mol_DH(DH);
-#else
-        double& mol_LJ = LJ;
-        double& mol_DH = DH;
-#endif
+        potential.reset_LJ_subtotal();
+        potential.reset_DH_subtotal();
+
         for (size_t si = 0; si < segmentCount; si++)
         {
             for (size_t sj = si + 1; sj < segmentCount; sj++)
@@ -509,13 +503,17 @@ Potential Molecule::E(const float bounding_value)
                     for (size_t j = jSeg.start; j <= iSeg.end; j++) {
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                        potential.increment_LJ(iRes, jRes, r, AminoAcidsData, mol_LJ);
+                        potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
                         /* Calculate electrostatic potential for each residue pair; increment molecule total. */
-                        potential.increment_DH(iRes, jRes, r, mol_DH);
+                        potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
                     }
                 }
             }
         }
+
+        /* Cache new values on the molecule */
+        LJ = potential.LJ_subtotal;
+        DH = potential.DH_subtotal;
 
         update_LJ_and_DH = false;
     }
@@ -535,27 +533,26 @@ Potential Molecule::E(const float bounding_value)
                 // LJ and DH within linker
                 if (iSeg.update_LJ_and_DH)
                 {
-                    iSeg.LJ = 0.0f;
-                    iSeg.DH = 0.0f;
-#if COMPENSATE_KERNEL_SUM
-                    KahanTuple seg_LJ(iSeg.LJ);
-                    KahanTuple seg_DH(iSeg.DH);
-#else
-                    double& seg_LJ = iSeg.LJ;
-                    double& seg_DH = iSeg.DH;
-#endif
+                    potential.reset_LJ_subtotal();
+                    potential.reset_DH_subtotal();
+
                     for (size_t j = i + 1; j <= iSeg.end; j++)
                     {
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment segment total. */
-                        potential.increment_LJ(iRes, jRes, r, AminoAcidsData, seg_LJ);
+                        potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
                         /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */
                         if (j - i >= 4)
                         {
-                            potential.increment_DH(iRes, jRes, r, seg_DH);
+                            potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
                         }
-                        iSeg.update_LJ_and_DH = false;
                     }
+
+                    /* Cache new values on the segment */
+                    iSeg.LJ = potential.LJ_subtotal;
+                    iSeg.DH = potential.DH_subtotal;
+
+                    iSeg.update_LJ_and_DH = false;
                 }
 
                 /* Add segment totals to potential totals */
@@ -565,7 +562,7 @@ Potential Molecule::E(const float bounding_value)
                 // Pseudo-bond
                 if (i < iSeg.end)
                 {
-                    potential.increment_bond(iRes, Links[i], Residues[i+1], bounding_value);
+                    potential.increment_bond(calculate_bond(iRes, Links[i], Residues[i+1], bounding_value));
                 }
 
                 if (i > 0 && !Links[i-1].dummy)
@@ -574,13 +571,13 @@ Potential Molecule::E(const float bounding_value)
                     // Pseudo-angle
                     if (i < linkCount)
                     {
-                        potential.increment_angle(Residues[i-1], iRes, Residues[i+1]);
+                        potential.increment_angle(calculate_angle(Residues[i-1], iRes, Residues[i+1]));
                     }
 
                     // Pseudo-torsion
                     if (i < linkCount - 1 && !Links[i+1].dummy)
                     {
-                        potential.increment_torsion(Residues[i-1], iRes, Links[i], Residues[i+1], Residues[i+2], torsions);
+                        potential.increment_torsion(calculate_torsion(Residues[i-1], iRes, Links[i], Residues[i+1], Residues[i+2], torsions));
                     }
                 }
             }

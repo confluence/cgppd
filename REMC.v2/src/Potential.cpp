@@ -2,70 +2,7 @@
 
 using namespace std;
 
-#if COMPENSATE_KERNEL_SUM
-KahanTuple::KahanTuple()
-{
-    double dsum(0.0f);
-    sum = &dsum;
-    c = 0.0f;
-}
-
-KahanTuple::KahanTuple(double &dsum)
-{
-    sum = &dsum;
-    c = 0.0f;
-}
-#endif // COMPENSATE_KERNEL_SUM
-
-Potential::Potential()
-{
-#if !COMPENSATE_KERNEL_SUM
-    LJ = 0.0f;
-    DH = 0.0f;
-#endif // not COMPENSATE_KERNEL_SUM
-
-#if FLEXIBLE_LINKS
-    /* NB: angle potential is a sum of logs -- we multiply the components and take the log at the end. */
-    angle = 1.0f;
-
-#if !COMPENSATE_KERNEL_SUM
-    bond = 0.0f;
-    torsion = 0.0f;
-#endif // not COMPENSATE_KERNEL_SUM
-#endif // FLEXIBLE_LINKS
-}
-
-Potential::~Potential()
-{
-}
-
-#if COMPENSATE_KERNEL_SUM
-double Potential::get(const KahanTuple &sum)
-{
-    return *sum.sum;
-}
-#else // if not COMPENSATE_KERNEL_SUM
-double Potential::get(const double &sum)
-{
-    return sum;
-}
-#endif // COMPENSATE_KERNEL_SUM
-
-void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData)
-{
-    increment_LJ(ri, rj, r, AminoAcidsData, LJ);
-}
-
-void Potential::increment_DH(Residue &ri, Residue &rj, const double r)
-{
-    increment_DH(ri, rj, r, DH);
-}
-
-#if COMPENSATE_KERNEL_SUM
-void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData, KahanTuple &sum)
-#else // if not COMPENSATE_KERNEL_SUM
-void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData, double &sum)
-#endif // COMPENSATE_KERNEL_SUM
+double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData)
 {
     double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
     // sigmaij is the average atomic radius determined by the van der waal radius in kim2008
@@ -80,21 +17,17 @@ void Potential::increment_LJ(Residue &ri, Residue &rj, const double r, const Ami
         LJ = -LJ + 2.0f * Eij;
     }
 
-    increment_LJ(sum, LJ);
+    return LJ;
 }
 
-#if COMPENSATE_KERNEL_SUM
-void Potential::increment_DH(Residue &ri, Residue &rj, const double r, KahanTuple &sum)
-#else // if not COMPENSATE_KERNEL_SUM
-void Potential::increment_DH(Residue &ri, Residue &rj, const double r, double &sum)
-#endif // COMPENSATE_KERNEL_SUM
+double calculate_DH(Residue &ri, Residue &rj, const double r)
 {
     double DH (ri.electrostaticCharge * rj.electrostaticCharge * expf(-r / Xi) / r);
-    increment_DH(sum, DH);
+    return DH;
 }
 
 #if FLEXIBLE_LINKS
-void Potential::increment_bond(Residue &ri, Link &l, Residue &rj, const float bounding_value)
+double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_value)
 {
     if (l.update_e_bond)
     {
@@ -105,10 +38,10 @@ void Potential::increment_bond(Residue &ri, Link &l, Residue &rj, const float bo
         l.update_e_bond = false;
     }
 
-    increment_bond(l.e_bond);
+    return l.e_bond;
 }
 
-void Potential::increment_angle(Residue &rh, Residue &ri, Residue &rj)
+double calculate_angle(Residue &rh, Residue &ri, Residue &rj)
 {
     if (ri.update_e_angle)
     {
@@ -123,10 +56,10 @@ void Potential::increment_angle(Residue &rh, Residue &ri, Residue &rj)
         ri.update_e_angle = false;
     }
 
-    increment_angle(ri.e_angle);
+    return ri.e_angle;
 }
 
-void Potential::increment_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue &rk, TorsionalLookupMatrix &torsions)
+double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue &rk, TorsionalLookupMatrix &torsions)
 {
     if (l.update_e_torsion)
     {
@@ -149,62 +82,110 @@ void Potential::increment_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj
         l.update_e_torsion = false;
     }
 
-    increment_torsion(l.e_torsion);
+    return l.e_torsion;
 }
-#endif
+#endif // FLEXIBLE_LINKS
+
+Potential::Potential()
+{
+    LJ = 0.0f;
+    DH = 0.0f;
+
+#if FLEXIBLE_LINKS
+    LJ_subtotal = 0.0f;
+    DH_subtotal = 0.0f;
+    bond = 0.0f;
+    /* NB: angle potential is a sum of logs -- we multiply the components and take the log at the end. */
+    angle = 1.0f;
+    torsion = 0.0f;
+#endif // FLEXIBLE_LINKS
 
 #if COMPENSATE_KERNEL_SUM
-void Potential::kahan_sum(KahanTuple &k, const double i)
-{
-    double y(i - k.c);
-    double t(*k.sum + y);
-    k.c = (t - *k.sum) - y;
-    *k.sum = t;
+    c_lj = 0.0f;
+    c_dh = 0.0f;
+#if FLEXIBLE_LINKS
+    c_lj_subtotal = 0.0f;
+    c_dh_subtotal = 0.0f;
+    c_bond = 0.0f;
+    c_torsion = 0.0f;
+#endif // FLEXIBLE_LINKS
+#endif // COMPENSATE_KERNEL_SUM
 }
 
-void Potential::sum(KahanTuple &sum, const double i)
+Potential::~Potential()
 {
-    kahan_sum(sum, i);
 }
-#else // if not COMPENSATE_KERNEL_SUM
-void Potential::sum(double &sum, const double i)
+
+#if COMPENSATE_KERNEL_SUM
+void Potential::kahan_sum(double &sum, const double i, double &c)
 {
-    sum += i;
+    double y(i - c);
+    double t(sum + y);
+    k.c = (t - sum) - y;
+    sum = t;
 }
 #endif // COMPENSATE_KERNEL_SUM
 
 void Potential::increment_LJ(const double LJ)
 {
-    increment_LJ(this->LJ, LJ);
+#if COMPENSATE_KERNEL_SUM
+    kahan_sum(this->LJ, LJ, c_lj);
+#else // if not COMPENSATE_KERNEL_SUM
+    this->LJ += LJ;
+#endif // COMPENSATE_KERNEL_SUM
 }
 
 void Potential::increment_DH(const double DH)
 {
-    increment_DH(this->DH, DH);
-}
-
 #if COMPENSATE_KERNEL_SUM
-void Potential::increment_LJ(KahanTuple &sum, const double LJ)
+    kahan_sum(this->DH, DH, c_dh);
 #else // if not COMPENSATE_KERNEL_SUM
-void Potential::increment_LJ(double &sum, const double LJ)
+    this->DH += DH;
 #endif // COMPENSATE_KERNEL_SUM
-{
-    this->sum(sum, LJ);
-}
-
-#if COMPENSATE_KERNEL_SUM
-void Potential::increment_DH(KahanTuple &sum, const double DH)
-#else // if not COMPENSATE_KERNEL_SUM
-void Potential::increment_DH(double &sum, const double DH)
-#endif // COMPENSATE_KERNEL_SUM
-{
-    this->sum(sum, DH);
 }
 
 #if FLEXIBLE_LINKS
+void Potential::reset_LJ_subtotal()
+{
+    LJ_subtotal = 0.0f;
+#if COMPENSATE_KERNEL_SUM
+    c_lj_subtotal = 0.0f;
+#endif // COMPENSATE_KERNEL_SUM
+}
+
+void Potential::reset_DH_subtotal()
+{
+    DH_subtotal = 0.0f;
+#if COMPENSATE_KERNEL_SUM
+    c_dh_subtotal = 0.0f;
+#endif // COMPENSATE_KERNEL_SUM
+}
+
+void Potential::increment_LJ_subtotal(const double LJ)
+{
+#if COMPENSATE_KERNEL_SUM
+    kahan_sum(this->LJ_subtotal, LJ, c_lj_subtotal);
+#else // if not COMPENSATE_KERNEL_SUM
+    this->LJ_subtotal += LJ;
+#endif // COMPENSATE_KERNEL_SUM
+}
+
+void Potential::increment_DH_subtotal(const double DH)
+{
+#if COMPENSATE_KERNEL_SUM
+    kahan_sum(this->DH_subtotal, DH, c_dh_subtotal);
+#else // if not COMPENSATE_KERNEL_SUM
+    this->DH_subtotal += DH;
+#endif // COMPENSATE_KERNEL_SUM
+}
+
 void Potential::increment_bond(const double bond)
 {
-    sum(this->bond, bond);
+#if COMPENSATE_KERNEL_SUM
+    kahan_sum(this->bond, bond, c_bond);
+#else // if not COMPENSATE_KERNEL_SUM
+    this->bond += bond;
+#endif // COMPENSATE_KERNEL_SUM
 }
 
 void Potential::increment_angle(const double angle)
@@ -214,36 +195,40 @@ void Potential::increment_angle(const double angle)
 
 void Potential::increment_torsion(const double torsion)
 {
-    sum(this->torsion, torsion);
+#if COMPENSATE_KERNEL_SUM
+    kahan_sum(this->torsion, torsion, c_torsion);
+#else // if not COMPENSATE_KERNEL_SUM
+    this->torsion += torsion;
+#endif // COMPENSATE_KERNEL_SUM
 }
-#endif
+#endif // FLEXIBLE_LINKS
 
 void Potential::increment(const Potential p)
 {
-    sum(LJ, get(p.LJ));
-    sum(DH, get(p.DH));
+    increment_LJ(p.LJ);
+    increment_DH(p.DH);
 
 #if FLEXIBLE_LINKS
-    sum(bond, get(p.bond));
-    angle *= p.angle;
-    sum(torsion, get(p.torsion));
-#endif
+    increment_bond(p.bond);
+    increment_angle(p.angle);
+    increment_torsion(p.torsion);
+#endif // FLEXIBLE_LINKS
 }
 
 double Potential::total_LJ()
 {
-    return get(LJ) * LJ_CONVERSION_FACTOR * KBTConversionFactor;
+    return LJ * LJ_CONVERSION_FACTOR * KBTConversionFactor;
 }
 
 double Potential::total_DH()
 {
-    return get(DH) * DH_constant_component * KBTConversionFactor;
+    return DH * DH_constant_component * KBTConversionFactor;
 }
 
 #if FLEXIBLE_LINKS
 double Potential::total_bond()
 {
-    return get(bond) * 0.5 * K_spring * KBTConversionFactor;
+    return bond * 0.5 * K_spring * KBTConversionFactor;
 }
 
 double Potential::total_angle()
@@ -253,15 +238,15 @@ double Potential::total_angle()
 
 double Potential::total_torsion()
 {
-    return get(torsion) * KBTConversionFactor;
+    return torsion * KBTConversionFactor;
 }
-#endif
+#endif // FLEXIBLE_LINKS
 
 double Potential::total()
 {
 #if FLEXIBLE_LINKS
-    return (get(DH) * DH_constant_component + get(LJ) * LJ_CONVERSION_FACTOR + get(bond) * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + get(torsion)) * KBTConversionFactor;
-#else
-    return (get(LJ) * LJ_CONVERSION_FACTOR + get(DH) * DH_constant_component) * KBTConversionFactor;
-#endif
+    return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion) * KBTConversionFactor;
+#else // if not FLEXIBLE_LINKS
+    return (LJ * LJ_CONVERSION_FACTOR + DH * DH_constant_component) * KBTConversionFactor;
+#endif // FLEXIBLE_LINKS
 }
