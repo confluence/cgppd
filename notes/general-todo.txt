@@ -4,7 +4,7 @@ EVERYWHERE
 
 REPLICA:
 
-* Duplication between phi function and E function -- use new method on residue (unit test!)
+* some of these were already deleted:
 * Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
 * delete Replica::freeLJpotentials, Replica::setLJpotentials
 * Remove audit
@@ -28,4 +28,5 @@ MOLECULE:
 
 MISC:
 
-* Make CPU version compile -- fix flag mismatch.  Total mess.
+* Make CPU version compile -- now compiles, but not without CUDA libraries.  Need to fix makefile.
+* Multiple GPUs?  Does that work?

@@ -7,5 +7,18 @@ MC moves:
 * any linker change: main linker E, internal molecule E
 * local linker bead translation -- update two bond lengths, three bond angles, four torsions
 * crankshaft move -- update three bond angles and four torsions
-* domain translation -- no local updates
 * domain rotation about linker bead -- update torsions and angles near edge bead; internal molecule E
+
+General:
+* Make angle terms optional
+    * also crankshaft moves
+* test efficiency / accuracy of including them
+* Validation with a simple test case
+* Nice examples to go in paper
+* Now that there's more time, try doing stuff on GPU:
+    * one molecule only (since only one molecule will have internal changes?)
+    * but then we have to cache at the molecule level at least, so that potential comparison works
+    * LJ/DH seems like a really good idea
+    * Friedrichs, et al.have a kernel for bonded forces
+* Is the caching stuff actually a good idea, or is it just overhead?
+    * Write another version of the CPU bond calculation, which throws out the caching and calculates everything
