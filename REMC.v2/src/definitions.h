@@ -15,7 +15,7 @@
     #define N_A			6.02214179e23f		// avogadros number
     #define Rgas 		8.314472f			// universal gas constant
     #define PI 			float(M_PIl)
-    #define KBTConversionFactor  (1.0f/(294.0f*Rgas/4184.0f))  // use 294K for verification
+    #define KBTConversionFactor  (1.0f/(294.0f*Rgas/4184.0f))  // use 294K for verification (should this be 298?)
     #define K_bTtoKcalmol  KBTConversionFactor
     #define KcalmoltoK_bt  (1.0f/K_bTtoKcalmol)
     #define BTU_to_J             0.948f
