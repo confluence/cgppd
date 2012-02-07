@@ -351,7 +351,7 @@ void Replica::MCSearch(int steps)
     //float translateStep = INITIAL_TRANSLATIONAL_STEP;
     //double rotateStep = INITIAL_ROTATIONAL_STEP;
 
-    bool lastOperationWasRotate;
+    bool lastOperationWasRotate; // TODO: remove
 
     float oldPotential = potential;
 
