@@ -40,6 +40,12 @@ public:
     bool translate(Vector3f v);
     void setRotation(Quaternion q);
     bool rotateQ(const Vector3double Raxis, const double angle);
+#if FLEXIBLE_LINKS
+    bool translate(Vector3f v, Residue r);
+    bool crankshaft(const double angle, Residue r);
+    bool rotate_domain(const Vector3double Raxis, const double angle, Residue r);
+#endif
+
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
     bool amIACrowder; // TODO: REMOVE
 

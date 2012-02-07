@@ -244,6 +244,7 @@ void Molecule::setPosition(Vector3f v)
     }
 }
 
+// TODO: rename this to just plain rotate
 bool Molecule::rotateQ(const Vector3double Raxis, const double angle)
 {
     double sina = sin(angle/2.0);
@@ -278,6 +279,29 @@ void Molecule::setRotation(Quaternion q)
         Residues[i].position.z = Residues[i].relativePosition.z + center.z;
     }
 }
+
+
+#if FLEXIBLE_LINKS
+bool Molecule::translate(Vector3f v, Residue r)
+{
+    // just translate one residue
+}
+
+bool Molecule::crankshaft(const double angle, Residue r)
+{
+    // 1. calculate axis from neighbouring residues
+    // 2. calculate quaternion from angle and axis
+    // 3. apply rotation to residue
+}
+
+bool Molecule::rotate_domain(const Vector3double Raxis, const double angle, Residue r)
+{
+    // FOR ROTATING DOMAIN
+    // 1. translate axis to make it go through residue
+    // 2. calculate quaternion from angle and axis
+    // 3. apply rotation to everything past residue (need to pick left / right?)
+}
+#endif
 
 bool Molecule::initFromPDB(const char* pdbfilename)
 {
