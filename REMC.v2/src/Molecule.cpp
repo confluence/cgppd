@@ -197,7 +197,7 @@ bool Molecule::translate(const Vector3f v)
     return true;
 }
 
-Vector3f Molecule::calculateCenter()
+void Molecule::recalculate_center()
 {
     Vector3f accumulator(0,0,0);
     for (size_t i=0; i<residueCount; i++)
@@ -205,31 +205,7 @@ Vector3f Molecule::calculateCenter()
         accumulator = accumulator + Residues[i].position;
     }
     center = accumulator / residueCount;
-    return center;
 }
-
-// void Molecule::saveAsPDB(const char* filename)
-// {
-//     FILE * output;
-//     output = fopen (filename,"w");
-//     fprintf(output,"REMARK %s \n",filename);
-//     fprintf(output,"REMARK Translation relative to input Q(w,x,y,z): %f %f %f %f\n",rotation.w,rotation.x,rotation.y,rotation.z);
-//     fprintf(output,"REMARK Rotation relative to input +P(x,y,z): %f %f %f\n",center.x,center.y,center.z);
-//
-//     size_t i=0;
-//     int itemcount = 0;
-//     while (i<residueCount)
-//     {
-//         itemcount++;
-//         fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',AminoAcidsData.get(Residues[i].aminoAcidIndex).getSNAME(),Residues[i].chainId,Residues[i].resSeq,' ',Residues[i].position.x,Residues[i].position.y,Residues[i].position.z,1.0f,1.0f);
-//         i++;
-//     }
-//
-//     fprintf(output,"END \n");
-//     fflush(output);
-//     fclose(output);
-//
-// }
 
 void Molecule::setPosition(Vector3f v)
 {
@@ -251,18 +227,7 @@ bool Molecule::rotateQ(const Vector3double Raxis, const double angle)
     double cosa = cos(angle/2.0);
 
     Quaternion q(cosa,sina*Raxis.x,sina*Raxis.y,sina*Raxis.z);
-
-    // track the global change from initial conditions.
-    q.normalize();
-    rotation = q * rotation;
-
-    for (size_t i=0; i<residueCount; i++)
-    {
-        Residues[i].relativePosition = q.rotateVector(Residues[i].relativePosition);
-        Residues[i].position.x = Residues[i].relativePosition.x + center.x;
-        Residues[i].position.y = Residues[i].relativePosition.y + center.y;
-        Residues[i].position.z = Residues[i].relativePosition.z + center.z;
-    }
+    setRotation(q);
 
     return true;
 }
@@ -282,9 +247,14 @@ void Molecule::setRotation(Quaternion q)
 
 
 #if FLEXIBLE_LINKS
+void Molecule::recalculate_center(Vector3f old_position, Vector3f new_position)
+{
+}
+
 bool Molecule::translate(Vector3f v, Residue r)
 {
     // just translate one residue
+    // recalculate centre (just one residue changed)
 }
 
 bool Molecule::crankshaft(const double angle, Residue r)
@@ -292,6 +262,7 @@ bool Molecule::crankshaft(const double angle, Residue r)
     // 1. calculate axis from neighbouring residues
     // 2. calculate quaternion from angle and axis
     // 3. apply rotation to residue
+    // recalculate centre (just one residue changed)
 }
 
 bool Molecule::rotate_domain(const Vector3double Raxis, const double angle, Residue r)
@@ -300,6 +271,7 @@ bool Molecule::rotate_domain(const Vector3double Raxis, const double angle, Resi
     // 1. translate axis to make it go through residue
     // 2. calculate quaternion from angle and axis
     // 3. apply rotation to everything past residue (need to pick left / right?)
+    // recalculate centre (everything)
 }
 #endif
 

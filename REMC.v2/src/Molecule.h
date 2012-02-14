@@ -35,7 +35,7 @@ public:
     void reserveResidueSpace(int size);
     char *print(); // TODO: eliminate?
     void saveAsPDB(const char *filename);
-    Vector3f calculateCenter(); // TODO: actually use this
+    void recalculate_center(); // TODO: actually use this
     void setPosition(Vector3f v);
     bool translate(Vector3f v);
     void setRotation(Quaternion q);
@@ -44,6 +44,7 @@ public:
     bool translate(Vector3f v, Residue r);
     bool crankshaft(const double angle, Residue r);
     bool rotate_domain(const Vector3double Raxis, const double angle, Residue r);
+    void recalculate_center(Vector3f old_position, Vector3f new_position);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
