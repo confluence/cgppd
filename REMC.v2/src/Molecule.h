@@ -73,7 +73,6 @@ public:
     bool update_LJ_and_DH; // LJ and DH values need to be updated
 #endif
     size_t chainCount;
-    Vector3f position;
     Quaternion rotation;
     Vector3f center;
     int index;
