@@ -182,7 +182,6 @@ void Replica::copy(const Replica &r)
         molecules[m].rotationalStep = r.molecules[m].rotationalStep;
         molecules[m].AminoAcidsData = r.molecules[m].AminoAcidsData;
         molecules[m].center = r.molecules[m].center;
-        molecules[m].position = r.molecules[m].position;
         molecules[m].rotation = r.molecules[m].rotation;
         molecules[m].moleculeRoleIdentifier = r.molecules[m].moleculeRoleIdentifier;
         rescount += r.molecules[m].residueCount;
@@ -234,6 +233,7 @@ int Replica::loadMolecule(const char* pdbfilename)
     return moleculeCount-1;
 }
 
+// TODO replace by load from DCD
 int Replica::loadMolecule(const char* pdbfilename, Vector3f position, Vector3double rotationAxis, double rotationAmount)
 {
     int i = loadMolecule(pdbfilename);

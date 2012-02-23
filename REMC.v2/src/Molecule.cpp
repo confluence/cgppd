@@ -57,7 +57,6 @@ Molecule::Molecule(const Molecule& m)
 
     AminoAcidsData = m.AminoAcidsData;
     center = m.center;
-    position = m.position;
     rotation = m.rotation;
     index = m.index;
     volume = m.volume;
@@ -98,7 +97,6 @@ void Molecule::copy(const Molecule& m)
 
     AminoAcidsData = m.AminoAcidsData;
     center = m.center;
-    position = m.position;
     rotation = m.rotation;
     volume = m.volume;
 
@@ -119,7 +117,6 @@ void Molecule::saveBeforeStateChange(const Molecule* m)
 {
     memcpy(Residues,m->Residues,sizeof(Residue)*m->residueCount);
     center = m->center;
-    position = m->position;
     rotation = m->rotation;
 }
 
@@ -127,7 +124,6 @@ void Molecule::undoStateChange(const Molecule* m)
 {
     memcpy(Residues,m->Residues,sizeof(Residue)*residueCount);
     center = m->center;
-    position = m->position;
     rotation = m->rotation;
 }
 
@@ -173,14 +169,10 @@ void Molecule::deleteResidues()
 bool Molecule::translate(const Vector3f v)
 {
     //center = center+v;
-    //position = position+v;
 
     center.x += v.x;
     center.y += v.y;
     center.z += v.z;
-    position.x += v.x;
-    position.y += v.y;
-    position.z += v.z;
 
     for (size_t i=0; i<residueCount; i++)
     {
@@ -210,7 +202,6 @@ void Molecule::recalculate_center()
 void Molecule::setPosition(Vector3f v)
 {
     center = v;
-    position = v;
     for (size_t i=0; i<residueCount; i++)
     {
         // more efficient to do it this way than with the overloaded +

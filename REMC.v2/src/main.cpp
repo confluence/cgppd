@@ -86,6 +86,7 @@ Replica *GLreplica;
 #include "openglvis.h"
 #endif
 
+// TODO: replace translation + rotation of molecule by DCD file
 void saveSimulation(const Replica *replicaState, argdata *parameters)
 {
     FILE * output;
@@ -107,7 +108,7 @@ void saveSimulation(const Replica *replicaState, argdata *parameters)
         fprintf(output,"#replica %d, molecules: x,y,z translation. w,x,y,z rotation quaternion\n",r);
         for (int m=0; m<replicaState[0].moleculeCount; m++)
         {
-            fprintf(output,"%.7f %.7f %.7f %.7f %.7f %.7f %.7f\n",replicaState[r].molecules[m].position.x,replicaState[r].molecules[m].position.y,replicaState[r].molecules[m].position.z,
+            fprintf(output,"%.7f %.7f %.7f %.7f %.7f %.7f %.7f\n",replicaState[r].molecules[m].center.x,replicaState[r].molecules[m].center.y,replicaState[r].molecules[m].center.z,
                     replicaState[r].molecules[m].rotation.w, replicaState[r].molecules[m].rotation.x, replicaState[r].molecules[m].rotation.y, replicaState[r].molecules[m].rotation.z);
         }
         fprintf(output,"#replica %d, stats: accept, acceptA, reject, totalAcceptReject, totalAccept, boundSamples, samplesSinceLastExchange, totalBoundSamples, totalSamples\n",r);
