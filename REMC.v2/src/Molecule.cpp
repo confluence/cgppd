@@ -238,22 +238,42 @@ void Molecule::setRotation(Quaternion q)
 
 
 #if FLEXIBLE_LINKS
-void Molecule::recalculate_center(Vector3f old_position, Vector3f new_position)
+void Molecule::recalculate_center(Vector3f difference)
 {
+    center = ((center * residueCount) + difference) / residueCount;
 }
 
 bool Molecule::translate(Vector3f v, Residue r)
 {
-    // just translate one residue
+    // translate one residue
+    r.position.x += v.x;
+    r.position.y += v.y;
+    r.position.z += v.z;
     // recalculate centre (just one residue changed)
+    recalculate_center(v);
 }
 
-bool Molecule::crankshaft(const double angle, Residue r)
+bool Molecule::crankshaft(const double angle, const bool flip_axis, const Residue ra, Residue rb, const Residue rc)
 {
-    // 1. calculate axis from neighbouring residues
-    // 2. calculate quaternion from angle and axis
-    // 3. apply rotation to residue
+    // calculate axis from neighbouring residues
+    Vector3double raxis(rc.position - ra.position);
+    // normalise axis
+    raxis.normalizeInPlace();
+    // flip direction randomly
+    if (flip_axis)
+    {
+        raxis.flipInPlace();
+    }
+    // calculate quaternion from angle and axis
+    // TODO give Quaternion a constructor for this!
+    double sina = sin(angle/2.0);
+    double cosa = cos(angle/2.0);
+
+    Quaternion q(cosa,sina*Raxis.x,sina*Raxis.y,sina*Raxis.z);
+    // apply rotation to residue
+    // TODO
     // recalculate centre (just one residue changed)
+    // TODO
 }
 
 bool Molecule::rotate_domain(const Vector3double Raxis, const double angle, Residue r)

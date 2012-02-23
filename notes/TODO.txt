@@ -53,6 +53,8 @@ EVENTUALLY
 
 OPTIMISE
 
+* is it *actually* worth summing vector components separately?
+
 * init of gpu memory seems slower (underlying software change?)
 
 * Now that there's more time, try doing stuff on GPU:
