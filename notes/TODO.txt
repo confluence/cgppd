@@ -52,6 +52,9 @@ EVENTUALLY
 --------------------------------------------------------------------------------
 
 OPTIMISE
+
+* init of gpu memory seems slower (underlying software change?)
+
 * Now that there's more time, try doing stuff on GPU:
     * one molecule only (since only one molecule will have internal changes?)
     * but then we have to cache at the molecule level at least, so that potential comparison works
