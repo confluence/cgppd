@@ -98,11 +98,17 @@ public:
         y=yi;
         z=zi;
     };
+    Vector3double(const Vector3f v) {
+        x=(double)v.x;
+        y=(double)v.y;
+        z=(double)v.z;
+    };
     double magnitude() {
         return sqrt(x*x+y*y+z*z);
     };
     Vector3double operator += (const Vector3f v);
     void normalizeInPlace();
+    void flipInPlace();
     Vector3double operator = (Vector3double v) {
         x=v.x;
         y=v.y;
