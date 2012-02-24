@@ -249,6 +249,7 @@ bool Molecule::translate(Vector3f v, Residue r)
     r.position.x += v.x;
     r.position.y += v.y;
     r.position.z += v.z;
+
     // recalculate centre (just one residue changed)
     recalculate_center(v);
 }
@@ -257,32 +258,54 @@ bool Molecule::crankshaft(const double angle, const bool flip_axis, const Residu
 {
     // calculate axis from neighbouring residues
     Vector3double raxis(rc.position - ra.position);
-    // normalise axis
-    raxis.normalizeInPlace();
+
     // flip direction randomly
-    if (flip_axis)
-    {
+    if (flip_axis) {
         raxis.flipInPlace();
     }
+
     // calculate quaternion from angle and axis
     // TODO give Quaternion a constructor for this!
     double sina = sin(angle/2.0);
     double cosa = cos(angle/2.0);
+    Quaternion q(cosa,sina*raxis.x,sina*raxis.y,sina*raxis.z);
 
-    Quaternion q(cosa,sina*Raxis.x,sina*Raxis.y,sina*Raxis.z);
     // apply rotation to residue
-    // TODO
+    old_position = rb.position;
+    rb.position = q.rotateVector(rb.position);
+
     // recalculate centre (just one residue changed)
-    // TODO
+    recalculate_center(rb.position - old_position);
 }
 
-bool Molecule::rotate_domain(const Vector3double Raxis, const double angle, Residue r)
+bool Molecule::rotate_domain(const Vector3double raxis, const double angle, const int rindex, const bool before)
 {
-    // FOR ROTATING DOMAIN
-    // 1. translate axis to make it go through residue
-    // 2. calculate quaternion from angle and axis
-    // 3. apply rotation to everything past residue (need to pick left / right?)
+    // translate axis to make it go through residue
+    // TODO
+
+    // calculate quaternion from angle and axis
+    // TODO give Quaternion a constructor for this!
+    double sina = sin(angle/2.0);
+    double cosa = cos(angle/2.0);
+    Quaternion q(cosa,sina*raxis.x,sina*raxis.y,sina*raxis.z);
+
+    // apply rotation to everything before or after residue
+    int start, end;
+
+    if (before) {
+        start = 0;
+        end = rindex;
+    } else {
+        start = rindex + 1;
+        end = residueCount;
+    }
+
+    for (int i = start; i < end; i++) {
+        Residues[i].position = q.rotateVector(Residues[i].position);
+    }
+
     // recalculate centre (everything)
+    recalculate_center();
 }
 #endif
 
