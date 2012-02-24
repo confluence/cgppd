@@ -108,7 +108,6 @@ public:
     };
     Vector3double operator += (const Vector3f v);
     void normalizeInPlace();
-    void flipInPlace();
     Vector3double operator = (Vector3double v) {
         x=v.x;
         y=v.y;

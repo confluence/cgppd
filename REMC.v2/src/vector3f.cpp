@@ -42,13 +42,6 @@ void Vector3double::normalizeInPlace()
     z /= magnitude;
 };
 
-void Vector3double::flipInPlace()
-{
-    x = -x;
-    y = -y;
-    z = -z;
-};
-
 Vector3f * pnormalize(Vector3f *v)
 {
     Vector3f *n = new Vector3f();

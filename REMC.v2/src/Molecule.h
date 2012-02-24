@@ -42,9 +42,13 @@ public:
     bool rotateQ(const Vector3double Raxis, const double angle);
 #if FLEXIBLE_LINKS
     void recalculate_center(Vector3f difference);
-    bool translate(Vector3f v, Residue r);
-    bool crankshaft(const double angle, const bool flip_axis, const Residue ra, Residue rb, const Residue rc);
-    bool rotate_domain(const Vector3double raxis, const double angle, const int rindex, const bool before);
+    void mark_bonds_for_update(const int ri);
+    void mark_angles_for_update(const int ri);
+    void mark_torsions_for_update(const int ri);
+    void mark_LJ_DH_for_update(const int ri);
+    bool translate(Vector3f v, const int ri);
+    bool crankshaft(const double angle, const bool flip_angle, const int ri);
+    bool rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);

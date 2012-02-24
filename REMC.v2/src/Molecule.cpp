@@ -243,25 +243,71 @@ void Molecule::recalculate_center(Vector3f difference)
     center = ((center * residueCount) + difference) / residueCount;
 }
 
-bool Molecule::translate(Vector3f v, Residue r)
+void Molecule::mark_bonds_for_update(const int ri)
+{
+    // TODO: boundaries
+    Links[ri - 1].update_e_bond = true;
+    Links[ri].update_e_bond = true;
+}
+
+void Molecule::mark_angles_for_update(const int ri)
+{
+    // TODO: boundaries
+    Residues[ri - 1].update_e_angle = true;
+    Residues[ri].update_e_angle = true;
+    Residues[ri + 1].update_e_angle = true;
+}
+
+void Molecule::mark_torsions_for_update(const int ri)
+{
+    // TODO: boundaries
+    Links[ri - 2].update_e_torsion = true;
+    Links[ri - 1].update_e_torsion = true;
+    Links[ri].update_e_torsion = true;
+    Links[ri + 1].update_e_torsion = true;
+}
+
+void Molecule::mark_LJ_DH_for_update(const int ri)
+{
+    update_LJ_and_DH = true;
+    for (int i = 0; i < segmentCount; i++) {
+        if (ri >= Segments[i].start && ri <= Segments[i].end) {
+            Segments[i].update_LJ_and_DH = true;
+            break;
+        }
+    }
+}
+
+bool Molecule::translate(Vector3f v, const int ri)
 {
     // translate one residue
-    r.position.x += v.x;
-    r.position.y += v.y;
-    r.position.z += v.z;
+    Residues[ri].position.x += v.x;
+    Residues[ri].position.y += v.y;
+    Residues[ri].position.z += v.z;
 
     // recalculate centre (just one residue changed)
     recalculate_center(v);
+
+    // mark potential values for update
+    mark_bonds_for_update(ri);
+    mark_angles_for_update(ri);
+    mark_torsions_for_update(ri);
+    mark_LJ_DH_for_update(ri);
+
+    return true;
 }
 
-bool Molecule::crankshaft(const double angle, const bool flip_axis, const Residue ra, Residue rb, const Residue rc)
+bool Molecule::crankshaft(const double angle, const bool flip_angle, const int ri)
 {
     // calculate axis from neighbouring residues
-    Vector3double raxis(rc.position - ra.position);
+    Vector3double raxis(Residues[ri + 1].position - Residues[ri - 1].position);
 
-    // flip direction randomly
-    if (flip_axis) {
-        raxis.flipInPlace();
+    // normalise axis
+    raxis.normalizeInPlace();
+
+    // flip angle randomly
+    if (flip_angle) {
+        angle = -angle;
     }
 
     // calculate quaternion from angle and axis
@@ -271,18 +317,26 @@ bool Molecule::crankshaft(const double angle, const bool flip_axis, const Residu
     Quaternion q(cosa,sina*raxis.x,sina*raxis.y,sina*raxis.z);
 
     // apply rotation to residue
-    old_position = rb.position;
-    rb.position = q.rotateVector(rb.position);
+    old_position = Residues[ri].position;
+    // TODO: is this right? Use position relative to previous residue?
+    relative_position = Residues[ri].position - Residues[ri - 1].position;
+    relative_position = q.rotateVector(relative_position);
+    Residues[ri].position = relative_position + Residues[ri - 1].position;
+    Residues[ri].relative_position = Residues[ri].position - center;
 
     // recalculate centre (just one residue changed)
-    recalculate_center(rb.position - old_position);
+    recalculate_center(Residues[ri].position - old_position);
+
+    // mark potential values for update
+    mark_angles_for_update(ri);
+    mark_torsions_for_update(ri);
+    mark_LJ_DH_for_update(ri);
+
+    return true;
 }
 
-bool Molecule::rotate_domain(const Vector3double raxis, const double angle, const int rindex, const bool before)
+bool Molecule::rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before)
 {
-    // translate axis to make it go through residue
-    // TODO
-
     // calculate quaternion from angle and axis
     // TODO give Quaternion a constructor for this!
     double sina = sin(angle/2.0);
@@ -294,18 +348,29 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
 
     if (before) {
         start = 0;
-        end = rindex;
+        end = ri;
     } else {
-        start = rindex + 1;
+        start = ri + 1;
         end = residueCount;
     }
 
     for (int i = start; i < end; i++) {
-        Residues[i].position = q.rotateVector(Residues[i].position);
+        relative_position = Residues[i].position - Residues[ri].position;
+        relative_position = q.rotateVector(relative_position);
+        Residues[i].position = relative_position + Residues[ri].position;
+        Residues[i].relativePosition = Residues[i].position - center
     }
 
     // recalculate centre (everything)
     recalculate_center();
+
+    // mark potential values for update
+    mark_bonds_for_update(ri);
+    mark_angles_for_update(ri);
+    mark_torsions_for_update(ri);
+    mark_LJ_DH_for_update(ri);
+
+    return true;
 }
 #endif
 
