@@ -245,14 +245,14 @@ void Molecule::recalculate_center(Vector3f difference)
 
 void Molecule::mark_bonds_for_update(const int ri)
 {
-    // TODO: boundaries
+    // TODO: boundaries -- start by detecting segment...
     Links[ri - 1].update_e_bond = true;
     Links[ri].update_e_bond = true;
 }
 
 void Molecule::mark_angles_for_update(const int ri)
 {
-    // TODO: boundaries
+    // TODO: boundaries -- start by detecting segment...
     Residues[ri - 1].update_e_angle = true;
     Residues[ri].update_e_angle = true;
     Residues[ri + 1].update_e_angle = true;
@@ -260,7 +260,7 @@ void Molecule::mark_angles_for_update(const int ri)
 
 void Molecule::mark_torsions_for_update(const int ri)
 {
-    // TODO: boundaries
+    // TODO: boundaries -- start by detecting segment...
     Links[ri - 2].update_e_torsion = true;
     Links[ri - 1].update_e_torsion = true;
     Links[ri].update_e_torsion = true;
