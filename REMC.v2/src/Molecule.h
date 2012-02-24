@@ -44,8 +44,7 @@ public:
     void recalculate_center(Vector3f difference);
     bool translate(Vector3f v, Residue r);
     bool crankshaft(const double angle, const bool flip_axis, const Residue ra, Residue rb, const Residue rc);
-    bool rotate_domain(const Vector3double Raxis, const double angle, Residue r);
-    void recalculate_center(Vector3f old_position, Vector3f new_position);
+    bool rotate_domain(const Vector3double raxis, const double angle, const int rindex, const bool before);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
