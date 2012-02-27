@@ -42,10 +42,7 @@ public:
     bool rotateQ(const Vector3double Raxis, const double angle);
 #if FLEXIBLE_LINKS
     void recalculate_center(Vector3f difference);
-    void mark_bonds_for_update(const int ri);
-    void mark_angles_for_update(const int ri);
-    void mark_torsions_for_update(const int ri);
-    void mark_LJ_DH_for_update(const int ri);
+    void mark_cached_potentials_for_update(const int ri);
     bool translate(Vector3f v, const int ri);
     bool crankshaft(const double angle, const bool flip_angle, const int ri);
     bool rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
