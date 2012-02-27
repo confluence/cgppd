@@ -243,40 +243,39 @@ void Molecule::recalculate_center(Vector3f difference)
     center = ((center * residueCount) + difference) / residueCount;
 }
 
-void Molecule::mark_bonds_for_update(const int ri)
-{
-    // TODO: boundaries -- start by detecting segment...
-    Links[ri - 1].update_e_bond = true;
-    Links[ri].update_e_bond = true;
-}
-
-void Molecule::mark_angles_for_update(const int ri)
-{
-    // TODO: boundaries -- start by detecting segment...
-    Residues[ri - 1].update_e_angle = true;
-    Residues[ri].update_e_angle = true;
-    Residues[ri + 1].update_e_angle = true;
-}
-
-void Molecule::mark_torsions_for_update(const int ri)
-{
-    // TODO: boundaries -- start by detecting segment...
-    Links[ri - 2].update_e_torsion = true;
-    Links[ri - 1].update_e_torsion = true;
-    Links[ri].update_e_torsion = true;
-    Links[ri + 1].update_e_torsion = true;
-}
-
-void Molecule::mark_LJ_DH_for_update(const int ri)
+void Molecule::mark_cached_potentials_for_update(const int ri)
 {
     update_LJ_and_DH = true;
+
     for (int i = 0; i < segmentCount; i++) {
         if (ri >= Segments[i].start && ri <= Segments[i].end) {
             Segments[i].update_LJ_and_DH = true;
-            break;
         }
     }
+
+    // Not checking segment boundaries here, because they are checked when linker potentials are calculated
+
+    if (ri > 1) {
+        Links[ri - 2].update_e_torsion = true;
+    }
+
+    if (ri > 0) {
+        Links[ri - 1].update_e_bond = true;
+        Residues[ri - 1].update_e_angle = true;
+        Links[ri - 1].update_e_torsion = true;
+    }
+
+    Links[ri].update_e_bond = true;
+    Residues[ri].update_e_angle = true;
+    Links[ri].update_e_torsion = true;
+
+    if (ri < residueCount - 1) {
+        Residues[ri + 1].update_e_angle = true;
+        Links[ri + 1].update_e_torsion = true;
+    }
 }
+
+//TODO TODO TODO boundary conditions -- see how they're done for other MC moves
 
 bool Molecule::translate(Vector3f v, const int ri)
 {
@@ -289,10 +288,7 @@ bool Molecule::translate(Vector3f v, const int ri)
     recalculate_center(v);
 
     // mark potential values for update
-    mark_bonds_for_update(ri);
-    mark_angles_for_update(ri);
-    mark_torsions_for_update(ri);
-    mark_LJ_DH_for_update(ri);
+    mark_cached_potentials_for_update(ri);
 
     return true;
 }
@@ -328,9 +324,7 @@ bool Molecule::crankshaft(const double angle, const bool flip_angle, const int r
     recalculate_center(Residues[ri].position - old_position);
 
     // mark potential values for update
-    mark_angles_for_update(ri);
-    mark_torsions_for_update(ri);
-    mark_LJ_DH_for_update(ri);
+    mark_cached_potentials_for_update(ri);
 
     return true;
 }
@@ -365,10 +359,7 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     recalculate_center();
 
     // mark potential values for update
-    mark_bonds_for_update(ri);
-    mark_angles_for_update(ri);
-    mark_torsions_for_update(ri);
-    mark_LJ_DH_for_update(ri);
+    mark_cached_potentials_for_update(ri);
 
     return true;
 }
