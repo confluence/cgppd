@@ -293,7 +293,7 @@ bool Molecule::translate(Vector3f v, const int ri)
     return true;
 }
 
-bool Molecule::crankshaft(const double angle, const bool flip_angle, const int ri)
+bool Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
 {
     // calculate axis from neighbouring residues
     Vector3double raxis(Residues[ri + 1].position - Residues[ri - 1].position);
@@ -301,7 +301,7 @@ bool Molecule::crankshaft(const double angle, const bool flip_angle, const int r
     // normalise axis
     raxis.normalizeInPlace();
 
-    // flip angle randomly
+    // flip angle randomly -- TODO: do this outside, in Replica?
     if (flip_angle) {
         angle = -angle;
     }
@@ -313,12 +313,12 @@ bool Molecule::crankshaft(const double angle, const bool flip_angle, const int r
     Quaternion q(cosa,sina*raxis.x,sina*raxis.y,sina*raxis.z);
 
     // apply rotation to residue
-    old_position = Residues[ri].position;
+    Vector3f old_position = Residues[ri].position;
     // TODO: is this right? Use position relative to previous residue?
-    relative_position = Residues[ri].position - Residues[ri - 1].position;
+    Vector3f relative_position = Residues[ri].position - Residues[ri - 1].position;
     relative_position = q.rotateVector(relative_position);
     Residues[ri].position = relative_position + Residues[ri - 1].position;
-    Residues[ri].relative_position = Residues[ri].position - center;
+    Residues[ri].relativePosition = Residues[ri].position - center;
 
     // recalculate centre (just one residue changed)
     recalculate_center(Residues[ri].position - old_position);
@@ -349,10 +349,10 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     }
 
     for (int i = start; i < end; i++) {
-        relative_position = Residues[i].position - Residues[ri].position;
+        Vector3f relative_position = Residues[i].position - Residues[ri].position;
         relative_position = q.rotateVector(relative_position);
         Residues[i].position = relative_position + Residues[ri].position;
-        Residues[i].relativePosition = Residues[i].position - center
+        Residues[i].relativePosition = Residues[i].position - center;
     }
 
     // recalculate centre (everything)
