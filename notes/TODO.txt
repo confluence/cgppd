@@ -15,6 +15,12 @@ FIX
 --------------------------------------------------------------------------------
 SOON
 --------------------------------------------------------------------------------
+WRITE
+* Thesis skeleton
+* Poster
+* Background chapter
+* Implementation
+
 CLEANUP
 * Split up main.cpp into definitions, functions and just the main function, so that it can be unit tested.
 * Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
