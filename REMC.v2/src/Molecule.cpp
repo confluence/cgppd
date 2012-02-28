@@ -314,7 +314,6 @@ bool Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
 
     // apply rotation to residue
     Vector3f old_position = Residues[ri].position;
-    // TODO: is this right? Use position relative to previous residue?
     Vector3f relative_position = Residues[ri].position - Residues[ri - 1].position;
     relative_position = q.rotateVector(relative_position);
     Residues[ri].position = relative_position + Residues[ri - 1].position;
