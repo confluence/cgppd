@@ -12,6 +12,11 @@ ADD
 FIX
 * update simulation read / save to use DCD format
 
+TEST
+* write an end-to-end test for optimisation comparisons
+** is component-wise addition of vectors important?
+** is caching of internal potential subtotals important?
+
 --------------------------------------------------------------------------------
 SOON
 --------------------------------------------------------------------------------

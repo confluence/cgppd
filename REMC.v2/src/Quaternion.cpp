@@ -9,6 +9,17 @@ Quaternion::Quaternion(double w,double x,double y,double z)
     this->z = z;
 }
 
+Quaternion::Quaternion(const double angle, const Vector3double raxis)
+{
+    double sina = sin(angle/2.0);
+    double cosa = cos(angle/2.0);
+
+    this->w = cosa;
+    this->x = sina * raxis.x;
+    this->y = sina * raxis.y;
+    this->z = sina * raxis.z;
+}
+
 double Quaternion::getMagnitude()
 {
     magnitude = sqrt(w*w + x*x + y*y + z*z);

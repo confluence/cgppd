@@ -44,3 +44,19 @@ double Residue::distance(const Residue& r, const float bounding_value)
 
     return sqrtf(Xab * Xab + Yab * Yab + Zab * Zab);
 }
+
+void Residue::set_rotation(const Quaternion q, const Vector3f origin)
+{
+    Vector3f rel_pos = position - origin;
+    rel_pos = q.rotateVector(rel_pos);
+    // TODO: is adding component-wise an important optimisation?
+    position = origin + rel_pos;
+}
+
+void Residue::set_rotation_about_center(const Quaternion q, const Vector3f center)
+{
+    // use cached relative position
+    relativePosition = q.rotateVector(relativePosition);
+    // TODO: is adding component-wise an important optimisation?
+    position = center + relativePosition;
+}
