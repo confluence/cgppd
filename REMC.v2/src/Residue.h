@@ -3,6 +3,7 @@
 #include "vector3f.h"
 #include "AminoAcids.h"
 #include "definitions.h"
+#include "Quaternion.h"
 
 class Residue
 {
@@ -29,6 +30,9 @@ public:
     //AminoAcid aa;
 
     double distance(const Residue& r, const float bounding_value);
+
+    void set_rotation(const Quaternion q, const Vector3f origin);
+    void set_rotation_about_center(const Quaternion q, const Vector3f center);
 
 #if FLEXIBLE_LINKS
     /* This value is only cached so that it can be checked by unit tests. */

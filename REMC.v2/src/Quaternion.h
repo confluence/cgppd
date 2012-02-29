@@ -16,6 +16,7 @@ class Quaternion
 public:
     Quaternion()  : w(1.0), x(0.0), y(0.0), z(0.0), magnitude(1.0) {};  // default constuctor (1,0,0,0)
     Quaternion(double,double,double,double);  //explicit constructor
+    Quaternion(const double angle, const Vector3double raxis);  // constructor from angle and axis of rotation
     double getMagnitude(); //get the magnitude of this
     Quaternion normalize(); //normalize the quarternion in place
     Quaternion getNormalized(); // get a normalised version without modifying the original

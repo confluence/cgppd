@@ -189,6 +189,14 @@ bool Molecule::translate(const Vector3f v)
     return true;
 }
 
+void Molecule::recalculate_relative_positions()
+{
+    for (size_t i=0; i<residueCount; i++)
+    {
+        Residues[i].relativePosition = center + Residues[i].position;
+    }
+}
+
 void Molecule::recalculate_center()
 {
     Vector3f accumulator(0,0,0);
@@ -197,6 +205,7 @@ void Molecule::recalculate_center()
         accumulator = accumulator + Residues[i].position;
     }
     center = accumulator / residueCount;
+    recalculate_relative_positions();
 }
 
 void Molecule::setPosition(Vector3f v)
@@ -214,25 +223,24 @@ void Molecule::setPosition(Vector3f v)
 // TODO: rename this to just plain rotate
 bool Molecule::rotateQ(const Vector3double Raxis, const double angle)
 {
-    double sina = sin(angle/2.0);
-    double cosa = cos(angle/2.0);
-
-    Quaternion q(cosa,sina*Raxis.x,sina*Raxis.y,sina*Raxis.z);
+    Quaternion q(angle, Raxis);
     setRotation(q);
 
     return true;
 }
 
+//TODO: call common method on residue
 void Molecule::setRotation(Quaternion q)
 {
     q.normalize();
     rotation = q * rotation;
     for (size_t i=0; i<residueCount; i++)
     {
-        Residues[i].relativePosition = q.rotateVector(Residues[i].relativePosition);
-        Residues[i].position.x = Residues[i].relativePosition.x + center.x;
-        Residues[i].position.y = Residues[i].relativePosition.y + center.y;
-        Residues[i].position.z = Residues[i].relativePosition.z + center.z;
+//         Residues[i].relativePosition = q.rotateVector(Residues[i].relativePosition);
+//         Residues[i].position.x = Residues[i].relativePosition.x + center.x;
+//         Residues[i].position.y = Residues[i].relativePosition.y + center.y;
+//         Residues[i].position.z = Residues[i].relativePosition.z + center.z;
+        Residues[i].set_rotation_about_center(q, center)
     }
 }
 
@@ -240,7 +248,10 @@ void Molecule::setRotation(Quaternion q)
 #if FLEXIBLE_LINKS
 void Molecule::recalculate_center(Vector3f difference)
 {
+    // TODO: doing this after each local move is expensive -- can we get away with calling it once from Replica at the end of all local moves?
+    // YES, because none of the local moves care about the centre.
     center = ((center * residueCount) + difference) / residueCount;
+    recalculate_relative_positions();
 }
 
 void Molecule::mark_cached_potentials_for_update(const int ri)
@@ -307,17 +318,15 @@ bool Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     }
 
     // calculate quaternion from angle and axis
-    // TODO give Quaternion a constructor for this!
-    double sina = sin(angle/2.0);
-    double cosa = cos(angle/2.0);
-    Quaternion q(cosa,sina*raxis.x,sina*raxis.y,sina*raxis.z);
+    Quaternion q(angle, raxis);
+    // TODO: is this necessary, or is it already normalised?
+    q.normalize();
 
     // apply rotation to residue
     Vector3f old_position = Residues[ri].position;
     Vector3f relative_position = Residues[ri].position - Residues[ri - 1].position;
     relative_position = q.rotateVector(relative_position);
     Residues[ri].position = relative_position + Residues[ri - 1].position;
-    Residues[ri].relativePosition = Residues[ri].position - center;
 
     // recalculate centre (just one residue changed)
     recalculate_center(Residues[ri].position - old_position);
@@ -331,10 +340,7 @@ bool Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
 bool Molecule::rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before)
 {
     // calculate quaternion from angle and axis
-    // TODO give Quaternion a constructor for this!
-    double sina = sin(angle/2.0);
-    double cosa = cos(angle/2.0);
-    Quaternion q(cosa,sina*raxis.x,sina*raxis.y,sina*raxis.z);
+    Quaternion q(angle, raxis);
 
     // apply rotation to everything before or after residue
     int start, end;
@@ -351,7 +357,6 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
         Vector3f relative_position = Residues[i].position - Residues[ri].position;
         relative_position = q.rotateVector(relative_position);
         Residues[i].position = relative_position + Residues[ri].position;
-        Residues[i].relativePosition = Residues[i].position - center;
     }
 
     // recalculate centre (everything)
