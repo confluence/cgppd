@@ -35,6 +35,7 @@ public:
     void reserveResidueSpace(int size);
     char *print(); // TODO: eliminate?
     void saveAsPDB(const char *filename);
+    void recalculate_relative_positions();
     void recalculate_center(); // TODO: actually use this
     void setPosition(Vector3f v);
     bool translate(Vector3f v);

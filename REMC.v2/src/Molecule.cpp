@@ -240,7 +240,7 @@ void Molecule::setRotation(Quaternion q)
 //         Residues[i].position.x = Residues[i].relativePosition.x + center.x;
 //         Residues[i].position.y = Residues[i].relativePosition.y + center.y;
 //         Residues[i].position.z = Residues[i].relativePosition.z + center.z;
-        Residues[i].set_rotation_about_center(q, center)
+        Residues[i].set_rotation_about_center(q, center);
     }
 }
 
