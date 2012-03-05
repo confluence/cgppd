@@ -31,8 +31,8 @@ public:
 
     double distance(const Residue& r, const float bounding_value);
 
-    void set_rotation(const Quaternion q, const Vector3f origin);
-    void set_rotation_about_center(const Quaternion q, const Vector3f center);
+    void set_rotation(Quaternion q, Vector3f origin);
+    void set_rotation_about_center(Quaternion q, Vector3f center);
 
 #if FLEXIBLE_LINKS
     /* This value is only cached so that it can be checked by unit tests. */
