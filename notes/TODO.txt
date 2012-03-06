@@ -8,14 +8,17 @@ CLEANUP
 
 ADD
 * boundary conditions
+* random selection of move
+    * 1/4 chance of translation, rotation, flex, local (gsl_rng_uniform_int? make configurable somehow -- gsl_ran_discrete?)
+    * configurable number of local (trans / crankshaft) moves -- default 3?
 
 FIX
 * update simulation read / save to use DCD format
 
 TEST
 * write an end-to-end test for optimisation comparisons
-** is component-wise addition of vectors important?
-** is caching of internal potential subtotals important?
+    * is component-wise addition of vectors important?
+    * is caching of internal potential subtotals important?
 
 --------------------------------------------------------------------------------
 SOON
