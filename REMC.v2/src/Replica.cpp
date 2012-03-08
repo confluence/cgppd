@@ -267,8 +267,6 @@ void Replica::initRNGs()
 void Replica::freeRNGs()
 {
     gsl_rng_free (rng_moleculeSelection);
-//     gsl_rng_free (rng_rotateAmount);
-//     gsl_rng_free (rng_translateAmount);
     gsl_rng_free (rng_rotate);
     gsl_rng_free (rng_translate);
     gsl_rng_free (MCRng);
