@@ -94,9 +94,7 @@ public:
 
     // rngs for this object
     gsl_rng * rng_translate;	// the translation vector rngs
-    gsl_rng * rng_translateAmount;	// the translation vector rngs
     gsl_rng * rng_rotate;		// the rotation vector rng
-    gsl_rng * rng_rotateAmount;	// the translation vector rngs
     gsl_rng * rng_moleculeSelection; // molecule selection rng
     gsl_rng * MCRng;  // used to determine what change to make
     gsl_rng * MCKbRng;	// boltzmann acceptance rng in MC

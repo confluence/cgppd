@@ -254,14 +254,8 @@ void Replica::initRNGs()
     rng_rotate = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (rng_rotate,random());
 
-    rng_rotateAmount = gsl_rng_alloc (gsl_rng_mt19937);
-    gsl_rng_set (rng_rotateAmount,random());
-
     rng_translate = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (rng_translate,random());
-
-    rng_translateAmount = gsl_rng_alloc (gsl_rng_mt19937);
-    gsl_rng_set (rng_translateAmount,random());
 
     MCRng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set (MCRng,random());
@@ -273,8 +267,8 @@ void Replica::initRNGs()
 void Replica::freeRNGs()
 {
     gsl_rng_free (rng_moleculeSelection);
-    gsl_rng_free (rng_rotateAmount);
-    gsl_rng_free (rng_translateAmount);
+//     gsl_rng_free (rng_rotateAmount);
+//     gsl_rng_free (rng_translateAmount);
     gsl_rng_free (rng_rotate);
     gsl_rng_free (rng_translate);
     gsl_rng_free (MCRng);
