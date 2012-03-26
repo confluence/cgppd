@@ -1900,6 +1900,7 @@ int main(int argc, char **argv)
     {
         for (size_t i=0; i<parameters.replicas; i++)
         {
+            // TODO: WTF, why are these not in the replica destructor?!
             replica[i].freeRNGs();
             delete [] replica[i].contiguousResidues;
         }

@@ -98,6 +98,11 @@ public:
     gsl_rng * rng_moleculeSelection; // molecule selection rng
     gsl_rng * MCRng;  // used to determine what change to make
     gsl_rng * MCKbRng;	// boltzmann acceptance rng in MC
+#if FLEXIBLE_LINKS
+    gsl_rng * MC_local_rng;  // used to determine what local change to make
+    double * MC_move_weights; // weightings for discrete MC move probabilities
+    gsl_ran_discrete_t * MC_discrete_table; // preprocessed lookup table for MC move generator
+#endif
 
     int threadCount;
     int nonCrowderCount;

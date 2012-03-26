@@ -11,6 +11,7 @@ ADD
 * random selection of move
     * 1/4 chance of translation, rotation, flex, local (gsl_rng_uniform_int? make configurable somehow -- gsl_ran_discrete?)
     * configurable number of local (trans / crankshaft) moves -- default 3?
+    * random choice of trans / crankshaft
 
 FIX
 * update simulation read / save to use DCD format

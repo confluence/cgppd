@@ -131,6 +131,13 @@
 //     #define FLEXIBLE_LINKS  0
     #define FLEXIBLE_LINKS  1
 
+    #ifdef FLEXIBLE_LINKS
+        #define WEIGHT_MC_TRANSLATE 1.0f
+        #define WEIGHT_MC_ROTATE 1.0f
+        #define WEIGHT_MC_ROTATE_DOMAIN 1.0f
+        #define WEIGHT_MC_LOCAL 1.0f
+    #endif
+
     #if USING_CUDA
         #define PERFORM_GPU_AND_CPU_E  0  // do both cpu and gpu sums for comparison
 

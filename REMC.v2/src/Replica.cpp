@@ -262,8 +262,22 @@ void Replica::initRNGs()
 
     MCKbRng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set (MCKbRng,random());
+
+#if FLEXIBLE_LINKS
+    MC_local_rng = gsl_rng_alloc(gsl_rng_mt19937);
+    gsl_rng_set (MC_local_rng, random());
+
+    MC_move_weights = new double[4];
+    MC_move_weights[0] =  WEIGHT_MC_TRANSLATE;
+    MC_move_weights[1] = WEIGHT_MC_ROTATE;
+    MC_move_weights[2] = WEIGHT_MC_ROTATE_DOMAIN;
+    MC_move_weights[3] = WEIGHT_MC_LOCAL;
+
+    MC_discrete_table = gsl_ran_discrete_preproc(4, MC_move_weights);
+#endif
 }
 
+// TODO: why is this not called from the destructor?!
 void Replica::freeRNGs()
 {
     gsl_rng_free (rng_moleculeSelection);
@@ -271,6 +285,12 @@ void Replica::freeRNGs()
     gsl_rng_free (rng_translate);
     gsl_rng_free (MCRng);
     gsl_rng_free (MCKbRng);
+
+#if FLEXIBLE_LINKS
+    gsl_rng_free(MC_local_rng);
+    gsl_ran_discrete_free(MC_discrete_table);
+    delete [] MC_move_weights;
+#endif
 }
 
 Vector3f Replica::createNormalisedRandomVector(gsl_rng * r)
@@ -357,6 +377,7 @@ void Replica::MCSearch(int steps)
 #endif
         uint moleculeNo = (int) gsl_rng_uniform_int(rng_moleculeSelection,moleculeCount);
 
+        // TODO: move this to external function
         uint mutationType = gsl_ran_bernoulli (MCRng,translate_rotate_bernoulli_bias);
 
         // save the current state so we can roll back if it was not a good mutation.
