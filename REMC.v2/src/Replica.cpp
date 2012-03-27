@@ -310,8 +310,12 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
     return x;
 }
 
-#define _translate	0
-#define _rotate 	1
+#define _translate 0
+#define _rotate 1
+#if FLEXIBLE_LINKS
+    #define _rotate_domain 2
+    #define _local 3
+#endif
 
 // here for profiling
 inline void Replica::rotate(const int m, const double rotateStep)
@@ -356,7 +360,14 @@ void Replica::translate(const int m, const float translateStep)
 #endif
 }
 
-
+uint Replica::get_MC_mutation_type()
+{
+#if FLEXIBLE_LINKS
+    return gsl_ran_discrete(MCRng, MC_discrete_table);
+#else
+    return gsl_ran_bernoulli(MCRng, translate_rotate_bernoulli_bias);
+#endif
+}
 
 void Replica::MCSearch(int steps)
 {
@@ -378,7 +389,8 @@ void Replica::MCSearch(int steps)
         uint moleculeNo = (int) gsl_rng_uniform_int(rng_moleculeSelection,moleculeCount);
 
         // TODO: move this to external function
-        uint mutationType = gsl_ran_bernoulli (MCRng,translate_rotate_bernoulli_bias);
+//         uint mutationType = gsl_ran_bernoulli (MCRng,translate_rotate_bernoulli_bias);
+        uint mutationType = get_MC_mutation_type();
 
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
@@ -394,7 +406,6 @@ void Replica::MCSearch(int steps)
 #endif
             break;
         }
-
         case _translate:
         {
             translate(moleculeNo, translateStep);
@@ -405,6 +416,30 @@ void Replica::MCSearch(int steps)
 
             break;
         }
+#if FLEXIBLE_LINKS
+        case _rotate_domain:
+        {
+            // TODO: call function on replica
+
+#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
+            // TODO: add more info
+            cout << "    Rotate domain: Replica "<< label << "/Molecule " << moleculeNo << endl;
+#endif
+
+            break;
+        }
+        case _local:
+        {
+            // TODO: call function on replica
+
+#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
+            // TODO: add more info
+            cout << "    Local linker moves: Replica "<< label << "/Molecule " << moleculeNo << endl;
+#endif
+
+            break;
+        }
+#endif // FLEXIBLE_LINKS
         default:
             break;
         }

@@ -3,8 +3,10 @@ NOW
 --------------------------------------------------------------------------------
 
 CLEANUP
+* log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks
 * delete Molecule::rotate
 * make Molecule::rotateQ call Molecule::setRotation, etc.
+* move definitions of MC move constants to definitions and rename them
 
 ADD
 * boundary conditions

@@ -131,7 +131,7 @@
 //     #define FLEXIBLE_LINKS  0
     #define FLEXIBLE_LINKS  1
 
-    #ifdef FLEXIBLE_LINKS
+    #if FLEXIBLE_LINKS
         #define WEIGHT_MC_TRANSLATE 1.0f
         #define WEIGHT_MC_ROTATE 1.0f
         #define WEIGHT_MC_ROTATE_DOMAIN 1.0f
