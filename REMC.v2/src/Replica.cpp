@@ -264,8 +264,14 @@ void Replica::initRNGs()
     gsl_rng_set (MCKbRng,random());
 
 #if FLEXIBLE_LINKS
+    rng_residueSelection = gsl_rng_alloc (gsl_rng_mt19937);
+    gsl_rng_set (rng_residueSelection,random());
+
     MC_local_rng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set (MC_local_rng, random());
+
+    rng_flip = gsl_rng_alloc(gsl_rng_mt19937);
+    gsl_rng_set (rng_flip, random());
 
     MC_move_weights = new double[4];
     MC_move_weights[0] =  WEIGHT_MC_TRANSLATE;
@@ -287,7 +293,9 @@ void Replica::freeRNGs()
     gsl_rng_free (MCKbRng);
 
 #if FLEXIBLE_LINKS
+    gsl_rng_free (rng_residueSelection);
     gsl_rng_free(MC_local_rng);
+    gsl_rng_free (rng_flip);
     gsl_ran_discrete_free(MC_discrete_table);
     delete [] MC_move_weights;
 #endif
@@ -315,6 +323,9 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
 #if FLEXIBLE_LINKS
     #define _rotate_domain 2
     #define _local 3
+
+    #define _local_translate 0
+    #define _local_crankshaft 1
 #endif
 
 // here for profiling
@@ -322,7 +333,7 @@ inline void Replica::rotate(const int m, const double rotateStep)
 {
     molecules[m].rotateQ(createNormalisedRandomVectord(rng_rotate),rotateStep);
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-    cout << "    Rotate: Replica "<< label << "/Molecule " << moleculeNo << endl;
+    cout << "    Rotate: Replica "<< label << "/Molecule " << m << endl;
 #endif
 }
 
@@ -330,10 +341,10 @@ inline void Replica::rotate(const int m, const double rotateStep)
 void Replica::translate(const int m, const float translateStep)
 {
     // pick directions to rotate in, do by generating a random normalised vector of length equal to INITIAL_TRANSLATIONAL_STEP
-    //Vector3f oldPosition = molecules[moleculeNo].center;
+    //Vector3f oldPosition = molecules[m].center;
     Vector3f translateVector = translateStep * createNormalisedRandomVector(rng_translate);
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-    cout << "    Translate: Replica "<< label << "/Molecule " << moleculeNo << endl;
+    cout << "    Translate: Replica "<< label << "/Molecule " << m << endl;
 #endif
 
 
@@ -348,7 +359,7 @@ void Replica::translate(const int m, const float translateStep)
     else
     {
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-        cout << "  - Reject: Replica "<< label << "/Molecule " << moleculeNo <<  " : falls outside bounding sphere" << endl;
+        cout << "  - Reject: Replica "<< label << "/Molecule " << m <<  " : falls outside bounding sphere" << endl;
 #endif
     }
 #elif BOUNDING_METHOD == PERIODIC_BOUNDARY 	// periodic boundary conditions
@@ -359,6 +370,42 @@ void Replica::translate(const int m, const float translateStep)
     molecules[m].setPosition(newPosition);
 #endif
 }
+
+#if FLEXIBLE_LINKS
+void Replica::rotate_domain(const int m, const float rotateStep, const int ri, const bool before)
+{
+     molecules[m].rotate_domain(createNormalisedRandomVectord(rng_rotate), rotateStep, ri, before)
+}
+
+uint Replica::get_local_move_type()
+{
+    //TODO: if crankshaft disabled, only return translate
+    return gsl_ran_bernoulli(MC_local_rng, LOCAL_TRANSLATE_BIAS);
+}
+
+void Replica::local(const int m, const float step, const int num_moves)
+{
+    for (size_t i = 0; i <= num_moves; i++) {
+        move_type = get_local_move_type();
+
+        switch (mutationType)
+        {
+        case _local_translate:
+        {
+            // TODO: call function on molecule
+            break;
+        }
+        case _local_crankshaft: // TODO: remove if crankshaft disabled
+        {
+            // TODO: call function on molecule
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+#endif
 
 uint Replica::get_MC_mutation_type()
 {
@@ -419,7 +466,9 @@ void Replica::MCSearch(int steps)
 #if FLEXIBLE_LINKS
         case _rotate_domain:
         {
-            // TODO: call function on replica
+            uint residueNo = (int) gsl_rng_uniform_int(rng_moleculeSelection, molecule[moleculeNo].residueCount);
+            bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
+            rotate_domain(moleculeNo, rotateStep, residueNo, before);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
             // TODO: add more info
@@ -430,7 +479,7 @@ void Replica::MCSearch(int steps)
         }
         case _local:
         {
-            // TODO: call function on replica
+            local(moleculeNo, rotateStep, NUM_LOCAL_MOVES);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
             // TODO: add more info

@@ -136,6 +136,9 @@
         #define WEIGHT_MC_ROTATE 1.0f
         #define WEIGHT_MC_ROTATE_DOMAIN 1.0f
         #define WEIGHT_MC_LOCAL 1.0f
+
+        #define NUM_LOCAL_MOVES 3
+        #define LOCAL_TRANSLATE_BIAS 0.5
     #endif
 
     #if USING_CUDA

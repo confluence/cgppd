@@ -99,6 +99,8 @@ public:
     gsl_rng * MCRng;  // used to determine what change to make
     gsl_rng * MCKbRng;	// boltzmann acceptance rng in MC
 #if FLEXIBLE_LINKS
+    gsl_rng * rng_residueSelection; // residue selection rng
+    gsl_rng * rng_flip; // used to determine whether to flip certain values
     gsl_rng * MC_local_rng;  // used to determine what local change to make
     double * MC_move_weights; // weightings for discrete MC move probabilities
     gsl_ran_discrete_t * MC_discrete_table; // preprocessed lookup table for MC move generator
@@ -234,6 +236,11 @@ public:
 private:
     void rotate(const int m, const double step);
     void translate(const int m, const float step);
+#if FLEXIBLE_LINKS
+    void rotate_domain(const int m, const float rotateStep, const int ri, const bool before);
+    void local(const int m, const float step, const int num_moves);
+#endif
+
 };
 
 #endif /*REPLICA_H_*/
