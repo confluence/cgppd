@@ -4,6 +4,8 @@ Segment::Segment()
 {
     start = 0;
     end = 0;
+    size = 0;
+
     flexible = false;
 
     LJ = 0.0f;

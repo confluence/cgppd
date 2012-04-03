@@ -232,11 +232,12 @@ public:
 
     Replica * GLreplica;
 
-
+// TODO: actually necessary for these to be private?
 private:
     void rotate(const int m, const double step);
     void translate(const int m, const float step);
 #if FLEXIBLE_LINKS
+    void random_residue_from_segment(const Segment s);
     void rotate_domain(const int m, const float rotateStep, const int ri, const bool before);
     void local(const int m, const float step, const int num_moves);
 #endif

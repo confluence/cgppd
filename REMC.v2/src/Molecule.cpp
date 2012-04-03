@@ -26,6 +26,7 @@ Molecule::~Molecule()
 {
     if(hasFilename)
         delete [] filename;
+    // TODO: shouldn't we delete residues and other dynamically allocated arays here?  Use a flag to see if they have been allocated?
 };
 
 void Molecule::init_amino_acid_data(AminoAcids &a)
@@ -159,11 +160,6 @@ void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
             Residues[i].aminoAcidIndex = int(PADDER_IDENTIFIER);
         }
     }
-}
-
-void Molecule::deleteResidues()
-{
-    delete [] Residues;
 }
 
 bool Molecule::translate(const Vector3f v)
@@ -380,6 +376,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     hasFilename = true;
     filename = new char[256];
     strcpy(filename, pdbfilename);
+    // TODO: do we actually need to store this value for anything?! NO!
 
     ifstream input(pdbfilename);
     if (!input.good())
@@ -500,6 +497,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     linkCount = vLinks.size() - 1;
     Links = new Link[linkCount];
     vector<Segment> vSegments;
+    vector<Segment*> vLinkers;
 
     for(size_t l = 0; l < linkCount; l++)
     {
@@ -525,6 +523,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         if (l == linkCount - 1)
         {
             vSegments.back().end = linkCount;
+            vSegments.back().size = vSegments.back().end - vSegments.back().start + 1;
         }
     }
 
@@ -534,7 +533,19 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     for (size_t s = 0; s < segmentCount; s++)
     {
         Segment S = vSegments[s];
-        memcpy (&Segments[s], &S, sizeof(S));
+        memcpy(&Segments[s], &S, sizeof(S));
+
+        if (S.flexible) {
+            vLinkers.push_back(&Segments[s]);
+        }
+    }
+
+    linkerCount = vLinkers.size();
+    Linkers = new Segment*[linkerCount];
+
+    for (size_t l = 0; l < linkerCount; l++)
+    {
+        memcpy(&Linkers[l], &vLinkers[l], sizeof(Segment*));
     }
 
 #endif
