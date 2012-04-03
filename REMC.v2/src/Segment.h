@@ -6,6 +6,8 @@ class Segment
 public:
     int start; // index of starting residue
     int end; // index of ending residue
+    int size; // length of this segment, including both end residues
+
     bool flexible; // this segment is a flexible linker
 
     double LJ; // cached internal LJ component of this segment if it is a linker

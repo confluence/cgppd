@@ -328,6 +328,7 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
     #define _local_crankshaft 1
 #endif
 
+// TODO: kill these useless wrapper functions
 // here for profiling
 inline void Replica::rotate(const int m, const double rotateStep)
 {
@@ -385,23 +386,25 @@ uint Replica::get_local_move_type()
 
 void Replica::local(const int m, const float step, const int num_moves)
 {
+    // TODO: pick a linker; then random residues inside the linker
     for (size_t i = 0; i <= num_moves; i++) {
         move_type = get_local_move_type();
 
         switch (mutationType)
         {
-        case _local_translate:
-        {
-            // TODO: call function on molecule
-            break;
-        }
-        case _local_crankshaft: // TODO: remove if crankshaft disabled
-        {
-            // TODO: call function on molecule
-            break;
-        }
-        default:
-            break;
+            case _local_translate:
+            {
+//                 Molecule::translate(Vector3f v, const int ri)
+                // TODO: call function on molecule
+                break;
+            }
+            case _local_crankshaft: // TODO: remove if crankshaft disabled
+            {
+                // TODO: call function on molecule
+                break;
+            }
+            default:
+                break;
         }
     }
 }
@@ -434,9 +437,6 @@ void Replica::MCSearch(int steps)
         cout << "Step: " << step << endl;
 #endif
         uint moleculeNo = (int) gsl_rng_uniform_int(rng_moleculeSelection,moleculeCount);
-
-        // TODO: move this to external function
-//         uint mutationType = gsl_ran_bernoulli (MCRng,translate_rotate_bernoulli_bias);
         uint mutationType = get_MC_mutation_type();
 
         // save the current state so we can roll back if it was not a good mutation.
@@ -444,53 +444,54 @@ void Replica::MCSearch(int steps)
 
         switch (mutationType)
         {
-        case _rotate:
-        {
-            rotate(moleculeNo, rotateStep);
+            case _rotate:
+            {
+                rotate(moleculeNo, rotateStep);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-            cout << "    Rotate: Replica "<< label << "/Molecule " << moleculeNo << endl;
+                cout << "    Rotate: Replica "<< label << "/Molecule " << moleculeNo << endl;
 #endif
-            break;
-        }
-        case _translate:
-        {
-            translate(moleculeNo, translateStep);
+                break;
+            }
+            case _translate:
+            {
+                translate(moleculeNo, translateStep);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-            cout << "    Translate: Replica "<< label << "/Molecule " << moleculeNo << endl;
+                cout << "    Translate: Replica "<< label << "/Molecule " << moleculeNo << endl;
 #endif
 
-            break;
-        }
+                break;
+            }
 #if FLEXIBLE_LINKS
-        case _rotate_domain:
-        {
-            uint residueNo = (int) gsl_rng_uniform_int(rng_moleculeSelection, molecule[moleculeNo].residueCount);
-            bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
-            rotate_domain(moleculeNo, rotateStep, residueNo, before);
+            case _rotate_domain:
+            {
+                // TODO: this is WRONG; we need to pick a residue from a linker!
+                uint residueNo = (int) gsl_rng_uniform_int(rng_moleculeSelection, molecule[moleculeNo].residueCount);
+                bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
+                rotate_domain(moleculeNo, rotateStep, residueNo, before);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-            // TODO: add more info
-            cout << "    Rotate domain: Replica "<< label << "/Molecule " << moleculeNo << endl;
+                // TODO: add more info
+                cout << "    Rotate domain: Replica "<< label << "/Molecule " << moleculeNo << endl;
 #endif
 
-            break;
-        }
-        case _local:
-        {
-            local(moleculeNo, rotateStep, NUM_LOCAL_MOVES);
+                break;
+            }
+            case _local:
+            {
+                local(moleculeNo, rotateStep, NUM_LOCAL_MOVES);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-            // TODO: add more info
-            cout << "    Local linker moves: Replica "<< label << "/Molecule " << moleculeNo << endl;
+                // TODO: add more info
+                cout << "    Local linker moves: Replica "<< label << "/Molecule " << moleculeNo << endl;
 #endif
 
-            break;
-        }
+                break;
+            }
 #endif // FLEXIBLE_LINKS
-        default:
-            break;
+            default:
+                break;
         }
 
 #if CUDA_E
@@ -876,6 +877,7 @@ float Replica::SumGridResults()
 #if CUDA_STREAMS
 
 // 1/3 of the above function, does the mutation on the gpu asynchronously
+// TODO: have the single search function call these partial functions!
 void Replica::MCSearchMutate()
 {
     oldPotential = potential;
@@ -883,6 +885,7 @@ void Replica::MCSearchMutate()
     uint moleculeNo = (int) gsl_rng_uniform_int(rng_moleculeSelection,moleculeCount);
     lastMutationIndex = moleculeNo;
 
+    // TODO: replace this with call to external function
     uint mutationType = gsl_ran_bernoulli (MCRng,translate_rotate_bernoulli_bias);
 
     // save the current state so we can roll back if it was not a good mutation.

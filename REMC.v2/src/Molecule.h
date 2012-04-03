@@ -26,7 +26,6 @@ public:
     Molecule operator = (const Molecule& m) {
         return Molecule(m);
     };
-    void deleteResidues(); // TODO: actually use this
     void init(AminoAcid residues[], char *description, char *data);
     bool initFromPDB(const char* pdbfilename);
     void copy(const Molecule& m); // TODO: eliminate?
@@ -65,8 +64,10 @@ public:
 #if FLEXIBLE_LINKS
     int linkCount;
     int segmentCount;
+    int linkerCount;
     Link *Links;
     Segment *Segments; // Boundaries of all domains and linkers
+    Segment **Linkers; // Array of pointers to all flexible segments -- TODO: will this do what I think this will do?
     TorsionalLookupMatrix torsions;
     Potential E(const float bounding_value);
 

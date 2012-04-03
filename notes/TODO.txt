@@ -7,6 +7,9 @@ CLEANUP
 * delete Molecule::rotate
 * make Molecule::rotateQ call Molecule::setRotation, etc.
 * move definitions of MC move constants to definitions and rename them
+* reserveResidueSpace not consistently used; use or remove
+* remove filename.
+* DELETE RESIDUES IN DESTRUCTOR; WTF!
 
 ADD
 * boundary conditions
