@@ -243,6 +243,7 @@ int Replica::loadMolecule(const char* pdbfilename, Vector3f position, Vector3dou
     return i;
 }
 
+// TODO: why is this not called from the constructor?
 void Replica::initRNGs()
 {
     unsigned long long seed = time (NULL);
@@ -264,6 +265,9 @@ void Replica::initRNGs()
     gsl_rng_set (MCKbRng,random());
 
 #if FLEXIBLE_LINKS
+    rng_linkerSelection = gsl_rng_alloc (gsl_rng_mt19937);
+    gsl_rng_set (rng_linkerSelection,random());
+
     rng_residueSelection = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (rng_residueSelection,random());
 
@@ -293,6 +297,7 @@ void Replica::freeRNGs()
     gsl_rng_free (MCKbRng);
 
 #if FLEXIBLE_LINKS
+    gsl_rng_free (rng_linkerSelection);
     gsl_rng_free (rng_residueSelection);
     gsl_rng_free(MC_local_rng);
     gsl_rng_free (rng_flip);
@@ -401,6 +406,7 @@ void Replica::local(const int m, const float step, const int num_moves)
             case _local_crankshaft: // TODO: remove if crankshaft disabled
             {
                 // TODO: call function on molecule
+                //Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
                 break;
             }
             default:
@@ -466,8 +472,8 @@ void Replica::MCSearch(int steps)
 #if FLEXIBLE_LINKS
             case _rotate_domain:
             {
-                // TODO: this is WRONG; we need to pick a residue from a linker!
-                uint residueNo = (int) gsl_rng_uniform_int(rng_moleculeSelection, molecule[moleculeNo].residueCount);
+                uint linkerNo = molecule[moleculeNo].random_linker_index(rng_linkerSelection);
+                uint residueNo = molecule[moleculeNo].random_residue_index(rng_residueSelection, linkerNo);
                 bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
                 rotate_domain(moleculeNo, rotateStep, residueNo, before);
 

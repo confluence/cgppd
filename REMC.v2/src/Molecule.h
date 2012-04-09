@@ -40,12 +40,23 @@ public:
     bool translate(Vector3f v);
     void setRotation(Quaternion q);
     bool rotateQ(const Vector3double Raxis, const double angle);
+
+    void rotate();
+    void translate();
+
 #if FLEXIBLE_LINKS
     void recalculate_center(Vector3f difference);
     void mark_cached_potentials_for_update(const int ri);
+
+    // TODO: eliminate these; merge into wrappers
     bool translate(Vector3f v, const int ri);
     bool crankshaft(double angle, const bool flip_angle, const int ri);
     bool rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
+
+    void make_local_moves(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip);
+    void translate_residue();
+    void crankshaft();
+    void rotate_domain(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
@@ -61,6 +72,8 @@ public:
     Residue *Residues;
     int residueCount;
 
+    uint random_residue_index(gsl_rng * r); // return random residue index
+
 #if FLEXIBLE_LINKS
     int linkCount;
     int segmentCount;
@@ -74,6 +87,9 @@ public:
     double LJ; // cached inter-segment LJ component of this molecule
     double DH; // cached inter-segment DH component of this molecule
     bool update_LJ_and_DH; // LJ and DH values need to be updated
+
+    uint random_linker_index(gsl_rng * r); // return random linker index
+    uint random_residue_index(gsl_rng * r, int li); // return random residue index from given linker
 #endif
     size_t chainCount;
     Quaternion rotation;

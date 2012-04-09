@@ -99,6 +99,7 @@ public:
     gsl_rng * MCRng;  // used to determine what change to make
     gsl_rng * MCKbRng;	// boltzmann acceptance rng in MC
 #if FLEXIBLE_LINKS
+    gsl_rng * rng_linkerSelection; // linker selection rng
     gsl_rng * rng_residueSelection; // residue selection rng
     gsl_rng * rng_flip; // used to determine whether to flip certain values
     gsl_rng * MC_local_rng;  // used to determine what local change to make

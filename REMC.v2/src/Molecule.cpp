@@ -242,6 +242,8 @@ void Molecule::setRotation(Quaternion q)
 
 
 #if FLEXIBLE_LINKS
+
+
 void Molecule::recalculate_center(Vector3f difference)
 {
     // TODO: doing this after each local move is expensive -- can we get away with calling it once from Replica at the end of all local moves?
@@ -576,6 +578,11 @@ float Molecule::calculateVolume()
     return volume;
 }
 
+uint Molecule::random_residue_index(gsl_rng * r)
+{
+    return (int) gsl_rng_uniform_int(r, residueCount);
+}
+
 #if FLEXIBLE_LINKS
 
 // TODO: add comments
@@ -688,4 +695,16 @@ Potential Molecule::E(const float bounding_value)
     return potential;
 }
 
-#endif
+uint Molecule::random_linker_index(gsl_rng * r)
+{
+    return (int) gsl_rng_uniform_int(r, linkerCount);
+}
+
+uint Molecule::random_residue_index(gsl_rng * r, int li)
+{
+    Segment * l = Linkers[li];
+    return (int) gsl_rng_uniform_int(r, l->size) + l->start;
+}
+
+
+#endif // FLEXIBLE_LINKS
