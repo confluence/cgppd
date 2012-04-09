@@ -3,6 +3,8 @@ NOW
 --------------------------------------------------------------------------------
 
 CLEANUP
+* REMOVE WRAPPERS; put molecule stuff in Molecule
+* put initRNGs, etc. in init
 * log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
 * delete Molecule::rotate
 * make Molecule::rotateQ call Molecule::setRotation, etc.
@@ -12,7 +14,8 @@ CLEANUP
 * DELETE RESIDUES IN DESTRUCTOR; WTF!
 
 ADD
-* boundary conditions
+* add helper functions to segment and molecule
+* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE?
 * random selection of move
     * 1/4 chance of translation, rotation, flex, local (gsl_rng_uniform_int? make configurable somehow -- gsl_ran_discrete?)
     * configurable number of local (trans / crankshaft) moves -- default 3?
@@ -66,6 +69,8 @@ EVENTUALLY
 --------------------------------------------------------------------------------
 
 OPTIMISE
+
+* consider reusing some of the ranges?
 
 * is it *actually* worth summing vector components separately?
 
