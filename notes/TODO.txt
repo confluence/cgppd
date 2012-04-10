@@ -3,11 +3,10 @@ NOW
 --------------------------------------------------------------------------------
 
 REFACTOR AND ADD MC MOVES
-* move createNormalisedRandomVector to molecule (rename)
 * wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
 * remove wrappers from replica
+* remove createNormalisedRandomVector* from replica
 * consistent calling of one MC move function from replica
-* make inexplicably int mutation functions void
 * move definitions of MC move constants to definitions and rename them
 * delete Molecule::rotate and rename rotateQ to rotate
 * make Molecule::rotateQ call Molecule::setRotation, etc.
