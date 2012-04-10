@@ -306,6 +306,7 @@ void Replica::freeRNGs()
 #endif
 }
 
+// TODO: remove these once the ones in molecule are used everywhere
 Vector3f Replica::createNormalisedRandomVector(gsl_rng * r)
 {
     //	float denominator = gsl_rng_max(r) - gsl_rng_min(r);
@@ -333,7 +334,7 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
     #define _local_crankshaft 1
 #endif
 
-// TODO: kill these useless wrapper functions
+// TODO: kill these useless wrapper functions (move the useful bits to Molecule)
 // here for profiling
 inline void Replica::rotate(const int m, const double rotateStep)
 {

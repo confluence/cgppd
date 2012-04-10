@@ -2,20 +2,28 @@
 NOW
 --------------------------------------------------------------------------------
 
-CLEANUP
-* REMOVE WRAPPERS; put molecule stuff in Molecule
-* put initRNGs, etc. in init
-* log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
-* delete Molecule::rotate
-* make Molecule::rotateQ call Molecule::setRotation, etc.
+REFACTOR AND ADD MC MOVES
+* move createNormalisedRandomVector to molecule (rename)
+* wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
+* remove wrappers from replica
+* consistent calling of one MC move function from replica
+* make inexplicably int mutation functions void
 * move definitions of MC move constants to definitions and rename them
-* reserveResidueSpace not consistently used; use or remove
-* remove filename.
-* DELETE RESIDUES IN DESTRUCTOR; WTF!
+* delete Molecule::rotate and rename rotateQ to rotate
+* make Molecule::rotateQ call Molecule::setRotation, etc.
+
+CLEANUP
+* Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
+* put initRNGs in init of replica and freeRNGs in destructor
+* MOLECULE: constructor / destructor
+    * reserveResidueSpace not consistently used; use or remove
+    * remove filename.
+    * DELETE RESIDUES IN DESTRUCTOR; WTF! Use flag(s?) to check whether was inited from PDB.
+    * Do we *ever* construct a molecule without a pdb file?
+* log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
 
 ADD
-* add helper functions to segment and molecule
-* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE?
+* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE? Do we need flags for this? Can we just assume periodic boundary?
 * random selection of move
     * 1/4 chance of translation, rotation, flex, local (gsl_rng_uniform_int? make configurable somehow -- gsl_ran_discrete?)
     * configurable number of local (trans / crankshaft) moves -- default 3?
