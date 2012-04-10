@@ -4,6 +4,8 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
+#include <gsl/gsl_rng.h>
+
 #include "definitions.h"
 #include "AminoAcids.h"
 #include "vector3f.h"
@@ -37,9 +39,9 @@ public:
     void recalculate_relative_positions();
     void recalculate_center(); // TODO: actually use this
     void setPosition(Vector3f v);
-    bool translate(Vector3f v);
+    void translate(Vector3f v);
     void setRotation(Quaternion q);
-    bool rotateQ(const Vector3double Raxis, const double angle);
+    void rotateQ(const Vector3double Raxis, const double angle);
 
     Vector3f normalised_random_vector_f(gsl_rng * r);
     Vector3double normalised_random_vector_d(gsl_rng * r);
@@ -47,13 +49,15 @@ public:
     void translate(gsl_rng * r);
 
 #if FLEXIBLE_LINKS
+    uint random_linker_index(gsl_rng * r); // return random linker index
+    uint random_residue_index(gsl_rng * r, int li); // return random residue index from given linker
+
     void recalculate_center(Vector3f difference);
     void mark_cached_potentials_for_update(const int ri);
 
-    // TODO: eliminate these; merge into wrappers
-    bool translate(Vector3f v, const int ri);
-    bool crankshaft(double angle, const bool flip_angle, const int ri);
-    bool rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
+    void translate(Vector3f v, const int ri);
+    void crankshaft(double angle, const bool flip_angle, const int ri);
+    void rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
 
     void make_local_moves(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip);
     // TODO: may need these depending on what we do in the wrapper above
@@ -90,9 +94,6 @@ public:
     double LJ; // cached inter-segment LJ component of this molecule
     double DH; // cached inter-segment DH component of this molecule
     bool update_LJ_and_DH; // LJ and DH values need to be updated
-
-    uint random_linker_index(gsl_rng * r); // return random linker index
-    uint random_residue_index(gsl_rng * r, int li); // return random residue index from given linker
 #endif
     size_t chainCount;
     Quaternion rotation;

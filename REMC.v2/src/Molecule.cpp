@@ -162,7 +162,7 @@ void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
     }
 }
 
-bool Molecule::translate(const Vector3f v)
+void Molecule::translate(const Vector3f v)
 {
     //center = center+v;
 
@@ -182,7 +182,6 @@ bool Molecule::translate(const Vector3f v)
         //even faster, use sse?
 
     }
-    return true;
 }
 
 void Molecule::recalculate_relative_positions()
@@ -217,12 +216,10 @@ void Molecule::setPosition(Vector3f v)
 }
 
 // TODO: rename this to just plain rotate
-bool Molecule::rotateQ(const Vector3double Raxis, const double angle)
+void Molecule::rotateQ(const Vector3double Raxis, const double angle)
 {
     Quaternion q(angle, Raxis);
     setRotation(q);
-
-    return true;
 }
 
 //TODO: call common method on residue
@@ -240,6 +237,18 @@ void Molecule::setRotation(Quaternion q)
     }
 }
 
+Vector3f Molecule::normalised_random_vector_f(gsl_rng * r)
+{
+    // TODO: do we actually need double brackets?
+    return (Vector3f(gsl_rng_uniform(r) - 0.5, 0.5 - gsl_rng_uniform(r), gsl_rng_uniform(r) - 0.5)).normalize();
+}
+
+Vector3double Molecule::normalised_random_vector_d(gsl_rng * r)
+{
+    Vector3double x(gsl_rng_uniform(r) - 0.5, 0.5 - gsl_rng_uniform(r), gsl_rng_uniform(r) - 0.5);
+    x.normalizeInPlace();
+    return x;
+}
 
 #if FLEXIBLE_LINKS
 
@@ -286,7 +295,7 @@ void Molecule::mark_cached_potentials_for_update(const int ri)
 
 //TODO TODO TODO boundary conditions -- see how they're done for other MC moves
 
-bool Molecule::translate(Vector3f v, const int ri)
+void Molecule::translate(Vector3f v, const int ri)
 {
     // translate one residue
     Residues[ri].position.x += v.x;
@@ -298,11 +307,9 @@ bool Molecule::translate(Vector3f v, const int ri)
 
     // mark potential values for update
     mark_cached_potentials_for_update(ri);
-
-    return true;
 }
 
-bool Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
+void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
 {
     // calculate axis from neighbouring residues
     Vector3double raxis(Residues[ri + 1].position - Residues[ri - 1].position);
@@ -331,8 +338,6 @@ bool Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
 
     // mark potential values for update
     mark_cached_potentials_for_update(ri);
-
-    return true;
 }
 
 bool Molecule::rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before)
@@ -362,8 +367,6 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
 
     // mark potential values for update
     mark_cached_potentials_for_update(ri);
-
-    return true;
 }
 #endif
 
