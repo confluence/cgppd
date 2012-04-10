@@ -228,6 +228,7 @@ public:
     void initTimers();
     void printTimers();
 
+    // TODO: remove these once the ones in molecule are used everywhere
     Vector3f createNormalisedRandomVector(gsl_rng * r);
     Vector3double createNormalisedRandomVectord(gsl_rng * r);
 

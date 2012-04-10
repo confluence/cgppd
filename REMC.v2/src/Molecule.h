@@ -41,8 +41,10 @@ public:
     void setRotation(Quaternion q);
     bool rotateQ(const Vector3double Raxis, const double angle);
 
-    void rotate();
-    void translate();
+    Vector3f normalised_random_vector_f(gsl_rng * r);
+    Vector3double normalised_random_vector_d(gsl_rng * r);
+    void rotate(gsl_rng * r);
+    void translate(gsl_rng * r);
 
 #if FLEXIBLE_LINKS
     void recalculate_center(Vector3f difference);
@@ -54,9 +56,10 @@ public:
     bool rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
 
     void make_local_moves(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip);
-    void translate_residue();
-    void crankshaft();
-    void rotate_domain(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip);
+    // TODO: may need these depending on what we do in the wrapper above
+//     void translate_residue();
+//     void crankshaft();
+//     void rotate_domain(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
