@@ -250,15 +250,15 @@ Vector3double Molecule::normalised_random_vector_d(gsl_rng * r)
     return x;
 }
 
-void Molecule::rotate(gsl_rng * r, const double angle)
+void Molecule::rotate(gsl_rng * r)
 {
-    rotate(normalised_random_vector_d(r), angle);
+    rotate(normalised_random_vector_d(r), INITIAL_ROTATIONAL_STEP);
 }
 
 // TODO: add boundary conditions to everything?
-void Molecule::translate(gsl_rng * r, const float distance, const float bounding_value)
+void Molecule::translate(gsl_rng * r, const float bounding_value)
 {
-    Vector3f v = distance * normalised_random_vector_f(r);
+    Vector3f v = INITIAL_TRANSLATIONAL_STEP * normalised_random_vector_f(r);
 
 #if BOUNDING_METHOD == BOUNDING_SPHERE
     if ((center + v).sumSquares() < bounding_value * bounding_value)
@@ -342,7 +342,7 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     // normalise axis
     raxis.normalizeInPlace();
 
-    // flip angle randomly -- TODO: do this outside, in Replica?
+    // TODO: clean this up -- do it in make_local_moves and just pass in the angle.
     if (flip_angle) {
         angle = -angle;
     }
@@ -394,7 +394,7 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     mark_cached_potentials_for_update(ri);
 }
 
-void Replica::rotate_domain(gsl_rng * r, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double angle)
+void Replica::rotate_domain(gsl_rng * rng_rotate, gsl_rng * rng_linker, gsl_rng * rng_residue, gsl_rng * rng_flip)
 {
     Vector3double raxis = normalised_random_vector_d(r);
     uint li = random_linker_index(rng_linker);
@@ -402,9 +402,10 @@ void Replica::rotate_domain(gsl_rng * r, gsl_rng * rng_linker, gsl_rng * rng_res
     bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
 
     rotate_domain(raxis, angle, ri, before);
+    // TODO TODO TODO recalculate the centre afterwards
 }
 
-void Replica::make_local_moves(gsl_rng * r, gsl_rng * rng_local_move, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double distance)
+void Replica::make_local_moves(gsl_rng * rng_rotate, gsl_rng * rng_translate, gsl_rng * rng_local_move, gsl_rng * rng_linker, gsl_rng * rng_residue, gsl_rng * rng_flip)
 {
     uint li = random_linker_index(rng_linker);
     for (size_t i = 0; i <= NUM_LOCAL_MOVES; i++) {
@@ -416,20 +417,22 @@ void Replica::make_local_moves(gsl_rng * r, gsl_rng * rng_local_move, gsl_rng * 
         {
             case MC_LOCAL_TRANSLATE:
             {
-                // TODO: call function on molecule
-                // translate(Vector3f v, const int ri)
+                Vector3f v = INITIAL_TRANSLATIONAL_STEP * normalised_random_vector_f(r);
+                translate(v, ri);
                 break;
             }
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
-                // TODO: call function on molecule
-                //crankshaft(double angle, const bool flip_angle, const int ri)
+                bool flip = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
+                // TODO: we actually need to select a residue that is not at the end of the linker!
+                crankshaft(INITIAL_ROTATIONAL_STEP, flip, ri);
                 break;
             }
             default:
                 break;
         }
     }
+    // TODO TODO TODO recalculate the centre afterwards
 }
 #endif // FLEXIBLE_LINKS
 
