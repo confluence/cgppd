@@ -1,5 +1,6 @@
 #ifndef SEGMENT_H_
 #define SEGMENT_H_
+#include <gsl/gsl_rng.h>
 
 class Segment
 {
@@ -15,6 +16,7 @@ public:
     bool update_LJ_and_DH; // LJ and DH values need to be updated
 
     Segment();
+    uint random_residue_index(gsl_rng * r);
 };
 
 #endif

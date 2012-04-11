@@ -131,7 +131,16 @@
 //     #define FLEXIBLE_LINKS  0
     #define FLEXIBLE_LINKS  1
 
+    #define MC_TRANSLATE 0
+    #define MC_ROTATE 1
+
     #if FLEXIBLE_LINKS
+        #define MC_ROTATE_DOMAIN 2
+        #define MC_LOCAL 3
+
+        #define MC_LOCAL_TRANSLATE 0
+        #define MC_LOCAL_CRANKSHAFT 1
+
         #define WEIGHT_MC_TRANSLATE 1.0f
         #define WEIGHT_MC_ROTATE 1.0f
         #define WEIGHT_MC_ROTATE_DOMAIN 1.0f

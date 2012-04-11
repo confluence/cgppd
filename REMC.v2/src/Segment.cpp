@@ -12,3 +12,8 @@ Segment::Segment()
     DH = 0.0f;
     update_LJ_and_DH = true;
 }
+
+uint Segment::random_residue_index(gsl_rng * r)
+{
+    return (int) gsl_rng_uniform_int(r, size) + start;
+}
