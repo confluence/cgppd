@@ -246,9 +246,10 @@ int Replica::loadMolecule(const char* pdbfilename, Vector3f position, Vector3dou
 // TODO: why is this not called from the constructor?
 void Replica::initRNGs()
 {
-    unsigned long long seed = time (NULL);
+//     unsigned long long seed = time (NULL);
     srand(time(NULL)+(label+1)*(label+1));
 
+    // TODO: why do we have multiple twisters?
     rng_moleculeSelection = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (rng_moleculeSelection,random());
 
