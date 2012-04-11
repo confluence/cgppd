@@ -209,20 +209,20 @@ void Molecule::setPosition(Vector3f v)
     for (size_t i=0; i<residueCount; i++)
     {
         // more efficient to do it this way than with the overloaded +
+        // TODO: is that actually true?
         Residues[i].position.x = Residues[i].relativePosition.x + center.x;
         Residues[i].position.y = Residues[i].relativePosition.y + center.y;
         Residues[i].position.z = Residues[i].relativePosition.z + center.z;
     }
 }
 
-// TODO: rename this to just plain rotate
-void Molecule::rotateQ(const Vector3double Raxis, const double angle)
+void Molecule::rotate(const Vector3double Raxis, const double angle)
 {
     Quaternion q(angle, Raxis);
     setRotation(q);
 }
 
-//TODO: call common method on residue
+//TODO: see if component-wise addition is faster
 void Molecule::setRotation(Quaternion q)
 {
     q.normalize();
@@ -250,9 +250,34 @@ Vector3double Molecule::normalised_random_vector_d(gsl_rng * r)
     return x;
 }
 
+void Molecule::rotate(gsl_rng * r, const double angle)
+{
+    rotate(normalised_random_vector_d(r), angle);
+}
+
+// TODO: add boundary conditions to everything?
+void Molecule::translate(gsl_rng * r, const float distance, const float bounding_value)
+{
+    Vector3f v = distance * normalised_random_vector_f(r);
+
+#if BOUNDING_METHOD == BOUNDING_SPHERE
+    if ((center + v).sumSquares() < bounding_value * bounding_value)
+    {
+        translate(v);
+    }
+    else
+    {
+    }
+#elif BOUNDING_METHOD == PERIODIC_BOUNDARY
+    Vector3f new_pos = center + v;
+    new_pos.x = fmod(new_pos.x + bounding_value, bounding_value);
+    new_pos.y = fmod(new_pos.y + bounding_value, bounding_value);
+    new_pos.z = fmod(new_pos.z + bounding_value, bounding_value);
+    setPosition(new_pos);
+#endif
+}
+
 #if FLEXIBLE_LINKS
-
-
 void Molecule::recalculate_center(Vector3f difference)
 {
     // TODO: doing this after each local move is expensive -- can we get away with calling it once from Replica at the end of all local moves?
@@ -368,7 +393,44 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     // mark potential values for update
     mark_cached_potentials_for_update(ri);
 }
-#endif
+
+void Replica::rotate_domain(gsl_rng * rng_rotate, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double angle)
+{
+    Vector3double raxis = normalised_random_vector_d(rng_rotate);
+    uint li = random_linker_index(rng_linker);
+    uint ri = random_residue_index(rng_residue, li);
+    bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
+
+    rotate_domain(raxis, angle, ri, before);
+}
+
+void Replica::make_local_moves(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double distance)
+{
+    // TODO: pick a linker; then random residues inside the linker
+    for (size_t i = 0; i <= num_moves; i++) {
+        //TODO: if crankshaft disabled, only return translate
+        move_type = gsl_ran_bernoulli(MC_local_rng, LOCAL_TRANSLATE_BIAS);
+
+        switch (mutationType)
+        {
+            case _local_translate:
+            {
+//                 Molecule::translate(Vector3f v, const int ri)
+                // TODO: call function on molecule
+                break;
+            }
+            case _local_crankshaft: // TODO: remove if crankshaft disabled
+            {
+                // TODO: call function on molecule
+                //Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+#endif // FLEXIBLE_LINKS
 
 bool Molecule::initFromPDB(const char* pdbfilename)
 {
