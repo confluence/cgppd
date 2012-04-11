@@ -45,9 +45,9 @@ public:
 
     Vector3f normalised_random_vector_f(gsl_rng * r);
     Vector3double normalised_random_vector_d(gsl_rng * r);
-    void rotate(gsl_rng * r, const double angle);
+    void rotate(gsl_rng * r);
     // TODO: add boundary conditions to everything?
-    void translate(gsl_rng * r, const float distance, const float bounding_value);
+    void translate(gsl_rng * r, const float bounding_value);
 
 #if FLEXIBLE_LINKS
     uint random_linker_index(gsl_rng * r); // return random linker index
@@ -60,8 +60,9 @@ public:
     void crankshaft(double angle, const bool flip_angle, const int ri);
     void rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
 
-    void rotate_domain(gsl_rng * r, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double angle);
-    void make_local_moves(gsl_rng * r, gsl_rng * rng_local_move, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double distance);
+    // TODO: can we reduce all these damn twisters to one?
+    void rotate_domain(gsl_rng * rng_rotate, gsl_rng * rng_linker, gsl_rng * rng_residue, gsl_rng * rng_flip);
+    void make_local_moves(gsl_rng * rng_rotate, gsl_rng * rng_translate, gsl_rng * rng_local_move, gsl_rng * rng_linker, gsl_rng * rng_residue, gsl_rng * rng_flip);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);

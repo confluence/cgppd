@@ -25,6 +25,7 @@ CLEANUP
     * log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
 
 ADD
+* crankshaft -- need to select a residue which is not at either end of a linker
 * boundary conditions -- EVERYTHING, NOT JUST TRANSLATE?
 * Make GPU MC call extra CPU moves for now?
 
