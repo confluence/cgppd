@@ -239,7 +239,7 @@ int Replica::loadMolecule(const char* pdbfilename, Vector3f position, Vector3dou
     int i = loadMolecule(pdbfilename);
     rotationAxis.normalizeInPlace();
     molecules[i].setPosition(position);
-    molecules[i].rotateQ(rotationAxis,rotationAmount);
+    molecules[i].rotate(rotationAxis,rotationAmount);
     return i;
 }
 
@@ -336,86 +336,86 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
 
 // TODO: kill these useless wrapper functions (move the useful bits to Molecule)
 // here for profiling
-inline void Replica::rotate(const int m, const double rotateStep)
-{
-    molecules[m].rotateQ(createNormalisedRandomVectord(rng_rotate),rotateStep);
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-    cout << "    Rotate: Replica "<< label << "/Molecule " << m << endl;
-#endif
-}
+// inline void Replica::rotate(const int m, const double rotateStep)
+// {
+//     molecules[m].rotate(createNormalisedRandomVectord(rng_rotate),rotateStep);
+// #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
+//     cout << "    Rotate: Replica "<< label << "/Molecule " << m << endl;
+// #endif
+// }
 
 // here for profiling
-void Replica::translate(const int m, const float translateStep)
-{
-    // pick directions to rotate in, do by generating a random normalised vector of length equal to INITIAL_TRANSLATIONAL_STEP
-    //Vector3f oldPosition = molecules[m].center;
-    Vector3f translateVector = translateStep * createNormalisedRandomVector(rng_translate);
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-    cout << "    Translate: Replica "<< label << "/Molecule " << m << endl;
-#endif
+// void Replica::translate(const int m, const float translateStep)
+// {
+//     // pick directions to rotate in, do by generating a random normalised vector of length equal to INITIAL_TRANSLATIONAL_STEP
+//     //Vector3f oldPosition = molecules[m].center;
+//     Vector3f translateVector = translateStep * createNormalisedRandomVector(rng_translate);
+// #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
+//     cout << "    Translate: Replica "<< label << "/Molecule " << m << endl;
+// #endif
+//
+//
+//     // bounding sphere conditions
+// #if BOUNDING_METHOD == BOUNDING_SPHERE
+//     // if the translate falls inside the bounding radius
+//     if ((molecules[m].center + translateVector).sumSquares() < boundingValue*boundingValue)
+//     {
+//         molecules[m].translate(translateVector);
+//     }
+//     // if the change causes the molecule to fall outside the bounding radius
+//     else
+//     {
+// #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
+//         cout << "  - Reject: Replica "<< label << "/Molecule " << m <<  " : falls outside bounding sphere" << endl;
+// #endif
+//     }
+// #elif BOUNDING_METHOD == PERIODIC_BOUNDARY 	// periodic boundary conditions
+//     Vector3f newPosition = molecules[m].center + translateVector;
+//     newPosition.x = fmod(newPosition.x+boundingValue,boundingValue);
+//     newPosition.y = fmod(newPosition.y+boundingValue,boundingValue);
+//     newPosition.z = fmod(newPosition.z+boundingValue,boundingValue);
+//     molecules[m].setPosition(newPosition);
+// #endif
+// }
 
-
-    // bounding sphere conditions
-#if BOUNDING_METHOD == BOUNDING_SPHERE
-    // if the translate falls inside the bounding radius
-    if ((molecules[m].center + translateVector).sumSquares() < boundingValue*boundingValue)
-    {
-        molecules[m].translate(translateVector);
-    }
-    // if the change causes the molecule to fall outside the bounding radius
-    else
-    {
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-        cout << "  - Reject: Replica "<< label << "/Molecule " << m <<  " : falls outside bounding sphere" << endl;
-#endif
-    }
-#elif BOUNDING_METHOD == PERIODIC_BOUNDARY 	// periodic boundary conditions
-    Vector3f newPosition = molecules[m].center + translateVector;
-    newPosition.x = fmod(newPosition.x+boundingValue,boundingValue);
-    newPosition.y = fmod(newPosition.y+boundingValue,boundingValue);
-    newPosition.z = fmod(newPosition.z+boundingValue,boundingValue);
-    molecules[m].setPosition(newPosition);
-#endif
-}
-
-#if FLEXIBLE_LINKS
-void Replica::rotate_domain(const int m, const float rotateStep, const int ri, const bool before)
-{
-     molecules[m].rotate_domain(createNormalisedRandomVectord(rng_rotate), rotateStep, ri, before)
-}
-
-uint Replica::get_local_move_type()
-{
-    //TODO: if crankshaft disabled, only return translate
-    return gsl_ran_bernoulli(MC_local_rng, LOCAL_TRANSLATE_BIAS);
-}
-
-void Replica::local(const int m, const float step, const int num_moves)
-{
-    // TODO: pick a linker; then random residues inside the linker
-    for (size_t i = 0; i <= num_moves; i++) {
-        move_type = get_local_move_type();
-
-        switch (mutationType)
-        {
-            case _local_translate:
-            {
-//                 Molecule::translate(Vector3f v, const int ri)
-                // TODO: call function on molecule
-                break;
-            }
-            case _local_crankshaft: // TODO: remove if crankshaft disabled
-            {
-                // TODO: call function on molecule
-                //Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
-                break;
-            }
-            default:
-                break;
-        }
-    }
-}
-#endif
+// #if FLEXIBLE_LINKS
+// void Replica::rotate_domain(const int m, const float rotateStep, const int ri, const bool before)
+// {
+//      molecules[m].rotate_domain(createNormalisedRandomVectord(rng_rotate), rotateStep, ri, before)
+// }
+//
+// uint Replica::get_local_move_type()
+// {
+//     //TODO: if crankshaft disabled, only return translate
+//     return gsl_ran_bernoulli(MC_local_rng, LOCAL_TRANSLATE_BIAS);
+// }
+//
+// void Replica::local(const int m, const float step, const int num_moves)
+// {
+//     // TODO: pick a linker; then random residues inside the linker
+//     for (size_t i = 0; i <= num_moves; i++) {
+//         move_type = get_local_move_type();
+//
+//         switch (mutationType)
+//         {
+//             case _local_translate:
+//             {
+// //                 Molecule::translate(Vector3f v, const int ri)
+//                 // TODO: call function on molecule
+//                 break;
+//             }
+//             case _local_crankshaft: // TODO: remove if crankshaft disabled
+//             {
+//                 // TODO: call function on molecule
+//                 //Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
+//                 break;
+//             }
+//             default:
+//                 break;
+//         }
+//     }
+// }
+// #endif
 
 uint Replica::get_MC_mutation_type()
 {

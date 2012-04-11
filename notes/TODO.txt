@@ -6,10 +6,10 @@ REFACTOR AND ADD MC MOVES
 * wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
 * remove wrappers from replica
 * remove createNormalisedRandomVector* from replica
+* remove passing of angle and distance; use constants from definitions straight in Molecule
 * consistent calling of one MC move function from replica
 * move definitions of MC move constants to definitions and rename them
-* delete Molecule::rotate and rename rotateQ to rotate
-* make Molecule::rotateQ call Molecule::setRotation, etc.
+* make Molecule::rotate call Molecule::setRotation, etc.
 
 CLEANUP
 * Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
@@ -19,7 +19,9 @@ CLEANUP
     * remove filename.
     * DELETE RESIDUES IN DESTRUCTOR; WTF! Use flag(s?) to check whether was inited from PDB.
     * Do we *ever* construct a molecule without a pdb file?
-* log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
+* REPLICA:
+    * Avoid using globals from definitions for things other than physical constants. e.g. pass rotate / translate steps into replica constructor
+    * log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
 
 ADD
 * boundary conditions -- EVERYTHING, NOT JUST TRANSLATE? Do we need flags for this? Can we just assume periodic boundary?

@@ -542,7 +542,7 @@ void loadArgsFromFile(argdata * parameters, Replica *initialReplica)
                     {
                         Vector3double v = Vector3double(rx,ry,rz);
                         v.normalizeInPlace();
-                        initialReplica->molecules[moleculeId].rotateQ(v,ra);
+                        initialReplica->molecules[moleculeId].rotate(v,ra);
                     }
 
                     if(crowdersSection)
