@@ -60,11 +60,8 @@ public:
     void crankshaft(double angle, const bool flip_angle, const int ri);
     void rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
 
-    void rotate_domain(gsl_rng * rng_rotate, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double angle);
-    void make_local_moves(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double distance);
-    // TODO: may need these depending on what we do in the wrapper above
-//     void translate_residue();
-//     void crankshaft();
+    void rotate_domain(gsl_rng * r, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double angle);
+    void make_local_moves(gsl_rng * r, gsl_rng * rng_local_move, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double distance);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);

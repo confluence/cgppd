@@ -6,12 +6,13 @@ REFACTOR AND ADD MC MOVES
 * wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
 * remove wrappers from replica
 * remove createNormalisedRandomVector* from replica
-* remove passing of angle and distance; use constants from definitions straight in Molecule
+* remove passing of angle and distance; use constants from definitions straight in Molecule (at the level where the random vector is generated)
 * consistent calling of one MC move function from replica
 * move definitions of MC move constants to definitions and rename them
 * make Molecule::rotate call Molecule::setRotation, etc.
 
 CLEANUP
+* Do we really need separate ranges for translate and rotate vectors?
 * Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
 * put initRNGs in init of replica and freeRNGs in destructor
 * MOLECULE: constructor / destructor

@@ -394,9 +394,9 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     mark_cached_potentials_for_update(ri);
 }
 
-void Replica::rotate_domain(gsl_rng * rng_rotate, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double angle)
+void Replica::rotate_domain(gsl_rng * r, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double angle)
 {
-    Vector3double raxis = normalised_random_vector_d(rng_rotate);
+    Vector3double raxis = normalised_random_vector_d(r);
     uint li = random_linker_index(rng_linker);
     uint ri = random_residue_index(rng_residue, li);
     bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
@@ -404,25 +404,26 @@ void Replica::rotate_domain(gsl_rng * rng_rotate, gsl_rng * rng_linker, gsl_rng 
     rotate_domain(raxis, angle, ri, before);
 }
 
-void Replica::make_local_moves(gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double distance)
+void Replica::make_local_moves(gsl_rng * r, gsl_rng * rng_local_move, gsl_rng * rng_linker, gsl_rng * rng_residue, rng_flip, const double distance)
 {
-    // TODO: pick a linker; then random residues inside the linker
-    for (size_t i = 0; i <= num_moves; i++) {
+    uint li = random_linker_index(rng_linker);
+    for (size_t i = 0; i <= NUM_LOCAL_MOVES; i++) {
+        uint ri = random_residue_index(rng_residue, li);
         //TODO: if crankshaft disabled, only return translate
-        move_type = gsl_ran_bernoulli(MC_local_rng, LOCAL_TRANSLATE_BIAS);
+        uint move = gsl_ran_bernoulli(gsl_rng * rng_local_move, LOCAL_TRANSLATE_BIAS);
 
-        switch (mutationType)
+        switch (move)
         {
-            case _local_translate:
+            case MC_LOCAL_TRANSLATE:
             {
-//                 Molecule::translate(Vector3f v, const int ri)
                 // TODO: call function on molecule
+                // translate(Vector3f v, const int ri)
                 break;
             }
-            case _local_crankshaft: // TODO: remove if crankshaft disabled
+            case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
                 // TODO: call function on molecule
-                //Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
+                //crankshaft(double angle, const bool flip_angle, const int ri)
                 break;
             }
             default:
@@ -767,8 +768,7 @@ uint Molecule::random_linker_index(gsl_rng * r)
 
 uint Molecule::random_residue_index(gsl_rng * r, int li)
 {
-    Segment * l = Linkers[li];
-    return (int) gsl_rng_uniform_int(r, l->size) + l->start;
+    return Linkers[li]->random_residue_index(r);
 }
 
 

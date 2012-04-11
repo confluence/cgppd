@@ -324,15 +324,15 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
     return x;
 }
 
-#define _translate 0
-#define _rotate 1
-#if FLEXIBLE_LINKS
-    #define _rotate_domain 2
-    #define _local 3
-
-    #define _local_translate 0
-    #define _local_crankshaft 1
-#endif
+// #define _translate 0
+// #define _rotate 1
+// #if FLEXIBLE_LINKS
+//     #define _rotate_domain 2
+//     #define _local 3
+//
+//     #define _local_translate 0
+//     #define _local_crankshaft 1
+// #endif
 
 // TODO: kill these useless wrapper functions (move the useful bits to Molecule)
 // here for profiling
@@ -451,7 +451,7 @@ void Replica::MCSearch(int steps)
 
         switch (mutationType)
         {
-            case _rotate:
+            case MC_ROTATE:
             {
                 rotate(moleculeNo, rotateStep);
 
@@ -460,7 +460,7 @@ void Replica::MCSearch(int steps)
 #endif
                 break;
             }
-            case _translate:
+            case MC_TRANSLATE:
             {
                 translate(moleculeNo, translateStep);
 
@@ -471,7 +471,7 @@ void Replica::MCSearch(int steps)
                 break;
             }
 #if FLEXIBLE_LINKS
-            case _rotate_domain:
+            case MC_ROTATE_DOMAIN:
             {
                 uint linkerNo = molecule[moleculeNo].random_linker_index(rng_linkerSelection);
                 uint residueNo = molecule[moleculeNo].random_residue_index(rng_residueSelection, linkerNo);
@@ -485,7 +485,7 @@ void Replica::MCSearch(int steps)
 
                 break;
             }
-            case _local:
+            case MC_LOCAL:
             {
                 local(moleculeNo, rotateStep, NUM_LOCAL_MOVES);
 
@@ -900,13 +900,13 @@ void Replica::MCSearchMutate()
 
     switch (mutationType)
     {
-    case _rotate:
+    case MC_ROTATE:
     {
         rotate(moleculeNo, rotateStep);
         break;
     }
 
-    case _translate:
+    case MC_TRANSLATE:
     {
         translate(moleculeNo, translateStep);
         break;
