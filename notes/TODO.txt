@@ -12,7 +12,7 @@ REFACTOR AND ADD MC MOVES
 * make Molecule::rotate call Molecule::setRotation, etc.
 
 CLEANUP
-* Do we really need separate ranges for translate and rotate vectors?
+* Do we really need separate ranges for translate and rotate vectors? In theory, we only need one mersenne twister for everything, so why do we have so many?
 * Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
 * put initRNGs in init of replica and freeRNGs in destructor
 * MOLECULE: constructor / destructor
@@ -25,11 +25,7 @@ CLEANUP
     * log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
 
 ADD
-* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE? Do we need flags for this? Can we just assume periodic boundary?
-* random selection of move
-    * 1/4 chance of translation, rotation, flex, local (gsl_rng_uniform_int? make configurable somehow -- gsl_ran_discrete?)
-    * configurable number of local (trans / crankshaft) moves -- default 3?
-    * random choice of trans / crankshaft
+* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE?
 * Make GPU MC call extra CPU moves for now?
 
 FIX
