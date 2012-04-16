@@ -43,15 +43,15 @@ public:
     void setRotation(Quaternion q);
     void rotate(const Vector3double Raxis, const double angle);
 
-    Vector3f normalised_random_vector_f(gsl_rng * r);
-    Vector3double normalised_random_vector_d(gsl_rng * r);
-    void rotate(gsl_rng * r);
+    Vector3f normalised_random_vector_f(gsl_rng * rng);
+    Vector3double normalised_random_vector_d(gsl_rng * rng);
+    void rotate(gsl_rng * rng);
     // TODO: add boundary conditions to everything?
-    void translate(gsl_rng * r, const float bounding_value);
+    void translate(gsl_rng * rng, const float bounding_value);
 
 #if FLEXIBLE_LINKS
-    uint random_linker_index(gsl_rng * r); // return random linker index
-    uint random_residue_index(gsl_rng * r, int li); // return random residue index from given linker
+    uint random_linker_index(gsl_rng * rng); // return random linker index
+    uint random_residue_index(gsl_rng * rng, int li); // return random residue index from given linker
 
     void recalculate_center(Vector3f difference);
     void mark_cached_potentials_for_update(const int ri);
@@ -60,9 +60,8 @@ public:
     void crankshaft(double angle, const bool flip_angle, const int ri);
     void rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
 
-    // TODO: can we reduce all these damn twisters to one?
-    void rotate_domain(gsl_rng * rng_rotate, gsl_rng * rng_linker, gsl_rng * rng_residue, gsl_rng * rng_flip);
-    void make_local_moves(gsl_rng * rng_rotate, gsl_rng * rng_translate, gsl_rng * rng_local_move, gsl_rng * rng_linker, gsl_rng * rng_residue, gsl_rng * rng_flip);
+    void rotate_domain(gsl_rng * rng);
+    void make_local_moves(gsl_rng * rng);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
@@ -78,7 +77,7 @@ public:
     Residue *Residues;
     int residueCount;
 
-    uint random_residue_index(gsl_rng * r); // return random residue index
+    uint random_residue_index(gsl_rng * rng); // return random residue index
 
 #if FLEXIBLE_LINKS
     int linkCount;
