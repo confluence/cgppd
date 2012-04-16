@@ -951,7 +951,7 @@ void *MCthreadableFunction(void *arg)
 #if CUDA_STREAMS
         data->replica[tx+threadIndex*tReplicas].cudaStream = streams[tx%streamsPerThread];	// use rotation to assign replicas to streams
         replica[tx+threadIndex*tReplicas].ReserveSumSpace();								// reserve a space for the potential summation to be stored
-        replica[tx+threadIndex*tReplicas].savedMolecule.reserveResidueSpace(replica[tx+threadIndex*tReplicas].maxMoleculeSize);
+        replica[tx+threadIndex*tReplicas].savedMolecule.reserveResidueSpace(replica[tx+threadIndex*tReplicas].maxMoleculeSize); // TODO: wtf, this seems to be a hack to avoid doing this in Replica.  This needs to be done after all molecules are loaded.
 #endif
 
     }
@@ -1019,6 +1019,7 @@ void *MCthreadableFunction(void *arg)
 
 
 #if CUDA_STREAMS	// use streams
+    // TODO: move this to Replica?
     int mcstep = 0;
     //int sampleIn = data->sampleStartsAfter+1;
     while (mcstep<data->MCsteps)

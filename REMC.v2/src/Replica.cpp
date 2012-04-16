@@ -249,34 +249,37 @@ void Replica::initRNGs()
 //     unsigned long long seed = time (NULL);
     srand(time(NULL)+(label+1)*(label+1));
 
+    rng = gsl_rng_alloc (gsl_rng_mt19937);
+    gsl_rng_set (rng, random());
+
     // TODO: why do we have multiple twisters?
-    rng_moleculeSelection = gsl_rng_alloc (gsl_rng_mt19937);
-    gsl_rng_set (rng_moleculeSelection,random());
-
-    rng_rotate = gsl_rng_alloc (gsl_rng_mt19937);
-    gsl_rng_set (rng_rotate,random());
-
-    rng_translate = gsl_rng_alloc (gsl_rng_mt19937);
-    gsl_rng_set (rng_translate,random());
-
-    MCRng = gsl_rng_alloc(gsl_rng_mt19937);
-    gsl_rng_set (MCRng,random());
-
-    MCKbRng = gsl_rng_alloc(gsl_rng_mt19937);
-    gsl_rng_set (MCKbRng,random());
+//     rng_moleculeSelection = gsl_rng_alloc (gsl_rng_mt19937);
+//     gsl_rng_set (rng_moleculeSelection,random());
+//
+//     rng_rotate = gsl_rng_alloc (gsl_rng_mt19937);
+//     gsl_rng_set (rng_rotate,random());
+//
+//     rng_translate = gsl_rng_alloc (gsl_rng_mt19937);
+//     gsl_rng_set (rng_translate,random());
+//
+//     MCRng = gsl_rng_alloc(gsl_rng_mt19937);
+//     gsl_rng_set (MCRng,random());
+//
+//     MCKbRng = gsl_rng_alloc(gsl_rng_mt19937);
+//     gsl_rng_set (MCKbRng,random());
 
 #if FLEXIBLE_LINKS
-    rng_linkerSelection = gsl_rng_alloc (gsl_rng_mt19937);
-    gsl_rng_set (rng_linkerSelection,random());
-
-    rng_residueSelection = gsl_rng_alloc (gsl_rng_mt19937);
-    gsl_rng_set (rng_residueSelection,random());
-
-    MC_local_rng = gsl_rng_alloc(gsl_rng_mt19937);
-    gsl_rng_set (MC_local_rng, random());
-
-    rng_flip = gsl_rng_alloc(gsl_rng_mt19937);
-    gsl_rng_set (rng_flip, random());
+//     rng_linkerSelection = gsl_rng_alloc (gsl_rng_mt19937);
+//     gsl_rng_set (rng_linkerSelection,random());
+//
+//     rng_residueSelection = gsl_rng_alloc (gsl_rng_mt19937);
+//     gsl_rng_set (rng_residueSelection,random());
+//
+//     MC_local_rng = gsl_rng_alloc(gsl_rng_mt19937);
+//     gsl_rng_set (MC_local_rng, random());
+//
+//     rng_flip = gsl_rng_alloc(gsl_rng_mt19937);
+//     gsl_rng_set (rng_flip, random());
 
     MC_move_weights = new double[4];
     MC_move_weights[0] =  WEIGHT_MC_TRANSLATE;
@@ -291,17 +294,19 @@ void Replica::initRNGs()
 // TODO: why is this not called from the destructor?!
 void Replica::freeRNGs()
 {
-    gsl_rng_free (rng_moleculeSelection);
-    gsl_rng_free (rng_rotate);
-    gsl_rng_free (rng_translate);
-    gsl_rng_free (MCRng);
-    gsl_rng_free (MCKbRng);
+    gsl_rng_free(rng);
+
+//     gsl_rng_free (rng_moleculeSelection);
+//     gsl_rng_free (rng_rotate);
+//     gsl_rng_free (rng_translate);
+//     gsl_rng_free (MCRng);
+//     gsl_rng_free (MCKbRng);
 
 #if FLEXIBLE_LINKS
-    gsl_rng_free (rng_linkerSelection);
-    gsl_rng_free (rng_residueSelection);
-    gsl_rng_free(MC_local_rng);
-    gsl_rng_free (rng_flip);
+//     gsl_rng_free (rng_linkerSelection);
+//     gsl_rng_free (rng_residueSelection);
+//     gsl_rng_free(MC_local_rng);
+//     gsl_rng_free (rng_flip);
     gsl_ran_discrete_free(MC_discrete_table);
     delete [] MC_move_weights;
 #endif
@@ -421,18 +426,20 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
 uint Replica::get_MC_mutation_type()
 {
 #if FLEXIBLE_LINKS
-    return gsl_ran_discrete(MCRng, MC_discrete_table);
+    return gsl_ran_discrete(rng, MC_discrete_table);
 #else
-    return gsl_ran_bernoulli(MCRng, translate_rotate_bernoulli_bias);
+    return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
 #endif
 }
+
+
 
 void Replica::MCSearch(int steps)
 {
     //float translateStep = INITIAL_TRANSLATIONAL_STEP;
     //double rotateStep = INITIAL_ROTATIONAL_STEP;
 
-    bool lastOperationWasRotate; // TODO: remove
+//     bool lastOperationWasRotate; // TODO: remove
 
     float oldPotential = potential;
 
@@ -441,10 +448,10 @@ void Replica::MCSearch(int steps)
 
     for (int step=0; step<steps; step++)
     {
-#if OUTOUTPUT_LEVEL >= PRINT_MC_STEP_COUNT
+#if OUTPUT_LEVEL >= PRINT_MC_STEP_COUNT
         cout << "Step: " << step << endl;
 #endif
-        uint moleculeNo = (int) gsl_rng_uniform_int(rng_moleculeSelection,moleculeCount);
+        uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         uint mutationType = get_MC_mutation_type();
 
         // save the current state so we can roll back if it was not a good mutation.
@@ -474,9 +481,9 @@ void Replica::MCSearch(int steps)
 #if FLEXIBLE_LINKS
             case MC_ROTATE_DOMAIN:
             {
-                uint linkerNo = molecule[moleculeNo].random_linker_index(rng_linkerSelection);
-                uint residueNo = molecule[moleculeNo].random_residue_index(rng_residueSelection, linkerNo);
-                bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
+                uint linkerNo = molecule[moleculeNo].random_linker_index(rng);
+                uint residueNo = molecule[moleculeNo].random_residue_index(rng, linkerNo);
+                bool before = (bool) gsl_ran_bernoulli (rng, 0.5);
                 rotate_domain(moleculeNo, rotateStep, residueNo, before);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
@@ -530,7 +537,7 @@ void Replica::MCSearch(int steps)
 #endif
         }
         // accept change if it meets the boltzmann criteria, must be (kJ/mol)/(RT), delta is in kcal/mol @ 294K
-        else if (gsl_rng_uniform(MCKbRng)<exp(-(delta*4184.0f)/(Rgas*temperature)))
+        else if (gsl_rng_uniform(rng) < exp(-(delta*4184.0f)/(Rgas*temperature)))
         {
             potential = newPotential;
             oldPotential = potential;
@@ -885,16 +892,15 @@ float Replica::SumGridResults()
 #if CUDA_STREAMS
 
 // 1/3 of the above function, does the mutation on the gpu asynchronously
-// TODO: have the single search function call these partial functions!
 void Replica::MCSearchMutate()
 {
     oldPotential = potential;
 
-    uint moleculeNo = (int) gsl_rng_uniform_int(rng_moleculeSelection,moleculeCount);
+    uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
     lastMutationIndex = moleculeNo;
 
     // TODO: replace this with call to external function
-    uint mutationType = gsl_ran_bernoulli (MCRng,translate_rotate_bernoulli_bias);
+    uint mutationType = gsl_ran_bernoulli (rng, translate_rotate_bernoulli_bias);
 
     // save the current state so we can roll back if it was not a good mutation.
     savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
@@ -951,7 +957,7 @@ void Replica::MCSearchAcceptReject()
         cout << "  * Replace: Replica "<< label << "/Molecule " << lastMutationIndex <<  " : delta E = " << delta << " E = " << potential << endl;
 #endif
     }
-    else if (gsl_rng_uniform(MCKbRng)<exp(-delta*4.184f/(Rgas*temperature)))
+    else if (gsl_rng_uniform(rng) < exp(-delta*4.184f/(Rgas*temperature)))
     {
         potential = newPotential;
         oldPotential = potential;

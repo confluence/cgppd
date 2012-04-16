@@ -237,28 +237,28 @@ void Molecule::setRotation(Quaternion q)
     }
 }
 
-Vector3f Molecule::normalised_random_vector_f(gsl_rng * r)
+Vector3f Molecule::normalised_random_vector_f(gsl_rng * rng)
 {
     // TODO: do we actually need double brackets?
-    return (Vector3f(gsl_rng_uniform(r) - 0.5, 0.5 - gsl_rng_uniform(r), gsl_rng_uniform(r) - 0.5)).normalize();
+    return (Vector3f(gsl_rng_uniform(rng) - 0.5, 0.5 - gsl_rng_uniform(rng), gsl_rng_uniform(rng) - 0.5)).normalize();
 }
 
-Vector3double Molecule::normalised_random_vector_d(gsl_rng * r)
+Vector3double Molecule::normalised_random_vector_d(gsl_rng * rng)
 {
-    Vector3double x(gsl_rng_uniform(r) - 0.5, 0.5 - gsl_rng_uniform(r), gsl_rng_uniform(r) - 0.5);
+    Vector3double x(gsl_rng_uniform(rng) - 0.5, 0.5 - gsl_rng_uniform(rng), gsl_rng_uniform(rng) - 0.5);
     x.normalizeInPlace();
     return x;
 }
 
-void Molecule::rotate(gsl_rng * r)
+void Molecule::rotate(gsl_rng * rng)
 {
-    rotate(normalised_random_vector_d(r), INITIAL_ROTATIONAL_STEP);
+    rotate(normalised_random_vector_d(rng), INITIAL_ROTATIONAL_STEP);
 }
 
 // TODO: add boundary conditions to everything?
-void Molecule::translate(gsl_rng * r, const float bounding_value)
+void Molecule::translate(gsl_rng * rng, const float bounding_value)
 {
-    Vector3f v = INITIAL_TRANSLATIONAL_STEP * normalised_random_vector_f(r);
+    Vector3f v = INITIAL_TRANSLATIONAL_STEP * normalised_random_vector_f(rng);
 
 #if BOUNDING_METHOD == BOUNDING_SPHERE
     if ((center + v).sumSquares() < bounding_value * bounding_value)
@@ -394,36 +394,36 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     mark_cached_potentials_for_update(ri);
 }
 
-void Replica::rotate_domain(gsl_rng * rng_rotate, gsl_rng * rng_linker, gsl_rng * rng_residue, gsl_rng * rng_flip)
+void Replica::rotate_domain(gsl_rng * rng)
 {
-    Vector3double raxis = normalised_random_vector_d(r);
-    uint li = random_linker_index(rng_linker);
-    uint ri = random_residue_index(rng_residue, li);
-    bool before = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
+    Vector3double raxis = normalised_random_vector_d(rng);
+    uint li = random_linker_index(rng);
+    uint ri = random_residue_index(rng, li);
+    bool before = (bool) gsl_ran_bernoulli(rng, 0.5);
 
     rotate_domain(raxis, angle, ri, before);
     // TODO TODO TODO recalculate the centre afterwards
 }
 
-void Replica::make_local_moves(gsl_rng * rng_rotate, gsl_rng * rng_translate, gsl_rng * rng_local_move, gsl_rng * rng_linker, gsl_rng * rng_residue, gsl_rng * rng_flip)
+void Replica::make_local_moves(gsl_rng * rng)
 {
-    uint li = random_linker_index(rng_linker);
+    uint li = random_linker_index(rng);
     for (size_t i = 0; i <= NUM_LOCAL_MOVES; i++) {
-        uint ri = random_residue_index(rng_residue, li);
+        uint ri = random_residue_index(rng, li);
         //TODO: if crankshaft disabled, only return translate
-        uint move = gsl_ran_bernoulli(gsl_rng * rng_local_move, LOCAL_TRANSLATE_BIAS);
+        uint move = gsl_ran_bernoulli(rng, LOCAL_TRANSLATE_BIAS);
 
         switch (move)
         {
             case MC_LOCAL_TRANSLATE:
             {
-                Vector3f v = INITIAL_TRANSLATIONAL_STEP * normalised_random_vector_f(r);
+                Vector3f v = INITIAL_TRANSLATIONAL_STEP * normalised_random_vector_f(rng);
                 translate(v, ri);
                 break;
             }
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
-                bool flip = (bool) gsl_ran_bernoulli (rng_flip, 0.5);
+                bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 // TODO: we actually need to select a residue that is not at the end of the linker!
                 crankshaft(INITIAL_ROTATIONAL_STEP, flip, ri);
                 break;
@@ -647,9 +647,9 @@ float Molecule::calculateVolume()
     return volume;
 }
 
-uint Molecule::random_residue_index(gsl_rng * r)
+uint Molecule::random_residue_index(gsl_rng * rng)
 {
-    return (int) gsl_rng_uniform_int(r, residueCount);
+    return (int) gsl_rng_uniform_int(rng, residueCount);
 }
 
 #if FLEXIBLE_LINKS
@@ -764,14 +764,14 @@ Potential Molecule::E(const float bounding_value)
     return potential;
 }
 
-uint Molecule::random_linker_index(gsl_rng * r)
+uint Molecule::random_linker_index(gsl_rng * rng)
 {
-    return (int) gsl_rng_uniform_int(r, linkerCount);
+    return (int) gsl_rng_uniform_int(rng, linkerCount);
 }
 
-uint Molecule::random_residue_index(gsl_rng * r, int li)
+uint Molecule::random_residue_index(gsl_rng * rng, int li)
 {
-    return Linkers[li]->random_residue_index(r);
+    return Linkers[li]->random_residue_index(rng);
 }
 
 
