@@ -59,6 +59,7 @@ ADD
 * Validation with a simple test case
 * Is the caching stuff actually a good idea, or is it just overhead?
     * Write another version of the CPU bond calculation, which throws out the caching and calculates everything
+* What happens if molecule consists of multiple chains?
 
 TEST
 Potential:
@@ -78,8 +79,6 @@ EVENTUALLY
 
 OPTIMISE
 
-* consider reusing some of the ranges?
-
 * is it *actually* worth summing vector components separately?
 
 * init of gpu memory seems slower (underlying software change?)
@@ -88,6 +87,7 @@ OPTIMISE
     * one molecule only (since only one molecule will have internal changes?)
     * but then we have to cache at the molecule level at least, so that potential comparison works
     * LJ/DH seems like a really good idea
+	* single kernel based on segments, or aditional kernel just for internal segments?
     * Friedrichs, et al.have a kernel for bonded forces
 
 CLEANUP
