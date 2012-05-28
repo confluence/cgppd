@@ -3,6 +3,7 @@ NOW
 --------------------------------------------------------------------------------
 
 REFACTOR AND ADD MC MOVES
+* need to initialise and destroy savedMolecule in streamed version
 * wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
 * remove wrappers from replica
 * remove createNormalisedRandomVector* from replica
