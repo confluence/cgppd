@@ -13,7 +13,6 @@ REFACTOR AND ADD MC MOVES
 * make Molecule::rotate call Molecule::setRotation, etc.
 
 CLEANUP
-* Do we really need separate ranges for translate and rotate vectors? In theory, we only need one mersenne twister for everything, so why do we have so many?
 * Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
 * put initRNGs in init of replica and freeRNGs in destructor
 * MOLECULE: constructor / destructor
@@ -24,6 +23,8 @@ CLEANUP
 * REPLICA:
     * Avoid using globals from definitions for things other than physical constants. e.g. pass rotate / translate steps into replica constructor
     * log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
+* AMINO ACIDS
+    * clean up read from file
 
 ADD
 * crankshaft -- need to select a residue which is not at either end of a linker
@@ -45,6 +46,7 @@ WRITE
 * Thesis skeleton
 * Poster
 * Background chapter
+    * Visualisation: graphs of LJ and DH potential vs residue distance (? -- for different types)
 * Implementation
 
 CLEANUP
@@ -56,6 +58,7 @@ CLEANUP
 ADD
 * Extra MC moves (just domain rotation?) on GPU?
 * Make angle terms, crankshaft moves optional; test efficiency / accuracy of including them
+* Make flexing optional; doesn't really work in cases with flexible loops coming out of domains.
 * Validation with a simple test case
 * Is the caching stuff actually a good idea, or is it just overhead?
     * Write another version of the CPU bond calculation, which throws out the caching and calculates everything
