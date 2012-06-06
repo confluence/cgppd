@@ -203,6 +203,7 @@
 
     #include <iostream>
 
+    // TODO: why is this here?
     class Replica;
 
     struct SimulationData
