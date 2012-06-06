@@ -714,7 +714,7 @@ void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundCo
 #endif
 }
 
-
+// TODO: remove this if it's unused
 void initLattice(Replica *initialReplica)
 {
     /*initialReplica->reserveContiguousMoleculeArray(2);
@@ -769,6 +769,7 @@ void initLattice(Replica *initialReplica)
     exit(0);
 }
 
+// TODO: move to Molecule!
 float isBound(Molecule *A, Molecule *B)
 {
     for (size_t residueI=0; residueI<A->residueCount; residueI++)
@@ -788,6 +789,7 @@ float isBound(Molecule *A, Molecule *B)
 }
 
 // calculate the root mean square between replicas
+// TODO: move to Replica!
 double DRMS(Replica* exp, Replica* sim)
 {
     double drms = 0;
@@ -837,6 +839,7 @@ double DRMS(Replica* exp, Replica* sim)
     return drms;
 }
 
+// TODO: move to Molecule!
 double DRMS(Molecule* a, Molecule* b)
 {
     double drms = 0;
@@ -1110,6 +1113,7 @@ void *MCthreadableFunction(void *arg)
     printf (" >>> Monte-Carlo thread %d exited.\n",int(threadIndex));
     return 0;
 }
+// END OF *MCthreadableFunction
 
 // Multithreaded simulation
 void REMCSimulation(Replica *initialReplica, argdata *parameters)
@@ -1575,8 +1579,7 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
     delete [] thread;
     return;
 }
-
-
+// END OF REMCSimulation
 
 int main(int argc, char **argv)
 {
@@ -1750,7 +1753,7 @@ int main(int argc, char **argv)
     initialReplica.initTimers();
 #endif
 
-    Replica tmp;
+    Replica tmp; // TODO: not used; remove
 
     float p = initialReplica.E();
     float pnc = initialReplica.E(&initialReplica.molecules[0],&initialReplica.molecules[1]);
