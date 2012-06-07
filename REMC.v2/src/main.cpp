@@ -49,7 +49,6 @@ int threads = THREAD_COUNT;   // 2 threads per core i think
 int streams = STREAM_COUNT;
 
 void REMCSimulation(Replica *initialReplica, argdata *parameters);
-double DRMS(Replica* a, Replica* b);
 bool getArgs(argdata * d, int argc, char **argv);
 void printHelp(bool badArg); // TODO: wrapper for bad args + help; rename to usage
 void loadArgsFromFile(argdata * parameters, Replica *initialReplica);
@@ -692,94 +691,6 @@ void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundCo
     printf("    - output/%s_%d_boundconformations\n",args->prependageString,args->pid);
     printf("    - output/%s_%d_acceptance_ratios\n",args->prependageString,args->pid);
 #endif
-}
-
-// TODO: move to Molecule!
-float isBound(Molecule *A, Molecule *B)
-{
-    for (size_t residueI=0; residueI<A->residueCount; residueI++)
-    {
-        for (size_t residueJ=0; residueJ<B->residueCount; residueJ++)
-        {
-            float distance = (A->Residues[residueI].position - B->Residues[residueJ].position).magnitude();
-
-            // if the experiment pair counts as a native contact
-            if (distance < 8.0)
-            {
-                return 1.0f;
-            }
-        }
-    }
-    return 0.0f;
-}
-
-// calculate the root mean square between replicas
-// TODO: move to Replica!
-double DRMS(Replica* exp, Replica* sim)
-{
-    double drms = 0;
-    double N = 0;
-    double native_contacts = 0;
-    double experimental_contacts = 0;
-    double binding_contacts = 0;
-
-    for (size_t moleculeI=0; moleculeI<exp->moleculeCount; moleculeI++)
-    {
-        for (size_t moleculeJ=moleculeI; moleculeJ<exp->moleculeCount; moleculeJ++)
-        {
-            if (moleculeI!= moleculeJ)
-            {
-                for (size_t residueI=0; residueI<exp->molecules[moleculeI].residueCount; residueI++)
-                {
-                    for (size_t residueJ=0; residueJ<exp->molecules[moleculeJ].residueCount; residueJ++)
-                    {
-                        N++;
-                        drms += abs((exp->molecules[moleculeI].Residues[residueI].position - exp->molecules[moleculeJ].Residues[residueJ].position).magnitude() -
-                                    (sim->molecules[moleculeI].Residues[residueI].position - sim->molecules[moleculeJ].Residues[residueJ].position).magnitude());
-
-                        // get native contacts. etc for quality stuff.
-
-                        // if the experiment pair counts as a native contact
-                        if ((exp->molecules[moleculeI].Residues[residueI].position - exp->molecules[moleculeJ].Residues[residueJ].position).magnitude() < 12*Angstrom)
-                        {
-                            native_contacts++;
-                            if ((sim->molecules[moleculeI].Residues[residueI].position - sim->molecules[moleculeJ].Residues[residueJ].position).magnitude() < 15*Angstrom)
-                            {
-                                experimental_contacts++;
-                            }
-                        }
-                        if ((sim->molecules[moleculeI].Residues[residueI].position - sim->molecules[moleculeJ].Residues[residueJ].position).magnitude() < 12*Angstrom)
-                        {
-                            binding_contacts++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    drms /= N;
-    cout << "DRMS (angstrom): " << drms/Angstrom << endl;
-    cout << "Quality of interfacial residue data [0:1]: " << experimental_contacts/native_contacts << endl;
-    cout << "Binding contacts discovered: " << binding_contacts << endl;
-    return drms;
-}
-
-// TODO: move to Molecule!
-double DRMS(Molecule* a, Molecule* b)
-{
-    double drms = 0;
-    double N = 0;
-
-    for (size_t residueA=0; residueA<a->residueCount; residueA++)
-    {
-        for (size_t residueB=0; residueB<b->residueCount; residueB++)
-        {
-            N++;
-            drms += abs((a->Residues[residueA].position - b->Residues[residueB].position).magnitude());
-        }
-    }
-    drms /= N;
-    return drms;
 }
 
 // required objects for synchronisation
