@@ -56,90 +56,12 @@ void *MCthreadableFunction(void *arg);
 void initSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
 void flushSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
 void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
-void saveSimulation(const Replica *replicaState, argdata *parameters);
 
 // All the opengl stuff
 #if GLVIS
 Replica *GLreplica;
 #include "openglvis.h"
 #endif
-
-// TODO: replace translation + rotation of molecule by DCD file
-void saveSimulation(const Replica *replicaState, argdata *parameters)
-{
-    FILE * output;
-    char filename[256];
-    sprintf(filename,"checkpoints/%s_%d",parameters->prependageString,parameters->pid);
-    output = fopen (filename,"w");
-    fprintf(output,"#Saved simulation state file, prependage string, original pid\n");
-    fprintf(output,"%s\n",parameters->file);
-    fprintf(output,"%s_%d\n",parameters->prependageString,parameters->pid);
-    fprintf(output,"%d\n",parameters->pid);
-    fprintf(output,"# threads, streams, gpus, MCsteps, RESteps, sampleFrequency, sampleStartsAfter,nonCrowders, temperatureMin, temperatureMax, currentStep\n");
-    fprintf(output,"%d %d %d %d %d %d %d %d %f %f %d\n",parameters->threads,parameters->streams,parameters->gpus,parameters->MCsteps,parameters->REsteps,parameters->sampleFrequency,parameters->sampleStartsAfter,parameters->nonCrowders,parameters->temperatureMin,parameters->temperatureMax,parameters->currentStep);
-    fprintf(output,"#molecules\n");
-    fprintf(output,"%d\n",replicaState[0].moleculeCount);
-    fprintf(output,"#replicas\n");
-    fprintf(output,"%d\n",parameters->replicas);
-    for (int r=0; r<parameters->replicas; r++)
-    {
-        fprintf(output,"#replica %d, molecules: x,y,z translation. w,x,y,z rotation quaternion\n",r);
-        for (int m=0; m<replicaState[0].moleculeCount; m++)
-        {
-            fprintf(output,"%.7f %.7f %.7f %.7f %.7f %.7f %.7f\n",replicaState[r].molecules[m].center.x,replicaState[r].molecules[m].center.y,replicaState[r].molecules[m].center.z,
-                    replicaState[r].molecules[m].rotation.w, replicaState[r].molecules[m].rotation.x, replicaState[r].molecules[m].rotation.y, replicaState[r].molecules[m].rotation.z);
-        }
-        fprintf(output,"#replica %d, stats: accept, acceptA, reject, totalAcceptReject, totalAccept, boundSamples, samplesSinceLastExchange, totalBoundSamples, totalSamples\n",r);
-        fprintf(output,"%d %d %d %d %d %d %d %d %d\n", replicaState[r].accept, replicaState[r].acceptA, replicaState[r].reject, replicaState[r].totalAcceptReject, replicaState[r].totalAccept, replicaState[r].boundSamples, replicaState[r].samplesSinceLastExchange, replicaState[r].totalBoundSamples, replicaState[r].totalSamples);
-    }
-    fclose(output);
-}
-
-void loadSimulation(Replica *initialReplica, Replica *replicas, argdata *parameters, char *filename)
-{
-    FILE * input;
-    input = fopen (filename,"w");
-    int fscanf_return;
-    argdata savedParameters;
-
-    fscanf_return = fscanf(input,"#Saved simulation state file and prependage\n","string");
-    fscanf_return = fscanf(input,"%s\n",savedParameters.file);
-    fscanf_return = fscanf(input,"%s\n",savedParameters.prependageString);
-    fscanf_return = fscanf(input,"# threads, streams, gpus, MCsteps, RESteps, sampleFrequency, sampleStartsAfter,nonCrowders, temperatureMin, temperatureMax, currentStep\n");
-    fscanf_return = fscanf(input,"%d %d %d %d %d %d %d %d %f %f %d\n",&savedParameters.threads,&savedParameters.streams,&savedParameters.gpus,&savedParameters.MCsteps,&savedParameters.REsteps,&savedParameters.sampleFrequency,&savedParameters.sampleStartsAfter,&savedParameters.nonCrowders,&savedParameters.temperatureMin,&savedParameters.temperatureMax,&savedParameters.currentStep);
-
-    loadArgsFromFile(parameters,initialReplica);
-
-    fscanf_return = fscanf(input,"#molecules\n");
-    int ignoreInt(0);
-    fscanf_return = fscanf(input,"%d\n",&ignoreInt);
-    for (int i=0; i<initialReplica->moleculeCount; i++)
-    {
-        fscanf_return = fscanf(input,"\n");
-    }
-    fscanf_return = fscanf(input,"#replicas\n");
-    fscanf_return = fscanf(input,"%d\n",&parameters->replicas);
-    for (int r=0; r<parameters->replicas; r++)
-    {
-        fscanf_return = fscanf(input,"#replica %d, molecules: x,y,z translation. w,x,y,z rotation quaternion\n",&ignoreInt);
-        for (int m=0; m<replicas[0].moleculeCount; m++)
-        {
-            Vector3f translation;
-            Quaternionf rotationf;
-            fscanf_return = fscanf(input,"%f %f %f %f %f %f %f\n",&translation.x,&translation.y,&translation.z,&rotationf.w,&rotationf.x,&rotationf.y,&rotationf.z);
-            Quaternion rotation = rotationf.makeQuaternion();
-            rotation.normalize();
-            replicas[r].molecules[m].setPosition(translation);
-            replicas[r].molecules[m].setRotation(rotation);
-
-        }
-        fscanf_return = fscanf(input,"#replica %d, stats: accept, acceptA, reject, totalAcceptReject, totalAccept, boundSamples, samplesSinceLastExchange, totalBoundSamples, totalSamples\n",&ignoreInt);
-        fscanf_return = fscanf(input,"%d %d %d %d %d %d %d %d %d\n", &replicas[r].accept, &replicas[r].acceptA, &replicas[r].reject, &replicas[r].totalAcceptReject, &replicas[r].totalAccept, &replicas[r].boundSamples, &replicas[r].samplesSinceLastExchange, &replicas[r].totalBoundSamples, &replicas[r].totalSamples);
-    }
-    fclose(input);
-}
-
-
 
 void printHelp(bool badArg)
 {
@@ -329,27 +251,8 @@ bool getArgs(argdata * d, int argc, char **argv)
         }
         else if (strcmp(argv[i],"-z")==0 || strcmp(argv[i],"--resume")==0)
         {
-#if CHECKPOINTING
-            if (i+1>=argc)
-                printHelp(true);
-            strcpy(d->checkpointfilename,argv[i+1]);
-            FILE *checkpointfile;
-            checkpointfile = fopen (d->checkpointfilename,"r");
-            int result = fscanf(checkpointfile,"%s\n",d->file);
-            result += fscanf(checkpointfile,"%d\n",&d->pid);
-            fclose(checkpointfile);
-            if (result < 2)
-            {
-                cout << "Checkpoint load failed." << endl;
-                exit(0);
-            }
-            d->resume = true;
-            d->inputFile = true;
-            i+=2;
-#else
             cout << "!!! Checkpointing is not enabled in this build, cannot resume" << endl;
             i++;
-#endif
         }
         else
         {
@@ -1035,36 +938,6 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
         replica[i].threadCount = parameters->threads;
     }
 
-    /*#if CHECKPOINTING
-    if (parameters->resume)
-    {
-    	FILE *checkpointfile;
-    	checkpointfile = fopen (parameters->checkpointfilename,"r");
-    	fscanf(checkpointfile,"%s\n",parameters->file);
-    	fscanf(checkpointfile,"%d\n",&parameters->pid);
-    	fscanf(checkpointfile,"%s\n",parameters->prependageString);
-    	fscanf(checkpointfile,"%d\n",&parameters->currentStep);
-
-    	for (int i=0;i<parameters->replicas;i++)
-    	{
-    		// fb ar
-    		fscanf(checkpointfile,"%d %d\n",&replica[i].totalBoundSamples,&replica[i].totalSamples);
-    		fscanf(checkpointfile,"%d %d %d\n",&replica[i].acceptA,&replica[i].accept,&replica[i].reject);
-    		for (int m=0;m<replicaState[i].moleculeCount;m++)
-    		{
-    			Quaternion qi;
-    			Vector3f vi;
-    			fscanf(checkpointfile,"    %f %f %f %f %f %f %f\n",&vi.x,&vi.y,&vi.z, &qi.w, &qi.x, &qi.y, &qi.z);
-    			qi.normalize();
-    			replica[i].molecules[m].rotation = qi.rotate(replica[i].molecules[m].rotation);
-    			replica[i].molecules[m].setPosition(vi);
-    		}
-    	}
-
-    	fclose(checkpointfile);
-    }
-    #endif*/
-
     initSamplingFiles(parameters,&fractionBoundFile,&boundConformationsFile,&acceptanceRatioFile,&exchangeFrequencyFile);
 
 
@@ -1162,22 +1035,6 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
             cout << "-!- CHANGED: sample frequency <- "<< mcstepsPerRE <<". -!-" << endl;
         }
     }
-
-#if CHECKPOINTING
-    if (checkpointFrequency % mcstepsPerRE != 0) //if it doesnt occur during a RE
-    {
-        if (checkpointFrequency < mcstepsPerRE)
-        {
-            checkpointFrequency = mcstepsPerRE;
-        }
-        else
-        {
-            checkpointFrequency = ceil( float(checkpointFrequency) / float(mcstepsPerRE)) * mcstepsPerRE; // make it so
-        }
-    }
-    int stepsUntilCheckpoint = checkpointFrequency;
-    printf ("--- The simulation will checkpoint every %d monte carlo steps ---.\n",checkpointFrequency);
-#endif
 
     printf ("--- Staring simulation ---.\n");
 
@@ -1302,17 +1159,6 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
         offset = 1-offset; // switch the swap neighbours in the replica exchange
 
         parameters->currentStep = mcstepsPerRE*steps;
-
-#if CHECKPOINTING
-        stepsUntilCheckpoint -= mcstepsPerRE; // decrement the counter
-
-        if (stepsUntilCheckpoint<=0) //if enough steps have passed to checkpoint
-        {
-            stepsUntilCheckpoint = checkpointFrequency; // reset the counter
-            // if it is a checkpoint place
-            saveSimulation(replica,parameters);
-        }
-#endif
 
         waitingThreads = 0;
         pthread_cond_broadcast(&waitingThreadCond);
@@ -1447,17 +1293,6 @@ int main(int argc, char **argv)
 
     nonCrowderMolecules.clear();
     bool use_defaults = getArgs(&parameters,argc,argv);
-#if CHECKPOINTING
-    if (!parameters.resume)
-    {
-        sprintf(parameters.checkpointfilename,"checkpoints/checkpoint.%s_%d",parameters.prependageString,parameters.pid);
-    }
-    else
-    {
-        cout << "The simulation will resume from the checkpoint file: " << parameters.checkpointfilename << endl;
-        cout << "Original input: " << parameters.file << endl;
-    }
-#endif
 
     cout.precision(8);
 
