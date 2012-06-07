@@ -32,11 +32,15 @@ class Replica
 public:
     Replica();
     ~Replica();
+    ~Replica(const char **pdbfilenames); // constructor for initial replica; not final parameter list
+    ~Replica(const Replica& ir); // constructor for final replicas; not final parameter list
 
     void setAminoAcidData(AminoAcids a);
     void reserveContiguousMoleculeArray(int size);
     void initRNGs();
     void freeRNGs();
+
+    // TODO: remove this once it's incorporated into final replica constructor
     void copy(const Replica& r); 						// assignment copy, duplicate it.
 
     void exchangeReplicas(Replica &r);
@@ -50,6 +54,7 @@ public:
 //     bool savePDB(const char *filename); // save multiple pdb files per replica
 //     void saveAsSinglePDB(const char *filename); //save one pdb, each molecule is given a chain id from A upward
 
+    // TODO: are both of these used?
     int loadMolecule(const char *pdbfilename);
     int loadMolecule(const char *pdbfilename, Vector3f position, Vector3double rotationAxis, double rotationAmount);
 

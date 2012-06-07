@@ -6,6 +6,7 @@ using namespace std;
 #include <cutil.h>
 #endif
 
+// TODO: move this to common init function?  Don't call this constructor at all, and make it blank?
 Replica::Replica()
 {
     temperature = 300.0f;
@@ -30,7 +31,31 @@ Replica::Replica()
     timersInit = false;
     translateStep = INITIAL_TRANSLATIONAL_STEP;
     rotateStep = INITIAL_ROTATIONAL_STEP;
+}
 
+
+Replica::Replica(const char **pdbfilenames) // constructor for initial replica; not final parameter list
+{
+
+}
+
+Replica::Replica(const Replica& ir)// constructor for final replicas; not final parameter list
+{
+    // copy everything from initial replica
+    // init timers
+    // set label
+    // temperature
+    // rotate step?
+    // translate step?
+
+    // TODO: inside thread function -- will this require a third constructor, or can we delay construction until the thread?
+    // cudaStream
+    // set LJ potentials
+    // data to device
+
+    // reserve sum space
+    // create saved molecule
+    // reserve residue space on saved molecule
 }
 
 #if INCLUDE_TIMERS
@@ -118,8 +143,10 @@ void Replica::copy(const Replica &r)
     nonCrowderResidues = r.nonCrowderResidues;
 
 //     if (molecules != NULL && moleculeCount != r.moleculeCount )
+    // TODO: move this thing to a common function; it's used in three places!
     if (moleculeCount != 0 && moleculeCount != r.moleculeCount )
     {
+        // TODO why are we wrapping this? when will it not work?
         try
         {
             delete [] molecules;
