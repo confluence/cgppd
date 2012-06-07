@@ -54,7 +54,6 @@ void printHelp(bool badArg); // TODO: wrapper for bad args + help; rename to usa
 void loadArgsFromFile(argdata * parameters, Replica *initialReplica);
 void *MCthreadableFunction(void *arg);
 void initSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
-void flushSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
 void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
 
 // All the opengl stuff
@@ -91,6 +90,7 @@ void printHelp(bool badArg)
     exit(0);
 }
 
+// TODO: COPYPASTA! Surely, there is a standard library for commandline parameters?
 bool getArgs(argdata * d, int argc, char **argv)
 {
     d->resume = false;
@@ -572,13 +572,6 @@ void initSamplingFiles (argdata * args, FILE ** fractionBoundFile, FILE ** bound
     fflush(*exchangeFrequencyFile);
 
     return;
-}
-
-void flushSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile)
-{
-    fflush(fractionBoundFile);
-    fflush(acceptanceRatioFile);
-    fflush(boundConformationsFile);
 }
 
 void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile)
