@@ -39,28 +39,6 @@ size_t lowestEnergy;
 Replica replica[REPLICA_COUNT];   // container for all replicas in the simulation
 vector<uint> nonCrowderMolecules; // contains a list of each molecule/protein we want, lets us quickly determine which ones to save
 
-// TODO: remove if not used
-int __nsleep(const struct timespec *req, struct timespec *rem)
-{
-    struct timespec temp_rem;
-    if(nanosleep(req,rem)==-1)
-        __nsleep(rem,&temp_rem);
-    else
-        return 1;
-}
-
-// TODO: remove if not used
-int msleep(unsigned long milisec)
-{
-    struct timespec req= {0},rem= {0};
-    time_t sec=(int)(milisec/1000);
-    milisec=milisec-(sec*1000);
-    req.tv_sec=sec;
-    req.tv_nsec=milisec*1000000L;
-    __nsleep(&req,&rem);
-    return 1;
-}
-
 // TODO: create one rng; pass into replicas! Thesis assumes one rng for all replicas.
 gsl_rng  * REMCRng;			// random numbers for the REMC method to swap labels
 bool exitCondition = false;
@@ -71,7 +49,6 @@ int threads = THREAD_COUNT;   // 2 threads per core i think
 int streams = STREAM_COUNT;
 
 void REMCSimulation(Replica *initialReplica, argdata *parameters);
-void REMCSimulationResume(Replica *initialReplica, argdata *parameters); // TODO: remove; doesn't exist
 double DRMS(Replica* a, Replica* b);
 bool getArgs(argdata * d, int argc, char **argv);
 void printHelp(bool badArg); // TODO: wrapper for bad args + help; rename to usage
@@ -715,61 +692,6 @@ void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundCo
     printf("    - output/%s_%d_boundconformations\n",args->prependageString,args->pid);
     printf("    - output/%s_%d_acceptance_ratios\n",args->prependageString,args->pid);
 #endif
-}
-
-// TODO: remove this if it's unused
-void initLattice(Replica *initialReplica)
-{
-    /*initialReplica->reserveContiguousMoleculeArray(2);
-    float interMolecularSpacing = BOUNDING_VALUE / 2 - 1;
-    nonCrowderMolecules.clear();
-    //initialReplica->loadMolecule("data/conf1/1a.pdb");
-    //initialReplica->loadMolecule("data/conf1/1b.pdb");
-
-    #if BOUNDING_SPHERE
-
-    initialReplica->loadMolecule("data/application/ubq.pdb",Vector3f(-20,-20,-20),Vector3f(0,1,0),3.142);
-    initialReplica->loadMolecule("data/application/uim.pdb",Vector3f(20,20,20),Vector3f(1,0,0),-3.142);
-
-    #else
-
-    initialReplica->loadMolecule("data/application/ubq.pdb",Vector3f(45,45,45),Vector3double(0,1,0),3.142);
-    nonCrowderMolecules.push_back(uint(initialReplica->moleculeCount));
-    initialReplica->loadMolecule("data/application/uim.pdb",Vector3f(60,60,60),Vector3double(1,0,0),-3.142);
-    nonCrowderMolecules.push_back(uint(initialReplica->moleculeCount));
-
-
-    gsl_rng *init_rotate = gsl_rng_alloc (gsl_rng_mt19937);
-
-    //create a lattice of protein crowders
-    for (int x=0;x<3;x++)
-    {
-    	for (int y=0;y<2;y++)
-    	{
-    		for (int z=0;z<2;z++)
-    		{
-    			if(!(x==1 && y==1 && z==1))
-    			{
-    				initialReplica->loadMolecule("data/application/cspA.pdb",Vector3f(x,y,z)*interMolecularSpacing,initialReplica->createNormalisedRandomVectord(init_rotate),1.0);
-    				initialReplica->molecules[initialReplica->moleculeCount-1].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
-    			}
-    		}
-    	}
-    }
-    gsl_rng_free(init_rotate);
-
-    #endif
-
-    cout << "Loaded: "<< endl;
-    cout << "-------------------------------------------------------------"<< endl;
-    for (int z=0; z<initialReplica->moleculeCount;z++)
-    	cout << initialReplica->molecules[z].filename << " " << initialReplica->molecules[z].moleculeRoleIdentifier << endl;
-    cout << initialReplica->residueCount << " residues" << endl;
-    cout << "-------------------------------------------------------------"<< endl;
-     */
-    cout << "EXIT: Program requires a configuration file." << endl;
-    cout << "use: REMCDockingGPU -f filename" << endl;
-    exit(0);
 }
 
 // TODO: move to Molecule!
@@ -1740,7 +1662,10 @@ int main(int argc, char **argv)
     else
     {
         parameters.nonCrowders = 2;
-        initLattice(&initialReplica);
+        // deprecated function
+        cout << "EXIT: Program requires a configuration file." << endl;
+        cout << "use: REMCDockingGPU -f filename" << endl;
+        exit(0);
     }
 
     cout << "Loaded: " << initialReplica.residueCount << " residues in " << initialReplica.moleculeCount << " molecules:\n";
@@ -1755,8 +1680,6 @@ int main(int argc, char **argv)
 #if INCLUDE_TIMERS
     initialReplica.initTimers();
 #endif
-
-    Replica tmp; // TODO: not used; remove
 
     float p = initialReplica.E();
     float pnc = initialReplica.E(&initialReplica.molecules[0],&initialReplica.molecules[1]);
