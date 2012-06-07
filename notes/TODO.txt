@@ -4,10 +4,6 @@ NOW
 
 GRAAAAAAH, CLEAN UP MAIN
 * clean up stuff for reading commandline params and reading args from file (ewwwwwww)
-* remove initLattice
-* move isBound to molecule
-* move replica DRMS to Replica
-* move molecule DRMS to Molecule
 * SimulationData already exists -- make a constructor!
 * Make proper constructors for molecule and Replica (priority!)
     * Initialise all the things properly
