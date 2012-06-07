@@ -55,34 +55,6 @@ void Replica::initTimers()
 }
 #endif
 
-// Replica::Replica(const Replica& r)
-// {
-//     Replica();
-//     label = r.label;
-//     temperature = r.temperature;
-//     moleculeCount = r.moleculeCount;
-//     residueCount = r.residueCount;
-//     aminoAcids = r.aminoAcids;
-//     molecules = new Molecule[moleculeCount];
-//     maxMoleculeSize = r.maxMoleculeSize;
-//     nonCrowderCount = r.nonCrowderCount;
-//     nonCrowderResidues = r.nonCrowderResidues;
-//     for (size_t m=0; m<moleculeCount; m++)
-//     {
-//         molecules[m] = r.molecules[m];
-//         cout << "molecule copy: " << &molecules[m] << " <- " << &r.molecules[m]<< endl;
-//     }
-// #if USING_CUDA
-//     blockSize = r.blockSize;
-//     sharedMemSize = r.sharedMemSize;
-//     replicaIsOnDevice = false;
-// #endif
-//
-//     paircount = r.paircount;
-//     rotateStep = r.rotateStep;
-//     translateStep = r.translateStep;
-// }
-
 void Replica::setAminoAcidData(AminoAcids a)
 {
     aminoAcids = a;

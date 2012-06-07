@@ -32,7 +32,7 @@ class Replica
 public:
     Replica();
     ~Replica();
-//     Replica(const Replica& r);
+
     void setAminoAcidData(AminoAcids a);
     void reserveContiguousMoleculeArray(int size);
     void initRNGs();
