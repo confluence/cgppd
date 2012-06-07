@@ -909,6 +909,8 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 
     for (size_t i=0; i<parameters->replicas; i++)
     {
+        // TODO: how much of this can be set on the initial replica?
+        // TODO: make a new constructor which takes an existing replica as a parameter
         replica[i].copy(*initialReplica);
 #if INCLUDE_TIMERS
         replica[i].initTimers();
