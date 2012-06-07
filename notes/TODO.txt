@@ -3,10 +3,13 @@ NOW
 --------------------------------------------------------------------------------
 
 GRAAAAAAH, CLEAN UP MAIN
-* clean up stuff for reading commandline params and reading args from file (ewwwwwww)
-* SimulationData already exists -- make a constructor!
+
 * Make proper constructors for molecule and Replica (priority!)
     * Initialise all the things properly
+* Instead of passing blank replica to loadArgsFromFile, get args object and initialise replica with it.
+
+* clean up stuff for reading commandline params and reading args from file (ewwwwwww)
+* SimulationData already exists -- make a constructor!
 * object for whole simulation + constructor
 
 REFACTOR AND ADD MC MOVES
@@ -40,6 +43,8 @@ ADD
 
 FIX
 * update simulation read / save to use DCD format
+    * put checkpointing back in -- this is the same thing.
+    * http://stackoverflow.com/questions/2107330/how-to-get-a-special-version-of-a-file-in-mercurial
 
 TEST
 * write an end-to-end test for optimisation comparisons
