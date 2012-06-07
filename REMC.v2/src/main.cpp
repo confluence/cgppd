@@ -39,7 +39,7 @@ size_t lowestEnergy;
 Replica replica[REPLICA_COUNT];   // container for all replicas in the simulation
 vector<uint> nonCrowderMolecules; // contains a list of each molecule/protein we want, lets us quickly determine which ones to save
 
-
+// TODO: remove if not used
 int __nsleep(const struct timespec *req, struct timespec *rem)
 {
     struct timespec temp_rem;
@@ -49,6 +49,7 @@ int __nsleep(const struct timespec *req, struct timespec *rem)
         return 1;
 }
 
+// TODO: remove if not used
 int msleep(unsigned long milisec)
 {
     struct timespec req= {0},rem= {0};
@@ -60,6 +61,7 @@ int msleep(unsigned long milisec)
     return 1;
 }
 
+// TODO: create one rng; pass into replicas! Thesis assumes one rng for all replicas.
 gsl_rng  * REMCRng;			// random numbers for the REMC method to swap labels
 bool exitCondition = false;
 bool viewConditions = false;
@@ -69,10 +71,10 @@ int threads = THREAD_COUNT;   // 2 threads per core i think
 int streams = STREAM_COUNT;
 
 void REMCSimulation(Replica *initialReplica, argdata *parameters);
-void REMCSimulationResume(Replica *initialReplica, argdata *parameters);
+void REMCSimulationResume(Replica *initialReplica, argdata *parameters); // TODO: remove; doesn't exist
 double DRMS(Replica* a, Replica* b);
 bool getArgs(argdata * d, int argc, char **argv);
-void printHelp(bool badArg);
+void printHelp(bool badArg); // TODO: wrapper for bad args + help; rename to usage
 void loadArgsFromFile(argdata * parameters, Replica *initialReplica);
 void *MCthreadableFunction(void *arg);
 void initSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
@@ -633,6 +635,7 @@ void loadArgsFromFile(argdata * parameters, Replica *initialReplica)
     fclose(fileindexf);
 }
 
+// TODO: can we eliminate the copypasta? Loop?
 void initSamplingFiles (argdata * args, FILE ** fractionBoundFile, FILE ** boundConformationsFile, FILE ** acceptanceRatioFile,  FILE ** exchangeFrequencyFile)
 {
     char * sfraftionBound = new char[256];
