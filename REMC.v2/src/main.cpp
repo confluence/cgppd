@@ -684,6 +684,7 @@ void *MCthreadableFunction(void *arg)
 
         //printf("Initial potential value for replica %d (compute thread %d): %20.10f\n",int(tx+threadIndex*tReplicas) ,int(threadIndex), replica[tx+threadIndex*tReplicas].EonDevice());
 #if CUDA_STREAMS
+        // TODO: does this access the same replica?! I assume so.
         data->replica[tx+threadIndex*tReplicas].cudaStream = streams[tx%streamsPerThread];	// use rotation to assign replicas to streams
         replica[tx+threadIndex*tReplicas].ReserveSumSpace();								// reserve a space for the potential summation to be stored
         replica[tx+threadIndex*tReplicas].savedMolecule.reserveResidueSpace(replica[tx+threadIndex*tReplicas].maxMoleculeSize); // TODO: wtf, this seems to be a hack to avoid doing this in Replica.  This needs to be done after all molecules are loaded.
