@@ -23,8 +23,12 @@ class Molecule
 public:
     // TODO: clean this up
     Molecule();
+    Molecule(const char* pdbfilename); // constructor for molecule loaded from file; not final parameter list
+    Molecule(const int size); // constructor for blank molecule of a particular size (for saving before MC move); not final parameter list
+
     ~Molecule();
-    Molecule(const Molecule& m);
+    Molecule(const Molecule& m);// TODO: is this used?
+    // TODO: is this used?
     Molecule operator = (const Molecule& m) {
         return Molecule(m);
     };

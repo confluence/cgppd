@@ -36,7 +36,8 @@ Replica::Replica()
 
 Replica::Replica(const char **pdbfilenames) // constructor for initial replica; not final parameter list
 {
-
+    // load molecules from filenames (constructors with filenames)
+    // create saved molecule and reserve residue space (constructor with size). This needs to be done after all molecules are loaded.
 }
 
 Replica::Replica(const Replica& ir)// constructor for final replicas; not final parameter list
@@ -49,13 +50,13 @@ Replica::Replica(const Replica& ir)// constructor for final replicas; not final 
     // translate step?
 
     // TODO: inside thread function -- will this require a third constructor, or can we delay construction until the thread?
-    // cudaStream
-    // set LJ potentials
+
+    // set LJ potentials -- can this be done earlier? Where does it come from?
     // data to device
 
-    // reserve sum space
-    // create saved molecule
-    // reserve residue space on saved molecule
+    // if cuda streams enabled
+        // cudaStream
+        // reserve sum space
 }
 
 #if INCLUDE_TIMERS
@@ -442,6 +443,7 @@ void Replica::MCSearch(int steps)
 
     float oldPotential = potential;
 
+    // TODO this should go in the constructor!
     Molecule savedMolecule;
     savedMolecule.reserveResidueSpace(maxMoleculeSize);
 
