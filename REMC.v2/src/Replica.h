@@ -31,9 +31,10 @@ class Replica
 {
 public:
     Replica();
+    Replica(const char **pdbfilenames); // constructor for initial replica; not final parameter list
+    Replica(const Replica& ir); // constructor for final replicas; not final parameter list
+
     ~Replica();
-    ~Replica(const char **pdbfilenames); // constructor for initial replica; not final parameter list
-    ~Replica(const Replica& ir); // constructor for final replicas; not final parameter list
 
     void setAminoAcidData(AminoAcids a);
     void reserveContiguousMoleculeArray(int size);

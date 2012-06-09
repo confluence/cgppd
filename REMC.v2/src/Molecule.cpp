@@ -2,6 +2,7 @@
 
 using namespace std;
 
+// TODO: we shouldn't ever need the blank constructor
 Molecule::Molecule()
 {
     translationalStep = INITIAL_TRANSLATIONAL_STEP;
@@ -22,11 +23,20 @@ Molecule::Molecule()
 #endif
 }
 
+Molecule::Molecule(const char* pdbfilename) // constructor for molecule loaded from file; not final parameter list
+{
+}
+
+Molecule::Molecule(const int size) // constructor for blank molecule of a particular size (for saving before MC move); not final parameter list
+{
+}
+
 Molecule::~Molecule()
 {
     if(hasFilename)
         delete [] filename;
     // TODO: shouldn't we delete residues and other dynamically allocated arays here?  Use a flag to see if they have been allocated?
+    // yes, we should
 };
 
 void Molecule::init_amino_acid_data(AminoAcids &a)
@@ -38,6 +48,7 @@ void Molecule::init_amino_acid_data(AminoAcids &a)
 #endif
 }
 
+// TODO: are we using this?
 Molecule::Molecule(const Molecule& m)
 {
     translationalStep = m.translationalStep;
@@ -74,6 +85,7 @@ Molecule::Molecule(const Molecule& m)
 #endif
 }
 
+// TODO: are we using this?
 void Molecule::copy(const Molecule& m)
 {
     translationalStep = m.translationalStep;
