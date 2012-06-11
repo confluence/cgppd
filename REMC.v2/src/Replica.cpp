@@ -6,7 +6,7 @@ using namespace std;
 #include <cutil.h>
 #endif
 
-// TODO: move this to common init function?  Don't call this constructor at all, and make it blank?
+// TODO: move all this to initialisation lists
 Replica::Replica()
 {
     temperature = 300.0f;
@@ -36,6 +36,7 @@ Replica::Replica()
 
 Replica::Replica(const char **pdbfilenames) // constructor for initial replica; not final parameter list
 {
+    // add all default int and float values to initialisation list
     // load molecules from filenames (constructors with filenames)
     // create saved molecule and reserve residue space (constructor with size). This needs to be done after all molecules are loaded.
 }
@@ -81,6 +82,7 @@ void Replica::initTimers()
 }
 #endif
 
+// TODO: remove this; it's totally pointless
 void Replica::setAminoAcidData(AminoAcids a)
 {
     aminoAcids = a;
@@ -105,6 +107,7 @@ Replica::~Replica()
         delete [] molecules;
 }
 
+// TODO: ugly, and only used once ever.
 int Replica::countpairs()
 {
     paircount = 0;
@@ -132,6 +135,7 @@ void Replica::exchangeReplicas(Replica &r)
 
 }
 
+// TODO: eliminate this; it's only used to construct replicas from an initial replica.
 void Replica::copy(const Replica &r)
 {
     label = r.label;
