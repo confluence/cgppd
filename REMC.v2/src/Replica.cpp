@@ -37,7 +37,25 @@ Replica::Replica()
 Replica::Replica(const char **pdbfilenames) // constructor for initial replica; not final parameter list
 {
     // add all default int and float values to initialisation list
-    // load molecules from filenames (constructors with filenames)
+
+    // set amino acid data
+    // set bounding value
+    // reserve contiguous molecule array
+
+    //ARGS FROM FILE
+    // for each molecule
+        // load molecule
+        // translate or set position
+        // maybe rotate
+        // if crowder
+            // set crowder identifier on molecule
+        // else
+            // increment non-crowder residues
+    // set bounding value (again?!)
+    // set number of non-crowder molecules
+
+    //COMMANDLINE
+
     // create saved molecule and reserve residue space (constructor with size). This needs to be done after all molecules are loaded.
 }
 
