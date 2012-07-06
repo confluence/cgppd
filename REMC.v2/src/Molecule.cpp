@@ -2,7 +2,7 @@
 
 using namespace std;
 
-// TODO: we shouldn't ever need the blank constructor
+// TODO: we probably need a default constructor for dynamic arrays. :/
 Molecule::Molecule()
 {
     translationalStep = INITIAL_TRANSLATIONAL_STEP;

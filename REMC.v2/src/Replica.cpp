@@ -7,6 +7,8 @@ using namespace std;
 #endif
 
 // TODO: move all this to initialisation lists
+// TODO: we probably need a default constructor for dynamic arrays. :/
+
 Replica::Replica()
 {
     temperature = 300.0f;
