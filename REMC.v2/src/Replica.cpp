@@ -36,7 +36,7 @@ Replica::Replica()
 }
 
 
-Replica::Replica(const char **pdbfilenames) // constructor for initial replica; not final parameter list
+void Replica::init_first_replica(const moldata *molecules) // constructor for initial replica; not final parameter list
 {
     // add all default int and float values to initialisation list
 
@@ -61,7 +61,7 @@ Replica::Replica(const char **pdbfilenames) // constructor for initial replica; 
     // create saved molecule and reserve residue space (constructor with size). This needs to be done after all molecules are loaded.
 }
 
-Replica::Replica(const Replica& ir)// constructor for final replicas; not final parameter list
+void Replica::init_child_replica(const Replica& ir)// constructor for final replicas; not final parameter list
 {
     // copy everything from initial replica
     // init timers

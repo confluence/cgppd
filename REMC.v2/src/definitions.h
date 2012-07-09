@@ -249,4 +249,18 @@
         int currentStep;
     };
 
+    struct moldata
+    {
+        char pdbfilename[256];
+        float px;
+        float py;
+        float pz;
+        bool translate;
+        float rx;
+        float ry;
+        float rz;
+        float ra;
+        bool crowder;
+    };
+
 #endif /*DEFINITIONS_H_*/
