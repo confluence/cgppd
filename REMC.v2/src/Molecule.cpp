@@ -459,7 +459,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     hasFilename = true;
     filename = new char[256];
     strcpy(filename, pdbfilename);
-    // TODO: do we actually need to store this value for anything?! NO!
+    // TODO: we only store this for printing.  Put it at the end?
 
     ifstream input(pdbfilename);
     if (!input.good())

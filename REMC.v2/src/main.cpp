@@ -389,6 +389,7 @@ void loadArgsFromFile(argdata * parameters, Replica *initialReplica)
             }
             else if (moleculeSection||crowdersSection) // files
             {
+                // TODO: read this into a vector of moldata; initialise replica afterwards
                 float px,py,pz,rx,ry,rz,ra;
                 char *pdbfilename = new char [256];
                 bool translate = true;
