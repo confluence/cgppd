@@ -6,7 +6,7 @@ resteps 2000
 replicas 20
 samplefrequency 1000
 sampleafter 500000
-boundry  160.7
+boundary  160.7
 temperaturetop 600
 temperaturebottom 250
 prefix ubq_400microM

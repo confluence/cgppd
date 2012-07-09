@@ -6,7 +6,7 @@ resteps 2000
 replicas 10
 samplefrequency 1000
 sampleafter 1
-boundry 202.5
+boundary 202.5
 temperaturemax 416
 temperaturemin 300
 prefix 2pcc_200microM

@@ -6,7 +6,7 @@ resteps 1000
 replicas 20
 samplefrequency 1000
 sampleafter 1000
-boundry  160.7
+boundary  160.7
 temperaturetop 300
 temperaturebottom 288
 prefix kh2008_400microM_8C
