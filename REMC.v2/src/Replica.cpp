@@ -38,7 +38,6 @@ Replica::Replica()
 
 void Replica::init_first_replica(const moldata *molecules) // constructor for initial replica; not final parameter list
 {
-    // add all default int and float values to initialisation list
 
     // set amino acid data
     // set bounding value
@@ -257,7 +256,7 @@ int Replica::loadMolecule(const char* pdbfilename)
     return moleculeCount-1;
 }
 
-// TODO replace by load from DCD
+// TODO use this from init
 int Replica::loadMolecule(const char* pdbfilename, Vector3f position, Vector3double rotationAxis, double rotationAmount)
 {
     int i = loadMolecule(pdbfilename);
