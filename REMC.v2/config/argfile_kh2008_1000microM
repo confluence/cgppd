@@ -8,7 +8,7 @@ resteps 20000
 replicas 20
 samplefrequency 1000
 sampleafter 1000
-boundry  118.4
+boundary  118.4
 temperaturetop 300
 temperaturebottom 288
 prefix kh2008_1000microM
@@ -19,8 +19,8 @@ files
 # - this section inserts molecules that are counted as part of the bound complex 
 # p(x,y,z) r(x,y,z,a) filename
 # p(x,y,z) or t(x,y,z) p = absolute position (x,y,z); t = translate by (x,y,z). one is required
-# the bounding box is defined as {x,y,z} = {[0:boundry],[0:boundry],[0:boundry]} p and r can be 
-# outside the bounds but will be set equal to the modulo of it and the boundry size on the 1st MC move  
+# the bounding box is defined as {x,y,z} = {[0:boundary],[0:boundry],[0:boundry]} p and r can be 
+# outside the bounds but will be set equal to the modulo of it and the boundary size on the 1st MC move  
 # r(x,y,z,a) = rotate about axis x,y,z by a in a clockwise manner
 # filename is the path to the file, can be relative to the executable or absolute
 

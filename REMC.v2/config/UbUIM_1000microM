@@ -6,7 +6,7 @@ resteps 2000
 replicas 20
 samplefrequency 1000
 sampleafter 1000000
-boundry  118.4
+boundary  118.4
 temperaturemax 420
 temperaturemin 240
 prefix Uim1Ub_1000microM
