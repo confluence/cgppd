@@ -37,6 +37,10 @@ Molecule::~Molecule()
         delete [] filename;
     // TODO: shouldn't we delete residues and other dynamically allocated arays here?  Use a flag to see if they have been allocated?
     // yes, we should
+    if(residueCount > 0)
+    {
+        delete [] Residues;
+    }
 };
 
 void Molecule::init_amino_acid_data(AminoAcids &a)
@@ -129,12 +133,14 @@ void Molecule::copy(const Molecule& m)
 void Molecule::saveBeforeStateChange(const Molecule* m)
 {
     memcpy(Residues,m->Residues,sizeof(Residue)*m->residueCount);
+    residueCount = m->residueCount; // make sure we copy the right number of residues back, and also delete the residues in destructor
     center = m->center;
     rotation = m->rotation;
 }
 
 void Molecule::undoStateChange(const Molecule* m)
 {
+    // TODO: how did this ever work?! If residueCount wasn't set in the save, it would have always been zero, and no bytes would have been copied!
     memcpy(Residues,m->Residues,sizeof(Residue)*residueCount);
     center = m->center;
     rotation = m->rotation;
