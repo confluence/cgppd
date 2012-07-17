@@ -38,20 +38,14 @@ Replica::Replica()
 
 void Replica::init_first_replica(const vector<moldata> mdata, AminoAcids amino_acid_data, const float bounding_value, const int initial_molecule_array_size) // constructor for initial replica; not final parameter list
 {
-    // set amino acid data
     setAminoAcidData(amino_acid_data);
-    // set bounding value
     setBoundingValue(bounding_value); // TODO: pass in either the value from parameters or the constant
-    // reserve contiguous molecule array
     reserveContiguousMoleculeArray(initial_molecule_array_size);
 
-    //ARGS FROM FILE
-    // for each molecule
     for (size_t s = 0; s < mdata.size(); s++)
     {
-        // load molecule
         int mi = loadMolecule(mdata[s].pdbfilename);
-        // translate or set position
+
         if (mdata[s].translate)
         {
             molecules[mi].translate(Vector3f(mdata[s].px, mdata[s].py, mdata[s].pz));
@@ -60,49 +54,43 @@ void Replica::init_first_replica(const vector<moldata> mdata, AminoAcids amino_a
         {
             molecules[mi].setPosition(Vector3f(mdata[s].px, mdata[s].py, mdata[s].pz));
         }
-        // maybe rotate
+
         if (mdata[s].ra >= 0.000)
         {
             Vector3double v = Vector3double(mdata[s].rx,mdata[s].ry,mdata[s].rz);
             v.normalizeInPlace();
             molecules[mi].rotate(v,mdata[s].ra);
         }
-        // if crowder
+
         if (mdata[s].crowder)
         {
-            // set crowder identifier on molecule
             molecules[mi].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
         }
-        // else
         else
         {
-            // increment non-crowder residues
             nonCrowderCount++;
             nonCrowderResidues += molecules[mi].residueCount;
         }
     }
 }
 
-void Replica::init_child_replica(const Replica& ir)// constructor for final replicas; not final parameter list
+void Replica::init_child_replica(const Replica& ir, const int label, const float temperature, const float rotate_step, const float translate_step, const int thread_count)// constructor for final replicas; not final parameter list
 {
-    // copy everything from initial replica
-    // init timers
-    // set label
-    // temperature
-    // rotate step?
-    // translate step?
+    // TODO: incorporate copy method into this one and try to clean it up
+    copy(ir);
+#if INCLUDE_TIMERS
+    initTimers();
+#endif
+    setLabel(label);
+    setTemperature(temperature);
+    setRotateStep(rotate_step);
+    setTranslateStep(translate_step);
+    // TODO: only one range for entire simulation (but is the library threadsafe?)
+    initRNGs();
+    threadCount = thread_count;
+    savedMolecule.reserveResidueSpace(maxMoleculeSize);
 
-    // create saved molecule and reserve residue space (constructor with size). This needs to be done after all molecules are loaded.
-
-
-    // TODO: inside thread function -- will this require a third constructor, or can we delay construction until the thread?
-
-    // set LJ potentials -- can this be done earlier? Where does it come from?
-    // data to device
-
-    // if cuda streams enabled
-        // cudaStream
-        // reserve sum space
+    // leaving out stuff inside thread function for now
 }
 
 #if INCLUDE_TIMERS
@@ -493,8 +481,8 @@ void Replica::MCSearch(int steps)
     float oldPotential = potential;
 
     // TODO this should go in the constructor!
-    Molecule savedMolecule;
-    savedMolecule.reserveResidueSpace(maxMoleculeSize);
+//     Molecule savedMolecule;
+//     savedMolecule.reserveResidueSpace(maxMoleculeSize);
 
     for (int step=0; step<steps; step++)
     {
