@@ -225,6 +225,20 @@
         FILE * boundConformations;
     };
 
+    struct moldata
+    {
+        char pdbfilename[256];
+        float px;
+        float py;
+        float pz;
+        bool translate;
+        float rx;
+        float ry;
+        float rz;
+        float ra;
+        bool crowder;
+    };
+
     struct argdata
     {
         int threads;
@@ -240,27 +254,14 @@
         char file[256];
         char logfile[256];
         bool inputFile;
-        int nonCrowders;
+//         int nonCrowders;
         float temperatureMin;
         float temperatureMax;
         int pid;
         char checkpointfilename[256];
         bool resume;
         int currentStep;
-    };
-
-    struct moldata
-    {
-        char pdbfilename[256];
-        float px;
-        float py;
-        float pz;
-        bool translate;
-        float rx;
-        float ry;
-        float rz;
-        float ra;
-        bool crowder;
+        vector<moldata> mdata;
     };
 
 #endif /*DEFINITIONS_H_*/

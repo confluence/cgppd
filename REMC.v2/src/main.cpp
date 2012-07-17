@@ -390,18 +390,20 @@ void loadArgsFromFile(argdata * parameters, Replica *initialReplica)
             else if (moleculeSection||crowdersSection) // files
             {
                 // TODO: read this into a vector of moldata; initialise replica afterwards
-                float px,py,pz,rx,ry,rz,ra;
-                char *pdbfilename = new char [256];
-                bool translate = true;
+//                 float px,py,pz,rx,ry,rz,ra;
+//                 char *pdbfilename = new char [256];
+//                 bool translate = true;
+                moldata m;
                 int result = 0;
                 if (saveline[0]=='t')
                 {
-                    result = sscanf(saveline,"t(%f,%f,%f) r(%f,%f,%f,%f) %s", &px,&py,&pz,&rx,&ry,&rz,&ra,pdbfilename);
+                    result = sscanf(saveline,"t(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px,&m.py,&m.pz,&m.rx,&m.ry,&m.rz,&m.ra,m.pdbfilename);
+                    m.translate = true;
                 }
                 if (saveline[0]=='p')
                 {
-                    result = sscanf(saveline,"p(%f,%f,%f) r(%f,%f,%f,%f) %s", &px,&py,&pz,&rx,&ry,&rz,&ra,pdbfilename);
-                    translate = false;
+                    result = sscanf(saveline,"p(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px,&m.py,&m.pz,&m.rx,&m.ry,&m.rz,&m.ra,m.pdbfilename);
+                    m.translate = false;
                 }
                 if (result<8)
                 {
@@ -409,36 +411,37 @@ void loadArgsFromFile(argdata * parameters, Replica *initialReplica)
                 }
                 else
                 {
-                    int moleculeId = initialReplica->loadMolecule(pdbfilename);
-                    if (translate)
-                    {
-                        initialReplica->molecules[moleculeId].translate(Vector3f(px,py,pz));
-                    }
-                    else
-                    {
-                        initialReplica->molecules[moleculeId].setPosition(Vector3f(px,py,pz));
-
-                    }
-
-                    if (ra >= 0.000)
-                    {
-                        Vector3double v = Vector3double(rx,ry,rz);
-                        v.normalizeInPlace();
-                        initialReplica->molecules[moleculeId].rotate(v,ra);
-                    }
-
-                    if(crowdersSection)
-                    {
-                        initialReplica->molecules[moleculeId].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
-                    }
-                    else
-                    {
-                        parameters->nonCrowders++;
-                        initialReplica->nonCrowderResidues += initialReplica->molecules[moleculeId].residueCount;
-                    }
+//                     int moleculeId = initialReplica->loadMolecule(pdbfilename);
+//                     if (translate)
+//                     {
+//                         initialReplica->molecules[moleculeId].translate(Vector3f(px,py,pz));
+//                     }
+//                     else
+//                     {
+//                         initialReplica->molecules[moleculeId].setPosition(Vector3f(px,py,pz));
+//
+//                     }
+//
+//                     if (ra >= 0.000)
+//                     {
+//                         Vector3double v = Vector3double(rx,ry,rz);
+//                         v.normalizeInPlace();
+//                         initialReplica->molecules[moleculeId].rotate(v,ra);
+//                     }
+                    m.crowder = crowdersSection;
+//                     if(crowdersSection)
+//                     {
+//                         initialReplica->molecules[moleculeId].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
+//                     }
+//                     else
+//                     {
+//                         parameters->nonCrowders++;
+//                         initialReplica->nonCrowderResidues += initialReplica->molecules[moleculeId].residueCount;
+//                     }
+                    parameters->mdata.push_back(m);
                 }
 
-                delete [] pdbfilename;
+//                 delete [] pdbfilename;
             }
         }
         input.close();
@@ -446,8 +449,9 @@ void loadArgsFromFile(argdata * parameters, Replica *initialReplica)
     if (parameters->bound <= 0)
     {
         cout << "! Bounding value too small, setting equal to " << BOUNDING_VALUE << endl;
+        parameters->bound = BOUNDING_VALUE;
     }
-    initialReplica->setBoundingValue(parameters->bound);
+//     initialReplica->setBoundingValue(parameters->bound);
 
     if (parameters->temperatureMax < parameters->temperatureMin)
     {
@@ -688,7 +692,7 @@ void *MCthreadableFunction(void *arg)
         // TODO: does this access the same replica?! I assume so.
         data->replica[tx+threadIndex*tReplicas].cudaStream = streams[tx%streamsPerThread];	// use rotation to assign replicas to streams
         replica[tx+threadIndex*tReplicas].ReserveSumSpace();								// reserve a space for the potential summation to be stored
-        replica[tx+threadIndex*tReplicas].savedMolecule.reserveResidueSpace(replica[tx+threadIndex*tReplicas].maxMoleculeSize); // TODO: wtf, this seems to be a hack to avoid doing this in Replica.  This needs to be done after all molecules are loaded.
+//         replica[tx+threadIndex*tReplicas].savedMolecule.reserveResidueSpace(replica[tx+threadIndex*tReplicas].maxMoleculeSize); // TODO: moved this to one of the init functions
 #endif
 
     }
@@ -1392,24 +1396,29 @@ int main(int argc, char **argv)
     } // end of check
 #endif
 
-    Replica initialReplica;
-    initialReplica.setAminoAcidData(aminoAcidData);
-    initialReplica.setBoundingValue(BOUNDING_VALUE);
-    initialReplica.reserveContiguousMoleculeArray(30);
+    Replica initialReplica; // TODO: we actually can just use a constructor here
+//     initialReplica.setAminoAcidData(aminoAcidData);
+//     initialReplica.setBoundingValue(BOUNDING_VALUE);
+//     initialReplica.reserveContiguousMoleculeArray(30);
     //if there is an input file load its contents here
     if (parameters.inputFile)
     {
-        loadArgsFromFile(&parameters,&initialReplica);
+//         loadArgsFromFile(&parameters,&initialReplica);
+        loadArgsFromFile(&parameters);
         getArgs(&parameters,argc,argv); // second pass to override any variables if doing performance tests
     }
     else
     {
-        parameters.nonCrowders = 2;
+//         parameters.nonCrowders = 2;
         // deprecated function
         cout << "EXIT: Program requires a configuration file." << endl;
         cout << "use: REMCDockingGPU -f filename" << endl;
         exit(0);
     }
+
+    // TODO: we can change this to a constructor
+    // TODO: remove magic number; make initial array size a constant
+    initialReplica.init_first_replica(parameters.mdata, aminoAcidData, parameters.bound, 30);
 
     cout << "Loaded: " << initialReplica.residueCount << " residues in " << initialReplica.moleculeCount << " molecules:\n";
 
@@ -1421,7 +1430,7 @@ int main(int argc, char **argv)
     printf("counted : %3d complex residues\n",initialReplica.nonCrowderResidues);
 
 #if INCLUDE_TIMERS
-    initialReplica.initTimers();
+    initialReplica.initTimers(); // TODO: this will be done again in child replicas! Eliminate?
 #endif
 
     float p = initialReplica.E();
@@ -1437,7 +1446,7 @@ int main(int argc, char **argv)
 
     // set box size
     initialReplica.setBlockSize(cuda_blockSize);
-    initialReplica.setBoundingValue(parameters.bound);
+    initialReplica.setBoundingValue(parameters.bound); // TODO: we already did that. Eliminate?
     // set box dimensions
     CUDA_setBoxDimension(parameters.bound);
 
