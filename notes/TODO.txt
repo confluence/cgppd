@@ -7,6 +7,7 @@ GRAAAAAAH, CLEAN UP MAIN
 * initial replica init -- done; turn into a constructor
 * child replica init -- done, sort of
 * cuda init -- need another function for this; done all over the place
+* cuda destructor
 
 * make a main.h
 

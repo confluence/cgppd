@@ -917,26 +917,32 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
     {
         // TODO: how much of this can be set on the initial replica?
         // TODO: make a new constructor which takes an existing replica as a parameter
-        replica[i].copy(*initialReplica);
-#if INCLUDE_TIMERS
-        replica[i].initTimers();
-#endif
-        replica[i].setLabel(i);
+//         replica[i].copy(*initialReplica);
+// #if INCLUDE_TIMERS
+//         replica[i].initTimers();
+// #endif
+//         replica[i].setLabel(i);
 
         // changed to geometric sequence
-        replica[i].setTemperature(parameters->temperatureMin * pow(geometricTemperature,int(i)));
+//         replica[i].setTemperature(parameters->temperatureMin * pow(geometricTemperature,int(i)));
+        float temperature = parameters->temperatureMin * pow(geometricTemperature, int(i));
 
-        replica[i].setRotateStep(MIN_ROTATION * pow(geometricRotation,int(i)));
-        replica[i].setTranslateStep(MIN_TRANSLATION * pow(geometricTranslate,int(i)));
-        printf ("Replica %d %.3f %.3f %.3f\n",int(i),replica[i].temperature,replica[i].translateStep,replica[i].rotateStep);
+//         replica[i].setRotateStep(MIN_ROTATION * pow(geometricRotation,int(i)));
+        float rotate_step = MIN_ROTATION * pow(geometricRotation, int(i));
+//         replica[i].setTranslateStep(MIN_TRANSLATION * pow(geometricTranslate,int(i)));
+        float translate_step = MIN_TRANSLATION * pow(geometricTranslate, int(i));
 
 
         // note which replica is the 300K replica for sampling
         // if there is no replica at 300K then choose the closest one.
         if ( abs(replica[i].temperature-300.0f) < abs(replica[_300kReplica].temperature-300.0f))
             _300kReplica = i;
-        replica[i].initRNGs();
-        replica[i].threadCount = parameters->threads;
+//         replica[i].initRNGs();
+//         replica[i].threadCount = parameters->threads;
+
+        replica[i].init_child_replica(*initialReplica, i, temperature, rotate_step, translate_step, parameters->threads);
+        printf ("Replica %d %.3f %.3f %.3f\n",int(i),replica[i].temperature,replica[i].translateStep,replica[i].rotateStep);
+
     }
 
     initSamplingFiles(parameters,&fractionBoundFile,&boundConformationsFile,&acceptanceRatioFile,&exchangeFrequencyFile);
