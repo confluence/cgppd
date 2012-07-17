@@ -146,7 +146,7 @@ void Molecule::reserveResidueSpace(int size)
     {
     	delete [] Residues;
     } catch (char * err) { cout << "Molecule already sized, deleted and resized" <<endl; }*/
-    Residues = new Residue[size];
+    Residues = new Residue[size]; // TODO make sure array is deleted in destructor
 }
 
 void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
