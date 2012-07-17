@@ -473,16 +473,7 @@ uint Replica::get_MC_mutation_type()
 
 void Replica::MCSearch(int steps)
 {
-    //float translateStep = INITIAL_TRANSLATIONAL_STEP;
-    //double rotateStep = INITIAL_ROTATIONAL_STEP;
-
-//     bool lastOperationWasRotate; // TODO: remove
-
     float oldPotential = potential;
-
-    // TODO this should go in the constructor!
-//     Molecule savedMolecule;
-//     savedMolecule.reserveResidueSpace(maxMoleculeSize);
 
     for (int step=0; step<steps; step++)
     {
@@ -600,7 +591,7 @@ void Replica::MCSearch(int steps)
             potential = oldPotential;
         }
     }
-    delete [] savedMolecule.Residues;
+//     delete [] savedMolecule.Residues;
 
 }
 
