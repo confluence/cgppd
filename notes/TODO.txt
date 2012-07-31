@@ -2,6 +2,30 @@
 NOW
 --------------------------------------------------------------------------------
 
+REFACTOR AND ADD MC MOVES
+* merge streamed and not-streamed MC version
+
+! make Molecule::rotate call Molecule::setRotation, etc.
+! wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
+! remove wrappers from replica
+! remove createNormalisedRandomVector* from replica
+! remove passing of angle and distance; use constants from definitions straight in Molecule (at the level where the random vector is generated)
+
+
+ADD
+* crankshaft -- need to select a residue which is not at either end of a linker
+* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE?
+* Make GPU MC call extra CPU moves for now?
+
+--------------------------------------------------------------------------------
+AFTER IT COMPILES AGAIN
+--------------------------------------------------------------------------------
+
+TEST
+
+* make a main.h
+* write unit tests for all the things
+
 GRAAAAAAH, CLEAN UP MAIN
 
 * initial replica init -- done; turn into a constructor
@@ -9,23 +33,14 @@ GRAAAAAAH, CLEAN UP MAIN
 * cuda init -- need another function for this; done all over the place
 * cuda destructor
 
-* make a main.h
 
 * object for whole simulation + constructor
 * SimulationData already exists -- make a constructor!
 * clean up stuff for reading commandline params and reading args from file (ewwwwwww)
 
-REFACTOR AND ADD MC MOVES
-* need to initialise and destroy savedMolecule in streamed version
-* wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
-* remove wrappers from replica
-* remove createNormalisedRandomVector* from replica
-* remove passing of angle and distance; use constants from definitions straight in Molecule (at the level where the random vector is generated)
-* consistent calling of one MC move function from replica
-* move definitions of MC move constants to definitions and rename them
-* make Molecule::rotate call Molecule::setRotation, etc.
-
 CLEANUP
+* Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
+* delete cruft marked for deletion and commented-out old stuff
 * Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
 * put initRNGs in init of replica and freeRNGs in destructor
 * MOLECULE: constructor / destructor
@@ -39,20 +54,10 @@ CLEANUP
 * AMINO ACIDS
     * clean up read from file
 
-ADD
-* crankshaft -- need to select a residue which is not at either end of a linker
-* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE?
-* Make GPU MC call extra CPU moves for now?
-
 FIX
 * update simulation read / save to use DCD format
     * put checkpointing back in -- this is the same thing.
     * http://stackoverflow.com/questions/2107330/how-to-get-a-special-version-of-a-file-in-mercurial
-
-TEST
-* write an end-to-end test for optimisation comparisons
-    * is component-wise addition of vectors important?
-    * is caching of internal potential subtotals important?
 
 --------------------------------------------------------------------------------
 SOON
@@ -63,12 +68,6 @@ WRITE
 * Background chapter
     * Visualisation: graphs of LJ and DH potential vs residue distance (? -- for different types)
 * Implementation
-
-CLEANUP
-* Split up main.cpp into definitions, functions and just the main function, so that it can be unit tested.
-* Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
-* delete cruft marked for deletion
-* difference between nonCrowderResidues and nonCrowderCount?
 
 ADD
 * Extra MC moves (just domain rotation?) on GPU?
@@ -84,6 +83,11 @@ Potential:
 * test data
 * !!! check performance of CPU NC E with doubles / floats
 * unit test for kahan sums, repulsive crowding
+
+TEST
+* write an end-to-end test for optimisation comparisons
+    * is component-wise addition of vectors important?
+    * is caching of internal potential subtotals important?
 
 --------------------------------------------------------------------------------
 LATER
