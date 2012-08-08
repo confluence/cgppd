@@ -254,7 +254,8 @@
         char file[256];
         char logfile[256];
         bool inputFile;
-//         int nonCrowders;
+//         TODO: for some reason I wanted to remove this
+        int nonCrowders;
         float temperatureMin;
         float temperatureMax;
         int pid;
