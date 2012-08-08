@@ -1,5 +1,7 @@
 #ifndef DEFINITIONS_H_
     #define DEFINITIONS_H_
+    // TODO: take this and the structs at the bottom and put them somewhere else
+    #include <vector>
 
     // Constant Data Input Files
 
