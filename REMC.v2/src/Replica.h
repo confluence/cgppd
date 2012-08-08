@@ -117,6 +117,7 @@ public:
     int threadCount;
     int nonCrowderCount;
     int maxMoleculeSize;
+    Molecule savedMolecule;
 
     int accept;
     int acceptA;
@@ -210,7 +211,6 @@ public:
     void FreeSumSpace();		// frees the above
     float SumGridResults();	//sums the grid returned by the potential kernel
     uint lastMutationIndex;
-    Molecule savedMolecule;
     float oldPotential;
     float newPotential;
     //split the functions to allow for latency hiding and overlapping calls
