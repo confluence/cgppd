@@ -490,7 +490,8 @@ void Replica::MCSearch(int steps)
         {
             case MC_ROTATE:
             {
-                rotate(moleculeNo, rotateStep);
+//                 rotate(moleculeNo, rotateStep);
+                molecules[moleculeNo].rotate(rng, rotateStep);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
                 cout << "    Rotate: Replica "<< label << "/Molecule " << moleculeNo << endl;
@@ -499,7 +500,9 @@ void Replica::MCSearch(int steps)
             }
             case MC_TRANSLATE:
             {
-                translate(moleculeNo, translateStep);
+//                 translate(moleculeNo, translateStep);
+// TODO add bounding value everywhere
+                molecules[moleculeNo].translate(rng, boundingValue, translateStep);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
                 cout << "    Translate: Replica "<< label << "/Molecule " << moleculeNo << endl;
@@ -510,10 +513,11 @@ void Replica::MCSearch(int steps)
 #if FLEXIBLE_LINKS
             case MC_ROTATE_DOMAIN:
             {
-                uint linkerNo = molecule[moleculeNo].random_linker_index(rng);
-                uint residueNo = molecule[moleculeNo].random_residue_index(rng, linkerNo);
-                bool before = (bool) gsl_ran_bernoulli (rng, 0.5);
-                rotate_domain(moleculeNo, rotateStep, residueNo, before);
+//                 uint linkerNo = molecule[moleculeNo].random_linker_index(rng);
+//                 uint residueNo = molecule[moleculeNo].random_residue_index(rng, linkerNo);
+//                 bool before = (bool) gsl_ran_bernoulli (rng, 0.5);
+//                 rotate_domain(moleculeNo, rotateStep, residueNo, before);
+                molecules[moleculeNo].rotate_domain(rng, rotateStep);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
                 // TODO: add more info
@@ -524,7 +528,8 @@ void Replica::MCSearch(int steps)
             }
             case MC_LOCAL:
             {
-                local(moleculeNo, rotateStep, NUM_LOCAL_MOVES);
+//                 local(moleculeNo, rotateStep, NUM_LOCAL_MOVES);
+                molecules[moleculeNo].make_local_moves(rng, rotateStep, translateStep);
 
 #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
                 // TODO: add more info

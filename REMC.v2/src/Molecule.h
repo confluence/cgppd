@@ -51,9 +51,9 @@ public:
 
     Vector3f normalised_random_vector_f(gsl_rng * rng);
     Vector3double normalised_random_vector_d(gsl_rng * rng);
-    void rotate(gsl_rng * rng);
+    void rotate(gsl_rng * rng, const double rotate_step);
     // TODO: add boundary conditions to everything?
-    void translate(gsl_rng * rng, const float bounding_value);
+    void translate(gsl_rng * rng, const float bounding_value, const double translate_step);
 
 #if FLEXIBLE_LINKS
     uint random_linker_index(gsl_rng * rng); // return random linker index
@@ -66,8 +66,8 @@ public:
     void crankshaft(double angle, const bool flip_angle, const int ri);
     void rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
 
-    void rotate_domain(gsl_rng * rng);
-    void make_local_moves(gsl_rng * rng);
+    void rotate_domain(gsl_rng * rng, const double rotate_step);
+    void make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step);
 #endif
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);

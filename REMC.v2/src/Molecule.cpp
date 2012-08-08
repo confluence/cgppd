@@ -268,15 +268,15 @@ Vector3double Molecule::normalised_random_vector_d(gsl_rng * rng)
     return x;
 }
 
-void Molecule::rotate(gsl_rng * rng)
+void Molecule::rotate(gsl_rng * rng, const double rotate_step)
 {
-    rotate(normalised_random_vector_d(rng), INITIAL_ROTATIONAL_STEP);
+    rotate(normalised_random_vector_d(rng), rotate_step);
 }
 
 // TODO: add boundary conditions to everything?
-void Molecule::translate(gsl_rng * rng, const float bounding_value)
+void Molecule::translate(gsl_rng * rng, const float bounding_value, const double translate_step)
 {
-    Vector3f v = INITIAL_TRANSLATIONAL_STEP * normalised_random_vector_f(rng);
+    Vector3f v = translate_step * normalised_random_vector_f(rng);
 
 #if BOUNDING_METHOD == BOUNDING_SPHERE
     if ((center + v).sumSquares() < bounding_value * bounding_value)
@@ -412,18 +412,18 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     mark_cached_potentials_for_update(ri);
 }
 
-void Molecule::rotate_domain(gsl_rng * rng)
+void Molecule::rotate_domain(gsl_rng * rng, const double rotate_step)
 {
     Vector3double raxis = normalised_random_vector_d(rng);
     uint li = random_linker_index(rng);
     uint ri = random_residue_index(rng, li);
     bool before = (bool) gsl_ran_bernoulli(rng, 0.5);
 
-    rotate_domain(raxis, angle, ri, before);
+    rotate_domain(raxis, rotate_step, ri, before);
     // TODO TODO TODO recalculate the centre afterwards
 }
 
-void Molecule::make_local_moves(gsl_rng * rng)
+void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
     uint li = random_linker_index(rng);
     for (size_t i = 0; i <= NUM_LOCAL_MOVES; i++) {
@@ -435,7 +435,7 @@ void Molecule::make_local_moves(gsl_rng * rng)
         {
             case MC_LOCAL_TRANSLATE:
             {
-                Vector3f v = INITIAL_TRANSLATIONAL_STEP * normalised_random_vector_f(rng);
+                Vector3f v = translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
                 break;
             }
@@ -443,7 +443,7 @@ void Molecule::make_local_moves(gsl_rng * rng)
             {
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 // TODO: we actually need to select a residue that is not at the end of the linker!
-                crankshaft(INITIAL_ROTATIONAL_STEP, flip, ri);
+                crankshaft(rotate_step, flip, ri);
                 break;
             }
             default:
