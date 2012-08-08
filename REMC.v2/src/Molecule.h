@@ -4,7 +4,9 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
+#include <gsl/gsl_qrng.h>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 
 #include "definitions.h"
 #include "AminoAcids.h"
