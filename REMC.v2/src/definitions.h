@@ -262,7 +262,7 @@
         char checkpointfilename[256];
         bool resume;
         int currentStep;
-        vector<moldata> mdata;
+        std::vector<moldata> mdata;
     };
 
 #endif /*DEFINITIONS_H_*/
