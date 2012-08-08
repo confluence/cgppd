@@ -383,7 +383,7 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     mark_cached_potentials_for_update(ri);
 }
 
-bool Molecule::rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before)
+void Molecule::rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before)
 {
     // calculate quaternion from angle and axis
     Quaternion q(angle, raxis);
@@ -412,7 +412,7 @@ bool Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     mark_cached_potentials_for_update(ri);
 }
 
-void Replica::rotate_domain(gsl_rng * rng)
+void Molecule::rotate_domain(gsl_rng * rng)
 {
     Vector3double raxis = normalised_random_vector_d(rng);
     uint li = random_linker_index(rng);
@@ -423,7 +423,7 @@ void Replica::rotate_domain(gsl_rng * rng)
     // TODO TODO TODO recalculate the centre afterwards
 }
 
-void Replica::make_local_moves(gsl_rng * rng)
+void Molecule::make_local_moves(gsl_rng * rng)
 {
     uint li = random_linker_index(rng);
     for (size_t i = 0; i <= NUM_LOCAL_MOVES; i++) {
