@@ -123,8 +123,6 @@ void Replica::setAminoAcidData(AminoAcids a)
 
 Replica::~Replica()
 {
-    cout << "in replica destructor" << endl;
-    //aminoAcids = AminoAcids();
 #if INCLUDE_TIMERS
     if (timersInit)
     {
@@ -137,15 +135,16 @@ Replica::~Replica()
         CUT_SAFE_CALL( cutDeleteTimer(replicaEHostTimer) )
     }
 #endif
-    cout << "before delete" << endl;
-    cout << "moleculeCount " << moleculeCount << endl;
-    cout << "label " << label << endl;
 
     if (moleculeCount > 0)
     {
         delete [] molecules;
     }
-    cout << "after delete" << endl;
+
+    if (contiguousResiduesSize > 0)
+    {
+        delete [] contiguousResidues;
+    }
 }
 
 // TODO: ugly, and only used once ever.
@@ -215,12 +214,13 @@ void Replica::copy(const Replica &r)
         contiguousResidues[i].aminoAcidIndex = int(PADDER_IDENTIFIER);
     }
 
-    // TODO: something in this block screws up deletion of residues from the molecules in this replica
     int rescount = 0;
     for (size_t m=0; m<moleculeCount; m++)
     {
         memcpy(contiguousResidues+rescount,r.molecules[m].Residues,r.molecules[m].residueCount*sizeof(Residue));
 
+        // TODO: pass this to an init function on Molecule, for the good of mankind.
+        molecules[m].contiguous = true;
         molecules[m].Residues = contiguousResidues+rescount;
         molecules[m].residueCount = r.molecules[m].residueCount;
         molecules[m].translationalStep = r.molecules[m].translationalStep;
@@ -231,10 +231,6 @@ void Replica::copy(const Replica &r)
         molecules[m].moleculeRoleIdentifier = r.molecules[m].moleculeRoleIdentifier;
         rescount += r.molecules[m].residueCount;
     }
-
-    // TODO: is this pointing to the same place as the molecules' residues?
-    delete [] contiguousResidues;
-    contiguousResiduesSize = 0;
 
     potential = r.potential;
 #if USING_CUDA

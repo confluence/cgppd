@@ -82,6 +82,7 @@ public:
 
     Residue *Residues;
     int residueCount;
+    bool contiguous; // whether the array is pointing to a contiguous array created from the replica
 
     uint random_residue_index(gsl_rng * rng); // return random residue index
 

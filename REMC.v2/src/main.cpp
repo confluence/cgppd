@@ -1596,7 +1596,7 @@ int main(int argc, char **argv)
         {
             // TODO: WTF, why are these not in the replica destructor?!
             replica[i].freeRNGs();
-//             delete [] replica[i].contiguousResidues; // this is in the copy now
+//             delete [] replica[i].contiguousResidues; // this is now
         }
     }
 

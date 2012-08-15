@@ -17,7 +17,7 @@ COMPILER=g++
 CFLAGS=-fno-omit-frame-pointer -O2
 # CFLAGS+=-ffast-math
 ### uncomment to add debug symbols
-CFLAGS+=-g
+# CFLAGS+=-g
 
 ### the following line enables debug output and emulation
 #NVCC_COMPILER_FLAGS=-g -deviceemu -D_EMU
