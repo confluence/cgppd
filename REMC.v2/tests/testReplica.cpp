@@ -27,7 +27,6 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TestReplica);
 
 void TestReplica::setUp()
 {
-    cout << "in TestReplica::setUp" << endl;
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
     testboxdim = 118.4f;
@@ -58,7 +57,6 @@ void TestReplica::setUp()
 
 void TestReplica::tearDown()
 {
-    cout << "in TestReplica::tearDown" << endl;
 #if USING_CUDA
     if (replica.replicaIsOnDevice)
     {
@@ -74,10 +72,8 @@ void TestReplica::tearDown()
 
 void TestReplica::testCopy()
 {
-    cout << "in TestReplica::testCopy" << endl;
     Replica replica_copy;
     replica_copy.copy(replica);
-    replica_copy.label = 8;
 
     CPPUNIT_ASSERT_EQUAL(replica.label, replica_copy.label);
     CPPUNIT_ASSERT_EQUAL(replica.temperature, replica_copy.temperature);

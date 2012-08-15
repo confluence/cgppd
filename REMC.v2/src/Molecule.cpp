@@ -8,6 +8,7 @@ Molecule::Molecule()
     translationalStep = INITIAL_TRANSLATIONAL_STEP;
     rotationalStep = INITIAL_ROTATIONAL_STEP;
     residueCount = 0;
+    contiguous = false;
     linkerCount = 0;
     segmentCount = 0;
     moleculeRoleIdentifier = 0.0f;
@@ -35,39 +36,30 @@ Molecule::Molecule(const int size) // constructor for blank molecule of a partic
 
 Molecule::~Molecule()
 {
-    cout << "in molecule destructor" << endl;
     if (hasFilename)
     {
-        cout << "for " << filename << endl;
         delete [] filename;
     }
-    cout << "after filename" << endl;
-    // TODO: shouldn't we delete residues and other dynamically allocated arays here?  Use a flag to see if they have been allocated?
-    // yes, we should
+
     if (linkerCount > 0)
     {
         delete [] Linkers;
     }
-    cout << "after linkers" << endl;
 
     if (segmentCount > 0)
     {
         delete [] Segments;
     }
-    cout << "after segments" << endl;
 
     if (linkCount > 0)
     {
         delete [] Links;
     }
-    cout << "after links" << endl;
 
-    cout << "residueCount " << residueCount << endl;
-    if (residueCount > 0)
+    if (!contiguous && residueCount > 0)
     {
         delete [] Residues; // TODO: valgrind doesn't like this -- has something already deleted it?
     }
-    cout << "after residues" << endl;
 };
 
 void Molecule::init_amino_acid_data(AminoAcids &a)

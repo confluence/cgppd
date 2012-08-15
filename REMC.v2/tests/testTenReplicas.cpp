@@ -28,7 +28,6 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TestTenReplicas);
 
 void TestTenReplicas::setUp()
 {
-    cout << "in TestTenReplicas::setUp" << endl;
     cuInit(0);
 
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
@@ -51,7 +50,6 @@ void TestTenReplicas::setUp()
 
 void TestTenReplicas::tearDown()
 {
-    cout << "in TestTenReplicas::tearDown" << endl;
 #if USING_CUDA
     cudaFree(ljp_t);
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
@@ -63,7 +61,6 @@ void TestTenReplicas::tearDown()
 
 void TestTenReplicas::testSanity()
 {
-    cout << "in TestTenReplicas::testSanity" << endl;
     struct ExpectedResult
     {
         float cpu;

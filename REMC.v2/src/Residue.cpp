@@ -12,8 +12,6 @@ Residue::Residue()
 
 Residue::~Residue()
 {
-    cout << "in residue destructor" << endl;
-    cout << "for " << aminoAcidIndex << endl;
 }
 
 Residue::Residue(const Residue & r)
