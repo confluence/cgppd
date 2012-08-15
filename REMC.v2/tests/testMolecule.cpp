@@ -24,6 +24,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TestMolecule);
 
 void TestMolecule::setUp()
 {
+    cout << "in TestMolecule::setUp" << endl;
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
 
@@ -34,6 +35,7 @@ void TestMolecule::setUp()
 
 void TestMolecule::testPDBSequence()
 {
+    cout << "in TestMolecule::testPDBSequence" << endl;
     const int expected_size = 76;
     CPPUNIT_ASSERT_EQUAL(expected_size, molecule.residueCount);
 
@@ -52,6 +54,7 @@ void TestMolecule::testPDBSequence()
 
 void TestMolecule::testPDBCentre()
 {
+    cout << "in TestMolecule::testPDBCentre" << endl;
     static const float expected_centre[3] = {30.442894736842103, 29.00898684210527, 15.5163947368421};
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[0], molecule.center.x, 0.00001);
@@ -82,6 +85,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TestLinkerPotentials);
 
 void TestLinkerPotentials::setUp()
 {
+    cout << "in TestLinkerPotentials::setUp" << endl;
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
 
@@ -92,6 +96,7 @@ void TestLinkerPotentials::setUp()
 
 void TestLinkerPotentials::testPDBSequence()
 {
+    cout << "in TestLinkerPotentials::testPDBSequence" << endl;
     const int expected_size = 10;
     CPPUNIT_ASSERT_EQUAL(expected_size, molecule.residueCount);
     CPPUNIT_ASSERT_EQUAL(expected_size - 1, molecule.linkCount);
@@ -111,6 +116,7 @@ void TestLinkerPotentials::testPDBSequence()
 
 void TestLinkerPotentials::testSegments()
 {
+    cout << "in TestLinkerPotentials::testSegments" << endl;
     CPPUNIT_ASSERT_EQUAL(1, molecule.segmentCount);
 //     CPPUNIT_ASSERT_EQUAL(1, molecule.linkerCount);
 
@@ -124,6 +130,7 @@ void TestLinkerPotentials::testSegments()
 
 void TestLinkerPotentials::testGeometry()
 {
+    cout << "in TestLinkerPotentials::testGeometry" << endl;
     float expected_bond_lengths[9] = {
         3.821749687194824,
         3.8273043632507324,
@@ -163,11 +170,11 @@ void TestLinkerPotentials::testGeometry()
     float testboxdim(118.4f);
 
     Potential e = molecule.E(testboxdim);
-    cout << e.total_LJ() << endl;
-    cout << e.total_DH() << endl;
-    cout << e.total_bond() << endl;
-    cout << e.total_angle() << endl;
-    cout << e.total_torsion() << endl;
+//     cout << e.total_LJ() << endl;
+//     cout << e.total_DH() << endl;
+//     cout << e.total_bond() << endl;
+//     cout << e.total_angle() << endl;
+//     cout << e.total_torsion() << endl;
 
     for (size_t i = 0; i < molecule.linkCount; i++)
     {

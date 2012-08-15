@@ -828,7 +828,7 @@ void *MCthreadableFunction(void *arg)
     {
 #if CUDA_STREAMS
         replica[tx+threadIndex*tReplicas].FreeSumSpace();
-        delete [] replica[tx+threadIndex*tReplicas].savedMolecule.Residues;
+//         delete [] replica[tx+threadIndex*tReplicas].savedMolecule.Residues;
 #endif
         replica[tx+threadIndex*tReplicas].FreeDevice();
     }
@@ -1596,7 +1596,7 @@ int main(int argc, char **argv)
         {
             // TODO: WTF, why are these not in the replica destructor?!
             replica[i].freeRNGs();
-            delete [] replica[i].contiguousResidues;
+//             delete [] replica[i].contiguousResidues; // this is in the copy now
         }
     }
 
