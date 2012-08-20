@@ -102,11 +102,19 @@
 
     // code things
 
-    #define PRINT_RE_STEP_COUNT	   1
-    #define PRINT_RE_STEP_RESULTS  2
-    #define PRINT_MC_STEP_COUNT    3
-    #define PRINT_MC_MUTATIONS     4
-    #define OUTPUT_LEVEL		   1
+    #define ERROR   0
+    #define ALWAYS   0
+    #define WARN    1
+    #define INFO    2
+    #define DEBUG   3
+    #define TRACE   4
+    #define LOGLEVEL ERROR
+
+    #define LOG(level, ...) \
+            do { if (LOGLEVEL >= level) printf(__VA_ARGS__); } while (0)
+
+//     #define DEBUGLOG(fmt, ...) \
+//             do { printf("%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, __VA_ARGS__); } while (0)
 
     #ifdef EnableOPENGL			//set here to override the makefile
         #define GLVIS 1

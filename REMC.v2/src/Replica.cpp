@@ -292,41 +292,13 @@ int Replica::loadMolecule(const char* pdbfilename, Vector3f position, Vector3dou
 // TODO: why is this not called from the constructor?
 void Replica::initRNGs()
 {
-//     unsigned long long seed = time (NULL);
     srand(time(NULL)+(label+1)*(label+1));
 
     rng = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (rng, random());
 
-    // TODO: why do we have multiple twisters?
-//     rng_moleculeSelection = gsl_rng_alloc (gsl_rng_mt19937);
-//     gsl_rng_set (rng_moleculeSelection,random());
-//
-//     rng_rotate = gsl_rng_alloc (gsl_rng_mt19937);
-//     gsl_rng_set (rng_rotate,random());
-//
-//     rng_translate = gsl_rng_alloc (gsl_rng_mt19937);
-//     gsl_rng_set (rng_translate,random());
-//
-//     MCRng = gsl_rng_alloc(gsl_rng_mt19937);
-//     gsl_rng_set (MCRng,random());
-//
-//     MCKbRng = gsl_rng_alloc(gsl_rng_mt19937);
-//     gsl_rng_set (MCKbRng,random());
 
 #if FLEXIBLE_LINKS
-//     rng_linkerSelection = gsl_rng_alloc (gsl_rng_mt19937);
-//     gsl_rng_set (rng_linkerSelection,random());
-//
-//     rng_residueSelection = gsl_rng_alloc (gsl_rng_mt19937);
-//     gsl_rng_set (rng_residueSelection,random());
-//
-//     MC_local_rng = gsl_rng_alloc(gsl_rng_mt19937);
-//     gsl_rng_set (MC_local_rng, random());
-//
-//     rng_flip = gsl_rng_alloc(gsl_rng_mt19937);
-//     gsl_rng_set (rng_flip, random());
-
     MC_move_weights = new double[4];
     MC_move_weights[0] =  WEIGHT_MC_TRANSLATE;
     MC_move_weights[1] = WEIGHT_MC_ROTATE;
@@ -342,17 +314,7 @@ void Replica::freeRNGs()
 {
     gsl_rng_free(rng);
 
-//     gsl_rng_free (rng_moleculeSelection);
-//     gsl_rng_free (rng_rotate);
-//     gsl_rng_free (rng_translate);
-//     gsl_rng_free (MCRng);
-//     gsl_rng_free (MCKbRng);
-
 #if FLEXIBLE_LINKS
-//     gsl_rng_free (rng_linkerSelection);
-//     gsl_rng_free (rng_residueSelection);
-//     gsl_rng_free(MC_local_rng);
-//     gsl_rng_free (rng_flip);
     gsl_ran_discrete_free(MC_discrete_table);
     delete [] MC_move_weights;
 #endif
@@ -361,113 +323,15 @@ void Replica::freeRNGs()
 // TODO: remove these once the ones in molecule are used everywhere
 Vector3f Replica::createNormalisedRandomVector(gsl_rng * r)
 {
-    //	float denominator = gsl_rng_max(r) - gsl_rng_min(r);
-    //	Vector3f x = 2.0f*(Vector3f(gsl_rng_get(r)/denominator-0.5f,gsl_rng_get(r)/denominator-0.5f,gsl_rng_get(r)/denominator-0.5f));
-    //Vector3f x = (Vector3f(gsl_rng_uniform(r)-0.5,0.5-gsl_rng_uniform(r),gsl_rng_uniform(r)-0.5)).normalize();
-    //return x;
     return (Vector3f(gsl_rng_uniform(r)-0.5,0.5-gsl_rng_uniform(r),gsl_rng_uniform(r)-0.5)).normalize();
 }
 
 Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
 {
-    //double denominator = gsl_rng_max(r) - gsl_rng_min(r);
     Vector3double x(gsl_rng_uniform(r)-0.5,0.5-gsl_rng_uniform(r),gsl_rng_uniform(r)-0.5);
     x.normalizeInPlace();
     return x;
 }
-
-// #define _translate 0
-// #define _rotate 1
-// #if FLEXIBLE_LINKS
-//     #define _rotate_domain 2
-//     #define _local 3
-//
-//     #define _local_translate 0
-//     #define _local_crankshaft 1
-// #endif
-
-// TODO: kill these useless wrapper functions (move the useful bits to Molecule)
-// here for profiling
-// inline void Replica::rotate(const int m, const double rotateStep)
-// {
-//     molecules[m].rotate(createNormalisedRandomVectord(rng_rotate),rotateStep);
-// #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-//     cout << "    Rotate: Replica "<< label << "/Molecule " << m << endl;
-// #endif
-// }
-
-// here for profiling
-// void Replica::translate(const int m, const float translateStep)
-// {
-//     // pick directions to rotate in, do by generating a random normalised vector of length equal to INITIAL_TRANSLATIONAL_STEP
-//     //Vector3f oldPosition = molecules[m].center;
-//     Vector3f translateVector = translateStep * createNormalisedRandomVector(rng_translate);
-// #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-//     cout << "    Translate: Replica "<< label << "/Molecule " << m << endl;
-// #endif
-//
-//
-//     // bounding sphere conditions
-// #if BOUNDING_METHOD == BOUNDING_SPHERE
-//     // if the translate falls inside the bounding radius
-//     if ((molecules[m].center + translateVector).sumSquares() < boundingValue*boundingValue)
-//     {
-//         molecules[m].translate(translateVector);
-//     }
-//     // if the change causes the molecule to fall outside the bounding radius
-//     else
-//     {
-// #if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-//         cout << "  - Reject: Replica "<< label << "/Molecule " << m <<  " : falls outside bounding sphere" << endl;
-// #endif
-//     }
-// #elif BOUNDING_METHOD == PERIODIC_BOUNDARY 	// periodic boundary conditions
-//     Vector3f newPosition = molecules[m].center + translateVector;
-//     newPosition.x = fmod(newPosition.x+boundingValue,boundingValue);
-//     newPosition.y = fmod(newPosition.y+boundingValue,boundingValue);
-//     newPosition.z = fmod(newPosition.z+boundingValue,boundingValue);
-//     molecules[m].setPosition(newPosition);
-// #endif
-// }
-
-// #if FLEXIBLE_LINKS
-// void Replica::rotate_domain(const int m, const float rotateStep, const int ri, const bool before)
-// {
-//      molecules[m].rotate_domain(createNormalisedRandomVectord(rng_rotate), rotateStep, ri, before)
-// }
-//
-// uint Replica::get_local_move_type()
-// {
-//     //TODO: if crankshaft disabled, only return translate
-//     return gsl_ran_bernoulli(MC_local_rng, LOCAL_TRANSLATE_BIAS);
-// }
-//
-// void Replica::local(const int m, const float step, const int num_moves)
-// {
-//     // TODO: pick a linker; then random residues inside the linker
-//     for (size_t i = 0; i <= num_moves; i++) {
-//         move_type = get_local_move_type();
-//
-//         switch (mutationType)
-//         {
-//             case _local_translate:
-//             {
-// //                 Molecule::translate(Vector3f v, const int ri)
-//                 // TODO: call function on molecule
-//                 break;
-//             }
-//             case _local_crankshaft: // TODO: remove if crankshaft disabled
-//             {
-//                 // TODO: call function on molecule
-//                 //Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
-//                 break;
-//             }
-//             default:
-//                 break;
-//         }
-//     }
-// }
-// #endif
 
 uint Replica::get_MC_mutation_type()
 {
@@ -478,17 +342,13 @@ uint Replica::get_MC_mutation_type()
 #endif
 }
 
-
-
 void Replica::MCSearch(int steps)
 {
     float oldPotential = potential;
 
     for (int step=0; step<steps; step++)
     {
-#if OUTPUT_LEVEL >= PRINT_MC_STEP_COUNT
-        cout << "Step: " << step << endl;
-#endif
+        LOG(INFO, "Step: %d", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         uint mutationType = get_MC_mutation_type();
 
@@ -499,52 +359,28 @@ void Replica::MCSearch(int steps)
         {
             case MC_ROTATE:
             {
-//                 rotate(moleculeNo, rotateStep);
                 molecules[moleculeNo].rotate(rng, rotateStep);
-
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-                cout << "    Rotate: Replica "<< label << "/Molecule " << moleculeNo << endl;
-#endif
+                LOG(DEBUG, "Rotate: Replica %d Molecule %d", label, moleculeNo);
                 break;
             }
             case MC_TRANSLATE:
             {
-//                 translate(moleculeNo, translateStep);
-// TODO add bounding value everywhere
+                // TODO add bounding value everywhere
                 molecules[moleculeNo].translate(rng, boundingValue, translateStep);
-
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-                cout << "    Translate: Replica "<< label << "/Molecule " << moleculeNo << endl;
-#endif
-
+                LOG(DEBUG, "Translate: Replica %d Molecule %d", label, moleculeNo);
                 break;
             }
 #if FLEXIBLE_LINKS
             case MC_ROTATE_DOMAIN:
             {
-//                 uint linkerNo = molecule[moleculeNo].random_linker_index(rng);
-//                 uint residueNo = molecule[moleculeNo].random_residue_index(rng, linkerNo);
-//                 bool before = (bool) gsl_ran_bernoulli (rng, 0.5);
-//                 rotate_domain(moleculeNo, rotateStep, residueNo, before);
                 molecules[moleculeNo].rotate_domain(rng, rotateStep);
-
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-                // TODO: add more info
-                cout << "    Rotate domain: Replica "<< label << "/Molecule " << moleculeNo << endl;
-#endif
-
+                LOG(DEBUG, "Rotate domain: Replica %d Molecule %d", label, moleculeNo);
                 break;
             }
             case MC_LOCAL:
             {
-//                 local(moleculeNo, rotateStep, NUM_LOCAL_MOVES);
                 molecules[moleculeNo].make_local_moves(rng, rotateStep, translateStep);
-
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-                // TODO: add more info
-                cout << "    Local linker moves: Replica "<< label << "/Molecule " << moleculeNo << endl;
-#endif
-
+                LOG(DEBUG, "Local linker moves: Replica %d Molecule %d", label, moleculeNo);
                 break;
             }
 #endif // FLEXIBLE_LINKS
@@ -575,9 +411,7 @@ void Replica::MCSearch(int steps)
             potential = newPotential;
             oldPotential = potential;
             accept++;
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-            cout << "  * Replace: Replica "<< label << "/Molecule " << moleculeNo <<  " : delta E = " << delta << " E = " << potential << endl;
-#endif
+            LOG(DEBUG, "  * Replace: Replica %d Molecule %d: delta E = %f; E = %f", label, moleculeNo, delta, potential);
         }
         // accept change if it meets the boltzmann criteria, must be (kJ/mol)/(RT), delta is in kcal/mol @ 294K
         else if (gsl_rng_uniform(rng) < exp(-(delta*4184.0f)/(Rgas*temperature)))
@@ -585,20 +419,14 @@ void Replica::MCSearch(int steps)
             potential = newPotential;
             oldPotential = potential;
             acceptA++;
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-            cout << "  **Replace: Replica "<< label << "/Molecule " << moleculeNo <<  " : delta E = " << delta << " U < " << exp(-delta * 4.184f/(Rgas*temperature)) << " E = " << potential << endl;
-#endif
+            LOG(DEBUG, "  **Replace: Replica %d Molecule %d: delta E = %f; U < %f; E = %f", label, moleculeNo, delta, exp(-delta * 4.184f/(Rgas*temperature)), potential);
         }
         //reject
         else
         {
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-            cout << "  - Reject: Replica "<< label << "/Molecule " << moleculeNo <<  " : delta E = " << delta << " E = " << oldPotential << endl;
-#endif
-
             reject++;
             molecules[moleculeNo].undoStateChange(&savedMolecule);
-
+            LOG(DEBUG, "   - Reject: Replica %d Molecule %d: delta E = %f; E = %f", label, moleculeNo, delta, potential);
 #if CUDA_E
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
@@ -996,25 +824,19 @@ void Replica::MCSearchAcceptReject()
     {
         potential = newPotential;
         oldPotential = potential;
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-        cout << "  * Replace: Replica "<< label << "/Molecule " << lastMutationIndex <<  " : delta E = " << delta << " E = " << potential << endl;
-#endif
+        LOG(DEBUG, "  * Replace: Replica %d Molecule %d: delta E = %f; E = %f", label, lastMutationIndex, delta, potential);
     }
     else if (gsl_rng_uniform(rng) < exp(-delta*4.184f/(Rgas*temperature)))
     {
         potential = newPotential;
         oldPotential = potential;
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-        cout << "  **Replace: Replica "<< label << "/Molecule " << lastMutationIndex <<  " : delta E = " << delta << " U < " << exp(-delta*4.184f/(Rgas*temperature)) << " E = " << potential << endl;
-#endif
+        LOG(DEBUG, "  * Replace: Replica %d Molecule %d: delta E = %f; U < %f; E = %f", label, lastMutationIndex, delta, exp(-delta*4.184f/(Rgas*temperature)), potential);
     }
     else
     {
-#if OUTPUT_LEVEL >= PRINT_MC_MUTATIONS
-        cout << "  - Reject: Replica "<< label << "/Molecule " << lastMutationIndex <<  " : delta E = " << delta << " E = " << oldPotential << endl;
-#endif
         molecules[lastMutationIndex].undoStateChange(&savedMolecule);
         potential = oldPotential;
+        LOG(DEBUG, "   - Reject: Replica %d Molecule %d: delta E = %f; E = %f", label, lastMutationIndex, delta, potential);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
 }

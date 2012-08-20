@@ -58,7 +58,7 @@ Molecule::~Molecule()
 
     if (!contiguous && residueCount > 0)
     {
-        delete [] Residues; // TODO: valgrind doesn't like this -- has something already deleted it?
+        delete [] Residues;
     }
 };
 
