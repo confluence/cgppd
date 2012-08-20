@@ -490,8 +490,8 @@ void loadArgsFromFile(argdata * parameters)
     fprintf(fileindexf,"index molecule_file_path crowder(Y/N)\n");
     delete [] fileindex;
 
-#if OUTPUT_LEVEL > 0
-// TODO: move this outside, use initialReplica, remove nonCrowders from parameters
+// #if OUTPUT_LEVEL > 0
+// TODO: move this outside, use initialReplica, remove nonCrowders from parameters; use new logging
 
 //     cout << "Argument data from file:" << endl;
 //     cout << "-------------------------------------" << endl;
@@ -521,7 +521,7 @@ void loadArgsFromFile(argdata * parameters)
 //         fprintf(fileindexf,"%2d %s Y\n",z,initialReplica->molecules[z].filename);
 //     }
 //     cout << "-------------------------------------------------------------"<< endl;
-#endif
+// #endif
     fclose(fileindexf);
 }
 
@@ -591,13 +591,11 @@ void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundCo
     fclose(boundConformationsFile);
     fclose(acceptanceRatioFile);
     fclose(exchangeFrequencyFile);
-#if OUTPUT_LEVEL > 0
 
-    cout << ">>> Sampling files closed." << endl;
-    printf("    - output/%s_%d_fractionBound\n",args->prependageString,args->pid);
-    printf("    - output/%s_%d_boundconformations\n",args->prependageString,args->pid);
-    printf("    - output/%s_%d_acceptance_ratios\n",args->prependageString,args->pid);
-#endif
+    LOG(ALWAYS, ">>> Sampling files closed.");
+    LOG(ALWAYS, "    - output/%s_%d_fractionBound\n", args->prependageString, args->pid);
+    LOG(ALWAYS, "    - output/%s_%d_boundconformations\n", args->prependageString, args->pid);
+    LOG(ALWAYS, "    - output/%s_%d_acceptance_ratios\n", args->prependageString, args->pid);
 }
 
 // required objects for synchronisation
@@ -1180,11 +1178,10 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
         GLreplica = &replica[_300kReplica];
         GlutDisplay();
 #endif
-#if OUTPUT_LEVEL > 0
+
         int tempI = replicaTemperatureMap[300.0f];
-        cout << "Replica Exchange step " << steps << " of " << parameters->REsteps << " complete (Fraction bound @ 300K: " << float(replica[tempI].totalBoundSamples)/max(1.0f,float(replica[tempI].totalSamples)) << ")"<< endl;
-        cout.flush();
-#endif
+        float frac = float(replica[tempI].totalBoundSamples)/max(1.0f,float(replica[tempI].totalSamples));
+        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)", steps, parameters->REsteps, frac);
 
         totalExchanges += exchanges;
         totalTests += tests;
@@ -1311,13 +1308,10 @@ int main(int argc, char **argv)
 
     AminoAcids aminoAcidData;
 
-#if OUTPUT_LEVEL > 0
-    cout << "Loading amino acid data. " << AMINOACIDDATASOURCE;
-#endif
+    LOG(ALWAYS, "Loading amino acid data: %s", AMINOACIDDATASOURCE);
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
-#if OUTPUT_LEVEL > 0
-    cout << "Loading pair lookup table. " << LJPDSOURCE << endl;
-#endif
+
+    LOG(ALWAYS, "Loading pair lookup table: %s", LJPDSOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
 
 #ifdef displayLJpotentials
@@ -1329,7 +1323,7 @@ int main(int argc, char **argv)
     cuInit(0);
     cudaInfo();
 
-#if OUTPUT_LEVEL > 0
+#if LOGLEVEL >= 0
     cout << "CUDA parameters and options for this run:\n" ;
     cout << "-----------------------------------------\n" ;
     cout << "Tile Size " << TILE_DIM << endl;
@@ -1561,16 +1555,12 @@ int main(int argc, char **argv)
 
     if (!skipsimulation)
     {
-#if OUTPUT_LEVEL > 0
-        cout << "Beginning simulation" << endl;
-#endif
+        LOG(ALWAYS, "Beginning simulation");
 
         // need at most REPLICA_COUNT threads
         cout << "Output files will be prefixed by " << parameters.prependageString << "_" << parameters.pid << endl;
         REMCSimulation(&initialReplica,&parameters);
-#if OUTPUT_LEVEL > 0
-        cout << endl << "Simulation done" << endl;
-#endif
+        LOG(ALWAYS, "Simulation done");
 
         for (size_t i=0; i<parameters.replicas; i++)
         {
