@@ -24,7 +24,7 @@ public:
     void tearDown();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TestTenReplicas);
+// CPPUNIT_TEST_SUITE_REGISTRATION(TestTenReplicas);
 
 void TestTenReplicas::setUp()
 {
