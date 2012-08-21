@@ -6,9 +6,6 @@ using namespace std;
 #include <cutil.h>
 #endif
 
-// TODO: move all this to initialisation lists
-// TODO: we probably need a default constructor for dynamic arrays. :/
-
 Replica::Replica()
 {
     temperature = 300.0f;
@@ -333,10 +330,17 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
     return x;
 }
 
-uint Replica::get_MC_mutation_type()
+uint Replica::get_MC_mutation_type(const Molecule* m)
 {
 #if FLEXIBLE_LINKS
-    return gsl_ran_discrete(rng, MC_discrete_table);
+    if (m->linkerCount > 0)
+    {
+        return gsl_ran_discrete(rng, MC_discrete_table);
+    }
+    else
+    {
+        return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
+    }
 #else
     return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
 #endif
@@ -350,7 +354,7 @@ void Replica::MCSearch(int steps)
     {
         LOG(INFO, "Step: %d", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
-        uint mutationType = get_MC_mutation_type();
+        uint mutationType = get_MC_mutation_type(&molecules[moleculeNo]);
 
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
@@ -433,97 +437,12 @@ void Replica::MCSearch(int steps)
             potential = oldPotential;
         }
     }
-//     delete [] savedMolecule.Residues;
-
 }
-
-// bool Replica::savePDB(const char *filename) // saves multiple pdb files per replica
-// {
-//     char filenameExt[256];
-//     char tmp[64];
-//     for (size_t i=0; i<moleculeCount; i++)
-//     {
-//         strcpy (filenameExt,filename);
-//         sprintf (tmp,"%02d",int(i));
-//         strcat (filenameExt,tmp);
-//         strcat (filenameExt,".pdb");
-//         molecules[i].saveAsPDB(filenameExt);
-//     }
-//     return true;
-// }
-//
-// void Replica::saveAsSinglePDB(const char *filename)
-// {
-//     FILE * output;
-//     output = fopen (filename,"w");
-//     fprintf(output,"REMARK %s \n",filename);
-//     fprintf(output,"REMARK potential: %0.10f \n",float(potential));
-//     fprintf(output,"REMARK temperature: %5.1f \n",temperature);
-//
-//     for (size_t i=0; i<moleculeCount; i++)
-//     {
-//         fprintf(output,"REMARK Molecule: %d\n",int(i));
-//         fprintf(output,"REMARK Rotation relative to input Q(w,x,y,z): %f %f %f %f\n",molecules[i].rotation.w,molecules[i].rotation.x,molecules[i].rotation.y,molecules[i].rotation.z);
-//         fprintf(output,"REMARK Centriod position P(x,y,z): %f %f %f\n",molecules[i].center.x,molecules[i].center.y,molecules[i].center.z);
-//     }
-//
-//     char chainId = 'A';
-//     int itemcount = 0;
-//     int lastSeqNo = 0;
-//     for (size_t m=0; m<moleculeCount; m++)
-//     {
-//         size_t i=0;
-//         while (i<molecules[m].residueCount)
-//         {
-//             itemcount++;
-//             fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',aminoAcids.get(molecules[m].Residues[i].aminoAcidIndex).getSNAME(),chainId,molecules[m].Residues[i].resSeq,' ',molecules[m].Residues[i].position.x,molecules[m].Residues[i].position.y,molecules[m].Residues[i].position.z,1.0f,1.0f);
-//             lastSeqNo = molecules[m].Residues[i].resSeq;
-//             i++;
-//         }
-//         fprintf(output,"TER   %5d      %3s %C%4d \n",itemcount,aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(),chainId,lastSeqNo);
-//         chainId++;
-//         fflush(output);
-//     }
-//     fprintf(output,"END \n");
-//     fflush(output);
-//     fclose(output);
-// }
-// simulation evaluations
 
 inline float crowderPairPotential(const float r)
 {
     return powf(6.0f/r,12.0f);
 }
-
-// inline float distance(Vector3f a,Vector3f b, float _boxdim)
-// {
-//     float Xab(a.x-b.x);
-//     float Yab(a.y-b.y);
-//     float Zab(a.z-b.z);
-//
-//     Xab = Xab - _boxdim * round(Xab/_boxdim);
-//     Yab = Yab - _boxdim * round(Yab/_boxdim);
-//     Zab = Zab - _boxdim * round(Zab/_boxdim);
-//
-//     return sqrtf(Xab*Xab+Yab*Yab+Zab*Zab);
-// }
-
-// inline void kahan_sum(double &potential, const double p_ij, double &c)
-// {
-//     double y(p_ij - c);
-//     double t(potential + y);
-//     c = (t - potential) - y;
-//     potential = t;
-// }
-//
-// inline void sum(double &potential, const double p_ij, double &c)
-// {
-// #if COMPENSATE_KERNEL_SUM
-//     kahan_sum(potential, p_ij, c);
-// #else
-//     potential += p_ij;
-// #endif
-// }
 
 double Replica::E()
 {

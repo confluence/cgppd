@@ -52,9 +52,6 @@ public:
     // the search method that mutates the replicas molecules.
     void MCSearch(int steps);//, Replica * replaceReplica);
 
-//     bool savePDB(const char *filename); // save multiple pdb files per replica
-//     void saveAsSinglePDB(const char *filename); //save one pdb, each molecule is given a chain id from A upward
-
     // TODO: are both of these used?
     int loadMolecule(const char *pdbfilename);
     int loadMolecule(const char *pdbfilename, Vector3f position, Vector3double rotationAxis, double rotationAmount);
@@ -100,16 +97,7 @@ public:
 
     // rngs for this object
     gsl_rng * rng; // we only need one Mersenne Twister for ALL THE THINGS, really.
-//     gsl_rng * rng_translate;	// the translation vector rngs
-//     gsl_rng * rng_rotate;		// the rotation vector rng
-//     gsl_rng * rng_moleculeSelection; // molecule selection rng
-//     gsl_rng * MCRng;  // used to determine what change to make
-//     gsl_rng * MCKbRng;	// boltzmann acceptance rng in MC
 #if FLEXIBLE_LINKS
-//     gsl_rng * rng_linkerSelection; // linker selection rng
-//     gsl_rng * rng_residueSelection; // residue selection rng
-//     gsl_rng * rng_flip; // used to determine whether to flip certain values
-//     gsl_rng * MC_local_rng;  // used to determine what local change to make
     double * MC_move_weights; // weightings for discrete MC move probabilities
     gsl_ran_discrete_t * MC_discrete_table; // preprocessed lookup table for MC move generator
 #endif
@@ -139,8 +127,7 @@ public:
     int nonCrowderResidues; // the number of non crowder residues for fast bound configurations test
     void countNonCrowdingResidues();
 
-    uint get_MC_mutation_type(); // randomly select type of MC move TODO: will be subsumed by the following
-    void make_random_MC_move(); // perform a random MC move
+    uint get_MC_mutation_type(const Molecule* m); // randomly select type of MC move
 
 #if USING_CUDA
 

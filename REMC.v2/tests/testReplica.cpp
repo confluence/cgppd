@@ -20,6 +20,7 @@ private:
 public:
     void setUp();
     void testCopy();
+    void testSimulation();
     void tearDown();
 };
 
@@ -70,6 +71,7 @@ void TestReplica::tearDown()
     cout.flush();
 }
 
+// TODO: this is pointless; remove it
 void TestReplica::testCopy()
 {
     Replica replica_copy;
@@ -88,4 +90,10 @@ void TestReplica::testCopy()
     CPPUNIT_ASSERT_EQUAL(replica.blockSize, replica_copy.blockSize);
     CPPUNIT_ASSERT_EQUAL(replica.sharedMemSize, replica_copy.sharedMemSize);
 #endif
+}
+
+void TestReplica::testSimulation()
+{
+    Replica child_replica;
+    child_replica.init_child_replica(*replica, 1, temperature, rotate_step, translate_step, parameters->threads);
 }
