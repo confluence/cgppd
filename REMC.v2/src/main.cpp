@@ -1010,6 +1010,7 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 
     SimulationData *data = new SimulationData[threadCount];
 
+    //TODO: this seems to print "invalid device pointer", but where does that come from?
     cout << cudaGetErrorString(cudaGetLastError()) << endl;
 
 
@@ -1047,7 +1048,7 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
         }
     }
 
-    printf ("--- Staring simulation ---.\n");
+    printf ("--- Starting simulation ---.\n");
 
 
     pthread_mutex_lock(&waitingCounterMutex);
