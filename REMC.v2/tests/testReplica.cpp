@@ -20,7 +20,7 @@ private:
 public:
     void setUp();
     void testCopy();
-    void testSimulation();
+    void testMC();
     void tearDown();
 };
 
@@ -92,8 +92,10 @@ void TestReplica::testCopy()
 #endif
 }
 
-void TestReplica::testSimulation()
+void TestReplica::testMC()
 {
     Replica child_replica;
-    child_replica.init_child_replica(*replica, 1, temperature, rotate_step, translate_step, parameters->threads);
+    child_replica.init_child_replica(*replica, 1, 300.0f, 0.2f, 0.5f, 1);
+#define LOGLEVEL DEBUG
+    child_replica->MCSearch(20);
 }
