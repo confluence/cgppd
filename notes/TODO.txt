@@ -3,7 +3,9 @@ NOW
 --------------------------------------------------------------------------------
 
 REFACTOR AND ADD MC MOVES
+* Don't do flexible moves if no linkers present?
 * merge streamed and not-streamed MC version
+* oldPotential is completely pointless; take it out
 
 ! make Molecule::rotate call Molecule::setRotation, etc.
 ! wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
