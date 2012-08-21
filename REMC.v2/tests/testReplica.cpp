@@ -95,7 +95,7 @@ void TestReplica::testCopy()
 void TestReplica::testMC()
 {
     Replica child_replica;
-    child_replica.init_child_replica(*replica, 1, 300.0f, 0.2f, 0.5f, 1);
+    child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, 1);
 #define LOGLEVEL DEBUG
     child_replica->MCSearch(20);
 }
