@@ -95,9 +95,7 @@ void TestReplica::testCopy()
 
 void TestReplica::testMC()
 {
-    cout << "in testMC" << endl;
     Replica child_replica;
-    LOG(DEBUG, "This should be printing something.\n");
     cout << child_replica.potential << endl;
     child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, 1);
     child_replica.MCSearch(20);
