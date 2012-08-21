@@ -1,0 +1,121 @@
+--------------------------------------------------------------------------------
+NOW
+--------------------------------------------------------------------------------
+
+REFACTOR AND ADD MC MOVES
+* Don't do flexible moves if no linkers present?
+* merge streamed and not-streamed MC version
+* oldPotential is completely pointless; take it out
+
+! make Molecule::rotate call Molecule::setRotation, etc.
+! wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
+! remove wrappers from replica
+! remove createNormalisedRandomVector* from replica
+! remove passing of angle and distance; use constants from definitions straight in Molecule (at the level where the random vector is generated)
+
+
+ADD
+* crankshaft -- need to select a residue which is not at either end of a linker
+* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE?
+* Make GPU MC call extra CPU moves for now?
+
+--------------------------------------------------------------------------------
+AFTER IT COMPILES AGAIN
+--------------------------------------------------------------------------------
+
+TEST
+
+* make a main.h
+* write unit tests for all the things
+
+GRAAAAAAH, CLEAN UP MAIN
+
+* initial replica init -- done; turn into a constructor
+* child replica init -- done, sort of
+* cuda init -- need another function for this; done all over the place
+* cuda destructor
+
+
+* object for whole simulation + constructor
+* SimulationData already exists -- make a constructor!
+* clean up stuff for reading commandline params and reading args from file (ewwwwwww)
+
+CLEANUP
+* Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
+* delete cruft marked for deletion and commented-out old stuff
+* Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
+* put initRNGs in init of replica and freeRNGs in destructor
+* MOLECULE: constructor / destructor
+    * reserveResidueSpace not consistently used; use or remove
+    * remove filename.
+    * DELETE RESIDUES IN DESTRUCTOR; WTF! Use flag(s?) to check whether was inited from PDB.
+    * Do we *ever* construct a molecule without a pdb file?
+* REPLICA:
+    * Avoid using globals from definitions for things other than physical constants. e.g. pass rotate / translate steps into replica constructor
+    * log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
+* AMINO ACIDS
+    * clean up read from file
+
+FIX
+* update simulation read / save to use DCD format
+    * put checkpointing back in -- this is the same thing.
+    * http://stackoverflow.com/questions/2107330/how-to-get-a-special-version-of-a-file-in-mercurial
+
+--------------------------------------------------------------------------------
+SOON
+--------------------------------------------------------------------------------
+WRITE
+* Thesis skeleton
+* Poster
+* Background chapter
+    * Visualisation: graphs of LJ and DH potential vs residue distance (? -- for different types)
+* Implementation
+
+ADD
+* Extra MC moves (just domain rotation?) on GPU?
+* Make angle terms, crankshaft moves optional; test efficiency / accuracy of including them
+* Make flexing optional; doesn't really work in cases with flexible loops coming out of domains.
+* Validation with a simple test case
+* Is the caching stuff actually a good idea, or is it just overhead?
+    * Write another version of the CPU bond calculation, which throws out the caching and calculates everything
+* What happens if molecule consists of multiple chains?
+
+TEST
+Potential:
+* test data
+* !!! check performance of CPU NC E with doubles / floats
+* unit test for kahan sums, repulsive crowding
+
+TEST
+* write an end-to-end test for optimisation comparisons
+    * is component-wise addition of vectors important?
+    * is caching of internal potential subtotals important?
+
+--------------------------------------------------------------------------------
+LATER
+--------------------------------------------------------------------------------
+
+* Nice examples to go in paper
+
+--------------------------------------------------------------------------------
+EVENTUALLY
+--------------------------------------------------------------------------------
+
+OPTIMISE
+
+* is it *actually* worth summing vector components separately?
+
+* init of gpu memory seems slower (underlying software change?)
+
+* Now that there's more time, try doing stuff on GPU:
+    * one molecule only (since only one molecule will have internal changes?)
+    * but then we have to cache at the molecule level at least, so that potential comparison works
+    * LJ/DH seems like a really good idea
+	* single kernel based on segments, or aditional kernel just for internal segments?
+    * Friedrichs, et al.have a kernel for bonded forces
+
+CLEANUP
+* Make CPU version compile -- now compiles, but not without CUDA libraries.  Need to fix makefile.
+
+ADD
+* Multiple GPUs?  Does that work?
