@@ -108,7 +108,8 @@
     #define INFO    2
     #define DEBUG   3
     #define TRACE   4
-    #define LOGLEVEL ERROR
+//     #define LOGLEVEL ERROR
+    #define LOGLEVEL DEBUG
 
     #define LOG(level, ...) \
             do { if (LOGLEVEL >= level) printf(__VA_ARGS__); } while (0)
