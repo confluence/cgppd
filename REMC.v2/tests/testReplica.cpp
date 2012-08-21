@@ -9,6 +9,7 @@ class TestReplica : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestReplica);
     CPPUNIT_TEST(testCopy);
+    CPPUNIT_TEST(testMC);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -94,6 +95,7 @@ void TestReplica::testCopy()
 
 void TestReplica::testMC()
 {
+    cout << "in testMC" << endl;
     Replica child_replica;
     cout << child_replica.potential << endl;
     child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, 1);
