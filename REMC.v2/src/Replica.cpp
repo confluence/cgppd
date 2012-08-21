@@ -352,6 +352,7 @@ void Replica::MCSearch(int steps)
 
     for (int step=0; step<steps; step++)
     {
+        cout << "Why am I not printing anything?" << endl;
         LOG(INFO, "Step: %d", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         uint mutationType = get_MC_mutation_type(&molecules[moleculeNo]);
