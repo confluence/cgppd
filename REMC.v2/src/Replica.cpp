@@ -353,7 +353,7 @@ void Replica::MCSearch(int steps)
     for (int step=0; step<steps; step++)
     {
         cout << "Why am I not printing anything?" << endl;
-        LOG(INFO, "Step: %d", step);
+        LOG(INFO, "Step: %d\n", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         uint mutationType = get_MC_mutation_type(&molecules[moleculeNo]);
 
@@ -365,27 +365,27 @@ void Replica::MCSearch(int steps)
             case MC_ROTATE:
             {
                 molecules[moleculeNo].rotate(rng, rotateStep);
-                LOG(DEBUG, "Rotate: Replica %d Molecule %d", label, moleculeNo);
+                LOG(DEBUG, "Rotate: Replica %d Molecule %d\n", label, moleculeNo);
                 break;
             }
             case MC_TRANSLATE:
             {
                 // TODO add bounding value everywhere
                 molecules[moleculeNo].translate(rng, boundingValue, translateStep);
-                LOG(DEBUG, "Translate: Replica %d Molecule %d", label, moleculeNo);
+                LOG(DEBUG, "Translate: Replica %d Molecule %d\n", label, moleculeNo);
                 break;
             }
 #if FLEXIBLE_LINKS
             case MC_ROTATE_DOMAIN:
             {
                 molecules[moleculeNo].rotate_domain(rng, rotateStep);
-                LOG(DEBUG, "Rotate domain: Replica %d Molecule %d", label, moleculeNo);
+                LOG(DEBUG, "Rotate domain: Replica %d Molecule %d\n", label, moleculeNo);
                 break;
             }
             case MC_LOCAL:
             {
                 molecules[moleculeNo].make_local_moves(rng, rotateStep, translateStep);
-                LOG(DEBUG, "Local linker moves: Replica %d Molecule %d", label, moleculeNo);
+                LOG(DEBUG, "Local linker moves: Replica %d Molecule %d\n", label, moleculeNo);
                 break;
             }
 #endif // FLEXIBLE_LINKS
@@ -416,7 +416,7 @@ void Replica::MCSearch(int steps)
             potential = newPotential;
             oldPotential = potential;
             accept++;
-            LOG(DEBUG, "  * Replace: Replica %d Molecule %d: delta E = %f; E = %f", label, moleculeNo, delta, potential);
+            LOG(DEBUG, "  * Replace: Replica %d Molecule %d: delta E = %f; E = %f\n", label, moleculeNo, delta, potential);
         }
         // accept change if it meets the boltzmann criteria, must be (kJ/mol)/(RT), delta is in kcal/mol @ 294K
         else if (gsl_rng_uniform(rng) < exp(-(delta*4184.0f)/(Rgas*temperature)))
@@ -424,14 +424,14 @@ void Replica::MCSearch(int steps)
             potential = newPotential;
             oldPotential = potential;
             acceptA++;
-            LOG(DEBUG, "  **Replace: Replica %d Molecule %d: delta E = %f; U < %f; E = %f", label, moleculeNo, delta, exp(-delta * 4.184f/(Rgas*temperature)), potential);
+            LOG(DEBUG, "  **Replace: Replica %d Molecule %d: delta E = %f; U < %f; E = %f\n", label, moleculeNo, delta, exp(-delta * 4.184f/(Rgas*temperature)), potential);
         }
         //reject
         else
         {
             reject++;
             molecules[moleculeNo].undoStateChange(&savedMolecule);
-            LOG(DEBUG, "   - Reject: Replica %d Molecule %d: delta E = %f; E = %f", label, moleculeNo, delta, potential);
+            LOG(DEBUG, "   - Reject: Replica %d Molecule %d: delta E = %f; E = %f\n", label, moleculeNo, delta, potential);
 #if CUDA_E
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
