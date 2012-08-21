@@ -332,6 +332,7 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
 
 uint Replica::get_MC_mutation_type(const Molecule* m)
 {
+    cout << m->linkerCount << endl;
 #if FLEXIBLE_LINKS
     if (m->linkerCount > 0)
     {
@@ -358,6 +359,8 @@ void Replica::MCSearch(int steps)
 
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
+
+        cout << mutationType << endl;
 
         switch (mutationType)
         {
