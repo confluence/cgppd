@@ -551,7 +551,9 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 #if FLEXIBLE_LINKS
                 Link L;
                 // occupancy set to 1 on a residue indicates that the following link is flexible.
+                cout << "occupancy is " << occupancy << endl;
                 L.flexible = bool(occupancy);
+                cout << "flexible is " << L.flexible << endl;
                 vLinks.push_back(L);
 #endif
             }
