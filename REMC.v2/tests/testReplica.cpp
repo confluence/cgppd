@@ -8,7 +8,6 @@
 class TestReplica : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestReplica);
-    CPPUNIT_TEST(testCopy);
     CPPUNIT_TEST(testMC);
     CPPUNIT_TEST_SUITE_END();
 
@@ -20,7 +19,6 @@ private:
 
 public:
     void setUp();
-    void testCopy();
     void testMC();
     void tearDown();
 };
@@ -54,7 +52,8 @@ void TestReplica::setUp()
     replica.reserveContiguousMoleculeArray(2);
 
     replica.loadMolecule("data/conf1/1a.pdb");
-    replica.loadMolecule("data/conf1/1b.pdb");
+//     replica.loadMolecule("data/conf1/1b.pdb");
+    replica.loadMolecule("tests/1UBQ.pdb");
 }
 
 void TestReplica::tearDown()
@@ -72,32 +71,9 @@ void TestReplica::tearDown()
     cout.flush();
 }
 
-// TODO: this is pointless; remove it
-void TestReplica::testCopy()
-{
-    Replica replica_copy;
-    replica_copy.copy(replica);
-
-    CPPUNIT_ASSERT_EQUAL(replica.label, replica_copy.label);
-    CPPUNIT_ASSERT_EQUAL(replica.temperature, replica_copy.temperature);
-    CPPUNIT_ASSERT_EQUAL(replica.maxMoleculeSize, replica_copy.maxMoleculeSize);
-    CPPUNIT_ASSERT_EQUAL(replica.boundingValue, replica_copy.boundingValue);
-    CPPUNIT_ASSERT_EQUAL(replica.residueCount, replica_copy.residueCount);
-    CPPUNIT_ASSERT_EQUAL(replica.moleculeCount, replica_copy.moleculeCount);
-    CPPUNIT_ASSERT_EQUAL(replica.nonCrowderCount, replica_copy.nonCrowderCount);
-    CPPUNIT_ASSERT_EQUAL(replica.nonCrowderResidues, replica_copy.nonCrowderResidues);
-    CPPUNIT_ASSERT_EQUAL(replica.potential, replica_copy.potential);
-#if USING_CUDA
-    CPPUNIT_ASSERT_EQUAL(replica.blockSize, replica_copy.blockSize);
-    CPPUNIT_ASSERT_EQUAL(replica.sharedMemSize, replica_copy.sharedMemSize);
-#endif
-}
-
 void TestReplica::testMC()
 {
     Replica child_replica;
-    cout << child_replica.potential << endl;
     child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, 1);
     child_replica.MCSearch(20);
-    cout << child_replica.potential << endl;
 }
