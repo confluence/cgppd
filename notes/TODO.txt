@@ -25,6 +25,7 @@ AFTER IT COMPILES AGAIN
 
 TEST
 
+* something is borked in the makefile; stuff doesn't recompile properly without a clean?
 * make a main.h
 * write unit tests for all the things
 
