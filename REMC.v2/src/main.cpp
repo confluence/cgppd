@@ -592,7 +592,7 @@ void closeSamplingFiles (argdata *args, FILE * fractionBoundFile, FILE * boundCo
     fclose(acceptanceRatioFile);
     fclose(exchangeFrequencyFile);
 
-    LOG(ALWAYS, ">>> Sampling files closed.");
+    LOG(ALWAYS, ">>> Sampling files closed.\n");
     LOG(ALWAYS, "    - output/%s_%d_fractionBound\n", args->prependageString, args->pid);
     LOG(ALWAYS, "    - output/%s_%d_boundconformations\n", args->prependageString, args->pid);
     LOG(ALWAYS, "    - output/%s_%d_acceptance_ratios\n", args->prependageString, args->pid);
@@ -1181,7 +1181,7 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 
         int tempI = replicaTemperatureMap[300.0f];
         float frac = float(replica[tempI].totalBoundSamples)/max(1.0f,float(replica[tempI].totalSamples));
-        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)", steps, parameters->REsteps, frac);
+        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters->REsteps, frac);
 
         totalExchanges += exchanges;
         totalTests += tests;
@@ -1308,10 +1308,10 @@ int main(int argc, char **argv)
 
     AminoAcids aminoAcidData;
 
-    LOG(ALWAYS, "Loading amino acid data: %s", AMINOACIDDATASOURCE);
+    LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
 
-    LOG(ALWAYS, "Loading pair lookup table: %s", LJPDSOURCE);
+    LOG(ALWAYS, "Loading pair lookup table: %s\n", LJPDSOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
 
 #ifdef displayLJpotentials
@@ -1555,12 +1555,12 @@ int main(int argc, char **argv)
 
     if (!skipsimulation)
     {
-        LOG(ALWAYS, "Beginning simulation");
+        LOG(ALWAYS, "Beginning simulation\n");
 
         // need at most REPLICA_COUNT threads
         cout << "Output files will be prefixed by " << parameters.prependageString << "_" << parameters.pid << endl;
         REMCSimulation(&initialReplica,&parameters);
-        LOG(ALWAYS, "Simulation done");
+        LOG(ALWAYS, "Simulation done\n");
 
         for (size_t i=0; i<parameters.replicas; i++)
         {
