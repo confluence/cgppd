@@ -710,10 +710,8 @@ Potential Molecule::E(const float bounding_value)
 
         for (size_t si = 0; si < segmentCount; si++)
         {
-            cout << iSeg.start << " - " << iSeg.end << endl;
             for (size_t sj = si + 1; sj < segmentCount; sj++)
             {
-                cout << jSeg.start << " - " << jSeg.end << endl;
                 for (size_t i = iSeg.start; i <= iSeg.end; i++)
                 {
                     for (size_t j = jSeg.start; j <= iSeg.end; j++) {
@@ -722,9 +720,6 @@ Potential Molecule::E(const float bounding_value)
                         if (i != j)
                         {
                             /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                            cout << "in main molecule E" << endl;
-                            cout << "i is " << i << ", j is " << j << ", residueCount is " << residueCount << endl;
-                            cout << r << endl;
                             potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
                             /* Calculate electrostatic potential for each residue pair; increment molecule total. */
                             potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
