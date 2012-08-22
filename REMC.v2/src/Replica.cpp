@@ -222,7 +222,7 @@ void Replica::copy(const Replica &r)
         molecules[m].residueCount = r.molecules[m].residueCount;
 
         molecules[m].Links = new Link[r.molecules[m].linkCount];
-        memcpy(molecules[m].Links, r.molecules[m].Links, r.molecules[m].linkCount*sizeof(Links));
+        memcpy(molecules[m].Links, r.molecules[m].Links, r.molecules[m].linkCount*sizeof(Link));
         molecules[m].linkCount = r.molecules[m].linkCount;
 
         molecules[m].Segments = new Segment[r.molecules[m].segmentCount];
