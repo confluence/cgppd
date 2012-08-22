@@ -710,8 +710,10 @@ Potential Molecule::E(const float bounding_value)
 
         for (size_t si = 0; si < segmentCount; si++)
         {
+            cout << iSeg.start << " - " << iSeg.end << endl;
             for (size_t sj = si + 1; sj < segmentCount; sj++)
             {
+                cout << jSeg.start << " - " << jSeg.end << endl;
                 for (size_t i = iSeg.start; i <= iSeg.end; i++)
                 {
                     for (size_t j = jSeg.start; j <= iSeg.end; j++) {
