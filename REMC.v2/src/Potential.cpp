@@ -83,7 +83,6 @@ double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue
         l.update_e_torsion = false;
     }
 
-    cout << "calculated torsion is " << l.e_torsion << endl;
     return l.e_torsion;
 }
 #endif // FLEXIBLE_LINKS
