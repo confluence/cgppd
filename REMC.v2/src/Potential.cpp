@@ -17,7 +17,6 @@ double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &
         LJ = -LJ + 2.0f * Eij;
     }
 
-    cout << "calculated LJ is " << LJ << endl;
     return LJ;
 }
 
