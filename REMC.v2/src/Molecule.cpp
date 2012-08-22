@@ -719,7 +719,7 @@ Potential Molecule::E(const float bounding_value)
                     for (size_t j = jSeg.start; j <= iSeg.end; j++) {
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         // segments overlap at edges; don't compare a residue to itself
-                        if (i <> j)
+                        if (i != j)
                         {
                             /* Calculate LJ-type potential for each residue pair; increment molecule total. */
                             cout << "in main molecule E" << endl;
