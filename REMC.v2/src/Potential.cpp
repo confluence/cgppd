@@ -83,6 +83,7 @@ double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue
         l.update_e_torsion = false;
     }
 
+    cout << "calculated torsion is " << l.e_torsion << endl;
     return l.e_torsion;
 }
 #endif // FLEXIBLE_LINKS
@@ -133,6 +134,7 @@ void Potential::increment_LJ(const double LJ)
     kahan_sum(this->LJ, LJ, c_lj);
 #else // if not COMPENSATE_KERNEL_SUM
     this->LJ += LJ;
+    cout << "incremented LJ to " << this->LJ << " with " << LJ << endl;
 #endif // COMPENSATE_KERNEL_SUM
 }
 
@@ -152,6 +154,7 @@ void Potential::reset_LJ_subtotal()
 #if COMPENSATE_KERNEL_SUM
     c_lj_subtotal = 0.0f;
 #endif // COMPENSATE_KERNEL_SUM
+    cout << "reset LJ subtotal" << endl;
 }
 
 void Potential::reset_DH_subtotal()
@@ -168,6 +171,7 @@ void Potential::increment_LJ_subtotal(const double LJ)
     kahan_sum(this->LJ_subtotal, LJ, c_lj_subtotal);
 #else // if not COMPENSATE_KERNEL_SUM
     this->LJ_subtotal += LJ;
+    cout << "incremented LJ subtotal to " << this->LJ_subtotal << " with " << LJ << endl;
 #endif // COMPENSATE_KERNEL_SUM
 }
 
