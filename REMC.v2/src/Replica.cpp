@@ -212,14 +212,24 @@ void Replica::copy(const Replica &r)
     }
 
     int rescount = 0;
-    for (size_t m=0; m<moleculeCount; m++)
+    for (size_t m = 0; m < moleculeCount; m++)
     {
-        memcpy(contiguousResidues+rescount,r.molecules[m].Residues,r.molecules[m].residueCount*sizeof(Residue));
-
         // TODO: pass this to an init function on Molecule, for the good of mankind.
+        memcpy(contiguousResidues+rescount, r.molecules[m].Residues, r.molecules[m].residueCount*sizeof(Residue));
+
         molecules[m].contiguous = true;
         molecules[m].Residues = contiguousResidues+rescount;
         molecules[m].residueCount = r.molecules[m].residueCount;
+
+        memcpy(molecules[m].Segments, r.molecules[m].Segments, r.molecules[m].segmentCount*sizeof(Segment));
+        molecules[m].segmentCount = r.molecules[m].segmentCount;
+        memcpy(molecules[m].Linkers, r.molecules[m].Linkers, r.molecules[m].linkerCount*sizeof(*Segment));
+        for (size_t l = 0; l < r.molecules[m].linkerCount; l++)
+        {
+            molecules[m].Linkers[l] = molecules[m].Linkers[l] - r.molecules[m].Segments + molecules[m].Segments;
+        }
+        molecules[m].linkerCount = r.molecules[m].linkerCount;
+
         molecules[m].translationalStep = r.molecules[m].translationalStep;
         molecules[m].rotationalStep = r.molecules[m].rotationalStep;
         molecules[m].AminoAcidsData = r.molecules[m].AminoAcidsData;
