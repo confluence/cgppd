@@ -134,7 +134,6 @@ void Potential::increment_LJ(const double LJ)
     kahan_sum(this->LJ, LJ, c_lj);
 #else // if not COMPENSATE_KERNEL_SUM
     this->LJ += LJ;
-    cout << "incremented LJ to " << this->LJ << " with " << LJ << endl;
 #endif // COMPENSATE_KERNEL_SUM
 }
 
@@ -154,7 +153,6 @@ void Potential::reset_LJ_subtotal()
 #if COMPENSATE_KERNEL_SUM
     c_lj_subtotal = 0.0f;
 #endif // COMPENSATE_KERNEL_SUM
-    cout << "reset LJ subtotal" << endl;
 }
 
 void Potential::reset_DH_subtotal()
@@ -171,7 +169,6 @@ void Potential::increment_LJ_subtotal(const double LJ)
     kahan_sum(this->LJ_subtotal, LJ, c_lj_subtotal);
 #else // if not COMPENSATE_KERNEL_SUM
     this->LJ_subtotal += LJ;
-    cout << "incremented LJ subtotal to " << this->LJ_subtotal << " with " << LJ << endl;
 #endif // COMPENSATE_KERNEL_SUM
 }
 
@@ -249,11 +246,6 @@ double Potential::total_torsion()
 
 double Potential::total()
 {
-    cout << "DH: " << DH << endl;
-    cout << "LJ: " << LJ << endl;
-    cout << "bond: " << bond << endl;
-    cout << "angle: " << angle << endl;
-    cout << "torsion: " << torsion << endl;
 #if FLEXIBLE_LINKS
     return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion) * KBTConversionFactor;
 #else // if not FLEXIBLE_LINKS
