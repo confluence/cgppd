@@ -755,7 +755,6 @@ Potential Molecule::E(const float bounding_value)
                     {
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment segment total. */
-                        cout << "in segment E" << endl;
                         potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
                         /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */
                         if (j - i >= 4)

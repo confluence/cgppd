@@ -523,7 +523,6 @@ Potential potential;
                         for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                         {
                             double r(iRes.distance(jRes, boundingValue) + EPS);
-                            cout << "in replica E" << endl;
                             potential.increment_LJ(calculate_LJ(iRes, jRes, r, aminoAcids));
                             potential.increment_DH(calculate_DH(iRes, jRes, r));
                         }
@@ -557,7 +556,6 @@ double Replica::E(Molecule *a,Molecule *b)
         for (size_t mj = 0; mj < b->residueCount; mj++)
         {
             double r(aRes.distance(bRes, boundingValue) + EPS);
-            cout << "in replica E(A,B)" << endl;
             potential.increment_LJ(calculate_LJ(aRes, bRes, r, aminoAcids));
             potential.increment_DH(calculate_DH(aRes, bRes, r));
         }
