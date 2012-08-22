@@ -409,7 +409,6 @@ void Replica::MCSearch(int steps)
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
 
-        cout << internal_molecule_E() << endl;
         double newPotential(EonDevice());  // sequential cuda call
         //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
 #if PERFORM_GPU_AND_CPU_E
@@ -420,6 +419,7 @@ void Replica::MCSearch(int steps)
 #else // only CPU calls
         float newPotential = E();
 #endif
+        cout << internal_molecule_E() << endl;
 
         float delta = newPotential - oldPotential;
 
