@@ -742,6 +742,7 @@ void Replica::MCSearchAcceptReject()
     //cudaStreamSynchronize(cudaStream);  // sync, newPotential needs to have been returned
     newPotential = SumGridResults();
 #if FLEXIBLE_LINKS
+    cout << internal_molecule_E() << endl;
     newPotential += internal_molecule_E();
 #endif
 
