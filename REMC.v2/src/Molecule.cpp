@@ -717,7 +717,7 @@ Potential Molecule::E(const float bounding_value)
                     for (size_t j = jSeg.start; j <= iSeg.end; j++) {
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                        cout << "in main molecule E; r is " << r << endl;
+                        cout << "in main molecule E" << endl;
                         potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
                         /* Calculate electrostatic potential for each residue pair; increment molecule total. */
                         potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
