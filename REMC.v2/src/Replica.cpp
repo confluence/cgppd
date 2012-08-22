@@ -419,8 +419,6 @@ void Replica::MCSearch(int steps)
 #else // only CPU calls
         float newPotential = E();
 #endif
-        cout << internal_molecule_E() << endl;
-
         float delta = newPotential - oldPotential;
 
         // accept change if its better.
