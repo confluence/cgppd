@@ -345,7 +345,6 @@ Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
 
 uint Replica::get_MC_mutation_type(const Molecule* m)
 {
-    cout << m->linkerCount << endl;
 #if FLEXIBLE_LINKS
     if (m->linkerCount > 0)
     {
@@ -372,8 +371,6 @@ void Replica::MCSearch(int steps)
 
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
-
-        cout << mutationType << endl;
 
         switch (mutationType)
         {
@@ -412,6 +409,7 @@ void Replica::MCSearch(int steps)
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
 
+        cout << internal_molecule_E() << endl;
         double newPotential(EonDevice());  // sequential cuda call
         //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
 #if PERFORM_GPU_AND_CPU_E
@@ -742,7 +740,6 @@ void Replica::MCSearchAcceptReject()
     //cudaStreamSynchronize(cudaStream);  // sync, newPotential needs to have been returned
     newPotential = SumGridResults();
 #if FLEXIBLE_LINKS
-    cout << internal_molecule_E() << endl;
     newPotential += internal_molecule_E();
 #endif
 
