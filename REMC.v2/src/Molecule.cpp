@@ -605,7 +605,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     linkCount = vLinks.size() - 1;
     Links = new Link[linkCount];
     vector<Segment> vSegments;
-    vector<Segment*> vLinkers;
+    vector<int> vLinkers;
 
     for(size_t l = 0; l < linkCount; l++)
     {
@@ -644,16 +644,16 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         memcpy(&Segments[s], &S, sizeof(S));
 
         if (S.flexible) {
-            vLinkers.push_back(&Segments[s]);
+            vLinkers.push_back(s);
         }
     }
 
     linkerCount = vLinkers.size();
-    Linkers = new Segment*[linkerCount];
+    Linkers = new int[linkerCount];
 
     for (size_t l = 0; l < linkerCount; l++)
     {
-        memcpy(&Linkers[l], &vLinkers[l], sizeof(Segment*));
+        Linkers[l] = vLinkers[l];
     }
 
 #endif
@@ -808,7 +808,7 @@ uint Molecule::random_linker_index(gsl_rng * rng)
 
 uint Molecule::random_residue_index(gsl_rng * rng, int li)
 {
-    return Linkers[li]->random_residue_index(rng);
+    return Segments[Linkers[li]].random_residue_index(rng);
 }
 
 

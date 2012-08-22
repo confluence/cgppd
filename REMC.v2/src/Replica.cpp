@@ -225,12 +225,8 @@ void Replica::copy(const Replica &r)
         memcpy(molecules[m].Segments, r.molecules[m].Segments, r.molecules[m].segmentCount*sizeof(Segment));
         molecules[m].segmentCount = r.molecules[m].segmentCount;
 
-        molecules[m].Linkers = new Segment*[r.molecules[m].linkerCount];
-        memcpy(molecules[m].Linkers, r.molecules[m].Linkers, r.molecules[m].linkerCount*sizeof(Segment*));
-        for (size_t l = 0; l < r.molecules[m].linkerCount; l++)
-        {
-            molecules[m].Linkers[l] = molecules[m].Linkers[l] - r.molecules[m].Segments + molecules[m].Segments;
-        }
+        molecules[m].Linkers = new int[r.molecules[m].linkerCount];
+        memcpy(molecules[m].Linkers, r.molecules[m].Linkers, r.molecules[m].linkerCount*sizeof(int));
         molecules[m].linkerCount = r.molecules[m].linkerCount;
 
         molecules[m].translationalStep = r.molecules[m].translationalStep;

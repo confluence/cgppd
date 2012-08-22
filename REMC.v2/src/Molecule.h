@@ -92,7 +92,7 @@ public:
     int linkerCount;
     Link *Links;
     Segment *Segments; // Boundaries of all domains and linkers
-    Segment **Linkers; // Array of pointers to all flexible segments -- TODO: will this do what I think this will do?
+    int *Linkers; // Array of indices of all flexible segments
     TorsionalLookupMatrix torsions;
     Potential E(const float bounding_value);
 
