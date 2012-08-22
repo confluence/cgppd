@@ -244,6 +244,11 @@ double Potential::total_torsion()
 
 double Potential::total()
 {
+    cout << "DH: " << DH << endl;
+    cout << "LJ: " << LJ << endl;
+    cout << "bond: " << bond << endl;
+    cout << "angle: " << angle << endl;
+    cout << "torsion: " << torsion << endl;
 #if FLEXIBLE_LINKS
     return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion) * KBTConversionFactor;
 #else // if not FLEXIBLE_LINKS
