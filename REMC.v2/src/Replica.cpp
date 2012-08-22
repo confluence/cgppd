@@ -223,7 +223,7 @@ void Replica::copy(const Replica &r)
 
         memcpy(molecules[m].Segments, r.molecules[m].Segments, r.molecules[m].segmentCount*sizeof(Segment));
         molecules[m].segmentCount = r.molecules[m].segmentCount;
-        memcpy(molecules[m].Linkers, r.molecules[m].Linkers, r.molecules[m].linkerCount*sizeof(*Segment));
+        memcpy(molecules[m].Linkers, r.molecules[m].Linkers, r.molecules[m].linkerCount*sizeof(Segment*));
         for (size_t l = 0; l < r.molecules[m].linkerCount; l++)
         {
             molecules[m].Linkers[l] = molecules[m].Linkers[l] - r.molecules[m].Segments + molecules[m].Segments;
