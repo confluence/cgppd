@@ -333,7 +333,7 @@ void Molecule::mark_cached_potentials_for_update(const int ri)
         }
     }
 
-    // Not checking segment boundaries here, because they are checked when linker potentials are calculated
+    // Not checking segment boundaries here, because they are checked when linker potentials are calculated TODO wat?!
 
     if (ri > 1) {
         Links[ri - 2].update_e_torsion = true;
