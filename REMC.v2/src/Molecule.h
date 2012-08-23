@@ -34,7 +34,6 @@ public:
     void saveBeforeStateChange(const Molecule* m);
     void undoStateChange(const Molecule* m);
     void reserveResidueSpace(int size);
-    char *print(); // TODO: eliminate?
     void saveAsPDB(const char *filename);
     void recalculate_relative_positions();
     void recalculate_center(); // TODO: actually use this
