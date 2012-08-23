@@ -436,7 +436,7 @@ Potential potential;
         {
 #endif
 #if FLEXIBLE_LINKS
-            // TODO: won't need to pass this once we have proper constructors!
+            // TODO: set bounding value on molecule during construction
             LOG(DEBUG, "Adding E for molecule %d.\n", mI);
             potential.increment(molecules[mI].E(boundingValue));
 #endif
