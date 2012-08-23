@@ -215,30 +215,29 @@ void Replica::copy(const Replica &r)
     for (size_t m = 0; m < moleculeCount; m++)
     {
         // TODO: pass this to an init function on Molecule, for the good of mankind.
-        memcpy(contiguousResidues+rescount, r.molecules[m].Residues, r.molecules[m].residueCount*sizeof(Residue));
-
-        molecules[m].contiguous = true;
-        molecules[m].Residues = contiguousResidues+rescount;
-        molecules[m].residueCount = r.molecules[m].residueCount;
-
-        molecules[m].Links = new Link[r.molecules[m].linkCount];
-        memcpy(molecules[m].Links, r.molecules[m].Links, r.molecules[m].linkCount*sizeof(Link));
-        molecules[m].linkCount = r.molecules[m].linkCount;
-
-        molecules[m].Segments = new Segment[r.molecules[m].segmentCount];
-        memcpy(molecules[m].Segments, r.molecules[m].Segments, r.molecules[m].segmentCount*sizeof(Segment));
-        molecules[m].segmentCount = r.molecules[m].segmentCount;
-
-        molecules[m].Linkers = new int[r.molecules[m].linkerCount];
-        memcpy(molecules[m].Linkers, r.molecules[m].Linkers, r.molecules[m].linkerCount*sizeof(int));
-        molecules[m].linkerCount = r.molecules[m].linkerCount;
-
-        molecules[m].translationalStep = r.molecules[m].translationalStep;
-        molecules[m].rotationalStep = r.molecules[m].rotationalStep;
-        molecules[m].AminoAcidsData = r.molecules[m].AminoAcidsData;
-        molecules[m].center = r.molecules[m].center;
-        molecules[m].rotation = r.molecules[m].rotation;
-        molecules[m].moleculeRoleIdentifier = r.molecules[m].moleculeRoleIdentifier;
+        molecules[m].copy(r.molecules[m], contiguousResidues + rescount);
+//         memcpy(contiguousResidues+rescount, r.molecules[m].Residues, r.molecules[m].residueCount*sizeof(Residue));
+//
+//         molecules[m].contiguous = true;
+//         molecules[m].Residues = contiguousResidues+rescount;
+//         molecules[m].residueCount = r.molecules[m].residueCount;
+//
+//         molecules[m].Links = new Link[r.molecules[m].linkCount];
+//         memcpy(molecules[m].Links, r.molecules[m].Links, r.molecules[m].linkCount*sizeof(Link));
+//         molecules[m].linkCount = r.molecules[m].linkCount;
+//
+//         molecules[m].Segments = new Segment[r.molecules[m].segmentCount];
+//         memcpy(molecules[m].Segments, r.molecules[m].Segments, r.molecules[m].segmentCount*sizeof(Segment));
+//         molecules[m].segmentCount = r.molecules[m].segmentCount;
+//
+//         molecules[m].Linkers = new int[r.molecules[m].linkerCount];
+//         memcpy(molecules[m].Linkers, r.molecules[m].Linkers, r.molecules[m].linkerCount*sizeof(int));
+//         molecules[m].linkerCount = r.molecules[m].linkerCount;
+//
+//         molecules[m].AminoAcidsData = r.molecules[m].AminoAcidsData;
+//         molecules[m].center = r.molecules[m].center;
+//         molecules[m].rotation = r.molecules[m].rotation;
+//         molecules[m].moleculeRoleIdentifier = r.molecules[m].moleculeRoleIdentifier;
         rescount += r.molecules[m].residueCount;
     }
 
