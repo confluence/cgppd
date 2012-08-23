@@ -25,18 +25,12 @@ class Molecule
 public:
     // TODO: clean this up
     Molecule();
-    Molecule(const char* pdbfilename); // constructor for molecule loaded from file; not final parameter list
-    Molecule(const int size); // constructor for blank molecule of a particular size (for saving before MC move); not final parameter list
-
     ~Molecule();
-//     Molecule(const Molecule& m);// TODO: is this used?
-//     // TODO: is this used?
-//     Molecule operator = (const Molecule& m) {
-//         return Molecule(m);
-//     };
+
+    // TODO: write a proper init function
     void init(AminoAcid residues[], char *description, char *data);
     bool initFromPDB(const char* pdbfilename);
-//     void copy(const Molecule& m); // TODO: eliminate?
+    void copy(const Molecule& m, const Residue * contiguous_residue_offset);
     void saveBeforeStateChange(const Molecule* m);
     void undoStateChange(const Molecule* m);
     void reserveResidueSpace(int size);
@@ -107,8 +101,6 @@ public:
     float volume;
     float moleculeRoleIdentifier;
 
-    float translationalStep;// TODO: REMOVE
-    float rotationalStep;// TODO: REMOVE
     char *filename;
     bool hasFilename;
     Vector3f xAxis;

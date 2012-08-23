@@ -5,8 +5,6 @@ using namespace std;
 // TODO: we probably need a default constructor for dynamic arrays. :/
 Molecule::Molecule()
 {
-    translationalStep = INITIAL_TRANSLATIONAL_STEP;
-    rotationalStep = INITIAL_ROTATIONAL_STEP;
     residueCount = 0;
     contiguous = false;
     linkerCount = 0;
@@ -24,14 +22,6 @@ Molecule::Molecule()
     DH = 0.0f;
     update_LJ_and_DH = true;
 #endif
-}
-
-Molecule::Molecule(const char* pdbfilename) // constructor for molecule loaded from file; not final parameter list
-{
-}
-
-Molecule::Molecule(const int size) // constructor for blank molecule of a particular size (for saving before MC move); not final parameter list
-{
 }
 
 Molecule::~Molecule()
@@ -71,83 +61,43 @@ void Molecule::init_amino_acid_data(AminoAcids &a)
 #endif
 }
 
-// // TODO: are we using this?
-// Molecule::Molecule(const Molecule& m)
-// {
-//     translationalStep = m.translationalStep;
-//     rotationalStep = m.rotationalStep;
-//
-//     if(residueCount > 0 && residueCount != m.residueCount)
-//     {
-//         delete [] Residues;
-//         Residues = new Residue[m.residueCount];
-//     }
-//     else if (residueCount == 0)
-//     {
-//         Residues = new Residue[m.residueCount];
-//     }
-//
-//     residueCount = m.residueCount;
-//     memcpy(Residues,m.Residues,sizeof(Residue)*residueCount);
-//
-//     AminoAcidsData = m.AminoAcidsData;
-//     center = m.center;
-//     rotation = m.rotation;
-//     index = m.index;
-//     volume = m.volume;
-//     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
-//     amIACrowder = m.amIACrowder;
-//     hasFilename = false;
-// #if FLEXIBLE_LINKS
-//     torsions = m.torsions;
-//     linkCount = m.linkCount;
-//     segmentCount = m.segmentCount;
-//     LJ = m.LJ;
-//     DH = m.DH;
-//     update_LJ_and_DH = m.update_LJ_and_DH;
-// #endif
-// }
-//
-// // TODO: are we using this?
-// void Molecule::copy(const Molecule& m)
-// {
-//     translationalStep = m.translationalStep;
-//     rotationalStep = m.rotationalStep;
-//
-//     if(residueCount > 0 && residueCount != m.residueCount)
-//     {
-//         delete [] Residues;
-//         Residues = new Residue[m.residueCount];
-//     }
-//     else if (residueCount == 0)
-//     {
-//         try
-//         {
-//             delete [] Residues;
-//         } catch (char * err) {}
-//         Residues = new Residue[m.residueCount];
-//     }
-//
-//     residueCount = m.residueCount;
-//     memcpy(Residues,m.Residues,sizeof(Residue)*residueCount);
-//
-//     AminoAcidsData = m.AminoAcidsData;
-//     center = m.center;
-//     rotation = m.rotation;
-//     volume = m.volume;
-//
-//     index = m.index;
-//     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
-//     amIACrowder = m.amIACrowder;
-// #if FLEXIBLE_LINKS
-//     torsions = m.torsions;
-//     linkCount = m.linkCount;
-//     segmentCount = m.segmentCount;
-//     LJ = m.LJ;
-//     DH = m.DH;
-//     update_LJ_and_DH = m.update_LJ_and_DH;
-// #endif
-// }
+// TODO: clean this up and use it from replica copy
+void Molecule::copy(const Molecule& m, const Residue * contiguous_residue_offset)
+{
+    contiguous = true;
+    memcpy(contiguous_residue_offset, m.Residues, m.residueCount*sizeof(Residue));
+    Residues = contiguous_residue_offset;
+    residueCount = m.residueCount;
+
+    Links = new Link[m.linkCount];
+    memcpy(Links, m.Links, m.linkCount*sizeof(Link));
+    linkCount = m.linkCount;
+
+    Segments = new Segment[m.segmentCount];
+    memcpy(Segments, m.Segments, m.segmentCount*sizeof(Segment));
+    segmentCount = m.segmentCount;
+
+    Linkers = new int[m.linkerCount];
+    memcpy(Linkers, m.Linkers, m.linkerCount*sizeof(int));
+    linkerCount = m.linkerCount;
+
+    AminoAcidsData = m.AminoAcidsData;
+    center = m.center;
+    rotation = m.rotation;
+    moleculeRoleIdentifier = m.moleculeRoleIdentifier;
+    volume = m.volume;
+    index = m.index;
+    amIACrowder = m.amIACrowder;
+
+#if FLEXIBLE_LINKS
+    torsions = m.torsions;
+    linkCount = m.linkCount;
+    segmentCount = m.segmentCount;
+    LJ = m.LJ;
+    DH = m.DH;
+    update_LJ_and_DH = m.update_LJ_and_DH;
+#endif
+}
 
 void Molecule::saveBeforeStateChange(const Molecule* m)
 {
