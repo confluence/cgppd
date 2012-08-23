@@ -437,7 +437,7 @@ Potential potential;
 #endif
 #if FLEXIBLE_LINKS
             // TODO: won't need to pass this once we have proper constructors!
-            LOG(DEBUG, "Adding E for molecule %d.", mI);
+            LOG(DEBUG, "Adding E for molecule %d.\n", mI);
             potential.increment(molecules[mI].E(boundingValue));
 #endif
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
