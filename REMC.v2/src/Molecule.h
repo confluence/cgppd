@@ -29,14 +29,14 @@ public:
     Molecule(const int size); // constructor for blank molecule of a particular size (for saving before MC move); not final parameter list
 
     ~Molecule();
-    Molecule(const Molecule& m);// TODO: is this used?
-    // TODO: is this used?
-    Molecule operator = (const Molecule& m) {
-        return Molecule(m);
-    };
+//     Molecule(const Molecule& m);// TODO: is this used?
+//     // TODO: is this used?
+//     Molecule operator = (const Molecule& m) {
+//         return Molecule(m);
+//     };
     void init(AminoAcid residues[], char *description, char *data);
     bool initFromPDB(const char* pdbfilename);
-    void copy(const Molecule& m); // TODO: eliminate?
+//     void copy(const Molecule& m); // TODO: eliminate?
     void saveBeforeStateChange(const Molecule* m);
     void undoStateChange(const Molecule* m);
     void reserveResidueSpace(int size);

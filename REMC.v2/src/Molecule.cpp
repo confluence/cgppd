@@ -71,83 +71,83 @@ void Molecule::init_amino_acid_data(AminoAcids &a)
 #endif
 }
 
-// TODO: are we using this?
-Molecule::Molecule(const Molecule& m)
-{
-    translationalStep = m.translationalStep;
-    rotationalStep = m.rotationalStep;
-
-    if(residueCount > 0 && residueCount != m.residueCount)
-    {
-        delete [] Residues;
-        Residues = new Residue[m.residueCount];
-    }
-    else if (residueCount == 0)
-    {
-        Residues = new Residue[m.residueCount];
-    }
-
-    residueCount = m.residueCount;
-    memcpy(Residues,m.Residues,sizeof(Residue)*residueCount);
-
-    AminoAcidsData = m.AminoAcidsData;
-    center = m.center;
-    rotation = m.rotation;
-    index = m.index;
-    volume = m.volume;
-    moleculeRoleIdentifier = m.moleculeRoleIdentifier;
-    amIACrowder = m.amIACrowder;
-    hasFilename = false;
-#if FLEXIBLE_LINKS
-    torsions = m.torsions;
-    linkCount = m.linkCount;
-    segmentCount = m.segmentCount;
-    LJ = m.LJ;
-    DH = m.DH;
-    update_LJ_and_DH = m.update_LJ_and_DH;
-#endif
-}
-
-// TODO: are we using this?
-void Molecule::copy(const Molecule& m)
-{
-    translationalStep = m.translationalStep;
-    rotationalStep = m.rotationalStep;
-
-    if(residueCount > 0 && residueCount != m.residueCount)
-    {
-        delete [] Residues;
-        Residues = new Residue[m.residueCount];
-    }
-    else if (residueCount == 0)
-    {
-        try
-        {
-            delete [] Residues;
-        } catch (char * err) {}
-        Residues = new Residue[m.residueCount];
-    }
-
-    residueCount = m.residueCount;
-    memcpy(Residues,m.Residues,sizeof(Residue)*residueCount);
-
-    AminoAcidsData = m.AminoAcidsData;
-    center = m.center;
-    rotation = m.rotation;
-    volume = m.volume;
-
-    index = m.index;
-    moleculeRoleIdentifier = m.moleculeRoleIdentifier;
-    amIACrowder = m.amIACrowder;
-#if FLEXIBLE_LINKS
-    torsions = m.torsions;
-    linkCount = m.linkCount;
-    segmentCount = m.segmentCount;
-    LJ = m.LJ;
-    DH = m.DH;
-    update_LJ_and_DH = m.update_LJ_and_DH;
-#endif
-}
+// // TODO: are we using this?
+// Molecule::Molecule(const Molecule& m)
+// {
+//     translationalStep = m.translationalStep;
+//     rotationalStep = m.rotationalStep;
+//
+//     if(residueCount > 0 && residueCount != m.residueCount)
+//     {
+//         delete [] Residues;
+//         Residues = new Residue[m.residueCount];
+//     }
+//     else if (residueCount == 0)
+//     {
+//         Residues = new Residue[m.residueCount];
+//     }
+//
+//     residueCount = m.residueCount;
+//     memcpy(Residues,m.Residues,sizeof(Residue)*residueCount);
+//
+//     AminoAcidsData = m.AminoAcidsData;
+//     center = m.center;
+//     rotation = m.rotation;
+//     index = m.index;
+//     volume = m.volume;
+//     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
+//     amIACrowder = m.amIACrowder;
+//     hasFilename = false;
+// #if FLEXIBLE_LINKS
+//     torsions = m.torsions;
+//     linkCount = m.linkCount;
+//     segmentCount = m.segmentCount;
+//     LJ = m.LJ;
+//     DH = m.DH;
+//     update_LJ_and_DH = m.update_LJ_and_DH;
+// #endif
+// }
+//
+// // TODO: are we using this?
+// void Molecule::copy(const Molecule& m)
+// {
+//     translationalStep = m.translationalStep;
+//     rotationalStep = m.rotationalStep;
+//
+//     if(residueCount > 0 && residueCount != m.residueCount)
+//     {
+//         delete [] Residues;
+//         Residues = new Residue[m.residueCount];
+//     }
+//     else if (residueCount == 0)
+//     {
+//         try
+//         {
+//             delete [] Residues;
+//         } catch (char * err) {}
+//         Residues = new Residue[m.residueCount];
+//     }
+//
+//     residueCount = m.residueCount;
+//     memcpy(Residues,m.Residues,sizeof(Residue)*residueCount);
+//
+//     AminoAcidsData = m.AminoAcidsData;
+//     center = m.center;
+//     rotation = m.rotation;
+//     volume = m.volume;
+//
+//     index = m.index;
+//     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
+//     amIACrowder = m.amIACrowder;
+// #if FLEXIBLE_LINKS
+//     torsions = m.torsions;
+//     linkCount = m.linkCount;
+//     segmentCount = m.segmentCount;
+//     LJ = m.LJ;
+//     DH = m.DH;
+//     update_LJ_and_DH = m.update_LJ_and_DH;
+// #endif
+// }
 
 void Molecule::saveBeforeStateChange(const Molecule* m)
 {
