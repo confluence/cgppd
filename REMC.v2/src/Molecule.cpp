@@ -61,7 +61,6 @@ void Molecule::init_amino_acid_data(AminoAcids &a)
 #endif
 }
 
-// TODO: clean this up and use it from replica copy
 void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 {
     contiguous = true;

@@ -3,16 +3,9 @@ NOW
 --------------------------------------------------------------------------------
 
 REFACTOR AND ADD MC MOVES
-* Don't do flexible moves if no linkers present?
 * merge streamed and not-streamed MC version
 * oldPotential is completely pointless; take it out
-
-! make Molecule::rotate call Molecule::setRotation, etc.
-! wrappers in molecule which take gsl_rng pointers from replica and generate random stuff to pass to other functions in molecule
-! remove wrappers from replica
-! remove createNormalisedRandomVector* from replica
-! remove passing of angle and distance; use constants from definitions straight in Molecule (at the level where the random vector is generated)
-
+* make Molecule::rotate call Molecule::setRotation, etc.
 
 ADD
 * crankshaft -- need to select a residue which is not at either end of a linker
@@ -42,7 +35,6 @@ GRAAAAAAH, CLEAN UP MAIN
 * clean up stuff for reading commandline params and reading args from file (ewwwwwww)
 
 CLEANUP
-* Eliminate duplication between constructors which take an existing object as a parameter, and copy methods
 * delete cruft marked for deletion and commented-out old stuff
 * Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
 * put initRNGs in init of replica and freeRNGs in destructor
@@ -53,7 +45,6 @@ CLEANUP
     * Do we *ever* construct a molecule without a pdb file?
 * REPLICA:
     * Avoid using globals from definitions for things other than physical constants. e.g. pass rotate / translate steps into replica constructor
-    * log function with loglevels which does cout conditionally; replace million OUTPUT_LEVEL checks?
 * AMINO ACIDS
     * clean up read from file
 

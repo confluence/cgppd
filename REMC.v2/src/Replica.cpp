@@ -168,11 +168,8 @@ void Replica::exchangeReplicas(Replica &r)
     swap(samplesSinceLastExchange,r.samplesSinceLastExchange);
     swap(totalBoundSamples,r.totalBoundSamples);
     swap(totalSamples,r.totalSamples);
-
-
 }
 
-// TODO: eliminate this; it's only used to construct replicas from an initial replica.
 void Replica::copy(const Replica &r)
 {
     label = r.label;
@@ -184,28 +181,16 @@ void Replica::copy(const Replica &r)
     nonCrowderCount = r.nonCrowderCount;
     nonCrowderResidues = r.nonCrowderResidues;
 
-//     if (molecules != NULL && moleculeCount != r.moleculeCount )
-    // TODO: move this thing to a common function; it's used in three places!
-    if (moleculeCount != 0 && moleculeCount != r.moleculeCount )
+    if (moleculeCount != 0)
     {
-        // TODO why are we wrapping this? when will it not work?
-        try
-        {
-            delete [] molecules;
-        }
-        catch ( char * str )
-        {
-            cout << "Exception raised: delete [] molecules in Replica::copy()" << endl;
-        }
+        delete [] molecules;
     }
-
     molecules = new Molecule[r.moleculeCount];
     moleculeCount = r.moleculeCount;
 
     //the next bit is important because it makes sure that residues are contiguous in memory => better cpu performance
     contiguousResiduesSize = int(32.0f*ceil(float(residueCount)/32.0f));
     contiguousResidues = new Residue[contiguousResiduesSize];
-    // contiguousResidues[residueCount..contiguousResiduesSize-1].aminoAcidIndex == PADDER_IDENTIFIER
     for (int i=residueCount; i<contiguousResiduesSize; i++)
     {
         contiguousResidues[i].aminoAcidIndex = int(PADDER_IDENTIFIER);
@@ -214,30 +199,7 @@ void Replica::copy(const Replica &r)
     int rescount = 0;
     for (size_t m = 0; m < moleculeCount; m++)
     {
-        // TODO: pass this to an init function on Molecule, for the good of mankind.
         molecules[m].copy(r.molecules[m], contiguousResidues + rescount);
-//         memcpy(contiguousResidues+rescount, r.molecules[m].Residues, r.molecules[m].residueCount*sizeof(Residue));
-//
-//         molecules[m].contiguous = true;
-//         molecules[m].Residues = contiguousResidues+rescount;
-//         molecules[m].residueCount = r.molecules[m].residueCount;
-//
-//         molecules[m].Links = new Link[r.molecules[m].linkCount];
-//         memcpy(molecules[m].Links, r.molecules[m].Links, r.molecules[m].linkCount*sizeof(Link));
-//         molecules[m].linkCount = r.molecules[m].linkCount;
-//
-//         molecules[m].Segments = new Segment[r.molecules[m].segmentCount];
-//         memcpy(molecules[m].Segments, r.molecules[m].Segments, r.molecules[m].segmentCount*sizeof(Segment));
-//         molecules[m].segmentCount = r.molecules[m].segmentCount;
-//
-//         molecules[m].Linkers = new int[r.molecules[m].linkerCount];
-//         memcpy(molecules[m].Linkers, r.molecules[m].Linkers, r.molecules[m].linkerCount*sizeof(int));
-//         molecules[m].linkerCount = r.molecules[m].linkerCount;
-//
-//         molecules[m].AminoAcidsData = r.molecules[m].AminoAcidsData;
-//         molecules[m].center = r.molecules[m].center;
-//         molecules[m].rotation = r.molecules[m].rotation;
-//         molecules[m].moleculeRoleIdentifier = r.molecules[m].moleculeRoleIdentifier;
         rescount += r.molecules[m].residueCount;
     }
 
@@ -252,7 +214,7 @@ void Replica::reserveContiguousMoleculeArray(int size)
 {
     if (moleculeCount != 0)
     {
-        cout << " ** Molecules already exist. Cannot reserve size" << endl;
+        LOG(ERROR, "Cannot reserve molecule size: molecules already exist.")
         return;
     }
     moleculeArraySize = size;
@@ -266,16 +228,13 @@ int Replica::loadMolecule(const char* pdbfilename)
         moleculeArraySize += 3;
         Molecule *new_molecules = new Molecule[moleculeArraySize];
         if (moleculeCount > 0)
-            memcpy(new_molecules,molecules,sizeof(Molecule)*moleculeCount);
-        try	{
+        {
+            memcpy(new_molecules, molecules, sizeof(Molecule)*moleculeCount);
             delete [] molecules;    // free existing array before forgetting about it
-        }
-        catch ( char * str ) 	{
-            cout << "Exception raised: delete [] molecules failed" << endl;
         }
 
         molecules = new Molecule[moleculeArraySize];
-        memcpy(molecules,new_molecules,sizeof(Molecule)*moleculeCount);
+        memcpy(molecules, new_molecules, sizeof(Molecule)*moleculeCount);
         delete [] new_molecules;
     }
 
@@ -327,19 +286,6 @@ void Replica::freeRNGs()
     gsl_ran_discrete_free(MC_discrete_table);
     delete [] MC_move_weights;
 #endif
-}
-
-// TODO: remove these once the ones in molecule are used everywhere
-Vector3f Replica::createNormalisedRandomVector(gsl_rng * r)
-{
-    return (Vector3f(gsl_rng_uniform(r)-0.5,0.5-gsl_rng_uniform(r),gsl_rng_uniform(r)-0.5)).normalize();
-}
-
-Vector3double Replica::createNormalisedRandomVectord(gsl_rng * r)
-{
-    Vector3double x(gsl_rng_uniform(r)-0.5,0.5-gsl_rng_uniform(r),gsl_rng_uniform(r)-0.5);
-    x.normalizeInPlace();
-    return x;
 }
 
 uint Replica::get_MC_mutation_type(const Molecule* m)
