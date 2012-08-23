@@ -654,6 +654,7 @@ Potential Molecule::E(const float bounding_value)
     // LJ and DH between segments within molecule
     if (update_LJ_and_DH)
     {
+        LOG(DEBUG, "Molecule %d LJ and DH needs to be calculated.", index);
         potential.reset_LJ_subtotal();
         potential.reset_DH_subtotal();
 
@@ -700,6 +701,7 @@ Potential Molecule::E(const float bounding_value)
                 // LJ and DH within linker
                 if (iSeg.update_LJ_and_DH)
                 {
+                    LOG(DEBUG, "Molecule %d segment %d LJ and DH needs to be calculated.", index, i);
                     potential.reset_LJ_subtotal();
                     potential.reset_DH_subtotal();
 

@@ -31,6 +31,7 @@ double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_va
 {
     if (l.update_e_bond)
     {
+        LOG(DEBUG, "Bond needs to be calculated.");
         // eqn 9: kim2008
         double r(rj.distance(ri, bounding_value));
         l.pseudo_bond = r;
@@ -45,6 +46,7 @@ double calculate_angle(Residue &rh, Residue &ri, Residue &rj)
 {
     if (ri.update_e_angle)
     {
+        LOG(DEBUG, "Angle needs to be calculated.");
         Vector3f ab = rh.position - ri.position;
         Vector3f cb = rj.position - ri.position;
         double theta = ab.angle(cb);
@@ -63,6 +65,7 @@ double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue
 {
     if (l.update_e_torsion)
     {
+        LOG(DEBUG, "Torsion needs to be calculated.");
         // TODO: is this the most efficient way?
         Vector3f b1 = ri.position - rh.position;
         Vector3f b2 = rj.position - ri.position;
