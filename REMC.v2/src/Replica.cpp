@@ -214,7 +214,7 @@ void Replica::reserveContiguousMoleculeArray(int size)
 {
     if (moleculeCount != 0)
     {
-        LOG(ERROR, "Cannot reserve molecule size: molecules already exist.")
+        LOG(ERROR, "Cannot reserve molecule size: molecules already exist.");
         return;
     }
     moleculeArraySize = size;
