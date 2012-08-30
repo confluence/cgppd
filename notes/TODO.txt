@@ -2,19 +2,23 @@
 NOW
 --------------------------------------------------------------------------------
 
-REFACTOR AND ADD MC MOVES
-* merge streamed and not-streamed MC version
-* oldPotential is completely pointless; take it out
-* make Molecule::rotate call Molecule::setRotation, etc.
-
-ADD
+* add boundary conditions
 * crankshaft -- need to select a residue which is not at either end of a linker
-* boundary conditions -- EVERYTHING, NOT JUST TRANSLATE?
-* Make GPU MC call extra CPU moves for now?
+* recalculate center
+* merge streamed and not-streamed MC version
+
+* oldPotential is completely pointless; take it out
+* make Molecule::rotate call Molecule::setRotation, etc. ?
+
+* actually look at processing code and figure out what it does
 
 --------------------------------------------------------------------------------
-AFTER IT COMPILES AGAIN
+THEN
 --------------------------------------------------------------------------------
+
+STRUCTURE
+
+* Linkers, etc. don't actually *need* to be arrays. Just keep them as vectors?
 
 TEST
 
@@ -30,6 +34,7 @@ GRAAAAAAH, CLEAN UP MAIN
 * cuda destructor
 
 
+* only one twister for whole simulation
 * object for whole simulation + constructor
 * SimulationData already exists -- make a constructor!
 * clean up stuff for reading commandline params and reading args from file (ewwwwwww)
