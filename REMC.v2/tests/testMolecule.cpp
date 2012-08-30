@@ -29,6 +29,8 @@ void TestMolecule::setUp()
 
     molecule.AminoAcidsData = aminoAcidData;
     molecule.index = 0;
+    float testboxdim(118.4f);
+    molecule.bounding_value = testboxdim;
     molecule.initFromPDB("tests/1UBQ.pdb");
 }
 
@@ -87,6 +89,8 @@ void TestLinkerPotentials::setUp()
 
     molecule.init_amino_acid_data(aminoAcidData);
     molecule.index = 0;
+    float testboxdim(118.4f);
+    molecule.bounding_value = testboxdim;
     molecule.initFromPDB("tests/angiotensin.pdb");
 }
 
@@ -160,9 +164,7 @@ void TestLinkerPotentials::testGeometry()
         0.0 // padding for simplicity
     };
 
-    float testboxdim(118.4f);
-
-    Potential e = molecule.E(testboxdim);
+    Potential e = molecule.E();
 //     cout << e.total_LJ() << endl;
 //     cout << e.total_DH() << endl;
 //     cout << e.total_bond() << endl;

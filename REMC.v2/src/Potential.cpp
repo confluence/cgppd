@@ -31,7 +31,7 @@ double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_va
 {
     if (l.update_e_bond)
     {
-        LOG(DEBUG, "Bond needs to be calculated.\n");
+//         LOG(DEBUG, "Bond needs to be calculated.\n");
         // eqn 9: kim2008
         double r(rj.distance(ri, bounding_value));
         l.pseudo_bond = r;
@@ -39,6 +39,7 @@ double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_va
         l.update_e_bond = false;
     }
 
+//     LOG(DEBUG, "Bond: %f\n", l.e_bond);
     return l.e_bond;
 }
 
@@ -46,7 +47,7 @@ double calculate_angle(Residue &rh, Residue &ri, Residue &rj)
 {
     if (ri.update_e_angle)
     {
-        LOG(DEBUG, "Angle needs to be calculated.\n");
+//         LOG(DEBUG, "Angle needs to be calculated.\n");
         Vector3f ab = rh.position - ri.position;
         Vector3f cb = rj.position - ri.position;
         double theta = ab.angle(cb);
@@ -58,6 +59,7 @@ double calculate_angle(Residue &rh, Residue &ri, Residue &rj)
         ri.update_e_angle = false;
     }
 
+//     LOG(DEBUG, "Angle: %f\n", ri.e_angle);
     return ri.e_angle;
 }
 
@@ -65,7 +67,7 @@ double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue
 {
     if (l.update_e_torsion)
     {
-        LOG(DEBUG, "Torsion needs to be calculated.\n");
+//         LOG(DEBUG, "Torsion needs to be calculated.\n");
         // TODO: is this the most efficient way?
         Vector3f b1 = ri.position - rh.position;
         Vector3f b2 = rj.position - ri.position;
@@ -85,6 +87,7 @@ double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue
         l.update_e_torsion = false;
     }
 
+//     LOG(DEBUG, "Torsion: %f\n", l.e_torsion);
     return l.e_torsion;
 }
 #endif // FLEXIBLE_LINKS
