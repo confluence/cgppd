@@ -42,11 +42,13 @@ public:
     void setRotation(Quaternion q);
     void rotate(const Vector3double Raxis, const double angle);
 
+    float bounding_value;
+
     Vector3f normalised_random_vector_f(gsl_rng * rng);
     Vector3double normalised_random_vector_d(gsl_rng * rng);
     void rotate(gsl_rng * rng, const double rotate_step);
     // TODO: add boundary conditions to everything?
-    void translate(gsl_rng * rng, const float bounding_value, const double translate_step);
+    void translate(gsl_rng * rng, const double translate_step);
 
 #if FLEXIBLE_LINKS
     uint random_linker_index(gsl_rng * rng); // return random linker index
@@ -87,7 +89,7 @@ public:
     Segment *Segments; // Boundaries of all domains and linkers
     int *Linkers; // Array of indices of all flexible segments
     TorsionalLookupMatrix torsions;
-    Potential E(const float bounding_value);
+    Potential E();
 
     double LJ; // cached inter-segment LJ component of this molecule
     double DH; // cached inter-segment DH component of this molecule

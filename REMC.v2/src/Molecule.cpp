@@ -9,6 +9,7 @@ Molecule::Molecule()
     contiguous = false;
     linkerCount = 0;
     segmentCount = 0;
+    bounding_value = 0;
     moleculeRoleIdentifier = 0.0f;
     index = -2;
     rotation = Quaternion(1.0f,0,0,0);
@@ -80,6 +81,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     memcpy(Linkers, m.Linkers, m.linkerCount*sizeof(int));
     linkerCount = m.linkerCount;
 
+    bounding_value = m.bounding_value;
     AminoAcidsData = m.AminoAcidsData;
     center = m.center;
     rotation = m.rotation;
@@ -189,6 +191,7 @@ void Molecule::recalculate_center()
     recalculate_relative_positions();
 }
 
+// TODO: consistently use this and/or translate
 void Molecule::setPosition(Vector3f v)
 {
     center = v;
@@ -241,8 +244,20 @@ void Molecule::rotate(gsl_rng * rng, const double rotate_step)
     rotate(normalised_random_vector_d(rng), rotate_step);
 }
 
+
+/* TODO boundary conditions
+ * These are only applied to the *centre*?
+ * PERIODIC: just apply modulus
+ * SPHERE: save position, apply position, check if inside boundary, restore old position if not?
+ *
+ * rotate: obviously still inside sphere if inside sphere before
+ * translate: required
+ * rotate domain: required
+ * local: required?
+ */
+
 // TODO: add boundary conditions to everything?
-void Molecule::translate(gsl_rng * rng, const float bounding_value, const double translate_step)
+void Molecule::translate(gsl_rng * rng, const double translate_step)
 {
     Vector3f v = translate_step * normalised_random_vector_f(rng);
 
@@ -642,7 +657,7 @@ uint Molecule::random_residue_index(gsl_rng * rng)
 
 // TODO: add comments
 
-Potential Molecule::E(const float bounding_value)
+Potential Molecule::E()
 {
     Potential potential;
 
@@ -654,7 +669,7 @@ Potential Molecule::E(const float bounding_value)
     // LJ and DH between segments within molecule
     if (update_LJ_and_DH)
     {
-        LOG(DEBUG, "Molecule %d LJ and DH needs to be calculated.\n", index);
+//         LOG(DEBUG, "Molecule %d LJ and DH needs to be calculated.\n", index);
         potential.reset_LJ_subtotal();
         potential.reset_DH_subtotal();
 
@@ -688,6 +703,10 @@ Potential Molecule::E(const float bounding_value)
 
     /* Add molecule totals to potential totals */
     /* TODO: what impact do side calculations like this have on kahan sum accuracy? */
+
+//     LOG(DEBUG, "Molecule LJ subtotal: %f\n", potential.LJ_subtotal);
+//     LOG(DEBUG, "Molecule DH subtotal: %f\n", potential.DH_subtotal);
+
     potential.increment_LJ(LJ);
     potential.increment_DH(DH);
 
@@ -701,7 +720,7 @@ Potential Molecule::E(const float bounding_value)
                 // LJ and DH within linker
                 if (iSeg.update_LJ_and_DH)
                 {
-                    LOG(DEBUG, "Molecule %d segment %d LJ and DH needs to be calculated.\n", index, si);
+//                     LOG(DEBUG, "Molecule %d segment %d LJ and DH needs to be calculated.\n", index, si);
                     potential.reset_LJ_subtotal();
                     potential.reset_DH_subtotal();
 
@@ -723,6 +742,9 @@ Potential Molecule::E(const float bounding_value)
 
                     iSeg.update_LJ_and_DH = false;
                 }
+
+//                 LOG(DEBUG, "Segment LJ subtotal: %f\n", potential.LJ_subtotal);
+//                 LOG(DEBUG, "Segment DH subtotal: %f\n", potential.DH_subtotal);
 
                 /* Add segment totals to potential totals */
                 potential.increment_LJ(iSeg.LJ);
@@ -753,6 +775,11 @@ Potential Molecule::E(const float bounding_value)
         }
     }
 
+//     LOG(DEBUG, "Total LJ : %f\n", potential.total_LJ());
+//     LOG(DEBUG, "Total DH : %f\n", potential.total_DH());
+//     LOG(DEBUG, "Total bond : %f\n", potential.total_bond());
+//     LOG(DEBUG, "Total angle : %f\n", potential.total_angle());
+//     LOG(DEBUG, "Total torsion : %f\n", potential.total_torsion());
     return potential;
 }
 

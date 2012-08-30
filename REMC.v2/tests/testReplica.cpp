@@ -75,8 +75,8 @@ void TestReplica::testMC()
 {
     Replica child_replica;
     child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, 1);
-    LOG(DEBUG, "+++Doing initial potential calculation.\n");
+//     LOG(DEBUG, "+++Doing initial potential calculation.\n");
     child_replica.potential = child_replica.E();
-    LOG(DEBUG, "+++Starting MC search.\n");
+//     LOG(DEBUG, "+++Starting MC search.\n");
     child_replica.MCSearch(20);
 }

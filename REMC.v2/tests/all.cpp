@@ -1,9 +1,3 @@
-// #include <UnitTest++.h>
-//
-// int main() {
-//     return UnitTest::RunAllTests();
-// }
-
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 
