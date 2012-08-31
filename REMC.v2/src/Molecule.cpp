@@ -283,6 +283,8 @@ void Molecule::recalculate_center(Vector3f difference)
 {
     // TODO: doing this after each local move is expensive -- can we get away with calling it once from Replica at the end of all local moves?
     // YES, because none of the local moves care about the centre.
+    // NOT ANYMORE, because the boundary conditions care about the centre.
+    // BUT we can recalculate relative positions once at the end?
     center = ((center * residueCount) + difference) / residueCount;
     recalculate_relative_positions();
 }
