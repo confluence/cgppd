@@ -36,7 +36,7 @@ public:
     void reserveResidueSpace(int size);
     void saveAsPDB(const char *filename);
     void recalculate_relative_positions();
-    void recalculate_center(); // TODO: actually use this
+    Vector3f recalculate_center(); // TODO: actually use this
     void setPosition(Vector3f v);
     void translate(Vector3f v);
     void setRotation(Quaternion q);
@@ -46,15 +46,16 @@ public:
 
     Vector3f normalised_random_vector_f(gsl_rng * rng);
     Vector3double normalised_random_vector_d(gsl_rng * rng);
+    Vector3f apply_boundary_conditions(Vector3f old_center, Vector3f new_center);
+
     void rotate(gsl_rng * rng, const double rotate_step);
-    // TODO: add boundary conditions to everything?
     void translate(gsl_rng * rng, const double translate_step);
 
 #if FLEXIBLE_LINKS
     uint random_linker_index(gsl_rng * rng); // return random linker index
     uint random_residue_index(gsl_rng * rng, int li); // return random residue index from given linker
 
-    void recalculate_center(Vector3f difference);
+    Vector3f recalculate_center(Vector3f difference);
     void mark_cached_potentials_for_update(const int ri);
 
     void translate(Vector3f v, const int ri);
@@ -63,7 +64,12 @@ public:
 
     void rotate_domain(gsl_rng * rng, const double rotate_step);
     void make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step);
+
+    gsl_ran_discrete_t * MC_discrete_table;
 #endif
+
+    uint get_MC_mutation_type(); // randomly select type of MC move
+    void make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step);
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
     bool amIACrowder; // TODO: REMOVE

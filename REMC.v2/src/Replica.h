@@ -127,7 +127,7 @@ public:
     int nonCrowderResidues; // the number of non crowder residues for fast bound configurations test
     void countNonCrowdingResidues();
 
-    uint get_MC_mutation_type(const Molecule* m); // randomly select type of MC move
+//     uint get_MC_mutation_type(const Molecule* m); // randomly select type of MC move
 
 #if USING_CUDA
 
