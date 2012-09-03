@@ -259,7 +259,7 @@ int Replica::loadMolecule(const char* pdbfilename, Vector3f position, Vector3dou
     return i;
 }
 
-// TODO: why is this not called from the constructor?
+// TODO: all of this needs to be done once for the whole simulation
 void Replica::initRNGs()
 {
     srand(time(NULL)+(label+1)*(label+1));
@@ -276,6 +276,11 @@ void Replica::initRNGs()
     MC_move_weights[3] = WEIGHT_MC_LOCAL;
 
     MC_discrete_table = gsl_ran_discrete_preproc(4, MC_move_weights);
+    for (size_t m = 0; m < moleculeCount; m++)
+    {
+        // TODO this is hacky, but it will be gone when this is per-simulation
+        molecules[m].MC_discrete_table = MC_discrete_table;
+    }
 #endif
 }
 
@@ -285,26 +290,27 @@ void Replica::freeRNGs()
     gsl_rng_free(rng);
 
 #if FLEXIBLE_LINKS
+    // TODO: will this be a problem for the molecules?
     gsl_ran_discrete_free(MC_discrete_table);
     delete [] MC_move_weights;
 #endif
 }
 
-uint Replica::get_MC_mutation_type(const Molecule* m)
-{
-#if FLEXIBLE_LINKS
-    if (m->linkerCount > 0)
-    {
-        return gsl_ran_discrete(rng, MC_discrete_table);
-    }
-    else
-    {
-        return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
-    }
-#else
-    return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
-#endif
-}
+// uint Replica::get_MC_mutation_type(const Molecule* m)
+// {
+// #if FLEXIBLE_LINKS
+//     if (m->linkerCount > 0)
+//     {
+//         return gsl_ran_discrete(rng, MC_discrete_table);
+//     }
+//     else
+//     {
+//         return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
+//     }
+// #else
+//     return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
+// #endif
+// }
 
 void Replica::MCSearch(int steps)
 {
@@ -314,43 +320,44 @@ void Replica::MCSearch(int steps)
     {
 //         LOG(INFO, "Step: %d\n", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
-        uint mutationType = get_MC_mutation_type(&molecules[moleculeNo]);
-
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
 
-        switch (mutationType)
-        {
-            case MC_ROTATE:
-            {
-                molecules[moleculeNo].rotate(rng, rotateStep);
-//                 LOG(DEBUG, "Rotate: Replica %d Molecule %d\n", label, moleculeNo);
-                break;
-            }
-            case MC_TRANSLATE:
-            {
-                // TODO add bounding value everywhere
-                molecules[moleculeNo].translate(rng, translateStep);
-//                 LOG(DEBUG, "Translate: Replica %d Molecule %d\n", label, moleculeNo);
-                break;
-            }
-#if FLEXIBLE_LINKS
-            case MC_ROTATE_DOMAIN:
-            {
-                molecules[moleculeNo].rotate_domain(rng, rotateStep);
-//                 LOG(DEBUG, "Rotate domain: Replica %d Molecule %d\n", label, moleculeNo);
-                break;
-            }
-            case MC_LOCAL:
-            {
-                molecules[moleculeNo].make_local_moves(rng, rotateStep, translateStep);
-//                 LOG(DEBUG, "Local linker moves: Replica %d Molecule %d\n", label, moleculeNo);
-                break;
-            }
-#endif // FLEXIBLE_LINKS
-            default:
-                break;
-        }
+        molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
+
+//         uint mutationType = get_MC_mutation_type(&molecules[moleculeNo]);
+//         switch (mutationType)
+//         {
+//             case MC_ROTATE:
+//             {
+//                 molecules[moleculeNo].rotate(rng, rotateStep);
+// //                 LOG(DEBUG, "Rotate: Replica %d Molecule %d\n", label, moleculeNo);
+//                 break;
+//             }
+//             case MC_TRANSLATE:
+//             {
+//                 // TODO add bounding value everywhere
+//                 molecules[moleculeNo].translate(rng, translateStep);
+// //                 LOG(DEBUG, "Translate: Replica %d Molecule %d\n", label, moleculeNo);
+//                 break;
+//             }
+// #if FLEXIBLE_LINKS
+//             case MC_ROTATE_DOMAIN:
+//             {
+//                 molecules[moleculeNo].rotate_domain(rng, rotateStep);
+// //                 LOG(DEBUG, "Rotate domain: Replica %d Molecule %d\n", label, moleculeNo);
+//                 break;
+//             }
+//             case MC_LOCAL:
+//             {
+//                 molecules[moleculeNo].make_local_moves(rng, rotateStep, translateStep);
+// //                 LOG(DEBUG, "Local linker moves: Replica %d Molecule %d\n", label, moleculeNo);
+//                 break;
+//             }
+// #endif // FLEXIBLE_LINKS
+//             default:
+//                 break;
+//         }
 
 #if CUDA_E
         // copy host data to device. so we can do the calculations on it.

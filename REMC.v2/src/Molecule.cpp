@@ -153,7 +153,6 @@ void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
 void Molecule::translate(const Vector3f v)
 {
     //center = center+v;
-
     center.x += v.x;
     center.y += v.y;
     center.z += v.z;
@@ -161,14 +160,9 @@ void Molecule::translate(const Vector3f v)
     for (size_t i=0; i<residueCount; i++)
     {
         //Residues[i].position = Residues[i].position + v;
-
-        // faster. no oo overhead
         Residues[i].position.x += v.x;
         Residues[i].position.y += v.y;
         Residues[i].position.z += v.z;
-
-        //even faster, use sse?
-
     }
 }
 
@@ -180,18 +174,16 @@ void Molecule::recalculate_relative_positions()
     }
 }
 
-void Molecule::recalculate_center()
+Vector3f Molecule::recalculate_center()
 {
     Vector3f accumulator(0,0,0);
     for (size_t i=0; i<residueCount; i++)
     {
-        accumulator = accumulator + Residues[i].position;
+        accumulator += Residues[i].position;
     }
-    center = accumulator / residueCount;
-    recalculate_relative_positions();
+    return accumulator / residueCount;
 }
 
-// TODO: consistently use this and/or translate
 void Molecule::setPosition(Vector3f v)
 {
     center = v;
@@ -239,54 +231,45 @@ Vector3double Molecule::normalised_random_vector_d(gsl_rng * rng)
     return x;
 }
 
-void Molecule::rotate(gsl_rng * rng, const double rotate_step)
+Vector3f Molecule::apply_boundary_conditions(Vector3f old_center, Vector3f new_center)
 {
-    rotate(normalised_random_vector_d(rng), rotate_step);
-}
-
-
-/* TODO boundary conditions
- * These are only applied to the *centre*?
- * PERIODIC: just apply modulus
- * SPHERE: save position, apply position, check if inside boundary, restore old position if not?
- *
- * rotate: obviously still inside sphere if inside sphere before
- * translate: required
- * rotate domain: required
- * local: required?
- */
-
-// TODO: add boundary conditions to everything?
-void Molecule::translate(gsl_rng * rng, const double translate_step)
-{
-    Vector3f v = translate_step * normalised_random_vector_f(rng);
-
 #if BOUNDING_METHOD == BOUNDING_SPHERE
-    if ((center + v).sumSquares() < bounding_value * bounding_value)
+    if (new_center.sumSquares() < bounding_value * bounding_value)
     {
-        translate(v);
+        return new_center;
     }
     else
     {
+        return old_center;
     }
 #elif BOUNDING_METHOD == PERIODIC_BOUNDARY
-    Vector3f new_pos = center + v;
-    new_pos.x = fmod(new_pos.x + bounding_value, bounding_value);
-    new_pos.y = fmod(new_pos.y + bounding_value, bounding_value);
-    new_pos.z = fmod(new_pos.z + bounding_value, bounding_value);
-    setPosition(new_pos);
+    new_center.x = fmod(new_center.x, bounding_value);
+    new_center.y = fmod(new_center.y, bounding_value);
+    new_center.z = fmod(new_center.z, bounding_value);
+    return new_center;
 #endif
 }
 
-#if FLEXIBLE_LINKS
-void Molecule::recalculate_center(Vector3f difference)
+void Molecule::rotate(gsl_rng * rng, const double rotate_step)
 {
-    // TODO: doing this after each local move is expensive -- can we get away with calling it once from Replica at the end of all local moves?
-    // YES, because none of the local moves care about the centre.
-    // NOT ANYMORE, because the boundary conditions care about the centre.
-    // BUT we can recalculate relative positions once at the end?
-    center = ((center * residueCount) + difference) / residueCount;
-    recalculate_relative_positions();
+    // no boundary conditions required, because the centre doesn't change
+    rotate(normalised_random_vector_d(rng), rotate_step);
+}
+
+void Molecule::translate(gsl_rng * rng, const double translate_step)
+{
+    Vector3f v = translate_step * normalised_random_vector_f(rng);
+    new_center = apply_boundary_conditions(center, center + v);
+    if (new_center != center)
+    {
+        setPosition(new_center);
+    }
+}
+
+#if FLEXIBLE_LINKS
+Vector3f Molecule::recalculate_center(Vector3f difference)
+{
+    return ((center * residueCount) + difference) / residueCount;
 }
 
 void Molecule::mark_cached_potentials_for_update(const int ri)
@@ -299,7 +282,7 @@ void Molecule::mark_cached_potentials_for_update(const int ri)
         }
     }
 
-    // Not checking segment boundaries here, because they are checked when linker potentials are calculated TODO wat?!
+    // Not checking segment boundaries here, because they are checked when linker potentials are calculated
 
     if (ri > 1) {
         Links[ri - 2].update_e_torsion = true;
@@ -321,20 +304,21 @@ void Molecule::mark_cached_potentials_for_update(const int ri)
     }
 }
 
-//TODO TODO TODO boundary conditions -- see how they're done for other MC moves
-
 void Molecule::translate(Vector3f v, const int ri)
 {
-    // translate one residue
-    Residues[ri].position.x += v.x;
-    Residues[ri].position.y += v.y;
-    Residues[ri].position.z += v.z;
+    // apply boundary conditions, possibly rejecting the move
+    new_center = apply_boundary_conditions(center, recalculate_center(v));
 
-    // recalculate centre (just one residue changed)
-    recalculate_center(v);
+    if (new_center != center)
+    {
+        // translate one residue
+        Residues[ri].position.x += v.x;
+        Residues[ri].position.y += v.y;
+        Residues[ri].position.z += v.z;
 
-    // mark potential values for update
-    mark_cached_potentials_for_update(ri);
+        // recalculate centre
+        center = new_center;
+    }
 }
 
 void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
@@ -356,16 +340,21 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     q.normalize();
 
     // apply rotation to residue
-    Vector3f old_position = Residues[ri].position;
     Vector3f relative_position = Residues[ri].position - Residues[ri - 1].position;
     relative_position = q.rotateVector(relative_position);
-    Residues[ri].position = relative_position + Residues[ri - 1].position;
+    Vector3f new_position = relative_position + Residues[ri - 1].position;
 
-    // recalculate centre (just one residue changed)
-    recalculate_center(Residues[ri].position - old_position);
+    // apply boundary conditions, possibly rejecting the move
+    new_center = apply_boundary_conditions(center, recalculate_center(new_position - Residues[ri].position));
 
-    // mark potential values for update
-    mark_cached_potentials_for_update(ri);
+    if (new_center != center)
+    {
+        // apply the move
+        Residues[ri].position = new_position;
+
+        // recalculate centre
+        center = new_center;
+    }
 }
 
 void Molecule::rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before)
@@ -390,11 +379,8 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
         Residues[i].position = relative_position + Residues[ri].position;
     }
 
-    // recalculate centre (everything)
-    recalculate_center();
-
-    // mark potential values for update
-    mark_cached_potentials_for_update(ri);
+    // TODO: how to apply boundary conditions? Need to be able to reverse move.
+    center = recalculate_center();
 }
 
 void Molecule::rotate_domain(gsl_rng * rng, const double rotate_step)
@@ -405,7 +391,8 @@ void Molecule::rotate_domain(gsl_rng * rng, const double rotate_step)
     bool before = (bool) gsl_ran_bernoulli(rng, 0.5);
 
     rotate_domain(raxis, rotate_step, ri, before);
-    // TODO TODO TODO recalculate the centre afterwards
+    mark_cached_potentials_for_update(ri);
+    recalculate_relative_positions();
 }
 
 void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step)
@@ -433,11 +420,67 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             }
             default:
                 break;
+
+            mark_cached_potentials_for_update(ri);
         }
+        // TODO apply boundary conditions
     }
-    // TODO TODO TODO recalculate the centre afterwards
+    recalculate_relative_positions();
 }
 #endif // FLEXIBLE_LINKS
+
+uint Replica::get_MC_mutation_type()
+{
+#if FLEXIBLE_LINKS
+    if (linkerCount > 0)
+    {
+        return gsl_ran_discrete(rng, MC_discrete_table);
+    }
+    else
+    {
+        return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
+    }
+#else
+    return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
+#endif
+}
+
+void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step)
+{
+    uint mutationType = get_MC_mutation_type();
+    switch (mutationType)
+    {
+        case MC_ROTATE:
+        {
+            rotate(rng, rotateStep);
+//                 LOG(DEBUG, "Rotate: Replica %d Molecule %d\n", label, moleculeNo);
+            break;
+        }
+        case MC_TRANSLATE:
+        {
+            // TODO add bounding value everywhere
+            translate(rng, translateStep);
+//                 LOG(DEBUG, "Translate: Replica %d Molecule %d\n", label, moleculeNo);
+            break;
+        }
+#if FLEXIBLE_LINKS
+        case MC_ROTATE_DOMAIN:
+        {
+            rotate_domain(rng, rotateStep);
+//                 LOG(DEBUG, "Rotate domain: Replica %d Molecule %d\n", label, moleculeNo);
+            break;
+        }
+        case MC_LOCAL:
+        {
+            make_local_moves(rng, rotateStep, translateStep);
+//                 LOG(DEBUG, "Local linker moves: Replica %d Molecule %d\n", label, moleculeNo);
+            break;
+        }
+#endif // FLEXIBLE_LINKS
+        default:
+            break;
+    }
+}
 
 bool Molecule::initFromPDB(const char* pdbfilename)
 {
