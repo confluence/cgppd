@@ -198,7 +198,7 @@ public:
     void FreeSumSpace();		// frees the above
     float SumGridResults();	//sums the grid returned by the potential kernel
     uint lastMutationIndex;
-    float oldPotential;
+//     float oldPotential;
     float newPotential;
     //split the functions to allow for latency hiding and overlapping calls
     void MCSearchMutate();

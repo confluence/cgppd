@@ -2,9 +2,6 @@
 NOW
 --------------------------------------------------------------------------------
 
-* add boundary conditions
-* crankshaft -- need to select a residue which is not at either end of a linker
-* recalculate center
 * merge streamed and not-streamed MC version
 
 * oldPotential is completely pointless; take it out

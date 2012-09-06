@@ -314,7 +314,7 @@ void Replica::freeRNGs()
 
 void Replica::MCSearch(int steps)
 {
-    float oldPotential = potential;
+//     float oldPotential = potential;
 
     for (int step=0; step<steps; step++)
     {
@@ -373,13 +373,14 @@ void Replica::MCSearch(int steps)
 #else // only CPU calls
         float newPotential = E();
 #endif
-        float delta = newPotential - oldPotential;
+//         float delta = newPotential - oldPotential;
+        float delta = newPotential - potential;
 
         // accept change if its better.
         if (delta < 0.0)
         {
             potential = newPotential;
-            oldPotential = potential;
+//             oldPotential = potential;
             accept++;
 //             LOG(DEBUG, "  * Replace: Replica %d Molecule %d: delta E = %f; E = %f\n", label, moleculeNo, delta, potential);
         }
@@ -387,7 +388,7 @@ void Replica::MCSearch(int steps)
         else if (gsl_rng_uniform(rng) < exp(-(delta*4184.0f)/(Rgas*temperature)))
         {
             potential = newPotential;
-            oldPotential = potential;
+//             oldPotential = potential;
             acceptA++;
 //             LOG(DEBUG, "  **Replace: Replica %d Molecule %d: delta E = %f; U < %f; E = %f\n", label, moleculeNo, delta, exp(-delta * 4.184f/(Rgas*temperature)), potential);
         }
@@ -400,7 +401,7 @@ void Replica::MCSearch(int steps)
 #if CUDA_E
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
-            potential = oldPotential;
+//             potential = oldPotential;
         }
     }
 }
@@ -651,36 +652,39 @@ float Replica::SumGridResults()
 // 1/3 of the above function, does the mutation on the gpu asynchronously
 void Replica::MCSearchMutate()
 {
-    oldPotential = potential;
+//     oldPotential = potential;
 
     uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
     lastMutationIndex = moleculeNo;
 
-    // TODO: replace this with call to external function
-    uint mutationType = gsl_ran_bernoulli (rng, translate_rotate_bernoulli_bias);
-
     // save the current state so we can roll back if it was not a good mutation.
     savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
 
-    switch (mutationType)
-    {
-    case MC_ROTATE:
-    {
-        rotate(moleculeNo, rotateStep);
-        break;
-    }
+    molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-    case MC_TRANSLATE:
-    {
-        translate(moleculeNo, translateStep);
-        break;
-    }
+//     // TODO: replace this with call to external function
+//     uint mutationType = gsl_ran_bernoulli (rng, translate_rotate_bernoulli_bias);
+//
+//     switch (mutationType)
+//     {
+//     case MC_ROTATE:
+//     {
+//         rotate(moleculeNo, rotateStep);
+//         break;
+//     }
+//
+//     case MC_TRANSLATE:
+//     {
+//         translate(moleculeNo, translateStep);
+//         break;
+//     }
+//
+//     default:
+//         break;
+//     }
+//     MoleculeDataToDevice(moleculeNo);
 
-    default:
-        break;
-    }
-    MoleculeDataToDevice(moleculeNo);
-    newPotential = 0.0f;
+//     newPotential = 0.0f;
 }
 
 void Replica::MCSearchEvaluate()
@@ -704,24 +708,25 @@ void Replica::MCSearchAcceptReject()
     printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 #endif
 
-    float delta = (newPotential - oldPotential);  // needs to be in K_bT
+//     float delta = (newPotential - oldPotential);  // needs to be in K_bT
+    float delta = (newPotential - potential);  // needs to be in K_bT
     // if the change is bad then discard it.
     if (delta < 0.0f)
     {
         potential = newPotential;
-        oldPotential = potential;
+//         oldPotential = potential;
 //         LOG(DEBUG, "  * Replace: Replica %d Molecule %d: delta E = %f; E = %f", label, lastMutationIndex, delta, potential);
     }
     else if (gsl_rng_uniform(rng) < exp(-delta*4.184f/(Rgas*temperature)))
     {
         potential = newPotential;
-        oldPotential = potential;
+//         oldPotential = potential;
 //         LOG(DEBUG, "  * Replace: Replica %d Molecule %d: delta E = %f; U < %f; E = %f", label, lastMutationIndex, delta, exp(-delta*4.184f/(Rgas*temperature)), potential);
     }
     else
     {
         molecules[lastMutationIndex].undoStateChange(&savedMolecule);
-        potential = oldPotential;
+//         potential = oldPotential;
 //         LOG(DEBUG, "   - Reject: Replica %d Molecule %d: delta E = %f; E = %f", label, lastMutationIndex, delta, potential);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
