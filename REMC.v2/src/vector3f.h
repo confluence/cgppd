@@ -24,6 +24,9 @@ public:
     bool operator == (Vector3f v) {
         return (x == v.x && y == v.y && z == v.z);
     };
+    bool operator != (Vector3f v) {
+        return !(this == v);
+    };
     Vector3f operator = (Vector3f v) {
         x=v.x;
         y=v.y;
