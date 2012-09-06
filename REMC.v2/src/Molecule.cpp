@@ -22,6 +22,7 @@ Molecule::Molecule()
     LJ = 0.0f;
     DH = 0.0f;
     update_LJ_and_DH = true;
+    local_move_successful = false;
 #endif
 }
 
@@ -240,6 +241,7 @@ Vector3f Molecule::apply_boundary_conditions(Vector3f old_center, Vector3f new_c
     }
     else
     {
+        LOG(DEBUG, "Move rejected because it would move molecule beyond boundary sphere.");
         return old_center;
     }
 #elif BOUNDING_METHOD == PERIODIC_BOUNDARY
@@ -318,6 +320,10 @@ void Molecule::translate(Vector3f v, const int ri)
 
         // recalculate centre
         center = new_center;
+
+        mark_cached_potentials_for_update(ri);
+
+        local_move_successful = true;
     }
 }
 
@@ -354,6 +360,10 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
 
         // recalculate centre
         center = new_center;
+
+        mark_cached_potentials_for_update(ri);
+
+        local_move_successful = true;
     }
 }
 
@@ -383,7 +393,7 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     }
 
     // apply boundary conditions, possibly rejecting the move
-    new_center = recalculate_center(accumulated_difference);
+    new_center = apply_boundary_conditions(center, recalculate_center(accumulated_difference));
 
     if (new_center != center)
     {
@@ -394,6 +404,9 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
 
         // apply new center
         center = new_center;
+
+        mark_cached_potentials_for_update(ri);
+        recalculate_relative_positions();
     }
 }
 
@@ -405,15 +418,15 @@ void Molecule::rotate_domain(gsl_rng * rng, const double rotate_step)
     bool before = (bool) gsl_ran_bernoulli(rng, 0.5);
 
     rotate_domain(raxis, rotate_step, ri, before);
-    mark_cached_potentials_for_update(ri);
-    recalculate_relative_positions();
 }
 
 void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
+
+    local_move_successful = false;
     uint li = random_linker_index(rng);
     for (size_t i = 0; i <= NUM_LOCAL_MOVES; i++) {
-        uint ri = random_residue_index(rng, li);
+        //TODO: if linker too short for crankshaft, only return translate?
         //TODO: if crankshaft disabled, only return translate
         uint move = gsl_ran_bernoulli(rng, LOCAL_TRANSLATE_BIAS);
 
@@ -421,27 +434,28 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
         {
             case MC_LOCAL_TRANSLATE:
             {
+                uint ri = random_residue_index(rng, li);
                 Vector3f v = translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
                 break;
             }
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
+                uint ri = random_residue_index_middle(rng, li);
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
-                // TODO: we actually need to select a residue that is not at the end of the linker!
                 crankshaft(rotate_step, flip, ri);
                 break;
             }
             default:
                 break;
-
-            mark_cached_potentials_for_update(ri);
         }
-        // TODO apply boundary conditions
     }
 
     // recalculate positions of residues relative to centre
-    recalculate_relative_positions();
+    if (local_move_successful)
+    {
+        recalculate_relative_positions();
+    }
 }
 #endif // FLEXIBLE_LINKS
 
@@ -852,6 +866,11 @@ uint Molecule::random_linker_index(gsl_rng * rng)
 uint Molecule::random_residue_index(gsl_rng * rng, int li)
 {
     return Segments[Linkers[li]].random_residue_index(rng);
+}
+
+uint Molecule::random_residue_index_middle(gsl_rng * rng, int li)
+{
+    return Segments[Linkers[li]].random_residue_index_middle(rng);
 }
 
 

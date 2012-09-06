@@ -17,6 +17,7 @@ public:
 
     Segment();
     uint random_residue_index(gsl_rng * r);
+    uint random_residue_index_middle(gsl_rng * r);
 };
 
 #endif
