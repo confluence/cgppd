@@ -87,6 +87,7 @@ public:
     bool contiguous; // whether the array is pointing to a contiguous array created from the replica
 
     uint random_residue_index(gsl_rng * rng); // return random residue index
+    uint random_residue_index_middle(gsl_rng * rng); // return random residue index which is not on a linker edge
 
 #if FLEXIBLE_LINKS
     int linkCount;
