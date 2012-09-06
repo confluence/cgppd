@@ -54,6 +54,7 @@ public:
 #if FLEXIBLE_LINKS
     uint random_linker_index(gsl_rng * rng); // return random linker index
     uint random_residue_index(gsl_rng * rng, int li); // return random residue index from given linker
+    uint random_residue_index_middle(gsl_rng * rng, int li); // return random residue index from given linker which is not on a linker edge
 
     Vector3f recalculate_center(Vector3f difference);
     void mark_cached_potentials_for_update(const int ri);
@@ -69,7 +70,7 @@ public:
     gsl_ran_discrete_t * MC_discrete_table;
 #endif
 
-    uint get_MC_mutation_type(); // randomly select type of MC move
+    uint get_MC_mutation_type(gsl_rng * rng); // randomly select type of MC move
     void make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step);
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
@@ -87,7 +88,6 @@ public:
     bool contiguous; // whether the array is pointing to a contiguous array created from the replica
 
     uint random_residue_index(gsl_rng * rng); // return random residue index
-    uint random_residue_index_middle(gsl_rng * rng); // return random residue index which is not on a linker edge
 
 #if FLEXIBLE_LINKS
     int linkCount;
