@@ -90,7 +90,7 @@ void TestTenReplicas::testSanity()
     {
         replicas[i].aminoAcids = aminoAcidData;
         replicas[i].label = i+1;
-        replicas[i].setBoundingValue(testboxdim);
+        replicas[i].boundingValue = testboxdim;
 
         replicas[i].reserveContiguousMoleculeArray(2);
 
@@ -103,7 +103,7 @@ void TestTenReplicas::testSanity()
         replicas[i].countNonCrowdingResidues();
 
 #if USING_CUDA
-        replicas[i].setDeviceLJPotentials(ljp_t);
+        replicas[i].device_LJPotentials = ljp_t;
         replicas[i].setBlockSize(TILE_DIM);
         replicas[i].ReplicaDataToDevice();
 #endif

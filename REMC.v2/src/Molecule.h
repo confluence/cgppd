@@ -73,10 +73,8 @@ public:
     uint get_MC_mutation_type(gsl_rng * rng); // randomly select type of MC move
     void make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step);
 
-    void setMoleculeRoleIdentifier(float moleculeRoleIdentifier);
-    bool amIACrowder; // TODO: REMOVE
+    void setMoleculeRoleIdentifier(float moleculeRoleIdentifier); // this setter is actually useful
 
-    float getVolume();// TODO: REMOVE
     float calculateVolume();
     float calculateSASA();
 
