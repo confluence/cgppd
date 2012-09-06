@@ -20,7 +20,7 @@ public:
     void testPDBCentre();
 };
 
-// CPPUNIT_TEST_SUITE_REGISTRATION(TestMolecule);
+CPPUNIT_TEST_SUITE_REGISTRATION(TestMolecule);
 
 void TestMolecule::setUp()
 {
