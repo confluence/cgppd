@@ -261,7 +261,7 @@ void Molecule::rotate(gsl_rng * rng, const double rotate_step)
 void Molecule::translate(gsl_rng * rng, const double translate_step)
 {
     Vector3f v = translate_step * normalised_random_vector_f(rng);
-    new_center = apply_boundary_conditions(center, center + v);
+    Vector3f new_center = apply_boundary_conditions(center, center + v);
     if (new_center != center)
     {
         setPosition(new_center);
@@ -309,7 +309,7 @@ void Molecule::mark_cached_potentials_for_update(const int ri)
 void Molecule::translate(Vector3f v, const int ri)
 {
     // apply boundary conditions, possibly rejecting the move
-    new_center = apply_boundary_conditions(center, recalculate_center(v));
+    Vector3f new_center = apply_boundary_conditions(center, recalculate_center(v));
 
     if (new_center != center)
     {
@@ -351,7 +351,7 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     Residues[ri].new_position = relative_position + Residues[ri - 1].position;
 
     // apply boundary conditions, possibly rejecting the move
-    new_center = apply_boundary_conditions(center, recalculate_center(new_position - Residues[ri].position));
+    Vector3f new_center = apply_boundary_conditions(center, recalculate_center(Residues[ri].new_position - Residues[ri].position));
 
     if (new_center != center)
     {
@@ -393,7 +393,7 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     }
 
     // apply boundary conditions, possibly rejecting the move
-    new_center = apply_boundary_conditions(center, recalculate_center(accumulated_difference));
+    Vector3f new_center = apply_boundary_conditions(center, recalculate_center(accumulated_difference));
 
     if (new_center != center)
     {
@@ -459,7 +459,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
 }
 #endif // FLEXIBLE_LINKS
 
-uint Replica::get_MC_mutation_type()
+uint Molecule::get_MC_mutation_type()
 {
 #if FLEXIBLE_LINKS
     if (linkerCount > 0)
@@ -482,27 +482,27 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
     {
         case MC_ROTATE:
         {
-            rotate(rng, rotateStep);
+            rotate(rng, rotate_step);
 //                 LOG(DEBUG, "Rotate: Replica %d Molecule %d\n", label, moleculeNo);
             break;
         }
         case MC_TRANSLATE:
         {
             // TODO add bounding value everywhere
-            translate(rng, translateStep);
+            translate(rng, translate_step);
 //                 LOG(DEBUG, "Translate: Replica %d Molecule %d\n", label, moleculeNo);
             break;
         }
 #if FLEXIBLE_LINKS
         case MC_ROTATE_DOMAIN:
         {
-            rotate_domain(rng, rotateStep);
+            rotate_domain(rng, rotate_step);
 //                 LOG(DEBUG, "Rotate domain: Replica %d Molecule %d\n", label, moleculeNo);
             break;
         }
         case MC_LOCAL:
         {
-            make_local_moves(rng, rotateStep, translateStep);
+            make_local_moves(rng, rotate_step, translate_step);
 //                 LOG(DEBUG, "Local linker moves: Replica %d Molecule %d\n", label, moleculeNo);
             break;
         }
