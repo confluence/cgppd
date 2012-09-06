@@ -78,8 +78,8 @@ void Replica::init_child_replica(const Replica& ir, const int label, const float
 #if INCLUDE_TIMERS
     initTimers();
 #endif
-    label = label;
-    temperature = temperature;
+    this.label = label;
+    this.temperature = temperature;
     rotateStep = rotate_step;
     translateStep = translate_step;
     // TODO: only one range for entire simulation (but is the library threadsafe?)
