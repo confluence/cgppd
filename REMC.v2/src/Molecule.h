@@ -64,6 +64,7 @@ public:
 
     void rotate_domain(gsl_rng * rng, const double rotate_step);
     void make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step);
+    bool local_move_successful;
 
     gsl_ran_discrete_t * MC_discrete_table;
 #endif
