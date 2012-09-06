@@ -36,7 +36,6 @@ public:
     void init_first_replica(const vector<moldata> mdata, AminoAcids amino_acid_data, const float bounding_value, const int initial_molecule_array_size);
     void init_child_replica(const Replica& ir, const int label, const float temperature, const float rotate_step, const float translate_step, const int thread_count);
 
-    void setAminoAcidData(AminoAcids a);
     void reserveContiguousMoleculeArray(int size);
     void initRNGs();
     void freeRNGs();
@@ -71,29 +70,12 @@ public:
     int residueCount;
 
     float boundingValue;
-    void setBoundingValue(float value) { // TODO: eliminate this setter
-        boundingValue = value;
-    };
 
     float temperature;
     short label;
     double potential;
-
     float translateStep;
     double rotateStep;
-
-    void setTranslateStep(float t) { // TODO: eliminate this setter
-        translateStep = t;
-    }
-    void setRotateStep(double r) { // TODO: eliminate this setter
-        rotateStep = r;
-    }
-    void setTemperature(float t) { // TODO: eliminate this setter
-        temperature = t;
-    }
-    void setLabel(short l) { // TODO: eliminate this setter
-        label = l;
-    }
 
     // rngs for this object
     gsl_rng * rng; // we only need one Mersenne Twister for ALL THE THINGS, really.
@@ -126,8 +108,6 @@ public:
 
     int nonCrowderResidues; // the number of non crowder residues for fast bound configurations test
     void countNonCrowdingResidues();
-
-//     uint get_MC_mutation_type(const Molecule* m); // randomly select type of MC move
 
 #if USING_CUDA
 
@@ -175,18 +155,13 @@ public:
 #endif
 
     void ReplicaDataToDevice();	// copy the replica to the device
-
-    void setDeviceLJPotentials(float * ljp) { // TODO: eliminate this setter
-        device_LJPotentials = ljp;
-    }
-    void ReplicaDataToHost(); // TODO: Never used? Remove?
-    void UpdateDeviceData(); // TODO: Never used? Remove?
+    void ReplicaDataToHost(); // TODO: Never used?
+    void UpdateDeviceData(); // TODO: Never used?
     void MoleculeDataToDevice(int MoleculeID); // update a molecule on the device
     double EonDevice();
     double EonDeviceNC();
     void EonDeviceAsync();
-    void setLJpotentials(float *ljp); // TODO: eliminate this setter
-    void setBlockSize(int blockSize);
+    void setBlockSize(int blockSize); // this setter actually does stuff and is necessary
 
     void FreeDevice();
 
@@ -198,7 +173,6 @@ public:
     void FreeSumSpace();		// frees the above
     float SumGridResults();	//sums the grid returned by the potential kernel
     uint lastMutationIndex;
-//     float oldPotential;
     float newPotential;
     //split the functions to allow for latency hiding and overlapping calls
     void MCSearchMutate();

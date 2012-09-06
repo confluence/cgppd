@@ -456,7 +456,6 @@ void loadArgsFromFile(argdata * parameters)
         cout << "! Bounding value too small, setting equal to " << BOUNDING_VALUE << endl;
         parameters->bound = BOUNDING_VALUE;
     }
-//     initialReplica->setBoundingValue(parameters->bound);
 
     if (parameters->temperatureMax < parameters->temperatureMin)
     {
@@ -687,7 +686,7 @@ void *MCthreadableFunction(void *arg)
 
     for (int tx=0; tx<replicasInThisThread; tx++)
     {
-        replica[tx+threadIndex*tReplicas].setLJpotentials(deviceLJpTmp);
+        replica[tx+threadIndex*tReplicas].device_LJPotentials = deviceLJpTmp;
         replica[tx+threadIndex*tReplicas].ReplicaDataToDevice();
 
 
@@ -919,30 +918,15 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
 
     for (size_t i=0; i<parameters->replicas; i++)
     {
-        // TODO: how much of this can be set on the initial replica?
-        // TODO: make a new constructor which takes an existing replica as a parameter
-//         replica[i].copy(*initialReplica);
-// #if INCLUDE_TIMERS
-//         replica[i].initTimers();
-// #endif
-//         replica[i].setLabel(i);
-
         // changed to geometric sequence
-//         replica[i].setTemperature(parameters->temperatureMin * pow(geometricTemperature,int(i)));
         float temperature = parameters->temperatureMin * pow(geometricTemperature, int(i));
-
-//         replica[i].setRotateStep(MIN_ROTATION * pow(geometricRotation,int(i)));
         float rotate_step = MIN_ROTATION * pow(geometricRotation, int(i));
-//         replica[i].setTranslateStep(MIN_TRANSLATION * pow(geometricTranslate,int(i)));
         float translate_step = MIN_TRANSLATION * pow(geometricTranslate, int(i));
-
 
         // note which replica is the 300K replica for sampling
         // if there is no replica at 300K then choose the closest one.
         if ( abs(replica[i].temperature-300.0f) < abs(replica[_300kReplica].temperature-300.0f))
             _300kReplica = i;
-//         replica[i].initRNGs();
-//         replica[i].threadCount = parameters->threads;
 
         replica[i].init_child_replica(*initialReplica, i, temperature, rotate_step, translate_step, parameters->threads);
         printf ("Replica %d %.3f %.3f %.3f\n",int(i),replica[i].temperature,replica[i].translateStep,replica[i].rotateStep);
@@ -1365,7 +1349,7 @@ int main(int argc, char **argv)
         {
             exampleReplicas[i-1].aminoAcids = aminoAcidData;
             exampleReplicas[i-1].label = i;
-            exampleReplicas[i-1].setBoundingValue(testboxdim);
+            exampleReplicas[i-1].boundingValue = testboxdim;
             exampleReplicas[i-1].reserveContiguousMoleculeArray(2);
             sprintf(egnames,"data/conf%d/1a.pdb",i);
             exampleReplicas[i-1].loadMolecule(egnames);
@@ -1378,7 +1362,7 @@ int main(int argc, char **argv)
 
             //show that cuda returns the same energys for each
             // make sure the replicas know where to find the data, as the use it for calling cuda kernels
-            exampleReplicas[i-1].setDeviceLJPotentials(ljp_t);
+            exampleReplicas[i-1].device_LJPotentials = ljp_t;
             exampleReplicas[i-1].setBlockSize(TILE_DIM);
             exampleReplicas[i-1].ReplicaDataToDevice();
             ///cout << "CPU execution time: " << cutGetTimerValue(cpu_E_timer)/100.0f << "ms"<<  endl;
@@ -1404,19 +1388,14 @@ int main(int argc, char **argv)
 #endif
 
     Replica initialReplica; // TODO: we actually can just use a constructor here
-//     initialReplica.setAminoAcidData(aminoAcidData);
-//     initialReplica.setBoundingValue(BOUNDING_VALUE);
-//     initialReplica.reserveContiguousMoleculeArray(30);
     //if there is an input file load its contents here
     if (parameters.inputFile)
     {
-//         loadArgsFromFile(&parameters,&initialReplica);
         loadArgsFromFile(&parameters);
         getArgs(&parameters,argc,argv); // second pass to override any variables if doing performance tests
     }
     else
     {
-//         parameters.nonCrowders = 2;
         // deprecated function
         cout << "EXIT: Program requires a configuration file." << endl;
         cout << "use: REMCDockingGPU -f filename" << endl;
@@ -1431,7 +1410,7 @@ int main(int argc, char **argv)
 
     for (int i=0; i<initialReplica.moleculeCount; i++)
     {
-        printf("%2d: %3d %12.3f A^3 %s\n",i , initialReplica.molecules[i].residueCount, initialReplica.molecules[i].getVolume(),initialReplica.molecules[i].filename);
+        printf("%2d: %3d %12.3f A^3 %s\n",i , initialReplica.molecules[i].residueCount, initialReplica.molecules[i].volume,initialReplica.molecules[i].filename);
     }
     initialReplica.countNonCrowdingResidues();
     printf("counted : %3d complex residues\n",initialReplica.nonCrowderResidues);
@@ -1453,7 +1432,7 @@ int main(int argc, char **argv)
 
     // set box size
     initialReplica.setBlockSize(cuda_blockSize);
-    initialReplica.setBoundingValue(parameters.bound); // TODO: we already did that. Eliminate?
+    initialReplica.boundingValue = parameters.bound; // TODO: we already did that. Eliminate?
     // set box dimensions
     CUDA_setBoxDimension(parameters.bound);
 
@@ -1466,7 +1445,7 @@ int main(int argc, char **argv)
     float * ljp_tmp;
     cudaMalloc((void**)&ljp_tmp,LJArraySize);
     copyLJPotentialDataToDevice(ljp_tmp,&aminoAcidData);
-    initialReplica.setDeviceLJPotentials(ljp_tmp);
+    initialReplica.device_LJPotentials = ljp_tmp;
 
 
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM

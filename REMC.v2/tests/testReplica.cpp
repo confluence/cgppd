@@ -47,7 +47,7 @@ void TestReplica::setUp()
 
     replica.aminoAcids = aminoAcidData;
     replica.label = 1;
-    replica.setBoundingValue(testboxdim);
+    replica.boundingValue = testboxdim;
 
     replica.reserveContiguousMoleculeArray(2);
 

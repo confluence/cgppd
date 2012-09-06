@@ -15,7 +15,6 @@ Molecule::Molecule()
     rotation = Quaternion(1.0f,0,0,0);
     volume = 0.0f;
     hasFilename = false;
-    amIACrowder = false;
 #if FLEXIBLE_LINKS
     linkCount = 0;
     segmentCount = 0;
@@ -89,7 +88,6 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
     volume = m.volume;
     index = m.index;
-    amIACrowder = m.amIACrowder;
 
 #if FLEXIBLE_LINKS
     torsions = m.torsions;
@@ -131,8 +129,6 @@ void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
     this->moleculeRoleIdentifier = moleculeRoleIdentifier;
     if(moleculeRoleIdentifier == CROWDER_IDENTIFIER)
     {
-        amIACrowder = true;
-
 #if REPULSIVE_CROWDING
         for (int i =0; i<residueCount; i++)
         {
@@ -704,11 +700,6 @@ float Molecule::calculateSASA()
 {
     // todo, not required for now
     return 1.0f;
-}
-
-float Molecule::getVolume()
-{
-    return volume;
 }
 
 float Molecule::calculateVolume()
