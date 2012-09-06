@@ -459,7 +459,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
 }
 #endif // FLEXIBLE_LINKS
 
-uint Molecule::get_MC_mutation_type()
+uint Molecule::get_MC_mutation_type(gsl_rng * rng)
 {
 #if FLEXIBLE_LINKS
     if (linkerCount > 0)
@@ -477,7 +477,7 @@ uint Molecule::get_MC_mutation_type()
 
 void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
-    uint mutationType = get_MC_mutation_type();
+    uint mutationType = get_MC_mutation_type(rng);
     switch (mutationType)
     {
         case MC_ROTATE:
