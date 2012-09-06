@@ -342,7 +342,7 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     // apply rotation to residue
     Vector3f relative_position = Residues[ri].position - Residues[ri - 1].position;
     relative_position = q.rotateVector(relative_position);
-    Vector3f new_position = relative_position + Residues[ri - 1].position;
+    Residues[ri].new_position = relative_position + Residues[ri - 1].position;
 
     // apply boundary conditions, possibly rejecting the move
     new_center = apply_boundary_conditions(center, recalculate_center(new_position - Residues[ri].position));
@@ -350,7 +350,7 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     if (new_center != center)
     {
         // apply the move
-        Residues[ri].position = new_position;
+        Residues[ri].position = Residues[ri].new_position;
 
         // recalculate centre
         center = new_center;
@@ -373,14 +373,28 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
         end = residueCount;
     }
 
+    Vector3f accumulated_difference(0,0,0);
+
     for (int i = start; i < end; i++) {
         Vector3f relative_position = Residues[i].position - Residues[ri].position;
         relative_position = q.rotateVector(relative_position);
-        Residues[i].position = relative_position + Residues[ri].position;
+        Residues[i].new_position = relative_position + Residues[ri].position;
+        accumulated_difference += Residues[i].new_position - Residues[i].position;
     }
 
-    // TODO: how to apply boundary conditions? Need to be able to reverse move.
-    center = recalculate_center();
+    // apply boundary conditions, possibly rejecting the move
+    new_center = recalculate_center(accumulated_difference);
+
+    if (new_center != center)
+    {
+        // apply the move
+        for (int i = start; i < end; i++) {
+            Residues[i].position = Residues[i].new_position;
+        }
+
+        // apply new center
+        center = new_center;
+    }
 }
 
 void Molecule::rotate_domain(gsl_rng * rng, const double rotate_step)
@@ -425,6 +439,8 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
         }
         // TODO apply boundary conditions
     }
+
+    // recalculate positions of residues relative to centre
     recalculate_relative_positions();
 }
 #endif // FLEXIBLE_LINKS
