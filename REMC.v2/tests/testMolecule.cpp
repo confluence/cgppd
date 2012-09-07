@@ -27,7 +27,7 @@ void TestMolecule::setUp()
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
 
-    molecule.AminoAcidsData = aminoAcidData;
+    molecule.init_amino_acid_data(aminoAcidData);
     molecule.index = 0;
     float testboxdim(118.4f);
     molecule.bounding_value = testboxdim;

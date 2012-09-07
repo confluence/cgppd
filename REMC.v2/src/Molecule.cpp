@@ -57,8 +57,7 @@ void Molecule::init_amino_acid_data(AminoAcids &a)
 {
     AminoAcidsData = a;
 #if FLEXIBLE_LINKS
-//     torsions.setAminoAcidLookupData(AminoAcidsData);
-    torsions.loadData("data/torsional_pair_potentials", a);
+    torsions.loadData(TORSIONALPAIRDATA, a);
 #endif
 }
 
