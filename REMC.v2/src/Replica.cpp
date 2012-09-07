@@ -29,6 +29,7 @@ Replica::Replica()
     paircount = 0;
     nonCrowderResidues = 0;
     timersInit = false;
+    replicaIsOnDevice = false;
     translateStep = INITIAL_TRANSLATIONAL_STEP;
     rotateStep = INITIAL_ROTATIONAL_STEP;
 }
@@ -233,7 +234,7 @@ int Replica::loadMolecule(const char* pdbfilename)
         delete [] new_molecules;
     }
 
-    molecules[moleculeCount].AminoAcidsData = aminoAcids;
+    molecules[moleculeCount].init_amino_acid_data(aminoAcids);
     molecules[moleculeCount].index = moleculeCount;
     molecules[moleculeCount].initFromPDB(pdbfilename);
     molecules[moleculeCount].bounding_value = boundingValue;
@@ -307,8 +308,9 @@ void Replica::MCSearch(int steps)
 cout << "cuda E" << endl;
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
-
+cout << 1 << endl;
         newPotential = EonDevice();  // sequential cuda call
+cout << 2 << endl;
         //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
 // #if PERFORM_GPU_AND_CPU_E
 // cout << "cpu and gpu E" << endl;
@@ -322,6 +324,7 @@ cout << "cpu only E" << endl;
 #endif
         float delta = newPotential - potential;
 
+cout << 3 << endl;
         // accept change if its better.
         if (delta < 0.0)
         {
