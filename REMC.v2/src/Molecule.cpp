@@ -479,26 +479,26 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
         case MC_ROTATE:
         {
             rotate(rng, rotate_step);
-                LOG(DEBUG, "Rotate\t\t");
+                LOG(DEBUG, "Rotate\t");
             break;
         }
         case MC_TRANSLATE:
         {
             translate(rng, translate_step);
-                LOG(DEBUG, "Translate\t\t");
+                LOG(DEBUG, "Translate\t");
             break;
         }
 #if FLEXIBLE_LINKS
         case MC_ROTATE_DOMAIN:
         {
             rotate_domain(rng, rotate_step);
-                LOG(DEBUG, "Rotate domain\t\t");
+                LOG(DEBUG, "Flex\t");
             break;
         }
         case MC_LOCAL:
         {
             make_local_moves(rng, rotate_step, translate_step);
-                LOG(DEBUG, "Local linker moves\t\t");
+                LOG(DEBUG, "Local\t");
             break;
         }
 #endif // FLEXIBLE_LINKS
