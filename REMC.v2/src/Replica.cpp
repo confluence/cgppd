@@ -310,12 +310,12 @@ cout << "cuda E" << endl;
 
         newPotential = EonDevice();  // sequential cuda call
         //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
-#if PERFORM_GPU_AND_CPU_E
-cout << "cpu and gpu E" << endl;
-        float cpu_e(E());
-        float err = abs(cpu_e-newPotential)/abs(cpu_e);
-        printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
-#endif
+// #if PERFORM_GPU_AND_CPU_E
+// cout << "cpu and gpu E" << endl;
+//         float cpu_e(E());
+//         float err = abs(cpu_e-newPotential)/abs(cpu_e);
+//         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
+// #endif
 #else // only CPU calls
 cout << "cpu only E" << endl;
         newPotential = E();
