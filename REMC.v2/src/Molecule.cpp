@@ -430,24 +430,25 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
         {
             case MC_LOCAL_TRANSLATE:
             {
+                LOG(DEBUG, "T");
                 uint ri = random_residue_index(rng, li);
                 Vector3f v = translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
-                LOG(DEBUG, "T");
                 break;
             }
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
+                LOG(DEBUG, "C");
                 uint ri = random_residue_index_middle(rng, li);
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 crankshaft(rotate_step, flip, ri);
-                LOG(DEBUG, "C");
                 break;
             }
             default:
                 break;
         }
     }
+
     LOG(DEBUG, "\t");
 
     // recalculate positions of residues relative to centre
@@ -481,27 +482,27 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
     {
         case MC_ROTATE:
         {
-            rotate(rng, rotate_step);
             LOG(DEBUG, "Rotate   \t\t");
+            rotate(rng, rotate_step);
             break;
         }
         case MC_TRANSLATE:
         {
-            translate(rng, translate_step);
             LOG(DEBUG, "Translate\t\t");
+            translate(rng, translate_step);
             break;
         }
 #if FLEXIBLE_LINKS
         case MC_ROTATE_DOMAIN:
         {
-            rotate_domain(rng, rotate_step);
             LOG(DEBUG, "Flex     \t\t");
+            rotate_domain(rng, rotate_step);
             break;
         }
         case MC_LOCAL:
         {
-            make_local_moves(rng, rotate_step, translate_step);
             LOG(DEBUG, "Local    \t");
+            make_local_moves(rng, rotate_step, translate_step);
             break;
         }
 #endif // FLEXIBLE_LINKS
