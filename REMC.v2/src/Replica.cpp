@@ -293,7 +293,6 @@ void Replica::freeRNGs()
 
 void Replica::MCSearch(int steps)
 {
-    cout << "BEGIN: " << potential << newPotential << endl;
     for (int step=0; step<steps; step++)
     {
         LOG(INFO, "Step %3d:\t", step);
@@ -327,7 +326,6 @@ void Replica::MCSearch(int steps)
             potential = newPotential;
             accept++;
             LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
-            cout << "ACCEPT: " << potential << newPotential << endl;
         }
         // accept change if it meets the boltzmann criteria, must be (kJ/mol)/(RT), delta is in kcal/mol @ 294K
         else if (gsl_rng_uniform(rng) < exp(-(delta*4184.0f)/(Rgas*temperature)))
@@ -335,7 +333,6 @@ void Replica::MCSearch(int steps)
             potential = newPotential;
             acceptA++;
             LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta * 4.184f/(Rgas*temperature)));
-            cout << "ACCEPTA: " << potential << newPotential << endl;
         }
         //reject
         else
@@ -346,10 +343,8 @@ void Replica::MCSearch(int steps)
 #if CUDA_E
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
-            cout << "REJECT: " << potential << newPotential << endl;
         }
     }
-    cout << "END: " << potential << newPotential << endl;
 }
 
 inline float crowderPairPotential(const float r)
