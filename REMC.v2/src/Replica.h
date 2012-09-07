@@ -74,6 +74,12 @@ public:
     float temperature;
     short label;
     double potential;
+#if CUDA_E && !CUDA_STREAMS // TODO: really?
+    double newPotential;
+#else
+    float newPotential;
+#endif
+
     float translateStep;
     double rotateStep;
 
@@ -173,7 +179,6 @@ public:
     void FreeSumSpace();		// frees the above
     float SumGridResults();	//sums the grid returned by the potential kernel
     uint lastMutationIndex;
-    float newPotential;
     //split the functions to allow for latency hiding and overlapping calls
     void MCSearchMutate();
     void MCSearchEvaluate();
