@@ -312,9 +312,9 @@ void Replica::MCSearch(int steps)
         float cpu_e(E());
         float err = abs(cpu_e-newPotential)/abs(cpu_e);
         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
+#endif
 #else // only CPU calls
         float newPotential = E();
-#endif
 #endif
         float delta = newPotential - potential;
 
