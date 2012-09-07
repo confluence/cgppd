@@ -479,27 +479,26 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
         case MC_ROTATE:
         {
             rotate(rng, rotate_step);
-//                 LOG(DEBUG, "Rotate: Replica %d Molecule %d\n", label, moleculeNo);
+                LOG(DEBUG, "Rotate\n");
             break;
         }
         case MC_TRANSLATE:
         {
-            // TODO add bounding value everywhere
             translate(rng, translate_step);
-//                 LOG(DEBUG, "Translate: Replica %d Molecule %d\n", label, moleculeNo);
+                LOG(DEBUG, "Translate\n");
             break;
         }
 #if FLEXIBLE_LINKS
         case MC_ROTATE_DOMAIN:
         {
             rotate_domain(rng, rotate_step);
-//                 LOG(DEBUG, "Rotate domain: Replica %d Molecule %d\n", label, moleculeNo);
+                LOG(DEBUG, "Rotate domain\n");
             break;
         }
         case MC_LOCAL:
         {
             make_local_moves(rng, rotate_step, translate_step);
-//                 LOG(DEBUG, "Local linker moves: Replica %d Molecule %d\n", label, moleculeNo);
+                LOG(DEBUG, "Local linker moves\n");
             break;
         }
 #endif // FLEXIBLE_LINKS
@@ -735,7 +734,6 @@ Potential Molecule::E()
     // LJ and DH between segments within molecule
     if (update_LJ_and_DH)
     {
-//         LOG(DEBUG, "Molecule %d LJ and DH needs to be calculated.\n", index);
         potential.reset_LJ_subtotal();
         potential.reset_DH_subtotal();
 
@@ -770,9 +768,6 @@ Potential Molecule::E()
     /* Add molecule totals to potential totals */
     /* TODO: what impact do side calculations like this have on kahan sum accuracy? */
 
-//     LOG(DEBUG, "Molecule LJ subtotal: %f\n", potential.LJ_subtotal);
-//     LOG(DEBUG, "Molecule DH subtotal: %f\n", potential.DH_subtotal);
-
     potential.increment_LJ(LJ);
     potential.increment_DH(DH);
 
@@ -786,7 +781,6 @@ Potential Molecule::E()
                 // LJ and DH within linker
                 if (iSeg.update_LJ_and_DH)
                 {
-//                     LOG(DEBUG, "Molecule %d segment %d LJ and DH needs to be calculated.\n", index, si);
                     potential.reset_LJ_subtotal();
                     potential.reset_DH_subtotal();
 
@@ -808,9 +802,6 @@ Potential Molecule::E()
 
                     iSeg.update_LJ_and_DH = false;
                 }
-
-//                 LOG(DEBUG, "Segment LJ subtotal: %f\n", potential.LJ_subtotal);
-//                 LOG(DEBUG, "Segment DH subtotal: %f\n", potential.DH_subtotal);
 
                 /* Add segment totals to potential totals */
                 potential.increment_LJ(iSeg.LJ);
@@ -841,11 +832,6 @@ Potential Molecule::E()
         }
     }
 
-//     LOG(DEBUG, "Total LJ : %f\n", potential.total_LJ());
-//     LOG(DEBUG, "Total DH : %f\n", potential.total_DH());
-//     LOG(DEBUG, "Total bond : %f\n", potential.total_bond());
-//     LOG(DEBUG, "Total angle : %f\n", potential.total_angle());
-//     LOG(DEBUG, "Total torsion : %f\n", potential.total_torsion());
     return potential;
 }
 
