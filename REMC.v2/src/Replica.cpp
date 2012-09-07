@@ -304,18 +304,20 @@ void Replica::MCSearch(int steps)
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
 #if CUDA_E
+cout << "cuda E" << endl;
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
 
         newPotential = EonDevice();  // sequential cuda call
-        cout << potential << newPotential << endl;
         //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
 #if PERFORM_GPU_AND_CPU_E
+cout << "cpu and gpu E" << endl;
         float cpu_e(E());
         float err = abs(cpu_e-newPotential)/abs(cpu_e);
         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 #endif
 #else // only CPU calls
+cout << "cpu only E" << endl;
         newPotential = E();
 #endif
         float delta = newPotential - potential;
@@ -358,7 +360,7 @@ double Replica::E()
     CUT_SAFE_CALL(cutStartTimer(replicaEHostTimer));
 #endif
 
-Potential potential;
+    Potential potential;
 
 #define iRes molecules[mI].Residues[mi]
 #define jRes molecules[mJ].Residues[mj]
