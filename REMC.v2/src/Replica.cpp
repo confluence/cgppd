@@ -294,11 +294,11 @@ void Replica::MCSearch(int steps)
 {
     for (int step=0; step<steps; step++)
     {
-        LOG(INFO, "Step: %d\n", step);
+        LOG(INFO, "Step: %d\t\t", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
-        LOG(DEBUG, "Replica %d Molecule %d: ", label, moleculeNo);
+        LOG(DEBUG, "Replica %d\t\tMolecule %d\t\t", label, moleculeNo);
 
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
