@@ -15,7 +15,10 @@ Replica::Replica()
     moleculeCount = 0;
     moleculeArraySize = 0;
     residueCount = 0;
-    maxMoleculeSize = 0;
+    max_residue_count = 0;
+#if FLEXIBLE_LINKS
+    max_segment_count = 0;
+#endif
     nonCrowderCount = 0;
     accept = 0;
     acceptA = 0;
@@ -29,9 +32,11 @@ Replica::Replica()
     paircount = 0;
     nonCrowderResidues = 0;
     timersInit = false;
-    replicaIsOnDevice = false;
     translateStep = INITIAL_TRANSLATIONAL_STEP;
     rotateStep = INITIAL_ROTATIONAL_STEP;
+#if USING_CUDA
+    replicaIsOnDevice = false;
+#endif
 }
 
 
@@ -87,8 +92,11 @@ void Replica::init_child_replica(const Replica& ir, const int label, const float
     // TODO: only one range for entire simulation (but is the library threadsafe?)
     initRNGs();
     threadCount = thread_count;
-    savedMolecule.reserveResidueSpace(maxMoleculeSize);
-
+#if FLEXIBLE_LINKS
+    savedMolecule.init_saved_molecule(max_residue_count, max_segment_count);
+#else
+    savedMolecule.init_saved_molecule(max_residue_count);
+#endif
     // leaving out stuff inside thread function for now
 }
 
@@ -172,7 +180,10 @@ void Replica::copy(const Replica &r)
     temperature = r.temperature;
     aminoAcids = r.aminoAcids;
     residueCount = r.residueCount;
-    maxMoleculeSize = r.maxMoleculeSize;
+    max_residue_count = r.max_residue_count;
+#if FLEXIBLE_LINKS
+    max_segment_count = r.max_segment_count;
+#endif
     boundingValue = r.boundingValue;
     nonCrowderCount = r.nonCrowderCount;
     nonCrowderResidues = r.nonCrowderResidues;
@@ -240,7 +251,10 @@ int Replica::loadMolecule(const char* pdbfilename)
     molecules[moleculeCount].bounding_value = boundingValue;
 
     residueCount += molecules[moleculeCount].residueCount;
-    maxMoleculeSize = max(maxMoleculeSize,molecules[moleculeCount].residueCount);
+    max_residue_count = max(max_residue_count, molecules[moleculeCount].residueCount);
+#if FLEXIBLE_LINKS
+    max_segment_count = max(max_segment_count, molecules[moleculeCount].segmentCount);
+#endif
     moleculeCount++;
     return moleculeCount-1;
 }
@@ -262,7 +276,6 @@ void Replica::initRNGs()
 
     rng = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (rng, random());
-
 
 #if FLEXIBLE_LINKS
     MC_move_weights = new double[4];
@@ -299,18 +312,16 @@ void Replica::MCSearch(int steps)
         LOG(INFO, "Step %3d:\t", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         // save the current state so we can roll back if it was not a good mutation.
-        savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
+//         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
+        savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         LOG(DEBUG, "Replica %d:\tMolecule %d:\t", label, moleculeNo);
 
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
 #if CUDA_E
-cout << "cuda E" << endl;
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
-cout << 1 << endl;
         newPotential = EonDevice();  // sequential cuda call
-cout << 2 << endl;
         //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
 // #if PERFORM_GPU_AND_CPU_E
 // cout << "cpu and gpu E" << endl;
@@ -319,12 +330,10 @@ cout << 2 << endl;
 //         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 // #endif
 #else // only CPU calls
-cout << "cpu only E" << endl;
         newPotential = E();
 #endif
         float delta = newPotential - potential;
 
-cout << 3 << endl;
         // accept change if its better.
         if (delta < 0.0)
         {
@@ -343,7 +352,8 @@ cout << 3 << endl;
         else
         {
             reject++;
-            molecules[moleculeNo].undoStateChange(&savedMolecule);
+//             molecules[moleculeNo].undoStateChange(&savedMolecule);
+            molecules[moleculeNo].MC_backup_restore(&savedMolecule);
             LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
 #if CUDA_E
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
@@ -599,7 +609,8 @@ void Replica::MCSearchMutate()
     uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
     lastMutationIndex = moleculeNo;
     // save the current state so we can roll back if it was not a good mutation.
-    savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
+//     savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
+    savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
     LOG(DEBUG, "Replica %d\tMolecule %d:\t", label, lastMutationIndex);
     molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 }
@@ -639,7 +650,8 @@ void Replica::MCSearchAcceptReject()
     }
     else
     {
-        molecules[lastMutationIndex].undoStateChange(&savedMolecule);
+//         molecules[lastMutationIndex].undoStateChange(&savedMolecule);
+        molecules[lastMutationIndex].MC_backup_restore(&savedMolecule);
         LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }

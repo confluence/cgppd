@@ -31,9 +31,12 @@ public:
     void init(AminoAcid residues[], char *description, char *data);
     bool initFromPDB(const char* pdbfilename);
     void copy(const Molecule& m, Residue * contiguous_residue_offset);
-    void saveBeforeStateChange(const Molecule* m);
-    void undoStateChange(const Molecule* m);
-    void reserveResidueSpace(int size);
+    void MC_backup_restore(const Molecule* m);
+#if FLEXIBLE_LINKS
+    void init_saved_molecule(int max_residue_count, int max_segment_count);
+#else
+    void init_saved_molecule(int max_residue_count);
+#endif
     void saveAsPDB(const char *filename);
     void recalculate_relative_positions();
     Vector3f recalculate_center(); // TODO: actually use this

@@ -98,30 +98,41 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 #endif
 }
 
-void Molecule::saveBeforeStateChange(const Molecule* m)
+void Molecule::MC_backup_restore(const Molecule* m)
 {
-    memcpy(Residues,m->Residues,sizeof(Residue)*m->residueCount);
-    residueCount = m->residueCount; // make sure we copy the right number of residues back, and also delete the residues in destructor
+    memcpy(Residues, m->Residues, sizeof(Residue) * m->residueCount);
+    residueCount = m->residueCount;
+
     center = m->center;
     rotation = m->rotation;
+
+#if FLEXIBLE_LINKS
+    // we need to save / restore all the cached potentials
+    LJ = m->LJ;
+    DH = m->DH;
+    update_LJ_and_DH = m->update_LJ_and_DH;
+
+    memcpy(Links, m->Links, sizeof(Link) * m->linkCount);
+    linkCount = m->linkCount;
+
+    memcpy(Segments, m->Segments, sizeof(Segment) * m->segmentCount);
+    segmentCount = m->segmentCount;
+#endif
 }
 
-void Molecule::undoStateChange(const Molecule* m)
+#if FLEXIBLE_LINKS
+void Molecule::init_saved_molecule(int max_residue_count, int max_segment_count)
 {
-    // TODO: how did this ever work?! If residueCount wasn't set in the save, it would have always been zero, and no bytes would have been copied!
-    memcpy(Residues,m->Residues,sizeof(Residue)*residueCount);
-    center = m->center;
-    rotation = m->rotation;
+    Residues = new Residue[max_residue_count];
+    Links = new Link[max_residue_count - 1];
+    Segments = new Segment[max_segment_count];
 }
-
-void Molecule::reserveResidueSpace(int size)
+#else
+void Molecule::init_saved_molecule(int max_residue_count)
 {
-    /*try
-    {
-    	delete [] Residues;
-    } catch (char * err) { cout << "Molecule already sized, deleted and resized" <<endl; }*/
-    Residues = new Residue[size]; // TODO make sure array is deleted in destructor
+    Residues = new Residue[max_residue_count];
 }
+#endif
 
 void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
 {
@@ -131,7 +142,6 @@ void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
 #if REPULSIVE_CROWDING
         for (int i =0; i<residueCount; i++)
         {
-            //Residues[i].isCrowder = true;
             Residues[i].aminoAcidIndex = int(CROWDER_IDENTIFIER);
         }
 #endif
@@ -140,7 +150,6 @@ void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
     {
         for (int i =0; i<residueCount; i++)
         {
-            //Residues[i].isCrowder = false;
             Residues[i].aminoAcidIndex = int(PADDER_IDENTIFIER);
         }
     }
