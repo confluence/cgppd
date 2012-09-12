@@ -92,7 +92,9 @@ public:
 
     int threadCount;
     int nonCrowderCount;
-    int maxMoleculeSize;
+//     int maxMoleculeSize;
+    int max_residue_count;
+    int max_segment_count;
     Molecule savedMolecule;
 
     int accept;

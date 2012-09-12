@@ -2,11 +2,10 @@
 NOW
 --------------------------------------------------------------------------------
 
-* merge streamed and not-streamed MC version
+* BUG: there is definitely something wrong with the potential calculation for local translation. Giant deltas!
+* BUG: get MC test working with CUDA
 
-* oldPotential is completely pointless; take it out
-* make Molecule::rotate call Molecule::setRotation, etc. ?
-
+* make Molecule::rotate call Molecule::setRotation, etc.?
 * actually look at processing code and figure out what it does
 
 --------------------------------------------------------------------------------
