@@ -75,6 +75,9 @@ public:
 
     /* Output final total */
     double total();
+
+    /* Log */
+    void print_log();
 };
 
 #endif /*POTENTIAL_H_*/

@@ -31,15 +31,14 @@ double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_va
 {
     if (l.update_e_bond)
     {
-//         LOG(DEBUG, "Bond needs to be calculated.\n");
         // eqn 9: kim2008
         double r(rj.distance(ri, bounding_value));
+        LOG(DEBUG_LOCAL_TRANSLATE, "\nri = (%f, %f, %f) rj = (%f, %f, %f) r = %f\n", ri.position.x, ri.position.y, ri.position.z, rj.position.x, rj.position.y, rj.position.z, r);
         l.pseudo_bond = r;
         l.e_bond = (r - R0) * (r - R0); // in angstroms
         l.update_e_bond = false;
     }
 
-//     LOG(DEBUG, "Bond: %f\n", l.e_bond);
     return l.e_bond;
 }
 
@@ -47,7 +46,6 @@ double calculate_angle(Residue &rh, Residue &ri, Residue &rj)
 {
     if (ri.update_e_angle)
     {
-//         LOG(DEBUG, "Angle needs to be calculated.\n");
         Vector3f ab = rh.position - ri.position;
         Vector3f cb = rj.position - ri.position;
         double theta = ab.angle(cb);
@@ -59,7 +57,6 @@ double calculate_angle(Residue &rh, Residue &ri, Residue &rj)
         ri.update_e_angle = false;
     }
 
-//     LOG(DEBUG, "Angle: %f\n", ri.e_angle);
     return ri.e_angle;
 }
 
@@ -67,7 +64,6 @@ double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue
 {
     if (l.update_e_torsion)
     {
-//         LOG(DEBUG, "Torsion needs to be calculated.\n");
         // TODO: is this the most efficient way?
         Vector3f b1 = ri.position - rh.position;
         Vector3f b2 = rj.position - ri.position;
@@ -87,7 +83,6 @@ double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue
         l.update_e_torsion = false;
     }
 
-//     LOG(DEBUG, "Torsion: %f\n", l.e_torsion);
     return l.e_torsion;
 }
 #endif // FLEXIBLE_LINKS
@@ -234,6 +229,7 @@ double Potential::total_DH()
 #if FLEXIBLE_LINKS
 double Potential::total_bond()
 {
+    LOG(DEBUG_LOCAL_TRANSLATE, "\nbond: %f K_spring: %d KBTConversionFactor: %f total bond: %f\n", bond, K_spring, KBTConversionFactor, bond * 0.5 * K_spring * KBTConversionFactor);
     return bond * 0.5 * K_spring * KBTConversionFactor;
 }
 
@@ -254,5 +250,14 @@ double Potential::total()
     return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion) * KBTConversionFactor;
 #else // if not FLEXIBLE_LINKS
     return (LJ * LJ_CONVERSION_FACTOR + DH * DH_constant_component) * KBTConversionFactor;
+#endif // FLEXIBLE_LINKS
+}
+
+void Potential::print_log()
+{
+#if FLEXIBLE_LINKS
+    LOG(DEBUG_POTENTIAL, "\nDH: %f\tLJ: %f\tbond: %f\tangle: %f\ttorsion: %f\tTOTAL: %f\n", total_LJ(), total_DH(), total_bond(), total_angle(), total_torsion(), total());
+#else // if not FLEXIBLE_LINKS
+    LOG(DEBUG_POTENTIAL, "\nDH: %f\tLJ: %f\tTOTAL: %f\n", total_LJ(), total_DH(), total());
 #endif // FLEXIBLE_LINKS
 }

@@ -245,7 +245,7 @@ Vector3f Molecule::apply_boundary_conditions(Vector3f old_center, Vector3f new_c
     }
     else
     {
-        LOG(DEBUG, "Move rejected because it would move molecule beyond boundary sphere.");
+        LOG(DEBUG_BOUNDARY, "Move rejected because it would move molecule beyond boundary sphere.");
         return old_center;
     }
 #elif BOUNDING_METHOD == PERIODIC_BOUNDARY
@@ -318,9 +318,11 @@ void Molecule::translate(Vector3f v, const int ri)
     if (new_center != center)
     {
         // translate one residue
+        LOG(DEBUG_LOCAL_TRANSLATE, "\nResidue: %d Old: (%f, %f, %f)\t", ri, Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
         Residues[ri].position.x += v.x;
         Residues[ri].position.y += v.y;
         Residues[ri].position.z += v.z;
+        LOG(DEBUG_LOCAL_TRANSLATE, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
         // recalculate centre
         center = new_center;
@@ -438,7 +440,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
         {
             case MC_LOCAL_TRANSLATE:
             {
-                LOG(DEBUG, "T");
+                LOG(DEBUG_MC, "T");
                 uint ri = random_residue_index(rng, li);
                 Vector3f v = translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
@@ -446,7 +448,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             }
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
-                LOG(DEBUG, "C");
+                LOG(DEBUG_MC, "C");
                 uint ri = random_residue_index_middle(rng, li);
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 crankshaft(rotate_step, flip, ri);
@@ -457,7 +459,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
         }
     }
 
-    LOG(DEBUG, "\t");
+    LOG(DEBUG_MC, "\t");
 
     // recalculate positions of residues relative to centre
     if (local_move_successful)
@@ -490,26 +492,26 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
     {
         case MC_ROTATE:
         {
-            LOG(DEBUG, "Rotate   \t\t");
+            LOG(DEBUG_MC, "Rotate   \t\t");
             rotate(rng, rotate_step);
             break;
         }
         case MC_TRANSLATE:
         {
-            LOG(DEBUG, "Translate\t\t");
+            LOG(DEBUG_MC, "Translate\t\t");
             translate(rng, translate_step);
             break;
         }
 #if FLEXIBLE_LINKS
         case MC_ROTATE_DOMAIN:
         {
-            LOG(DEBUG, "Flex     \t\t");
+            LOG(DEBUG_MC, "Flex     \t\t");
             rotate_domain(rng, rotate_step);
             break;
         }
         case MC_LOCAL:
         {
-            LOG(DEBUG, "Local    \t");
+            LOG(DEBUG_MC, "Local    \t");
             make_local_moves(rng, rotate_step, translate_step);
             break;
         }
