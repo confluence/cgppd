@@ -102,17 +102,18 @@
 
     // code things
 
-    #define ERROR   0
-    #define ALWAYS   0
-    #define WARN    1
-    #define INFO    2
-    #define DEBUG   3
-    #define TRACE   4
-//     #define LOGLEVEL ERROR
-    #define LOGLEVEL DEBUG
+    #define ERROR   true
+    #define ALWAYS   true
+    #define INFO    true
+    #define DEBUG   true
+
+    #define DEBUG_MC true
+    #define DEBUG_BOUNDARY false
+    #define DEBUG_POTENTIAL true
+    #define DEBUG_LOCAL_TRANSLATE true
 
     #define LOG(level, ...) \
-            do { if (LOGLEVEL >= level) printf(__VA_ARGS__); } while (0)
+            do { if (level) printf(__VA_ARGS__); } while (0)
 
 //     #define DEBUGLOG(fmt, ...) \
 //             do { printf("%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, __VA_ARGS__); } while (0)

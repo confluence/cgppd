@@ -3,6 +3,8 @@ NOW
 --------------------------------------------------------------------------------
 
 * BUG: there is definitely something wrong with the potential calculation for local translation. Giant deltas!
+  * local translation leads to huge difference in DH and bond potentials
+  * huge residue jump because of boundary wrapping?! That shouldn't happen.
 * BUG: get MC test working with CUDA
 
 * make Molecule::rotate call Molecule::setRotation, etc.?
