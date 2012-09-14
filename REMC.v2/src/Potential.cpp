@@ -256,8 +256,8 @@ double Potential::total()
 void Potential::print_log()
 {
 #if FLEXIBLE_LINKS
-    LOG(DEBUG_POTENTIAL, "\nDH: %f\tLJ: %f\tbond: %f\tangle: %f\ttorsion: %f\tTOTAL: %f\n", total_LJ(), total_DH(), total_bond(), total_angle(), total_torsion(), total());
+    LOG(INFO_POTENTIAL, "\nDH: %f\tLJ: %f\tbond: %f\tangle: %f\ttorsion: %f\tTOTAL: %f\n", total_LJ(), total_DH(), total_bond(), total_angle(), total_torsion(), total());
 #else // if not FLEXIBLE_LINKS
-    LOG(DEBUG_POTENTIAL, "\nDH: %f\tLJ: %f\tTOTAL: %f\n", total_LJ(), total_DH(), total());
+    LOG(INFO_POTENTIAL, "\nDH: %f\tLJ: %f\tTOTAL: %f\n", total_LJ(), total_DH(), total());
 #endif // FLEXIBLE_LINKS
 }

@@ -109,8 +109,10 @@
 
     #define DEBUG_MC true
     #define DEBUG_BOUNDARY false
-    #define DEBUG_POTENTIAL true
-    #define DEBUG_LOCAL_TRANSLATE true
+    #define INFO_POTENTIAL false
+    #define DEBUG_POTENTIAL false
+    #define DEBUG_LOCAL_TRANSLATE false
+    #define DEBUG_DH false
 
     #define LOG(level, ...) \
             do { if (level) printf(__VA_ARGS__); } while (0)

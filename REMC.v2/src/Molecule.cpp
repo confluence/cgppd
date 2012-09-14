@@ -312,6 +312,12 @@ void Molecule::mark_cached_potentials_for_update(const int ri)
 
 void Molecule::translate(Vector3f v, const int ri)
 {
+    LOG(DEBUG_LOCAL_TRANSLATE, "\nOld v: (%f, %f, %f)\t", v.x, v.y, v.z);
+    // Complete thumb-suck
+    // I'm not convinced that this is the right thing to do
+    v = v / 1e15;
+    LOG(DEBUG_LOCAL_TRANSLATE, "New v: (%f, %f, %f)\n", v.x, v.y, v.z);
+
     // apply boundary conditions, possibly rejecting the move
     Vector3f new_center = apply_boundary_conditions(center, recalculate_center(v));
 
@@ -784,6 +790,7 @@ Potential Molecule::E()
 
     potential.increment_LJ(LJ);
     potential.increment_DH(DH);
+//     LOG(DEBUG_DH, "\nMolecule DH = %f\n", DH);
 
     for (size_t si = 0; si < segmentCount; si++)
     {
@@ -820,6 +827,7 @@ Potential Molecule::E()
                 /* Add segment totals to potential totals */
                 potential.increment_LJ(iSeg.LJ);
                 potential.increment_DH(iSeg.DH);
+//                 LOG(DEBUG_DH, "\nSegment DH = %f\n", iSeg.DH);
 
                 // Pseudo-bond
                 if (i < iSeg.end)
