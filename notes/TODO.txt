@@ -4,7 +4,15 @@ NOW
 
 * BUG: there is definitely something wrong with the potential calculation for local translation. Giant deltas!
   * local translation leads to huge difference in DH and bond potentials
-  * huge residue jump because of boundary wrapping?! That shouldn't happen.
+    * large translation often leads to big *drop* in DH? That leads to giant negative deltas which are not counterbalanced by huge bond values.
+        * should outright reject bond values that are too high (beyond which bond would break?)
+    * sometimes a large *increase* in DH -- why?! residue moves very close to many other residues?
+    * maybe a residue from one molecule is going into the other molecule?
+  * solution is probably to shrink the translate vector *a lot*. /100?
+  * why is the molecule DH always zero?
+  * jump always caused by inter-molecule DH.
+  * verify what is actually going on by outputting PDB files (DO THIS ASAP)
+
 * BUG: get MC test working with CUDA
 
 * make Molecule::rotate call Molecule::setRotation, etc.?
