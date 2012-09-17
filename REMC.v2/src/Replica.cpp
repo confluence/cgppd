@@ -333,6 +333,16 @@ void Replica::MCSearch(int steps)
         newPotential = E();
 #endif
         float delta = newPotential - potential;
+//         if (abs(delta) > 10.0)
+//         {
+//             int bad_molecule = moleculeNo;
+//             char filename [50];
+//             for (size_t mi = 0; mi < moleculeCount; mi++)
+//             {
+//                 sprintf(filename, "%d_%f_%d_%d.pdb", step, delta, mi, bad_molecule);
+//                 molecules[mi].saveAsPDB(filename);
+//             }
+//         }
 
         // accept change if its better.
         if (delta < 0.0)
@@ -442,7 +452,7 @@ double Replica::E()
 #endif
     }
 
-    potential.print_log();
+    potential.print_log(INFO_POTENTIAL, "\nTotal potential");
     double total(potential.total());
 
 #if INCLUDE_TIMERS

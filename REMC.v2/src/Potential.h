@@ -77,7 +77,7 @@ public:
     double total();
 
     /* Log */
-    void print_log();
+    void print_log(const bool level, const char * prefix);
 };
 
 #endif /*POTENTIAL_H_*/
