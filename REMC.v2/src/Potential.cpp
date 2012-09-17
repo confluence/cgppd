@@ -16,7 +16,10 @@ double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &
     {
         LJ = -LJ + 2.0f * Eij;
     }
-
+    if (abs(LJ) > 1.0)
+    {
+        LOG(DEBUG_LJ,"\n+++++ r = %f; sigmaij = %f; LJ = %f\n", r, sigmaij, LJ);
+    }
     return LJ;
 }
 
@@ -33,7 +36,6 @@ double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_va
     {
         // eqn 9: kim2008
         double r(rj.distance(ri, bounding_value));
-        LOG(DEBUG_LOCAL_TRANSLATE, "\nri = (%f, %f, %f) rj = (%f, %f, %f) r = %f\n", ri.position.x, ri.position.y, ri.position.z, rj.position.x, rj.position.y, rj.position.z, r);
         l.pseudo_bond = r;
         l.e_bond = (r - R0) * (r - R0); // in angstroms
         l.update_e_bond = false;
@@ -253,11 +255,11 @@ double Potential::total()
 #endif // FLEXIBLE_LINKS
 }
 
-void Potential::print_log()
+void Potential::print_log(const bool level, const char * prefix)
 {
 #if FLEXIBLE_LINKS
-    LOG(INFO_POTENTIAL, "\nDH: %f\tLJ: %f\tbond: %f\tangle: %f\ttorsion: %f\tTOTAL: %f\n", total_LJ(), total_DH(), total_bond(), total_angle(), total_torsion(), total());
+    LOG(level, "%s:\tLJ: %f\tDH: %f\tbond: %f\tangle: %f\ttorsion: %f\tTOTAL: %f\n", prefix, total_LJ(), total_DH(), total_bond(), total_angle(), total_torsion(), total());
 #else // if not FLEXIBLE_LINKS
-    LOG(INFO_POTENTIAL, "\nDH: %f\tLJ: %f\tTOTAL: %f\n", total_LJ(), total_DH(), total());
+    LOG(level, "%s:\tLJ: %f\tDH: %f\tTOTAL: %f\n", prefix, total_LJ(), total_DH(), total());
 #endif // FLEXIBLE_LINKS
 }

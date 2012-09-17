@@ -312,11 +312,11 @@ void Molecule::mark_cached_potentials_for_update(const int ri)
 
 void Molecule::translate(Vector3f v, const int ri)
 {
-    LOG(DEBUG_LOCAL_TRANSLATE, "\nOld v: (%f, %f, %f)\t", v.x, v.y, v.z);
+//     LOG(DEBUG_LOCAL_TRANSLATE, "\nOld v: (%f, %f, %f)\t", v.x, v.y, v.z);
     // Complete thumb-suck
     // I'm not convinced that this is the right thing to do
-    v = v / 1e15;
-    LOG(DEBUG_LOCAL_TRANSLATE, "New v: (%f, %f, %f)\n", v.x, v.y, v.z);
+//     v = v / 1e15;
+//     LOG(DEBUG_LOCAL_TRANSLATE, "New v: (%f, %f, %f)\n", v.x, v.y, v.z);
 
     // apply boundary conditions, possibly rejecting the move
     Vector3f new_center = apply_boundary_conditions(center, recalculate_center(v));
@@ -715,6 +715,34 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     return true;
 }
 
+char * Molecule::amino_acid_name(const int ri)
+{
+    return AminoAcidsData.get(Residues[ri].aminoAcidIndex).getSNAME();
+}
+
+void Molecule::saveAsPDB(const char* filename)
+{
+        FILE * output;
+        output = fopen (filename,"w");
+
+        fprintf(output,"REMARK %s \n",filename);
+        fprintf(output,"REMARK Translation relative to input Q(w,x,y,z): %f %f %f %f\n",rotation.w,rotation.x,rotation.y,rotation.z);
+        fprintf(output,"REMARK Rotation relative to input +P(x,y,z): %f %f %f\n",center.x,center.y,center.z);
+
+#define iRes Residues[i]
+#define ipos Residues[i].position
+        for (size_t i = 0; i < residueCount; i++)
+        {
+            // TODO: flexible links
+            fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",i,"CA",' ', amino_acid_name(i), iRes.chainId, iRes.resSeq, ' ', ipos.x, ipos.y, ipos.z, 1.0f,1.0f);
+        }
+
+        fprintf(output,"END \n");
+
+        fflush(output);
+        fclose(output);
+}
+
 float Molecule::calculateSASA()
 {
     // todo, not required for now
@@ -763,7 +791,7 @@ Potential Molecule::E()
             {
                 for (size_t i = iSeg.start; i <= iSeg.end; i++)
                 {
-                    for (size_t j = jSeg.start; j <= iSeg.end; j++) {
+                    for (size_t j = jSeg.start; j <= jSeg.end; j++) {
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         // segments overlap at edges; don't compare a residue to itself
                         if (i != j)
@@ -790,21 +818,20 @@ Potential Molecule::E()
 
     potential.increment_LJ(LJ);
     potential.increment_DH(DH);
-//     LOG(DEBUG_DH, "\nMolecule DH = %f\n", DH);
 
     for (size_t si = 0; si < segmentCount; si++)
     {
         // Flexible linker potentials
         if (iSeg.flexible)
         {
-            for (size_t i = iSeg.start; i <= iSeg.end; i++)
+            // LJ and DH within linker
+            if (iSeg.update_LJ_and_DH)
             {
-                // LJ and DH within linker
-                if (iSeg.update_LJ_and_DH)
-                {
-                    potential.reset_LJ_subtotal();
-                    potential.reset_DH_subtotal();
+                potential.reset_LJ_subtotal();
+                potential.reset_DH_subtotal();
 
+                for (size_t i = iSeg.start; i <= iSeg.end; i++)
+                {
                     for (size_t j = i + 1; j <= iSeg.end; j++)
                     {
                         double r(iRes.distance(jRes, bounding_value) + EPS);
@@ -816,19 +843,21 @@ Potential Molecule::E()
                             potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
                         }
                     }
-
-                    /* Cache new values on the segment */
-                    iSeg.LJ = potential.LJ_subtotal;
-                    iSeg.DH = potential.DH_subtotal;
-
-                    iSeg.update_LJ_and_DH = false;
                 }
 
-                /* Add segment totals to potential totals */
-                potential.increment_LJ(iSeg.LJ);
-                potential.increment_DH(iSeg.DH);
-//                 LOG(DEBUG_DH, "\nSegment DH = %f\n", iSeg.DH);
+                /* Cache new values on the segment */
+                iSeg.LJ = potential.LJ_subtotal;
+                iSeg.DH = potential.DH_subtotal;
 
+                iSeg.update_LJ_and_DH = false;
+            }
+
+            /* Add segment totals to potential totals */
+            potential.increment_LJ(iSeg.LJ);
+            potential.increment_DH(iSeg.DH);
+
+            for (size_t i = iSeg.start; i <= iSeg.end; i++)
+            {
                 // Pseudo-bond
                 if (i < iSeg.end)
                 {
