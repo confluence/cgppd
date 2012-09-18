@@ -2,14 +2,9 @@
 NOW
 --------------------------------------------------------------------------------
 
-* BUG: there is definitely something wrong with the potential calculation for local translation. Giant deltas!
-  * local translation leads to huge difference in LJ and bond potentials
-    * large translation often leads to big *drop* in LJ? That leads to giant negative deltas which are not counterbalanced by huge bond values.
-        * should outright reject bond values that are too high (beyond which bond would break?)
-    * sometimes a large *increase* in LJ
-    * it happens if sigmaij > r.
-    * screw-up already happens in initial calculation, before anything is moved.
-    * so why is it triggered by local translate, and not crankshaft?
+* BUG (?): huge LJ spikes after translation but also during original calculation inside molecule, for each r which drops below sigmaij.
+    * start with minimised molecule?
+    * after that, rejecting bad moves should be OK.
 
 * BUG: get MC test working with CUDA
 
