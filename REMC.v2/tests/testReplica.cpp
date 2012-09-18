@@ -52,8 +52,8 @@ void TestReplica::setUp()
     replica.reserveContiguousMoleculeArray(2);
 
     replica.loadMolecule("data/conf1/1a.pdb");
-//     replica.loadMolecule("data/conf1/1b.pdb");
-    replica.loadMolecule("tests/1UBQ.pdb");
+    replica.loadMolecule("data/conf1/1b.pdb");
+//     replica.loadMolecule("tests/1UBQ.pdb");
 }
 
 void TestReplica::tearDown()
@@ -91,7 +91,7 @@ void TestReplica::testMC()
 #endif
     child_replica.potential = child_replica.E();
 //     LOG(DEBUG, "+++Starting MC search.\n");
-    child_replica.MCSearch(20);
+    child_replica.MCSearch(50);
 #if USING_CUDA
     child_replica.FreeDevice();
     cudaFree(ljp_t);
