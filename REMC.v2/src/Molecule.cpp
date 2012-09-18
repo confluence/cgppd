@@ -278,8 +278,10 @@ Vector3f Molecule::recalculate_center(Vector3f difference)
     return ((center * residueCount) + difference) / residueCount;
 }
 
-void Molecule::mark_cached_potentials_for_update(const int ri)
+void Molecule::mark_cached_potentials_for_update(const int ri, const bool crankshaft)
 {
+    // For any move, update the LJ and DH for the entire molecule and for all segments which contain the residue
+
     update_LJ_and_DH = true;
 
     for (int i = 0; i < segmentCount; i++) {
@@ -288,24 +290,36 @@ void Molecule::mark_cached_potentials_for_update(const int ri)
         }
     }
 
-    // Not checking segment boundaries here, because they are checked when linker potentials are calculated
+    // We don't need to update bonds or angles for crankshaft moves; only torsions.
+    // We're not checking whether the marked residues and links fall within flexible segments, because the potential calculation ignores unnecessary segments.
 
     if (ri > 1) {
         Links[ri - 2].update_e_torsion = true;
     }
 
     if (ri > 0) {
-        Links[ri - 1].update_e_bond = true;
-        Residues[ri - 1].update_e_angle = true;
+        if (!crankshaft) {
+            Links[ri - 1].update_e_bond = true;
+            Residues[ri - 1].update_e_angle = true;
+        }
+
         Links[ri - 1].update_e_torsion = true;
     }
 
-    Links[ri].update_e_bond = true;
-    Residues[ri].update_e_angle = true;
-    Links[ri].update_e_torsion = true;
+    if (!crankshaft) {
+        Residues[ri].update_e_angle = true;
+    }
 
-    if (ri < residueCount - 1) {
-        Residues[ri + 1].update_e_angle = true;
+    if (ri + 1 < residueCount) {
+        if (!crankshaft) {
+            Links[ri].update_e_bond = true;
+            Residues[ri + 1].update_e_angle = true;
+        }
+
+        Links[ri].update_e_torsion = true;
+    }
+
+    if (ri + 2 < residueCount) {
         Links[ri + 1].update_e_torsion = true;
     }
 }
