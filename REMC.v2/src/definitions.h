@@ -112,7 +112,7 @@
     #define INFO_POTENTIAL false
     #define DEBUG_POTENTIAL false
     #define DEBUG_LOCAL_TRANSLATE false
-    #define DEBUG_LJ true
+    #define DEBUG_LJ false
 
     #define LOG(level, ...) \
             do { if (level) printf(__VA_ARGS__); } while (0)
