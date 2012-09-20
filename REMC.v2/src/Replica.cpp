@@ -330,6 +330,7 @@ void Replica::MCSearch(int steps)
 //         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 // #endif
 #else // only CPU calls
+        LOG(DEBUG, "WTF");
         newPotential = E();
 #endif
         float delta = newPotential - potential;
@@ -481,8 +482,6 @@ double Replica::E(Molecule *a,Molecule *b)
     potential.increment(a->E());
     potential.increment(b->E());
 #endif
-    LOG(DEBUG, "CAN WE SEE THIS?");
-    potential.print_log(DEBUG, "");
     return potential.total();
 }
 
