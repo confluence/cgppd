@@ -7,8 +7,6 @@ Molecule::Molecule()
 {
     residueCount = 0;
     contiguous = false;
-    linkerCount = 0;
-    segmentCount = 0;
     bounding_value = 0;
     moleculeRoleIdentifier = 0.0f;
     index = -2;
@@ -18,11 +16,12 @@ Molecule::Molecule()
 #if FLEXIBLE_LINKS
     linkCount = 0;
     segmentCount = 0;
+    linkerCount = 0;
     LJ = 0.0f;
     DH = 0.0f;
     update_LJ_and_DH = true;
     local_move_successful = false;
-#endif
+#endif // FLEXIBLE_LINKS
 }
 
 Molecule::~Molecule()
@@ -32,6 +31,7 @@ Molecule::~Molecule()
         delete [] filename;
     }
 
+#if FLEXIBLE_LINKS
     if (linkerCount > 0)
     {
         delete [] Linkers;
@@ -46,6 +46,7 @@ Molecule::~Molecule()
     {
         delete [] Links;
     }
+#endif // FLEXIBLE_LINKS
 
     if (!contiguous && residueCount > 0)
     {
@@ -58,7 +59,7 @@ void Molecule::init_amino_acid_data(AminoAcids &a)
     AminoAcidsData = a;
 #if FLEXIBLE_LINKS
     torsions.loadData(TORSIONALPAIRDATA, a);
-#endif
+#endif // FLEXIBLE_LINKS
 }
 
 void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
@@ -68,6 +69,15 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     Residues = contiguous_residue_offset;
     residueCount = m.residueCount;
 
+    bounding_value = m.bounding_value;
+    AminoAcidsData = m.AminoAcidsData;
+    center = m.center;
+    rotation = m.rotation;
+    moleculeRoleIdentifier = m.moleculeRoleIdentifier;
+    volume = m.volume;
+    index = m.index;
+
+#if FLEXIBLE_LINKS
     Links = new Link[m.linkCount];
     memcpy(Links, m.Links, m.linkCount*sizeof(Link));
     linkCount = m.linkCount;
@@ -80,22 +90,12 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     memcpy(Linkers, m.Linkers, m.linkerCount*sizeof(int));
     linkerCount = m.linkerCount;
 
-    bounding_value = m.bounding_value;
-    AminoAcidsData = m.AminoAcidsData;
-    center = m.center;
-    rotation = m.rotation;
-    moleculeRoleIdentifier = m.moleculeRoleIdentifier;
-    volume = m.volume;
-    index = m.index;
-
-#if FLEXIBLE_LINKS
     torsions = m.torsions;
-    linkCount = m.linkCount;
-    segmentCount = m.segmentCount;
+
     LJ = m.LJ;
     DH = m.DH;
     update_LJ_and_DH = m.update_LJ_and_DH;
-#endif
+#endif // FLEXIBLE_LINKS
 }
 
 void Molecule::MC_backup_restore(const Molecule* m)
@@ -117,7 +117,7 @@ void Molecule::MC_backup_restore(const Molecule* m)
 
     memcpy(Segments, m->Segments, sizeof(Segment) * m->segmentCount);
     segmentCount = m->segmentCount;
-#endif
+#endif // FLEXIBLE_LINKS
 }
 
 #if FLEXIBLE_LINKS
@@ -127,12 +127,12 @@ void Molecule::init_saved_molecule(int max_residue_count, int max_segment_count)
     Links = new Link[max_residue_count - 1];
     Segments = new Segment[max_segment_count];
 }
-#else
+#else // if not FLEXIBLE_LINKS
 void Molecule::init_saved_molecule(int max_residue_count)
 {
     Residues = new Residue[max_residue_count];
 }
-#endif
+#endif // FLEXIBLE_LINKS
 
 void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
 {
@@ -144,7 +144,7 @@ void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
         {
             Residues[i].aminoAcidIndex = int(CROWDER_IDENTIFIER);
         }
-#endif
+#endif // REPULSIVE_CROWDING
     }
     else if (moleculeRoleIdentifier == PADDER_IDENTIFIER)
     {
@@ -253,7 +253,7 @@ Vector3f Molecule::apply_boundary_conditions(Vector3f old_center, Vector3f new_c
     new_center.y = fmod(new_center.y, bounding_value);
     new_center.z = fmod(new_center.z, bounding_value);
     return new_center;
-#endif
+#endif // BOUNDING_METHOD
 }
 
 void Molecule::rotate(gsl_rng * rng, const double rotate_step)
@@ -500,9 +500,9 @@ uint Molecule::get_MC_mutation_type(gsl_rng * rng)
     {
         return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
     }
-#else
+#else // if not FLEXIBLE_LINKS
     return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
-#endif
+#endif // FLEXIBLE_LINKS
 }
 
 void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step)
@@ -546,7 +546,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     vector<Residue> vResidues;
 #if FLEXIBLE_LINKS
     vector<Link> vLinks;
-#endif
+#endif // FLEXIBLE_LINKS
 
     chainCount = 1; // there must be at least one
     hasFilename = true;
@@ -621,7 +621,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 // occupancy set to 1 on a residue indicates that the following link is flexible.
                 L.flexible = bool(occupancy);
                 vLinks.push_back(L);
-#endif
+#endif // FLEXIBLE_LINKS
             }
         }
         else if (strncmp(line, "TER", 3) == 0) // Optional,Mandatory if ATOM records exist.
@@ -632,7 +632,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
             vLinks.back().dummy = true;
             // Set it to non-flexible regardless of the occupancy of the last residue
             vLinks.back().flexible = false;
-#endif
+#endif // FLEXIBLE_LINKS
         }
         else if (strncmp(line, "END", 3) == 0)
         {
@@ -724,7 +724,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         Linkers[l] = vLinkers[l];
     }
 
-#endif
+#endif // FLEXIBLE_LINKS
 
     return true;
 }
