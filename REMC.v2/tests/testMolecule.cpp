@@ -61,6 +61,7 @@ void TestMolecule::testPDBCentre()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[2], molecule.center.z, 0.00001);
 }
 
+#if FLEXIBLE_LINKS
 class TestLinkerPotentials : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestLinkerPotentials);
@@ -182,3 +183,4 @@ void TestLinkerPotentials::testGeometry()
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, molecule.Links[i].pseudo_torsion, 0.00001);
     }
 }
+#endif // FLEXIBLE_LINKS
