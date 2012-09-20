@@ -482,6 +482,7 @@ double Replica::E(Molecule *a,Molecule *b)
     potential.increment(b->E());
 #endif
 
+    potential.print_log(DEBUG, "");
     return potential.total();
 }
 
