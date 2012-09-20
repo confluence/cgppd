@@ -105,10 +105,12 @@ void Replica::initTimers()
 {
     //timers for profiling the cuda functions
     replicaToGPUTimer = 0;
+    replicaToHostTimer = 0;
     replicaUpdateGPUTimer = 0;
-    replicaECUDATimer = 0;
     replicaMoleculeUpdateTimer = 0;
+    replicaECUDATimer = 0;
     initGPUMemoryTimer = 0;
+    replicaEHostTimer = 0;
 
     CUT_SAFE_CALL( cutCreateTimer(&replicaToGPUTimer) );
     CUT_SAFE_CALL( cutCreateTimer(&replicaToHostTimer) );
