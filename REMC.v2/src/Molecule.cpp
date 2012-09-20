@@ -347,7 +347,7 @@ void Molecule::translate(Vector3f v, const int ri)
         // recalculate centre
         center = new_center;
 
-        mark_cached_potentials_for_update(ri);
+        mark_cached_potentials_for_update(ri, false);
 
         local_move_successful = true;
     }
@@ -387,7 +387,7 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
         // recalculate centre
         center = new_center;
 
-        mark_cached_potentials_for_update(ri);
+        mark_cached_potentials_for_update(ri, true);
 
         local_move_successful = true;
     }
@@ -431,7 +431,7 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
         // apply new center
         center = new_center;
 
-        mark_cached_potentials_for_update(ri);
+        mark_cached_potentials_for_update(ri, false);
         recalculate_relative_positions();
     }
 }
