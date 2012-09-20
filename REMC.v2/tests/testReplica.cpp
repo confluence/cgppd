@@ -91,7 +91,7 @@ void TestReplica::testMC()
 #endif
     child_replica.potential = child_replica.E();
 //     LOG(DEBUG, "+++Starting MC search.\n");
-    child_replica.MCSearch(50);
+//     child_replica.MCSearch(50);
 #if USING_CUDA
     child_replica.FreeDevice();
     cudaFree(ljp_t);
