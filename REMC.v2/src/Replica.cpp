@@ -309,7 +309,6 @@ void Replica::freeRNGs()
 
 void Replica::MCSearch(int steps)
 {
-    cout << "start of MCSearch" << endl;
     for (int step=0; step<steps; step++)
     {
         LOG(DEBUG_MC, "Step %3d:\t", step);
@@ -333,9 +332,6 @@ void Replica::MCSearch(int steps)
 //         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 // #endif
 #else // only CPU calls
-        cout << "just before E call" << endl;
-        LOG(DEBUG, "Current new potential is %f\n", newPotential);
-        LOG(DEBUG, "E is %f\n", E());
         newPotential = E();
 #endif
         float delta = newPotential - potential;
@@ -385,7 +381,6 @@ inline float crowderPairPotential(const float r)
 
 double Replica::E()
 {
-    cout << "start of E" << endl;
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStartTimer(replicaEHostTimer));
 #endif
@@ -465,7 +460,6 @@ double Replica::E()
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
 #endif
-    cout << "end of E" << endl;
     return total;
 }
 
