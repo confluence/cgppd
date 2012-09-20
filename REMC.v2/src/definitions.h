@@ -109,7 +109,7 @@
 
     #define DEBUG_MC true
     #define DEBUG_BOUNDARY false
-    #define INFO_POTENTIAL false
+    #define INFO_POTENTIAL true
     #define DEBUG_POTENTIAL false
     #define DEBUG_LOCAL_TRANSLATE false
     #define DEBUG_LJ false
