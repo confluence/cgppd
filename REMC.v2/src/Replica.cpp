@@ -307,6 +307,7 @@ void Replica::freeRNGs()
 
 void Replica::MCSearch(int steps)
 {
+    cout << "start of MCSearch" << endl;
     for (int step=0; step<steps; step++)
     {
         LOG(DEBUG_MC, "Step %3d:\t", step);
