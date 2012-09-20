@@ -811,7 +811,7 @@ Potential Molecule::E()
                         if (i != j)
                         {
                             /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                            potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
+                            potential.increment_LJ_subtotal(calculate_LJ((int)i, (int)j, iRes, jRes, r, AminoAcidsData));
                             /* Calculate electrostatic potential for each residue pair; increment molecule total. */
                             potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
                         }
@@ -850,7 +850,7 @@ Potential Molecule::E()
                     {
                         double r(iRes.distance(jRes, bounding_value) + EPS);
                         /* Calculate LJ-type potential for each residue pair; increment segment total. */
-                        potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
+                        potential.increment_LJ_subtotal(calculate_LJ((int)i, (int)j, iRes, jRes, r, AminoAcidsData));
                         /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */
                         if (j - i >= 4)
                         {
