@@ -801,10 +801,8 @@ Potential Molecule::E()
 
         for (size_t si = 0; si < segmentCount; si++)
         {
-            LOG(DEBUG_LJ, "Segment i: %d ", si);
             for (size_t sj = si + 1; sj < segmentCount; sj++)
             {
-                LOG(DEBUG_LJ, "Segment j: %d\n", sj);
                 for (size_t i = iSeg.start; i <= iSeg.end; i++)
                 {
                     for (size_t j = jSeg.start; j <= jSeg.end; j++) {
@@ -812,6 +810,7 @@ Potential Molecule::E()
                         // apply intra-linker condition to eliminate overlap and closeness
                         if (j - i >= 4)
                         {
+                            LOG(DEBUG_LJ, "Comparing residues %d (segment %d) and %d (segment %d)\n", i, si, j, sj);
                             /* Calculate LJ-type potential for each residue pair; increment molecule total. */
                             potential.increment_LJ_subtotal(calculate_LJ((int)i, (int)j, iRes, jRes, r, AminoAcidsData));
                             /* Calculate electrostatic potential for each residue pair; increment molecule total. */
