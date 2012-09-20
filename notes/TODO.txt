@@ -2,14 +2,11 @@
 NOW
 --------------------------------------------------------------------------------
 
-* BUG (?): huge LJ spikes after translation but also during original calculation inside molecule, for each r which drops below sigmaij.
-    * start with minimised molecule?
-    * after that, rejecting bad moves should be OK.
+* TEST: recompile without flexibility and make sure nothing is porked
+
+* CONUNDRUM: email Rob about LJ after verifying that inflexible version still works.
 
 * BUG: get MC test working with CUDA
-
-* make Molecule::rotate call Molecule::setRotation, etc.?
-* actually look at processing code and figure out what it does
 
 --------------------------------------------------------------------------------
 THEN
@@ -19,19 +16,20 @@ STRUCTURE
 
 * Linkers, etc. don't actually *need* to be arrays. Just keep them as vectors?
 
-TEST
+MAKEFILE
 
 * something is borked in the makefile; stuff doesn't recompile properly without a clean?
+* it would be nice to fix CPU-only version!
+
+TEST
+
 * make a main.h
 * write unit tests for all the things
 
 GRAAAAAAH, CLEAN UP MAIN
 
-* initial replica init -- done; turn into a constructor
-* child replica init -- done, sort of
 * cuda init -- need another function for this; done all over the place
 * cuda destructor
-
 
 * only one twister for whole simulation
 * object for whole simulation + constructor
@@ -39,16 +37,12 @@ GRAAAAAAH, CLEAN UP MAIN
 * clean up stuff for reading commandline params and reading args from file (ewwwwwww)
 
 CLEANUP
-* delete cruft marked for deletion and commented-out old stuff
 * Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
-* put initRNGs in init of replica and freeRNGs in destructor
+* put initRNGs in init of replica and freeRNGs in destructor (OBSOLETE -- should not be pre-replica)
 * MOLECULE: constructor / destructor
-    * reserveResidueSpace not consistently used; use or remove
-    * remove filename.
-    * DELETE RESIDUES IN DESTRUCTOR; WTF! Use flag(s?) to check whether was inited from PDB.
-    * Do we *ever* construct a molecule without a pdb file?
-* REPLICA:
-    * Avoid using globals from definitions for things other than physical constants. e.g. pass rotate / translate steps into replica constructor
+    * reserveResidueSpace not consistently used?
+    * maybe use init from pdb function with rotation / translation params?
+    * make Molecule::rotate call Molecule::setRotation, etc.?
 * AMINO ACIDS
     * clean up read from file
 
@@ -60,6 +54,10 @@ FIX
 --------------------------------------------------------------------------------
 SOON
 --------------------------------------------------------------------------------
+
+PROCESSING
+* actually look at processing code and figure out what it does
+
 WRITE
 * Thesis skeleton
 * Poster
