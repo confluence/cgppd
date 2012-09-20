@@ -332,8 +332,8 @@ void Replica::MCSearch(int steps)
 // #endif
 #else // only CPU calls
         cout << "just before E call" << endl;
-        LOG(DEBUG, "Current new potential is $f\n", newPotential);
-        LOG(DEBUG, "E is $f\n", E());
+        LOG(DEBUG, "Current new potential is %f\n", newPotential);
+        LOG(DEBUG, "E is %f\n", E());
         newPotential = E();
 #endif
         float delta = newPotential - potential;
