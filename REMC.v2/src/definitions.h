@@ -109,7 +109,7 @@
 
     #define DEBUG_MC true
     #define DEBUG_BOUNDARY false
-    #define INFO_POTENTIAL true
+    #define INFO_POTENTIAL false
     #define DEBUG_POTENTIAL false
     #define DEBUG_LOCAL_TRANSLATE false
     #define DEBUG_LJ false
@@ -142,7 +142,7 @@
 
     #define COMPENSATE_KERNEL_SUM	  0
 
-    #define FLEXIBLE_LINKS  0
+    #define FLEXIBLE_LINKS  1
 
     #define MC_TRANSLATE 0
     #define MC_ROTATE 1
