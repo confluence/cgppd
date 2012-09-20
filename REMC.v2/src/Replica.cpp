@@ -381,6 +381,7 @@ inline float crowderPairPotential(const float r)
 
 double Replica::E()
 {
+    cout << "start of E" << endl;
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStartTimer(replicaEHostTimer));
 #endif
@@ -460,6 +461,7 @@ double Replica::E()
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
 #endif
+    cout << "end of E" << endl;
     return total;
 }
 
