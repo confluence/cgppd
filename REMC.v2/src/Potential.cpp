@@ -16,9 +16,27 @@ double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &
     {
         LJ = -LJ + 2.0f * Eij;
     }
+
+    return LJ;
+}
+
+double calculate_LJ(const int i, const int j, Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData)
+{
+    double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
+    // sigmaij is the average atomic radius determined by the van der waal radius in kim2008
+    double sigmaij(0.5f * (ri.vanderWaalRadius + rj.vanderWaalRadius));
+    //float r0 = powf(2.0f,(1.0f/6.0f));
+    //float sigT = sigmaij / r ;
+    double LJtmp(powf(sigmaij / r, 6.0f)); //sigT*sigT*sigT*sigT*sigT*sigT;
+    double LJ(-4.0f * Eij * LJtmp * (LJtmp - 1.0f));
+
+    if (Eij > 0.0f && r < sigmaij * r0_constant)  // attractive pairs
+    {
+        LJ = -LJ + 2.0f * Eij;
+    }
     if (abs(LJ) > 1.0)
     {
-        LOG(DEBUG_LJ,"\n+++++ r = %f; sigmaij = %f; LJ = %f\n", r, sigmaij, LJ);
+        LOG(DEBUG_LJ,"\ni = %d; j = %d; r = %f; sigmaij = %f; LJ = %f\n", i, j, r, sigmaij, LJ);
     }
     return LJ;
 }
