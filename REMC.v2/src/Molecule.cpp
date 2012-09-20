@@ -852,7 +852,7 @@ Potential Molecule::E()
                     {
                         if (j - i >= 4)
                         {
-                            doub/* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */le r(iRes.distance(jRes, bounding_value) + EPS);
+                            double r(iRes.distance(jRes, bounding_value) + EPS);
                             /* Calculate LJ-type potential for each residue pair; increment segment total. */
                             potential.increment_LJ_subtotal(calculate_LJ((int)i, (int)j, iRes, jRes, r, AminoAcidsData));
                             /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */
