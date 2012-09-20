@@ -462,6 +462,7 @@ double Replica::E()
     CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
 #endif
     cout << "end of E" << endl;
+    LOG(DEBUG, "end of E\n");
     return total;
 }
 
