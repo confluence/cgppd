@@ -330,7 +330,7 @@ void Replica::MCSearch(int steps)
 //         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 // #endif
 #else // only CPU calls
-        cout << "just before E call") << endl;
+        cout << "just before E call" << endl;
         newPotential = E();
 #endif
         float delta = newPotential - potential;
