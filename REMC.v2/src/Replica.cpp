@@ -463,6 +463,7 @@ double Replica::E()
 #endif
     cout << "end of E" << endl;
     LOG(DEBUG, "xxxxxx end of E\n");
+    cout << "WTF" << endl;
     return total;
 }
 
