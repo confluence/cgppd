@@ -4,11 +4,6 @@
 #include <cstring>
 #include <cmath>
 #include <pthread.h>
-#include <cuda.h>
-#include <cutil.h>  // CUDA c util package
-#include <cuda_runtime_api.h>
-#include <cutil_inline.h>
-#include <cutil_inline_runtime.h>
 #include <sys/mman.h>
 #include <gsl/gsl_qrng.h>
 #include <gsl/gsl_rng.h>
@@ -17,7 +12,6 @@
 #include "AminoAcid.h"
 #include "TorsionalLookupMatrix.h"
 #include "Replica.h"
-#include "cudaExterns.h"
 #include "vector3f.h"
 #include "Quaternion.h"
 #include <map>
@@ -25,8 +19,13 @@
 
 //all cuda things
 #if USING_CUDA
-
+#include <cuda.h>
+#include <cutil.h>  // CUDA c util package
+#include <cuda_runtime_api.h>
+#include <cutil_inline.h>
+#include <cutil_inline_runtime.h>
 #include "cudaExterns.h"
+
 int cuda_blockSize = TILE_DIM;
 bool auto_blockdim = true;
 
@@ -995,8 +994,9 @@ void REMCSimulation(Replica *initialReplica, argdata *parameters)
     SimulationData *data = new SimulationData[threadCount];
 
     //TODO: this seems to print "invalid device pointer", but where does that come from?
+#if USING_CUDA
     cout << cudaGetErrorString(cudaGetLastError()) << endl;
-
+#endif
 
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
@@ -1263,18 +1263,17 @@ int main(int argc, char **argv)
     int sysreturn;
     sysreturn = system("mkdir -p checkpoints");
     sysreturn = system("mkdir -p output");
-
+    cout << "Version: " << HGVERSION << endl;
     cout << "Compiled with:" << endl;
-#ifdef EnableOPENGL
+#ifdef GLVIS
     cout << "  OpenGL support" << endl;
 #endif
-#if EnableCUDA
+#if USING_CUDA
     cout << "  CUDA support" << endl;
 #endif
 #if CUDA_STREAMS
     cout << "  Asynchronous GPU calls (CUDA capability 1.1+ required)" << endl;
 #endif
-
 #if COMPENSATE_KERNEL_SUM
     cout << "  Kahan summation in kernels" << endl;
 #endif

@@ -31,11 +31,13 @@ Replica::Replica()
     totalSamples = 0;
     paircount = 0;
     nonCrowderResidues = 0;
-    timersInit = false;
     translateStep = INITIAL_TRANSLATIONAL_STEP;
     rotateStep = INITIAL_ROTATIONAL_STEP;
 #if USING_CUDA
     replicaIsOnDevice = false;
+#endif
+#if INCLUDE_TIMERS
+    timersInit = false;
 #endif
 }
 
