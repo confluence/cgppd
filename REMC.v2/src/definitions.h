@@ -130,7 +130,6 @@
     #define THREADING 			1
     #define THREAD_COUNT		1
     #define STREAM_COUNT		1
-    #define INCLUDE_TIMERS		1	//include timers
     //#define CHECKPOINTING		1
     #define CHECKPOINTFREQUENCY 10000
 
@@ -208,6 +207,9 @@
         #elif BLOCK_SIZE <= 22						//sqrt 512 == 22.something
             #define SHARED_MEM_RESULT_SIZE	512
         #endif
+        #define INCLUDE_TIMERS      1   //include timers
+    #else
+        #define INCLUDE_TIMERS 0 // the timers use cutil -- no CUDA; no timers.
     #endif // USING_CUDA 1
 
     #if GLVIS

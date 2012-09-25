@@ -2,10 +2,6 @@
 NOW
 --------------------------------------------------------------------------------
 
-* TEST: recompile without flexibility and make sure nothing is porked
-
-* CONUNDRUM: email Rob about LJ after verifying that inflexible version still works.
-
 * BUG: get MC test working with CUDA
 
 --------------------------------------------------------------------------------
@@ -15,11 +11,6 @@ THEN
 STRUCTURE
 
 * Linkers, etc. don't actually *need* to be arrays. Just keep them as vectors?
-
-MAKEFILE
-
-* something is borked in the makefile; stuff doesn't recompile properly without a clean?
-* it would be nice to fix CPU-only version!
 
 TEST
 

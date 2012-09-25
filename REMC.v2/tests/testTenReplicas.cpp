@@ -1,9 +1,11 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <Replica.h>
+#include "definitions.h"
+#if USING_CUDA
 #include <cutil.h>
 #include <cutil_inline.h>
-#include "definitions.h"
+#endif
 
 class TestTenReplicas : public CppUnit::TestFixture
 {
@@ -28,7 +30,9 @@ public:
 
 void TestTenReplicas::setUp()
 {
+#if USING_CUDA
     cuInit(0);
+#endif
 
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
@@ -85,7 +89,7 @@ void TestTenReplicas::testSanity()
     // mysteriously slower in oneiric
     static const float expected_averages [6] = {0.029f, 0.0f, 0.271f, 0.95f, 0.0f, 0.11f};
     static int exceeded_averages [6] = {0, 0, 0, 0, 0, 0};
-
+// TODO use the new constructor
     for (int i = 0; i < 10; i++)
     {
         replicas[i].aminoAcids = aminoAcidData;
@@ -99,7 +103,9 @@ void TestTenReplicas::testSanity()
         sprintf(test_molecule_file,"data/conf%d/1b.pdb",i+1);
         replicas[i].loadMolecule(test_molecule_file);
 
+#if INCLUDE_TIMERS
         replicas[i].initTimers();
+#endif
         replicas[i].countNonCrowdingResidues();
 
 #if USING_CUDA
@@ -119,7 +125,6 @@ void TestTenReplicas::testSanity()
         double gpu_nc = replicas[i].EonDeviceNC();
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu, e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu_nc, gpu_nc, e);
-#endif
 
         float averages[6];
 
@@ -139,7 +144,6 @@ void TestTenReplicas::testSanity()
             }
         }
 
-#if USING_CUDA
         replicas[i].FreeDevice();
 #endif
     }
