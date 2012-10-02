@@ -748,7 +748,7 @@ void Molecule::saveAsPDB(const char* filename)
         for (size_t i = 0; i < residueCount; i++)
         {
             // TODO: flexible links
-            fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",i,"CA",' ', amino_acid_name(i), iRes.chainId, iRes.resSeq, ' ', ipos.x, ipos.y, ipos.z, 1.0f,1.0f);
+            fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n", int(i), "CA", ' ', amino_acid_name(i), iRes.chainId, iRes.resSeq, ' ', ipos.x, ipos.y, ipos.z, 1.0f,1.0f);
         }
 
         fprintf(output,"END \n");
@@ -810,7 +810,7 @@ Potential Molecule::E()
                         // apply intra-linker condition to eliminate overlap and closeness
                         if (j - i >= 4)
                         {
-                            LOG(DEBUG_LJ, "Comparing residues %d (segment %d) and %d (segment %d)\n", i, si, j, sj);
+                            LOG(DEBUG_LJ, "Comparing residues %d (segment %d) and %d (segment %d)\n", int(i), int(si), int(j), int(sj));
                             /* Calculate LJ-type potential for each residue pair; increment molecule total. */
                             potential.increment_LJ_subtotal(calculate_LJ((int)i, (int)j, iRes, jRes, r, AminoAcidsData));
                             /* Calculate electrostatic potential for each residue pair; increment molecule total. */
