@@ -55,6 +55,14 @@ void TestReplica::setUp()
 
     replica.loadMolecule("data/conf1/1a.pdb");
     replica.loadMolecule("data/conf1/1b.pdb");
+
+#if USING_CUDA
+    int cuda_blockSize;
+    (replica.residueCount < 1024) ? cuda_blockSize = 32 : cuda_blockSize = 64;
+    replica.setBlockSize(cuda_blockSize);
+#endif
+
+
 //     replica.loadMolecule("tests/1UBQ.pdb");
 }
 
