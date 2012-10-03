@@ -683,7 +683,7 @@ void Replica::ReplicaDataToDevice()
 
     paddedSize = int(ceil(float(residueCount)/float(blockSize)))*blockSize; // reserve a blocksize multiple because it allows for efficient summation
     dataSetSize = paddedSize;
-    LOG(DEBUG_CUDA, "block size: %f, padded size: %f\n", blockSize, paddedSize);
+    LOG(DEBUG_CUDA, "block size: %d, padded size: %d\n", blockSize, paddedSize);
 
 #if CUDA_STREAMS
     cudaMallocHost((void**)&host_float4_residuePositions,sizeof(float4)*paddedSize);
