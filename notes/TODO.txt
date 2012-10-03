@@ -2,8 +2,6 @@
 NOW
 --------------------------------------------------------------------------------
 
-* BUG: get MC test working with CUDA (what is missing?)
-* main.h -- already done
 * extend unit test to a reasonably complete normal simulation (with reading of parameters, etc.)
 * mock rng (?) for a predictable set of steps?
 

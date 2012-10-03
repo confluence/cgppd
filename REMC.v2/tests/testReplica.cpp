@@ -34,17 +34,17 @@ void TestReplica::setUp()
     testboxdim = 118.4f;
 
 #if USING_CUDA
-//     cuInit(0);
-//     cutilCheckMsg("Failed to initialise CUDA runtime.");
-//     cudaMalloc((void**)&ljp_t,LJArraySize);
-//     cutilCheckMsg("Failed to allocate contact potential memory on the GPU");
-//     CUDA_setBoxDimension(testboxdim);
-//     cutilCheckMsg("Failed to copy box dimensions to GPU");
-//     copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
-//     cutilCheckMsg("Failed to code contact potentials to device.");
-// #if LJ_LOOKUP_METHOD == TEXTURE_MEM
-//     bindLJTexture(ljp_t);
-// #endif
+    cuInit(0);
+    cutilCheckMsg("Failed to initialise CUDA runtime.");
+    cudaMalloc((void**)&ljp_t,LJArraySize);
+    cutilCheckMsg("Failed to allocate contact potential memory on the GPU");
+    CUDA_setBoxDimension(testboxdim);
+    cutilCheckMsg("Failed to copy box dimensions to GPU");
+    copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
+    cutilCheckMsg("Failed to code contact potentials to device.");
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    bindLJTexture(ljp_t);
+#endif
 #endif
 
     replica.aminoAcids = aminoAcidData;
@@ -62,17 +62,15 @@ void TestReplica::setUp()
     replica.setBlockSize(cuda_blockSize);
 #endif
 
-
-//     replica.loadMolecule("tests/1UBQ.pdb");
 }
 
 void TestReplica::tearDown()
 {
 #if USING_CUDA
-//     cudaFree(ljp_t);
-// #if LJ_LOOKUP_METHOD == TEXTURE_MEM
-//     unbindLJTexture();
-// #endif
+    cudaFree(ljp_t);
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    unbindLJTexture();
+#endif
 #endif
     cout.flush();
 }
@@ -81,32 +79,13 @@ void TestReplica::testMC()
 {
     Replica child_replica;
     child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, 1);
-//     LOG(DEBUG, "+++Doing initial potential calculation.\n");
-// TODO: put in function
 #if USING_CUDA
-    cuInit(0);
-    cutilCheckMsg("Failed to initialise CUDA runtime.");
-    cudaMalloc((void**)&ljp_t,LJArraySize);
-    cutilCheckMsg("Failed to allocate contact potential memory on the GPU");
-    CUDA_setBoxDimension(testboxdim);
-    cutilCheckMsg("Failed to copy box dimensions to GPU");
-    copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
-    cutilCheckMsg("Failed to code contact potentials to device.");
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    bindLJTexture(ljp_t);
-#endif
-
     child_replica.device_LJPotentials = ljp_t;
     child_replica.ReplicaDataToDevice();
 #endif
     child_replica.potential = child_replica.E();
-//     LOG(DEBUG, "+++Starting MC search.\n");
     child_replica.MCSearch(20);
 #if USING_CUDA
     child_replica.FreeDevice();
-    cudaFree(ljp_t);
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    unbindLJTexture();
-#endif
 #endif
 }
