@@ -327,26 +327,15 @@ void Replica::MCSearch(int steps)
         MoleculeDataToDevice(moleculeNo);
         newPotential = EonDevice();  // sequential cuda call
         //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
-// #if PERFORM_GPU_AND_CPU_E
-// cout << "cpu and gpu E" << endl;
-//         float cpu_e(E());
-//         float err = abs(cpu_e-newPotential)/abs(cpu_e);
-//         printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
-// #endif
+#if PERFORM_GPU_AND_CPU_E
+        float cpu_e(E());
+        float err = abs(cpu_e - newPotential) / abs(cpu_e);
+        printf("%24.20f %24.20f %24.20f\n", cpu_e, float(newPotential), err);
+#endif
 #else // only CPU calls
         newPotential = E();
 #endif
         float delta = newPotential - potential;
-//         if (abs(delta) > 10.0)
-//         {
-//             int bad_molecule = moleculeNo;
-//             char filename [50];
-//             for (size_t mi = 0; mi < moleculeCount; mi++)
-//             {
-//                 sprintf(filename, "%d_%f_%d_%d.pdb", step, delta, mi, bad_molecule);
-//                 molecules[mi].saveAsPDB(filename);
-//             }
-//         }
 
         // accept change if its better.
         if (delta < 0.0)
