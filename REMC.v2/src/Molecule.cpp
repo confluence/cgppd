@@ -175,7 +175,7 @@ void Molecule::recalculate_relative_positions()
 {
     for (size_t i=0; i<residueCount; i++)
     {
-        Residues[i].relativePosition = center + Residues[i].position;
+        Residues[i].relativePosition = Residues[i].position - center;
     }
 }
 
