@@ -28,9 +28,11 @@ NVCC_ARCH=-arch=sm_20
 
 CUDA=yes
 GL=yes
+STREAMS=no
+LINKERS=yes
+
 TEST=yes
 DEBUG=no
-STREAMS=no
 
 ################################################################################
 
@@ -60,6 +62,10 @@ endif
 
 ifeq ($(STREAMS),yes)
 DEFINE+=-DEnableStreams
+endif
+
+ifeq ($(LINKERS),yes)
+DEFINE+=-DEnableFlexibleLinkers
 endif
 
 OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
@@ -103,6 +109,7 @@ help:
 	@echo "  CUDA: use CUDA (default: yes)"
 	@echo "  GL: use GL (default: yes)"
 	@echo "  STREAMS: use CUDA streams (default: no)"
+	@echo "  LINKERS: use flexible linkers (default: yes)"
 	@echo "  TEST: build unit tests (default: yes)"
 	@echo "  DEBUG: compile with debugging symbols (default: no)"
 

@@ -142,7 +142,11 @@
 
     #define COMPENSATE_KERNEL_SUM	  0
 
-    #define FLEXIBLE_LINKS  1
+    #ifdef EnableFlexibleLinkers
+        #define FLEXIBLE_LINKS  1
+    #else
+        #define FLEXIBLE_LINKS  0
+    #endif
 
     #define MC_TRANSLATE 0
     #define MC_ROTATE 1
