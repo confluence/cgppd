@@ -79,9 +79,8 @@ obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
 	@echo Making CUDA files.
 	nvcc ${NVCC_ARCH} ${NVCC_COMPILER_FLAGS} ${INCLUDE} ${DEFINE} -c src/CudaFunctions.cu -o obj/CudaFunctions.o
 
-# TODO: make this also work for blank target
 ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
-	-include $(DEPFILES)
+-include $(DEPFILES)
 endif
 
 src/%.d: src/%.cpp
@@ -96,7 +95,7 @@ obj/%.o: src/%.cpp src/%.d src/%.h
 	$(COMPILER) $(CFLAGS) ${INCLUDE} ${DEFINE} -o $@ -c $<
 
 clean:
-	@rm -rf obj src/*.d REMC test
+	@rm -rf obj REMC test
 
 help:
 	@echo "Usage: make [REMC] [options]"
