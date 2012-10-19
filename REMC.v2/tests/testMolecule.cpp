@@ -61,13 +61,14 @@ void TestMolecule::testPDBCentre()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[2], molecule.center.z, 0.00001);
 }
 
-#if FLEXIBLE_LINKS
 class TestLinkerPotentials : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestLinkerPotentials);
     CPPUNIT_TEST(testPDBSequence);
+#if FLEXIBLE_LINKS
     CPPUNIT_TEST(testSegments);
     CPPUNIT_TEST(testGeometry);
+#endif // FLEXIBLE_LINKS
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -77,8 +78,10 @@ private:
 public:
     void setUp();
     void testPDBSequence();
+#if FLEXIBLE_LINKS
     void testSegments();
     void testGeometry();
+#endif // FLEXIBLE_LINKS
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestLinkerPotentials);
@@ -99,7 +102,9 @@ void TestLinkerPotentials::testPDBSequence()
 {
     const int expected_size = 10;
     CPPUNIT_ASSERT_EQUAL(expected_size, molecule.residueCount);
+#if FLEXIBLE_LINKS
     CPPUNIT_ASSERT_EQUAL(expected_size - 1, molecule.linkCount);
+#endif // FLEXIBLE_LINKS
 
     char expected_sequence_names[expected_size][4] = {"ASP","ARG","VAL","TYR","ILE","HIS","PRO","PHE","HIS","LEU"};
     int expected;
@@ -114,6 +119,7 @@ void TestLinkerPotentials::testPDBSequence()
     }
 }
 
+#if FLEXIBLE_LINKS
 void TestLinkerPotentials::testSegments()
 {
     CPPUNIT_ASSERT_EQUAL(1, molecule.segmentCount);
@@ -166,11 +172,6 @@ void TestLinkerPotentials::testGeometry()
     };
 
     Potential e = molecule.E();
-//     cout << e.total_LJ() << endl;
-//     cout << e.total_DH() << endl;
-//     cout << e.total_bond() << endl;
-//     cout << e.total_angle() << endl;
-//     cout << e.total_torsion() << endl;
 
     for (size_t i = 0; i < molecule.linkCount; i++)
     {
