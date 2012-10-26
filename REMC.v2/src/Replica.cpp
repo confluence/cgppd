@@ -232,6 +232,7 @@ void Replica::reserveContiguousMoleculeArray(int size)
     molecules = new Molecule[size];
 }
 
+// TODO: also add translation / position / rotation to this?
 int Replica::loadMolecule(const char* pdbfilename)
 {
     if (moleculeCount+1 > moleculeArraySize) //need a new array
@@ -249,10 +250,7 @@ int Replica::loadMolecule(const char* pdbfilename)
         delete [] new_molecules;
     }
 
-    molecules[moleculeCount].init_amino_acid_data(aminoAcids);
-    molecules[moleculeCount].index = moleculeCount;
-    molecules[moleculeCount].initFromPDB(pdbfilename);
-    molecules[moleculeCount].bounding_value = boundingValue;
+    molecules[moleculeCount].init(pdbfilename, aminoAcids, moleculeCount, boundingValue);
 
     residueCount += molecules[moleculeCount].residueCount;
     max_residue_count = max(max_residue_count, molecules[moleculeCount].residueCount);
@@ -261,16 +259,6 @@ int Replica::loadMolecule(const char* pdbfilename)
 #endif
     moleculeCount++;
     return moleculeCount-1;
-}
-
-// TODO use this from init
-int Replica::loadMolecule(const char* pdbfilename, Vector3f position, Vector3double rotationAxis, double rotationAmount)
-{
-    int i = loadMolecule(pdbfilename);
-    rotationAxis.normalizeInPlace();
-    molecules[i].setPosition(position);
-    molecules[i].rotate(rotationAxis,rotationAmount);
-    return i;
 }
 
 // TODO: all of this needs to be done once for the whole simulation

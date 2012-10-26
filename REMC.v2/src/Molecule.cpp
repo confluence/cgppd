@@ -54,12 +54,16 @@ Molecule::~Molecule()
     }
 };
 
-void Molecule::init_amino_acid_data(AminoAcids &a)
+void Molecule::init(const char* pdbfilename, AminoAcids &a, int index, const float bounding_value)
 {
     AminoAcidsData = a;
 #if FLEXIBLE_LINKS
     torsions.loadData(TORSIONALPAIRDATA, a);
 #endif // FLEXIBLE_LINKS
+
+    initFromPDB(pdbfilename);
+    this->index = index;
+    this->bounding_value = bounding_value;
 }
 
 void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
