@@ -51,9 +51,7 @@ public:
     // the search method that mutates the replicas molecules.
     void MCSearch(int steps);//, Replica * replaceReplica);
 
-    // TODO: are both of these used?
     int loadMolecule(const char *pdbfilename);
-    int loadMolecule(const char *pdbfilename, Vector3f position, Vector3double rotationAxis, double rotationAmount);
 
     AminoAcids aminoAcids;
 

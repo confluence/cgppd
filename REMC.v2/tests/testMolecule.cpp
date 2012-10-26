@@ -8,46 +8,73 @@ class TestMolecule : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(TestMolecule);
     CPPUNIT_TEST(testPDBSequence);
     CPPUNIT_TEST(testPDBCentre);
+#if FLEXIBLE_LINKS
+    CPPUNIT_TEST(testSegments);
+    CPPUNIT_TEST(testGeometry);
+#endif // FLEXIBLE_LINKS
+    CPPUNIT_TEST(testStartingPotential);
     CPPUNIT_TEST_SUITE_END();
 
 private:
-    Molecule molecule;
+    Molecule ubiquitin;
+    Molecule angiotensin;
     AminoAcids aminoAcidData;
+    float testboxdim;
 
 public:
     void setUp();
     void testPDBSequence();
     void testPDBCentre();
+#if FLEXIBLE_LINKS
+    void testSegments();
+    void testGeometry();
+#endif // FLEXIBLE_LINKS
+    void testStartingPotential();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestMolecule);
 
 void TestMolecule::setUp()
 {
+    testboxdim = 118.4f;
+
+    // TODO: init for this as well?
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
     aminoAcidData.loadLJPotentialData(LJPDSOURCE);
 
-    molecule.init_amino_acid_data(aminoAcidData);
-    molecule.index = 0;
-    float testboxdim(118.4f);
-    molecule.bounding_value = testboxdim;
-    molecule.initFromPDB("tests/1UBQ.pdb");
+    ubiquitin.init("tests/1UBQ.pdb", aminoAcidData, 0, testboxdim);
+    angiotensin.init("tests/angiotensin.pdb", aminoAcidData, 0, testboxdim);
 }
 
 void TestMolecule::testPDBSequence()
 {
-    const int expected_size = 76;
-    CPPUNIT_ASSERT_EQUAL(expected_size, molecule.residueCount);
+    const int ubiquitin_size = 76;
+    char ubiquitin_names[ubiquitin_size][4] = {"MET", "GLN", "ILE", "PHE", "VAL", "LYS", "THR", "LEU", "THR", "GLY", "LYS", "THR", "ILE", "THR", "LEU", "GLU", "VAL", "GLU", "PRO", "SER", "ASP", "THR", "ILE", "GLU", "ASN", "VAL", "LYS", "ALA", "LYS", "ILE", "GLN", "ASP", "LYS", "GLU", "GLY", "ILE", "PRO", "PRO", "ASP", "GLN", "GLN", "ARG", "LEU", "ILE", "PHE", "ALA", "GLY", "LYS", "GLN", "LEU", "GLU", "ASP", "GLY", "ARG", "THR", "LEU", "SER", "ASP", "TYR", "ASN", "ILE", "GLN", "LYS", "GLU", "SER", "THR", "LEU", "HIS", "LEU", "VAL", "LEU", "ARG", "LEU", "ARG", "GLY", "GLY"};
 
-    char expected_sequence_names[expected_size][4] = {"MET", "GLN", "ILE", "PHE", "VAL", "LYS", "THR", "LEU", "THR", "GLY", "LYS", "THR", "ILE", "THR", "LEU", "GLU", "VAL", "GLU", "PRO", "SER", "ASP", "THR", "ILE", "GLU", "ASN", "VAL", "LYS", "ALA", "LYS", "ILE", "GLN", "ASP", "LYS", "GLU", "GLY", "ILE", "PRO", "PRO", "ASP", "GLN", "GLN", "ARG", "LEU", "ILE", "PHE", "ALA", "GLY", "LYS", "GLN", "LEU", "GLU", "ASP", "GLY", "ARG", "THR", "LEU", "SER", "ASP", "TYR", "ASN", "ILE", "GLN", "LYS", "GLU", "SER", "THR", "LEU", "HIS", "LEU", "VAL", "LEU", "ARG", "LEU", "ARG", "GLY", "GLY"};
+    const int angiotensin_size = 10;
+    char angiotensin_names[angiotensin_size][4] = {"ASP","ARG","VAL","TYR","ILE","HIS","PRO","PHE","HIS","LEU"};
+
+    CPPUNIT_ASSERT_EQUAL(ubiquitin_size, ubiquitin.residueCount);
+    CPPUNIT_ASSERT_EQUAL(angiotensin_size, angiotensin.residueCount);
+#if FLEXIBLE_LINKS
+    CPPUNIT_ASSERT_EQUAL(angiotensin_size - 1, angiotensin.linkCount);
+#endif // FLEXIBLE_LINKS
+
     int expected;
     int got;
 
-    // TODO: rewrite this so it compares strings instead
-    for (int i = 0; i < expected_size; i++)
+    // TODO: rewrite these so they compare strings instead
+    for (int i = 0; i < ubiquitin_size; i++)
     {
-        expected = aminoAcidData.getAminoAcidIndex(expected_sequence_names[i]);
-        got = molecule.Residues[i].aminoAcidIndex;
+        expected = aminoAcidData.getAminoAcidIndex(ubiquitin_names[i]);
+        got = ubiquitin.Residues[i].aminoAcidIndex;
+        CPPUNIT_ASSERT_EQUAL(expected, got);
+    }
+
+    for (int i = 0; i < angiotensin_size; i++)
+    {
+        expected = aminoAcidData.getAminoAcidIndex(angiotensin_names[i]);
+        got = angiotensin.Residues[i].aminoAcidIndex;
         CPPUNIT_ASSERT_EQUAL(expected, got);
     }
 }
@@ -56,84 +83,26 @@ void TestMolecule::testPDBCentre()
 {
     static const float expected_centre[3] = {30.442894736842103, 29.00898684210527, 15.5163947368421};
 
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[0], molecule.center.x, 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[1], molecule.center.y, 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[2], molecule.center.z, 0.00001);
-}
-
-class TestLinkerPotentials : public CppUnit::TestFixture
-{
-    CPPUNIT_TEST_SUITE(TestLinkerPotentials);
-    CPPUNIT_TEST(testPDBSequence);
-#if FLEXIBLE_LINKS
-    CPPUNIT_TEST(testSegments);
-    CPPUNIT_TEST(testGeometry);
-#endif // FLEXIBLE_LINKS
-    CPPUNIT_TEST_SUITE_END();
-
-private:
-    Molecule molecule;
-    AminoAcids aminoAcidData;
-
-public:
-    void setUp();
-    void testPDBSequence();
-#if FLEXIBLE_LINKS
-    void testSegments();
-    void testGeometry();
-#endif // FLEXIBLE_LINKS
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(TestLinkerPotentials);
-
-void TestLinkerPotentials::setUp()
-{
-    aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
-    aminoAcidData.loadLJPotentialData(LJPDSOURCE);
-
-    molecule.init_amino_acid_data(aminoAcidData);
-    molecule.index = 0;
-    float testboxdim(118.4f);
-    molecule.bounding_value = testboxdim;
-    molecule.initFromPDB("tests/angiotensin.pdb");
-}
-
-void TestLinkerPotentials::testPDBSequence()
-{
-    const int expected_size = 10;
-    CPPUNIT_ASSERT_EQUAL(expected_size, molecule.residueCount);
-#if FLEXIBLE_LINKS
-    CPPUNIT_ASSERT_EQUAL(expected_size - 1, molecule.linkCount);
-#endif // FLEXIBLE_LINKS
-
-    char expected_sequence_names[expected_size][4] = {"ASP","ARG","VAL","TYR","ILE","HIS","PRO","PHE","HIS","LEU"};
-    int expected;
-    int got;
-
-    // TODO: rewrite this so it compares strings instead
-    for (int i = 0; i < expected_size; i++)
-    {
-        expected = aminoAcidData.getAminoAcidIndex(expected_sequence_names[i]);
-        got = molecule.Residues[i].aminoAcidIndex;
-        CPPUNIT_ASSERT_EQUAL(expected, got);
-    }
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[0], ubiquitin.center.x, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[1], ubiquitin.center.y, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[2], ubiquitin.center.z, 0.00001);
 }
 
 #if FLEXIBLE_LINKS
-void TestLinkerPotentials::testSegments()
+void TestMolecule::testSegments()
 {
-    CPPUNIT_ASSERT_EQUAL(1, molecule.segmentCount);
-//     CPPUNIT_ASSERT_EQUAL(1, molecule.linkerCount);
+    CPPUNIT_ASSERT_EQUAL(1, angiotensin.segmentCount);
+//     CPPUNIT_ASSERT_EQUAL(1, angiotensin.linkerCount);
 
-    CPPUNIT_ASSERT_EQUAL(0, molecule.Segments[0].start);
-    CPPUNIT_ASSERT_EQUAL(9, molecule.Segments[0].end);
-    CPPUNIT_ASSERT_EQUAL(true, molecule.Segments[0].flexible);
+    CPPUNIT_ASSERT_EQUAL(0, angiotensin.Segments[0].start);
+    CPPUNIT_ASSERT_EQUAL(9, angiotensin.Segments[0].end);
+    CPPUNIT_ASSERT_EQUAL(true, angiotensin.Segments[0].flexible);
 
-//     CPPUNIT_ASSERT_EQUAL(0, molecule.Linkers[0]->start);
-//     CPPUNIT_ASSERT_EQUAL(9, molecule.Linkers[0]->end);
+//     CPPUNIT_ASSERT_EQUAL(0, angiotensin.Linkers[0]->start);
+//     CPPUNIT_ASSERT_EQUAL(9, angiotensin.Linkers[0]->end);
 }
 
-void TestLinkerPotentials::testGeometry()
+void TestMolecule::testGeometry()
 {
     float expected_bond_lengths[9] = {
         3.821749687194824,
@@ -171,17 +140,21 @@ void TestLinkerPotentials::testGeometry()
         0.0 // padding for simplicity
     };
 
-    Potential e = molecule.E();
+    Potential e = angiotensin.E();
 
-    for (size_t i = 0; i < molecule.linkCount; i++)
+    for (size_t i = 0; i < angiotensin.linkCount; i++)
     {
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_bond_lengths[i], molecule.Links[i].pseudo_bond, 0.00001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_bond_lengths[i], angiotensin.Links[i].pseudo_bond, 0.00001);
 
         // convert degrees (from VMD) to radians
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_angles[i]/57.29577951308232, molecule.Residues[i].pseudo_angle, 0.00001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_angles[i]/57.29577951308232, angiotensin.Residues[i].pseudo_angle, 0.00001);
 
         // convert degrees (from VMD) to radians
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, molecule.Links[i].pseudo_torsion, 0.00001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, angiotensin.Links[i].pseudo_torsion, 0.00001);
     }
 }
 #endif // FLEXIBLE_LINKS
+
+void TestMolecule::testStartingPotential()
+{
+}

@@ -28,7 +28,7 @@ public:
     ~Molecule();
 
     // TODO: write a proper init function
-    void init(AminoAcid residues[], char *description, char *data);
+    void init(const char* pdbfilename, AminoAcids &a, int index, const float bounding_value);
     bool initFromPDB(const char* pdbfilename);
     void copy(const Molecule& m, Residue * contiguous_residue_offset);
     void MC_backup_restore(const Molecule* m);
@@ -83,7 +83,6 @@ public:
     float calculateSASA();
 
     AminoAcids AminoAcidsData;
-    void init_amino_acid_data(AminoAcids &a); // TODO: this is a hack; use proper constructors
 
     Residue *Residues;
     int residueCount;
