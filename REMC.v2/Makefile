@@ -7,7 +7,7 @@ CFLAGS=-fno-omit-frame-pointer -O2
 COMPILER=g++
 HGVERSION:= $(shell hg parents --template 'hgid: {node|short}')
 DEFINE=
-OBJS=AminoAcid AminoAcids Link Segment Potential Molecule Quaternion Replica Residue TorsionalLookupMatrix vector3f
+OBJS=AminoAcid AminoAcids Link Segment Potential Molecule Quaternion Replica Residue Simulation TorsionalLookupMatrix vector3f
 
 # For automatic dependencies
 SUFFIXES+=.d
