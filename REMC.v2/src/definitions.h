@@ -261,6 +261,12 @@
 
     struct argdata
     {
+        bool viewConditions;
+        bool skipsimulation;
+#if USING_CUDA
+        int cuda_blockSize;
+        bool auto_blockdim;
+#endif
         int threads;
         int streams;
         int gpus;
