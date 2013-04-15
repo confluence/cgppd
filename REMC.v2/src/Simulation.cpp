@@ -4,6 +4,12 @@ Simulation::Simulation(argdata parameters)
 {
     this->parameters = parameters;
 
+    replicasInitialised = false;
+    waitingThreadMutex = PTHREAD_MUTEX_INITIALIZER;
+    waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
+    reMutex = PTHREAD_MUTEX_INITIALIZER;
+    writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
+
     LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
 
@@ -242,7 +248,7 @@ void *Simulation::MCthreadableFunction(void *arg)
     printf ("--- Monte-Carlo thread %d running. ---.\n",int(threadIndex+1));
 
 #if GLVIS
-    GLreplica = &replica[0];
+    gl->GLreplica = &replica[0];
 #endif
     // determine the number of replicas the thread will run
     int tReplicas = int(ceil(float(data->replicaCount)/float(data->threads)));
@@ -793,8 +799,8 @@ void Simulation::run()
         pthread_cond_broadcast(&waitingThreadCond);
 
 #if GLVIS
-        GLreplica = &replica[_300kReplica];
-        GlutDisplay();
+        gl->GLreplica = &replica[_300kReplica];
+        gl->GlutDisplay();
 #endif
 
         int tempI = replicaTemperatureMap[300.0f];
