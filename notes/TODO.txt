@@ -2,6 +2,8 @@
 NOW
 --------------------------------------------------------------------------------
 
+* argh; revert GL changes and fall back to a global variable?
+
 * make sure everything compiles and runs
 * single rng for all replicas
 * sort out gl stuff
