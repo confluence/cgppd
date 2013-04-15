@@ -1,111 +1,61 @@
-// openglvis.h
-// this file contains all global functions for displaying whats going on in opengl,
-// its non essential for the contant of this code so its all been moved here to keep
-// it separate from the other stuff
+#include "OpenGLController.h"
 
-#ifndef OPENGL_H
-#define OPENGL_H
+OpenGLController::OpenGLController()
+{
+    displayminimum = false;
 
-extern Replica replica[REPLICA_COUNT];
+    //modes
+    b_mlook = true;
+    b_rotate = false;
+    b_translate = false;
+    b_scale  = false;
 
-bool displayminimum = false;
+    //draw options
+    drawAxes = false;
+    drawNormals = false;
+    drawFilled = true;
+    drawWire = false;
+    pulse = false;
+    glow = false;
+    fog = false;
 
-#define WIDTH      	 	800
-#define HEIGHT       	800
-#define MOVESPEED  0.05f  //movement
-#define MSPEED     0.02f  //mouse
-#define MACC       0.8f  //mouse acceleration
-#include <GL/glut.h>
-#include <GL/gl.h>
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include "Camera.h"
-#include <vector>
-#include <ctime>
-#include <linux/kernel.h>
-//#include <linux/time.h>
+    showSelection = true;
+    dr = 0; //replica to display
+    // input control variables 1,0,-1 indicate states
+    moveFrontback = 0;
+    moveLeftRight = 0;
+    deltaRotate = 0;
+    lastkey = 0;
 
-#define M_ROTATE		1001
-#define M_TRANSLATE 	1002
-#define M_SCALE			1003
-#define M_QUIT			1004
-#define M_COLOR			1005
-#define M_ADD			1006
-#define M_REMOVE		1007
-#define M_SAVE			1008
-#define M_LOAD			1009
-#define M_DESELECT  	1010
-#define M_SELECT    	1011
-#define M_WIREFRAME 	1012
-#define M_FILLED		1013
-#define M_NORMALS		1014
-#define M_AXES			1015
-#define M_INVSELECTION 	1016
+    LightPos0 = { -100.0f, 100.0f, 100.0f, 1.0f};           // Light Position
+    LightPos1 = { -100.0f, -100.0f, 100.0f, 1.0f};          // Light Position
+    LightPos2 = { -100.0f, 0.0f, -100.0f, 1.0f};            // Light Position
+    materialShininess = 128.0f;                                       // Material shininess
 
-void GlutInit(int windowheight,int windowwidth, char* title);
-void GlutDisplay();
-void GlutResize(int width, int height);
-void GlutMouseFunction(int btn, int state, int x, int y);
-void GlutIdleFunction();
-void GLUTMouseActiveMotion(int x, int y);
-void GLUTMousePassiveMotion(int x, int y);
-void GLUTMouse(int btn, int state, int x, int y);
-void GLUTKeyboardPress(unsigned char x , int y ,int z);
-void GLUTKeyboardUp(unsigned char x , int y ,int z);
-void GLUTKeyboardSpecial(int x , int y ,int z);
-void GLUTcreateMenu();
-void GLUTmenu(int);
-void GLUTdrawaxes();
+    COLOURS =
+    {   { 0.8f, 0.2f, 0.0f },
+        { 0.0f, 0.7f, 0.7f },
+        { 0.0f, 0.0f, 0.7f },
+        { 1.0f, 0.5f, 0.0f },
+        { 1.0f, 1.0f, 0.0f }
+    };
+}
 
-Camera camera;
+void OpenGLController::init(int argc, char **argv, argdata parameters)
+{
+    glutInit(&argc, argv);
+    camera.setPosition(Vector3f(-15,15,15), Vector3f(1,-1,-1), Vector3f(0,1,0));
+    char windowName[64] = {"REMC Protein Docker"};
+    GlutInit(WIDTH, HEIGHT, windowName);
+    gl_replicaCount = parameters.replicas;
+    gl_boundingValue = int(parameters.bound);
+}
 
-//modes
-bool b_mlook = true;
-bool b_rotate = false;
-bool b_translate = false;
-bool b_scale  = false;
+// OpenGLController::~OpenGLController()
+// {
+// }
 
-//draw options
-bool drawAxes = false;
-bool drawNormals = false;
-bool drawFilled = true;
-bool drawWire = false;
-bool pulse = false;
-bool glow = false;
-bool fog = false;
-
-int mousex;
-int mousey;
-int windowh;
-int windoww;
-bool showSelection = true;
-int gl_replicaCount;
-int gl_boundingValue;
-int dr = 0; //replica to display
-// input control variables 1,0,-1 indicate states
-int moveFrontback = 0;
-int moveLeftRight = 0;
-float deltaRotate = 0;
-unsigned char lastkey = 0;
-int glutWindowID;
-
-float LightPos0[] = { -100.0f, 100.0f, 100.0f, 1.0f};			// Light Position
-float LightPos1[] = { -100.0f, -100.0f, 100.0f, 1.0f};			// Light Position
-float LightPos2[] = { -100.0f, 0.0f, -100.0f, 1.0f};			// Light Position
-float materialShininess = 128.0f;										// Material shininess
-
-float COLOURS[5][3] =
-{   { 0.8f, 0.2f, 0.0f },
-    { 0.0f, 0.7f, 0.7f },
-    { 0.0f, 0.0f, 0.7f },
-    { 1.0f, 0.5f, 0.0f },
-    { 1.0f, 1.0f, 0.0f }
-};
-
-char *windowtitle;
-// initialization function
-void GlutInit(int windowheight,int windowwidth, char* title)
+void OpenGLController::GlutInit(int windowheight,int windowwidth, char* title)
 {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(windowheight, windowwidth);
@@ -130,15 +80,15 @@ void GlutInit(int windowheight,int windowwidth, char* title)
     glutKeyboardUpFunc(GLUTKeyboardUp);
     glutSpecialFunc(GLUTKeyboardSpecial);
 
-    float LightPos0[] = { 200.0f, 200.0f, 200.0f, 1.0f};			// Light Position
-    float LightPos1[] = { -200.0f, 200.0f, 200.0f, 1.0f};			// Light Position
-    float LightPos2[] = { 150.0f, 200.0f, -180.0f, 1.0f};			// Light Position
-    float LightAmb[] = { 0.3f, 0.3f, 0.3f, 1.0f};					// Ambient Light Values
-    float LightDif[] = { 0.7f, 0.7f, 0.7f, 1.0f};					// Diffuse Light Values
-    float LightSpc[] = {0.5f, 0.5f, 0.5f, 1.0f};					// Specular Light Values
-    float materialAmbient[] = {0.2f, 0.2f, 0.2f, 0.0f};						// Material ambient values
-    float materialDiffuse[] = {0.27f, 0.27f, 0.27f, 0.0f};						// Material diffuse values
-    float materialSpecular[] = {1.0f, 1.0f, 1.0f, 0.0f};						// Material specular values
+    float LightPos0[] = { 200.0f, 200.0f, 200.0f, 1.0f};            // Light Position
+    float LightPos1[] = { -200.0f, 200.0f, 200.0f, 1.0f};           // Light Position
+    float LightPos2[] = { 150.0f, 200.0f, -180.0f, 1.0f};           // Light Position
+    float LightAmb[] = { 0.3f, 0.3f, 0.3f, 1.0f};                   // Ambient Light Values
+    float LightDif[] = { 0.7f, 0.7f, 0.7f, 1.0f};                   // Diffuse Light Values
+    float LightSpc[] = {0.5f, 0.5f, 0.5f, 1.0f};                    // Specular Light Values
+    float materialAmbient[] = {0.2f, 0.2f, 0.2f, 0.0f};                     // Material ambient values
+    float materialDiffuse[] = {0.27f, 0.27f, 0.27f, 0.0f};                      // Material diffuse values
+    float materialSpecular[] = {1.0f, 1.0f, 1.0f, 0.0f};                        // Material specular values
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -189,63 +139,62 @@ void GlutInit(int windowheight,int windowwidth, char* title)
     glMaterialf( GL_FRONT, GL_SHININESS, materialShininess );
 }
 
-#define AXISDIM 1500
-void GLUTdrawBoundingSphere()
+void OpenGLController::GLUTdrawBoundingSphere()
 {
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glPushMatrix();
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
     /*glBegin(GL_LINES);
-    	glLineWidth(2.0f);
+        glLineWidth(2.0f);
 
-    	// x axis
-    	glColor3f(0.15,0.15,0.15);
-    	glVertex3f(-AXISDIM,0,0);
+        // x axis
+        glColor3f(0.15,0.15,0.15);
+        glVertex3f(-AXISDIM,0,0);
 
-    	glColor3f(1.0,0,0);
-    	glVertex3f(0,0,0);
-    	glVertex3f(0,0,0);
+        glColor3f(1.0,0,0);
+        glVertex3f(0,0,0);
+        glVertex3f(0,0,0);
 
-    	glColor3f(0.15,0.15,0.15);
-    	glVertex3f(AXISDIM,0,0);
+        glColor3f(0.15,0.15,0.15);
+        glVertex3f(AXISDIM,0,0);
 
-    	// y axis
-    	glColor3f(0.15,0.15,0.15);
-    	glVertex3f(0,-AXISDIM,0);
+        // y axis
+        glColor3f(0.15,0.15,0.15);
+        glVertex3f(0,-AXISDIM,0);
 
-    	glColor3f(0,1.0,0);
-    	glVertex3f(0,0,0);
-    	glVertex3f(0,0,0);
+        glColor3f(0,1.0,0);
+        glVertex3f(0,0,0);
+        glVertex3f(0,0,0);
 
-    	glColor3f(0.15,0.15,0.15);
-    	glVertex3f(0,AXISDIM,0);
+        glColor3f(0.15,0.15,0.15);
+        glVertex3f(0,AXISDIM,0);
 
-    	// z axis
-    	glColor3f(0.15,0.15,0.15);
-    	glVertex3f(0,0,-AXISDIM);
+        // z axis
+        glColor3f(0.15,0.15,0.15);
+        glVertex3f(0,0,-AXISDIM);
 
-    	glColor3f(0,0,1.0);
-    	glVertex3f(0,0,0);
-    	glVertex3f(0,0,0);
+        glColor3f(0,0,1.0);
+        glVertex3f(0,0,0);
+        glVertex3f(0,0,0);
 
-    	glColor3f(0.15,0.15,0.15);
-    	glVertex3f(0,0,AXISDIM);
+        glColor3f(0.15,0.15,0.15);
+        glVertex3f(0,0,AXISDIM);
 
-    	glLineWidth(0.5f);
-    	glColor4f(0.75,0.75,0.75,0.2);
-    	for (int i=0; i<=gl_boundingValue;i+=2)
-    	{
-    		float l = gl_boundingValue * cos ( asin(i/gl_boundingValue));
-    		glVertex3f(-l,0,i);
-    		glVertex3f(l,0,i);
-    		glVertex3f(-l,0,-i);
-    		glVertex3f(l,0,-i);
-    		glVertex3f(i,0,-l);
-    		glVertex3f(i,0,l);
-    		glVertex3f(-i,0,-l);
-    		glVertex3f(-i,0,l);
-    	}
+        glLineWidth(0.5f);
+        glColor4f(0.75,0.75,0.75,0.2);
+        for (int i=0; i<=gl_boundingValue;i+=2)
+        {
+            float l = gl_boundingValue * cos ( asin(i/gl_boundingValue));
+            glVertex3f(-l,0,i);
+            glVertex3f(l,0,i);
+            glVertex3f(-l,0,-i);
+            glVertex3f(l,0,-i);
+            glVertex3f(i,0,-l);
+            glVertex3f(i,0,l);
+            glVertex3f(-i,0,-l);
+            glVertex3f(-i,0,l);
+        }
 
     glEnd();
     */
@@ -277,7 +226,7 @@ void GLUTdrawBoundingSphere()
     glPopAttrib();
 }
 
-void GLUTdrawBoundingBox()
+void OpenGLController::GLUTdrawBoundingBox()
 {
     float lindim  = gl_boundingValue*0.5;
     glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -285,16 +234,16 @@ void GLUTdrawBoundingBox()
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
     /*glBegin(GL_LINES);
-    	glLineWidth(1.0f);
-    	glColor3f(0.75,0.75,0.75);
-    	for (int i=0; i<=gl_boundingValue;i+=5)
-    		for (int j=0; j<=gl_boundingValue;j+=5)
-    		{
-    			glVertex3f(-lindim,0,j-lindim);
-    			glVertex3f(lindim,0,j-lindim);
-    			glVertex3f(i-lindim,0,-lindim);
-    			glVertex3f(i-lindim,0,lindim);
-    		}
+        glLineWidth(1.0f);
+        glColor3f(0.75,0.75,0.75);
+        for (int i=0; i<=gl_boundingValue;i+=5)
+            for (int j=0; j<=gl_boundingValue;j+=5)
+            {
+                glVertex3f(-lindim,0,j-lindim);
+                glVertex3f(lindim,0,j-lindim);
+                glVertex3f(i-lindim,0,-lindim);
+                glVertex3f(i-lindim,0,lindim);
+            }
 
     glEnd();
     */
@@ -364,7 +313,7 @@ void GLUTdrawBoundingBox()
 
 
 // glut display call
-void GlutDisplay()
+void OpenGLController::GlutDisplay()
 {
     GLUquadric * quadric;
     float lindim  = gl_boundingValue*0.5;
@@ -391,20 +340,20 @@ void GlutDisplay()
 
 
     /*glPushMatrix();
-    	glColor3f(1.0,0.0,0.0);
-    	glTranslated (1,0,0);
-    	gluSphere(quadric, 0.15, 20, 20);
+        glColor3f(1.0,0.0,0.0);
+        glTranslated (1,0,0);
+        gluSphere(quadric, 0.15, 20, 20);
     glPopMatrix();
     glPushMatrix();
-    	glColor3f(0.0,1.0,0.0);
-    	glTranslated (0,1,0);
-    	gluSphere(quadric, 0.15, 20, 20);
+        glColor3f(0.0,1.0,0.0);
+        glTranslated (0,1,0);
+        gluSphere(quadric, 0.15, 20, 20);
     glPopMatrix();
     glPushMatrix();
-    	glColor3f(0.0,0.0,1.0);
-    	glTranslated (0,0,1);
-    	gluSphere(quadric, 0.15, 20, 20);
-    glPopMatrix();	*/
+        glColor3f(0.0,0.0,1.0);
+        glTranslated (0,0,1);
+        gluSphere(quadric, 0.15, 20, 20);
+    glPopMatrix();  */
 
 
     for(size_t m=0; m<GLreplica->moleculeCount; m++)
@@ -454,62 +403,6 @@ void GlutDisplay()
         glPopMatrix();
     }
 
-
-    /*  glPushMatrix();
-    	glColor3d(1.0,0,0);
-    	glBegin(GL_LINES);
-    		glVertex3d(replica[dr].pResidues[0].position.x,replica[dr].pResidues[0].position.y,replica[dr].pResidues[0].position.z);
-    		for (int i=1;i<replica[dr].length;i++)
-    		{
-    				glColor3d(1.0-i*1.0/(double(replica[dr].length)),0.0,i*1.0/(double(replica[dr].length)));
-    				glVertex3d(replica[dr].pResidues[i].position.x,replica[dr].pResidues[i].position.y,replica[dr].pResidues[i].position.z);
-    				//ated(replica[0].pResidues[i].position.x-replica[0].pResidues[i-1].position.x,
-    						//	 replica[0].pResidues[i].position.y-replica[0].pResidues[i-1].position.y,
-    						//	 replica[0].pResidues[i].position.z-replica[0].pResidues[i-1].position.z);
-    				// gluCylinder(quadric, bottomRadius, topRadius, height, slices, rings)
-    				//gluCylinder(quadric, 1e-10,  1e-10, (replica[0].pResidues[i].position-replica[0].pResidues[i-1].position).magnitude(), 7, 7);
-    		}
-    	glEnd();
-    glPopMatrix();*/
-
-
-    //	glPopMatrix();
-    //glPopAttrib();
-    //glPushAttrib(GL_ALL_ATTRIB_BITS);
-    //	glPushMatrix();
-    //		glEnable(GL_DEPTH_TEST);
-
-    // show minimum
-    /*		if (displayminimum)
-    		{
-    			//glScaled(0.1,0.1,0.1);
-
-    			for(size_t m=0;m<replica[dr].moleculeCount;m++)
-    			{
-    				positionS = replica[dr].molecules[m].center;
-
-    				glColor3f(1.0,1.0,0.0);
-    				glBegin(GL_LINES);
-    					glLineWidth(3.0f);
-    					glVertex3f(positionS.x,0,positionS.z);
-    					glVertex3f(positionS.x,positionS.y,positionS.z);
-    				glEnd();
-
-    				glPushMatrix();
-    					glTranslatef(positionS.x,positionS.y,positionS.z);
-    					glColor3f(0.7,0.7,0.7);
-    				    for (uint r=0;r<replica[lowestEnergy].molecules[m].residueCount;r++)
-    					{
-    						glPushMatrix();
-    							Vector3f p = replica[lowestEnergy].molecules[m].Residues[r].relativePosition;
-    							glTranslatef(p.x,p.y,p.z);
-    							// gluSphere(quadric, radius, slices, rings)
-    							gluSphere(quadric, 2, 20, 20);
-    						glPopMatrix();
-    					}
-    				glPopMatrix();
-    			}
-    		}*/
     glPopMatrix();
     glPopAttrib();
 
@@ -526,7 +419,7 @@ void GlutDisplay()
 }
 
 // idle glut function
-void GlutIdleFunction()
+void OpenGLController::GlutIdleFunction()
 {
     // introduce time dependent functions
     static long last_time =  clock()-100;
@@ -544,7 +437,7 @@ void GlutIdleFunction()
     glutPostRedisplay();
 }
 
-void GlutResize(int w, int h)
+void OpenGLController::GlutResize(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
@@ -554,7 +447,7 @@ void GlutResize(int w, int h)
     gluLookAt(-2.0f,0.0f,-5.0f, -2.0f,0.0f,-4.0f , 0.0f,1.0f,0.0f);
 }
 
-void GLUTMouseActiveMotion(int x, int y)
+void OpenGLController::GLUTMouseActiveMotion(int x, int y)
 {
     if (b_mlook)
     {
@@ -576,12 +469,12 @@ void GLUTMouseActiveMotion(int x, int y)
     }
 }
 
-void GLUTMousePassiveMotion(int x, int y)
+void OpenGLController::GLUTMousePassiveMotion(int x, int y)
 {
 
 }
 
-void GLUTMouse(int btn, int state, int x, int y)
+void OpenGLController::GLUTMouse(int btn, int state, int x, int y)
 {
     if(btn==GLUT_LEFT_BUTTON && state == GLUT_DOWN)
     {
@@ -605,7 +498,7 @@ void GLUTMouse(int btn, int state, int x, int y)
     }
 }
 
-void GLUTKeyboardPress(unsigned char key, int x, int y)
+void OpenGLController::GLUTKeyboardPress(unsigned char key, int x, int y)
 {
     switch(key)
     {
@@ -629,8 +522,8 @@ void GLUTKeyboardPress(unsigned char key, int x, int y)
     case 'N':
         dr++;
         dr = dr%gl_replicaCount;
-        GLreplica = & replica[dr];
-        cout << "displaying replica: " << dr << " E=" << replica[dr].potential << endl;
+        GLreplica = & (*replica)[dr];
+        cout << "displaying replica: " << dr << " E=" << GLreplica->potential << endl;
         break;
     case 'm':
     case 'M':
@@ -648,7 +541,7 @@ void GLUTKeyboardPress(unsigned char key, int x, int y)
 
 }
 
-void GLUTKeyboardUp(unsigned char key, int x, int y)
+void OpenGLController::GLUTKeyboardUp(unsigned char key, int x, int y)
 {
     switch(key)
     {
@@ -671,7 +564,7 @@ void GLUTKeyboardUp(unsigned char key, int x, int y)
     }
 }
 
-void GLUTKeyboardSpecial(int key, int x, int y)
+void OpenGLController::GLUTKeyboardSpecial(int key, int x, int y)
 {
     switch(key)
     {
@@ -685,7 +578,7 @@ void GLUTKeyboardSpecial(int key, int x, int y)
     }
 }
 
-void GLUTmenu(int call)
+void OpenGLController::GLUTmenu(int call)
 {
     b_mlook = true;
     switch(call)
@@ -697,12 +590,10 @@ void GLUTmenu(int call)
     }
 }
 
-void GLUTcreateMenu()
+void OpenGLController::GLUTcreateMenu()
 {
     glutCreateMenu(GLUTmenu);
     glutAddMenuEntry("Quit", M_QUIT);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 // gl stuff ends
-
-#endif

@@ -416,7 +416,8 @@ void loadArgsFromFile(argdata * parameters)
     }
     if (parameters->threads > parameters->streams)
     {
-        parameters->streams = threads;
+        // TODO: is this right? Should it be set to the default threads?
+        parameters->streams = parameters->threads;
         if (parameters->streams > 16*parameters->gpus)
         {
             parameters->streams = 16*parameters->gpus;
@@ -496,7 +497,7 @@ int main(int argc, char **argv)
     parameters.inputFile = false;
     memset(parameters.prependageString,0,256);
 
-    bool use_defaults = getArgs(&parameters,argc,argv);
+    bool use_defaults = getArgs(&parameters, argc, argv);
 
     //if there is an input file load its contents here
 
@@ -513,7 +514,7 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    simulation Simulation(parameters);
+    Simulation simulation(parameters);
 
     if (strcmp(argv[argc-1],"-c")==0)
     {
@@ -526,15 +527,13 @@ int main(int argc, char **argv)
 #if GLVIS
         if (parameters.viewConditions)
         {
-            glutInit(&argc, argv);
-            camera.setPosition(Vector3f(-15,15,15),Vector3f(1,-1,-1),Vector3f(0,1,0));
-            char windowName[64] = {"REMC Protein Docker"};
-            GlutInit(WIDTH,HEIGHT,windowName);
-            gl_replicaCount = parameters.replicas;
-            gl_boundingValue = int(parameters.bound);
-            GLreplica = &simulation.initialReplica;
+            gl.init(argv, argc, parameters, simulation)
+            gl.replica = &simulation.replica;
+            gl.GLreplica = &simulation.initialReplica;
+            simulation.gl = &gl;
         }
 #endif
+
         if (!parameters.skipsimulation)
         {
             simulation.run();
@@ -544,11 +543,12 @@ int main(int argc, char **argv)
         if (parameters.viewConditions)
         {
             // TODO: this is overwritten inside run. Why do we set it back here?
-            GLreplica = &simulation.initialReplica;
+            gl.GLreplica = &simulation.initialReplica;
             cout << "Entering free gl viewing mode." << endl;
-            glutMainLoop();
+            gl.glutMainLoop();
         }
 #endif
+
     }
     cout << "Finished." << endl;
     return 0;

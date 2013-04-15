@@ -30,32 +30,32 @@
 #endif
 
 #if GLVIS
-#include "openglvis.h"
+#include "OpenGLController.h"
 #endif
 
 class Simulation
 {
 public:
-    #if GLVIS
-    Replica *GLreplica;
-    #endif
+#if GLVIS
+    OpenGLController * gl;
+#endif
 
     AminoAcids aminoAcidData;
 
-    float e = 2.71828182845904523536f;
+//     float e = 2.71828182845904523536f;
     size_t lowestEnergy;
     Replica initialReplica;
     Replica replica[REPLICA_COUNT];   // container for all replicas in the simulation
-    bool replicasInitialised = false;
+    bool replicasInitialised;
 
     // TODO: create one rng; pass into replicas! Thesis assumes one rng for all replicas.
     gsl_rng  * REMCRng;         // random numbers for the REMC method to swap labels
 
     // required objects for synchronisation
-    pthread_mutex_t waitingThreadMutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t reMutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t waitingThreadMutex;
+    pthread_mutex_t waitingCounterMutex;
+    pthread_mutex_t reMutex;
+    pthread_mutex_t writeFileMutex;
     pthread_cond_t waitingThreadCond;
     pthread_cond_t waitingReplicaExchangeCond;
     int waitingThreadCount;
