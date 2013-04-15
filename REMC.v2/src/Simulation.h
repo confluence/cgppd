@@ -52,15 +52,6 @@ public:
     // TODO: create one rng; pass into replicas! Thesis assumes one rng for all replicas.
     gsl_rng  * REMCRng;         // random numbers for the REMC method to swap labels
 
-    // required objects for synchronisation
-    pthread_mutex_t waitingThreadMutex;
-    pthread_mutex_t waitingCounterMutex;
-    pthread_mutex_t reMutex;
-    pthread_mutex_t writeFileMutex;
-    pthread_cond_t waitingThreadCond;
-    pthread_cond_t waitingReplicaExchangeCond;
-    int waitingThreadCount;
-
     Simulation(argdata parameters);
     ~Simulation();
 
@@ -69,11 +60,12 @@ public:
 #endif
     void init();
 
-    void *MCthreadableFunction(void *arg);
     void run();
 
     void initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConformationsFile, FILE ** acceptanceRatioFile,  FILE ** exchangeFrequencyFile);
     void closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile);
 };
+
+void *MCthreadableFunction(void *arg);
 
 #endif /*SIMULATION_H_*/

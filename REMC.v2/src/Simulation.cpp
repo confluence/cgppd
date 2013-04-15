@@ -238,12 +238,22 @@ void Simulation::init()
     cout.flush();
 }
 
-void *Simulation::MCthreadableFunction(void *arg)
+// WTF is going on with these?
+pthread_mutex_t waitingThreadMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t reMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t waitingThreadCond;
+pthread_cond_t waitingReplicaExchangeCond;
+int waitingThreadCount;
+
+void *MCthreadableFunction(void *arg)
 {
 
     SimulationData *data = (SimulationData *) arg;
     long threadIndex = data->index;
     Replica *replica = data->replica;
+    OpenGLController *gl = data->gl;
 
     printf ("--- Monte-Carlo thread %d running. ---.\n",int(threadIndex+1));
 
@@ -492,12 +502,6 @@ void Simulation::run()
 {
     LOG(ALWAYS, "Beginning simulation\n");
 
-    // TODO WTF, why do these cause warnings?
-    waitingThreadMutex = PTHREAD_MUTEX_INITIALIZER;
-    waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
-    reMutex = PTHREAD_MUTEX_INITIALIZER;
-    writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
-
     // need at most REPLICA_COUNT threads
     cout << "Output files will be prefixed by " << parameters.prependageString << "_" << parameters.pid << endl;
 
@@ -702,6 +706,9 @@ void Simulation::run()
         data[i].conformationsBound = &conformationsBound;
         data[i].fractionBound = fractionBoundFile;
         data[i].boundConformations = boundConformationsFile;
+#if GLVIS
+        data[i].gl = gl;
+#endif
 
         // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
         // % #gpus so they share if threads > gpus
