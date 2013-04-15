@@ -36,6 +36,7 @@
 class Simulation
 {
 public:
+    argdata parameters;
 #if GLVIS
     OpenGLController * gl;
 #endif
@@ -63,14 +64,16 @@ public:
     Simulation(argdata parameters);
     ~Simulation();
 
+#if USING_CUDA
     void run_check();
+#endif
     void init();
 
     void *MCthreadableFunction(void *arg);
     void run();
 
-    void initSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
-    void closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile);
+    void initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConformationsFile, FILE ** acceptanceRatioFile,  FILE ** exchangeFrequencyFile);
+    void closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile);
 };
 
 #endif /*SIMULATION_H_*/

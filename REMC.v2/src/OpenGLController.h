@@ -114,6 +114,6 @@ public:
     void GLUTcreateMenu();
     void GLUTmenu(int);
     void GLUTdrawaxes();
-}
+};
 
 #endif

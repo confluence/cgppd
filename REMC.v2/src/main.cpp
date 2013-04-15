@@ -516,18 +516,20 @@ int main(int argc, char **argv)
 
     Simulation simulation(parameters);
 
+#if USING_CUDA
     if (strcmp(argv[argc-1],"-c")==0)
     {
         simulation.run_check();
     }
     else
     {
+#endif
         simulation.init();
 
 #if GLVIS
         if (parameters.viewConditions)
         {
-            gl.init(argv, argc, parameters, simulation)
+            gl.init(argc, argv, parameters);
             gl.replica = &simulation.replica;
             gl.GLreplica = &simulation.initialReplica;
             simulation.gl = &gl;
@@ -545,11 +547,13 @@ int main(int argc, char **argv)
             // TODO: this is overwritten inside run. Why do we set it back here?
             gl.GLreplica = &simulation.initialReplica;
             cout << "Entering free gl viewing mode." << endl;
-            gl.glutMainLoop();
+            glutMainLoop();
         }
 #endif
 
+#if USING_CUDA
     }
+#endif
     cout << "Finished." << endl;
     return 0;
 }

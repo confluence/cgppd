@@ -5,10 +5,6 @@ Simulation::Simulation(argdata parameters)
     this->parameters = parameters;
 
     replicasInitialised = false;
-    waitingThreadMutex = PTHREAD_MUTEX_INITIALIZER;
-    waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
-    reMutex = PTHREAD_MUTEX_INITIALIZER;
-    writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
 
     LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
@@ -57,8 +53,10 @@ Simulation::~Simulation()
     }
 }
 
+#if USING_CUDA
 void Simulation::run_check()
 {
+
     cout << "performing check..." << endl;
     // get values for the example conformations
     Replica exampleReplicas[10];
@@ -116,9 +114,11 @@ void Simulation::run_check()
 #endif
     cout.flush();
 }
+#endif
 
 void Simulation::init()
 {
+
     // TODO: we can change this to a constructor
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters.mdata, aminoAcidData, parameters.bound, 30);
@@ -491,6 +491,12 @@ void *Simulation::MCthreadableFunction(void *arg)
 void Simulation::run()
 {
     LOG(ALWAYS, "Beginning simulation\n");
+
+    // TODO WTF, why do these cause warnings?
+    waitingThreadMutex = PTHREAD_MUTEX_INITIALIZER;
+    waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
+    reMutex = PTHREAD_MUTEX_INITIALIZER;
+    writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
 
     // need at most REPLICA_COUNT threads
     cout << "Output files will be prefixed by " << parameters.prependageString << "_" << parameters.pid << endl;
@@ -880,7 +886,7 @@ void Simulation::run()
 #endif
 
     pthread_mutex_lock(&writeFileMutex);
-    closeSamplingFiles(parameters,fractionBoundFile,boundConformationsFile,acceptanceRatioFile,exchangeFrequencyFile);
+    closeSamplingFiles(fractionBoundFile,boundConformationsFile,acceptanceRatioFile,exchangeFrequencyFile);
     pthread_mutex_unlock(&writeFileMutex);
 
 
