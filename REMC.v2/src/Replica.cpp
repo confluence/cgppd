@@ -1058,7 +1058,7 @@ void Replica::cudaRollbackMutation()
 #endif // CUDA MC
 #endif  // CUDA
 
-
+// TODO: it's completely unnecessary to pass data in here; we only use the bound conformations. Eliminating this eliminates the circular dependency between SimulationData and Replica.
 // this code is a bit special...
 bool Replica::sample(SimulationData *data, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex)
 {

@@ -514,8 +514,6 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    Simulation simulation(parameters);
-
 #if USING_CUDA
     if (strcmp(argv[argc-1],"-c")==0)
     {
@@ -524,15 +522,18 @@ int main(int argc, char **argv)
     else
     {
 #endif
-        simulation.init();
+        simulation.init(parameters);
 
 #if GLVIS
         if (parameters.viewConditions)
         {
-            gl.init(argc, argv, parameters);
-            gl.replica = &simulation.replica;
-            gl.GLreplica = &simulation.initialReplica;
-            simulation.gl = &gl;
+            glutInit(&argc, argv);
+            camera.setPosition(Vector3f(-15,15,15),Vector3f(1,-1,-1),Vector3f(0,1,0));
+            char windowName[64] = {"REMC Protein Docker"};
+            GlutInit(WIDTH,HEIGHT,windowName);
+            gl_replicaCount = parameters.replicas;
+            gl_boundingValue = int(parameters.bound);
+            GLreplica = &simulation.initialReplica;
         }
 #endif
 
@@ -545,7 +546,7 @@ int main(int argc, char **argv)
         if (parameters.viewConditions)
         {
             // TODO: this is overwritten inside run. Why do we set it back here?
-            gl.GLreplica = &simulation.initialReplica;
+            GLreplica = &simulation.initialReplica;
             cout << "Entering free gl viewing mode." << endl;
             glutMainLoop();
         }

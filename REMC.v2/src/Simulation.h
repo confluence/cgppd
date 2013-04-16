@@ -30,16 +30,13 @@
 #endif
 
 #if GLVIS
-#include "OpenGLController.h"
+#include "openglvis.h"
 #endif
 
 class Simulation
 {
 public:
     argdata parameters;
-#if GLVIS
-    OpenGLController * gl;
-#endif
 
     AminoAcids aminoAcidData;
 
@@ -52,13 +49,13 @@ public:
     // TODO: create one rng; pass into replicas! Thesis assumes one rng for all replicas.
     gsl_rng  * REMCRng;         // random numbers for the REMC method to swap labels
 
-    Simulation(argdata parameters);
+    Simulation();
     ~Simulation();
 
 #if USING_CUDA
     void run_check();
 #endif
-    void init();
+    void init(argdata parameters);
 
     void run();
 
