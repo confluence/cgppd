@@ -1,9 +1,7 @@
 #include "Simulation.h"
 
-Simulation::Simulation(argdata parameters)
+Simulation::Simulation()
 {
-    this->parameters = parameters;
-
     replicasInitialised = false;
 
     LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
@@ -116,8 +114,9 @@ void Simulation::run_check()
 }
 #endif
 
-void Simulation::init()
+void Simulation::init(argdata parameters)
 {
+    this->parameters = parameters;
 
     // TODO: we can change this to a constructor
     // TODO: remove magic number; make initial array size a constant
@@ -253,12 +252,11 @@ void *MCthreadableFunction(void *arg)
     SimulationData *data = (SimulationData *) arg;
     long threadIndex = data->index;
     Replica *replica = data->replica;
-    OpenGLController *gl = data->gl;
 
     printf ("--- Monte-Carlo thread %d running. ---.\n",int(threadIndex+1));
 
 #if GLVIS
-    gl->GLreplica = &replica[0];
+    GLreplica = &replica[0];
 #endif
     // determine the number of replicas the thread will run
     int tReplicas = int(ceil(float(data->replicaCount)/float(data->threads)));
@@ -706,9 +704,6 @@ void Simulation::run()
         data[i].conformationsBound = &conformationsBound;
         data[i].fractionBound = fractionBoundFile;
         data[i].boundConformations = boundConformationsFile;
-#if GLVIS
-        data[i].gl = gl;
-#endif
 
         // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
         // % #gpus so they share if threads > gpus
@@ -812,8 +807,8 @@ void Simulation::run()
         pthread_cond_broadcast(&waitingThreadCond);
 
 #if GLVIS
-        gl->GLreplica = &replica[_300kReplica];
-        gl->GlutDisplay();
+        GLreplica = &replica[_300kReplica];
+        GlutDisplay();
 #endif
 
         int tempI = replicaTemperatureMap[300.0f];

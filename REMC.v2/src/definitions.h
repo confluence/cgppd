@@ -223,15 +223,12 @@
 
     #include <iostream>
 
-    // TODO: why is this here? So we can use Replica in the struct?
     class Replica;
-    class OpenGLController;
 
     struct SimulationData
     {
         long index;
         Replica *replica;
-        OpenGLController *gl;
         int replicaCount;
         int GPUID;
         int threads;
