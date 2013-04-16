@@ -46,7 +46,7 @@ endif
 
 ifeq ($(GL),yes)
 LINKS+=-lglut -lGL -lGLU
-OBJS+=Camera
+OBJS+=Camera openglvis
 DEFINE+=-DEnableOPENGL
 endif
 

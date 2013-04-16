@@ -4,11 +4,7 @@
 
 using namespace std;
 
-#if GLVIS
-Replica * GLreplica;
-#endif
-
-Simulation simulation;
+// Simulation simulation;
 
 void printHelp(bool badArg); // TODO: wrapper for bad args + help; rename to usage
 bool getArgs(argdata * d, int argc, char **argv);

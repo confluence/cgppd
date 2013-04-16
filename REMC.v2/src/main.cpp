@@ -499,6 +499,8 @@ int main(int argc, char **argv)
 
     bool use_defaults = getArgs(&parameters, argc, argv);
 
+    Simulation simulation;
+
     //if there is an input file load its contents here
 
     if (parameters.inputFile)
@@ -527,6 +529,7 @@ int main(int argc, char **argv)
 #if GLVIS
         if (parameters.viewConditions)
         {
+            replica = &simulation.replica;
             glutInit(&argc, argv);
             camera.setPosition(Vector3f(-15,15,15),Vector3f(1,-1,-1),Vector3f(0,1,0));
             char windowName[64] = {"REMC Protein Docker"};
