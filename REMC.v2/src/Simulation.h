@@ -11,14 +11,10 @@
 #include <gsl/gsl_qrng.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
-#include "definitions.h"
-#include "AminoAcid.h"
-#include "TorsionalLookupMatrix.h"
-#include "Replica.h"
-#include "vector3f.h"
-#include "Quaternion.h"
 #include <map>
 #include <unistd.h>  // include for profiling, TAU cannot find getpid() as it is an externed call
+
+#include "definitions.h"
 
 #if USING_CUDA
 #include <cuda.h>
@@ -26,6 +22,16 @@
 #include <cuda_runtime_api.h>
 #include <cutil_inline.h>
 #include <cutil_inline_runtime.h>
+#endif
+
+#include "structures.h"
+#include "AminoAcid.h"
+#include "TorsionalLookupMatrix.h"
+#include "Replica.h"
+#include "vector3f.h"
+#include "Quaternion.h"
+
+#if USING_CUDA
 #include "cudaExterns.h"
 #endif
 
