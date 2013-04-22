@@ -1,6 +1,7 @@
 #ifndef POTENTIAL_H_
 #define POTENTIAL_H_
 #include "definitions.h"
+#include "constants.h"
 #include "TorsionalLookupMatrix.h"
 #include "Residue.h"
 #include "Link.h"

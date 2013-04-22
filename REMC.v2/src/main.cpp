@@ -92,7 +92,7 @@ bool getArgs(argdata * d, int argc, char **argv)
             if (i+1>=argc)
                 printHelp(true);
             d->cuda_blockSize = atoi(argv[i+1]);
-            cout << "Block size changed to: " << cuda_blockSize << endl;
+            cout << "Block size changed to: " << d->cuda_blockSize << endl;
             i+=2;
             d->auto_blockdim = false;
         }

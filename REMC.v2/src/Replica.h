@@ -2,6 +2,7 @@
 #define REPLICA_H_
 #include "vector3f.h"
 #include "definitions.h"
+#include "structures.h"
 #include "Quaternion.h"
 #include <fstream>
 #include <vector>
