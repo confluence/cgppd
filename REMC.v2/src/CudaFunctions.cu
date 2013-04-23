@@ -101,7 +101,7 @@ float * LJPotentialDataToDevice (AminoAcids *a)
     }
 
 #if LJ_LOOKUP_METHOD == CONST_MEM
-    cudaMemcpyToSymbol("const_LJPotentialData",&safeData,sizeof(tableSize));
+    cudaMemcpyToSymbol(const_LJPotentialData, &safeData, sizeof(tableSize));
     delete [] safeData;
     return LJPotentialData;
 #else
@@ -168,7 +168,7 @@ void cudaInfo()
 
 void CUDA_setBoxDimension(float value)
 {
-    cudaMemcpyToSymbol("const_boxdim",&value,sizeof(value));
+    cudaMemcpyToSymbol(const_boxdim, &value, sizeof(value));
     cutilCheckMsg ("Set boxdim");
 
 };
@@ -710,7 +710,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
 
 void CUDA_setMoleculeBlength(int length)
 {
-    cudaMemcpyToSymbol("const_lenght_of_b",&length,sizeof(length));
+    cudaMemcpyToSymbol(const_lenght_of_b, &length, sizeof(length));
     cutilCheckMsg ("CUDA_setMoleculeBlength: Set b size");
 }
 
