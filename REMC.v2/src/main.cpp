@@ -21,7 +21,6 @@ void printHelp(bool badArg)
     cout << "\t-b|--boundary x:  The bounding box edge length" << endl;
     cout << "\t-t0|--tmax x: 	The temperature of the highest replica" << endl;
     cout << "\t-t1|--tmin x:    The temperature of the lowest replica" << endl;
-    cout << "\t-t1|--tmin x:    The temperature of the lowest replica" << endl;
     cout << "\t-bx|--blockdim x: Number of threads per CUDA block" << endl;
 
     exit(0);
