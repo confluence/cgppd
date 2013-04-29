@@ -9,13 +9,13 @@
 #include <cutil_inline.h>
 #endif
 
-#include "main.h"
+#include "Simulation.h"
 
 // extern bool getArgs(argdata * d, int argc, char **argv);
 
-class TestMain : public CppUnit::TestFixture
+class TestSimulation : public CppUnit::TestFixture
 {
-    CPPUNIT_TEST_SUITE(TestMain);
+    CPPUNIT_TEST_SUITE(TestSimulation);
     CPPUNIT_TEST(testGetArgs);
 //     CPPUNIT_TEST(testLoadArgsFromFile);
     CPPUNIT_TEST_SUITE_END();
@@ -30,21 +30,22 @@ public:
     void tearDown();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TestMain);
+CPPUNIT_TEST_SUITE_REGISTRATION(TestSimulation);
 
-void TestMain::setUp()
+void TestSimulation::setUp()
 {
 }
 
-void TestMain::testGetArgs()
+void TestSimulation::testGetArgs()
 {
+#define LEN_TEST_ARGV 28
     argdata a;
-    const char * c_argv[29] = {"my_programname", "-f", "my_filename", "-c", "-h", "-v", "-0", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-o", "my_suffix", "-b", "23", "-t0", "23", "-t1", "23", "-bx", "23"};
-    char * argv[29];
-    for(int i = 0; i < 30; i++) {
+    const char * c_argv[LEN_TEST_ARGV] = {"my_programname", "-f", "my_filename", "-c", "-v", "-0", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-o", "my_suffix", "-b", "23", "-t0", "23", "-t1", "23", "-bx", "23"};
+    char * argv[LEN_TEST_ARGV];
+    for(int i = 0; i < LEN_TEST_ARGV; i++) {
         argv[i] = strdup(c_argv[i]);
     }
-    int argc(30);
+    int argc(LEN_TEST_ARGV);
 
     getArgs(&a, argc, argv);
 
@@ -76,6 +77,6 @@ void TestMain::testGetArgs()
     cout << "currentStep: " << a.currentStep << endl;
 }
 
-void TestMain::tearDown()
+void TestSimulation::tearDown()
 {
 }

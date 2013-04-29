@@ -92,7 +92,7 @@ endif
 src/%.d: src/%.cpp
 	$(COMPILER) $(CFLAGS) -MM -MT '$(patsubst src/%.cpp,obj/%.o,$<)' $< -MF $@
 
-obj/main.o: src/main.cpp src/main.h
+obj/main.o: src/main.cpp
 	@mkdir -p $(dir $@)
 	$(COMPILER) $(CFLAGS) ${INCLUDE} ${DEFINE} -DHGVERSION="\"${HGVERSION}\"" -o $@ -c $<
 

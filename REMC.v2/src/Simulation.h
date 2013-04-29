@@ -39,6 +39,8 @@
 #include "openglvis.h"
 #endif
 
+using namespace std;
+
 class Simulation
 {
 public:
@@ -69,6 +71,9 @@ public:
     void closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile);
 };
 
+void printHelp(bool badArg); // TODO: wrapper for bad args + help; rename to usage
+bool getArgs(argdata * d, int argc, char **argv);
+void loadArgsFromFile(argdata * parameters);
 void *MCthreadableFunction(void *arg);
 
 #endif /*SIMULATION_H_*/
