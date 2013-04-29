@@ -11,8 +11,6 @@
 
 #include "Simulation.h"
 
-// extern bool getArgs(argdata * d, int argc, char **argv);
-
 class TestSimulation : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestSimulation);
@@ -49,32 +47,33 @@ void TestSimulation::testGetArgs()
 
     getArgs(&a, argc, argv);
 
-    cout << "viewConditions: " << a.viewConditions << endl;
-    cout << "skipsimulation: " << a.skipsimulation << endl;
+    CPPUNIT_ASSERT_EQUAL(true, a.viewConditions);
+    CPPUNIT_ASSERT_EQUAL(false, a.skipsimulation);
 #if USING_CUDA
-    cout << "cuda_blockSize: " << a.cuda_blockSize << endl;
-    cout << "auto_blockdim: " << a.auto_blockdim << endl;
+    CPPUNIT_ASSERT_EQUAL(23, a.cuda_blockSize);
+    CPPUNIT_ASSERT_EQUAL(false, a.auto_blockdim);
 #endif
-    cout << "threads: " << a.threads << endl;
-    cout << "streams: " << a.streams << endl;
-    cout << "gpus: " << a.gpus << endl;
-    cout << "MCsteps: " << a.MCsteps << endl;
-    cout << "REsteps: " << a.REsteps << endl;
-    cout << "replicas: " << a.replicas << endl;
-    cout << "bound: " << a.bound << endl;
-    cout << "sampleFrequency: " << a.sampleFrequency << endl;
-    cout << "sampleStartsAfter: " << a.sampleStartsAfter << endl;
-    cout << "prependageString: " << a.prependageString << endl;
-    cout << "file: " << a.file << endl;
-    cout << "logfile: " << a.logfile << endl;
-    cout << "inputFile: " << a.inputFile << endl;
-    cout << "nonCrowders: " << a.nonCrowders << endl;
-    cout << "temperatureMin: " << a.temperatureMin << endl;
-    cout << "temperatureMax: " << a.temperatureMax << endl;
-    cout << "pid: " << a.pid << endl;
-    cout << "checkpointfilename: " << a.checkpointfilename << endl;
-    cout << "resume: " << a.resume << endl;
-    cout << "currentStep: " << a.currentStep << endl;
+    CPPUNIT_ASSERT_EQUAL(23, a.threads);
+    CPPUNIT_ASSERT_EQUAL(23, a.streams);
+    CPPUNIT_ASSERT_EQUAL(23, a.gpus);
+    CPPUNIT_ASSERT_EQUAL(23, a.MCsteps);
+    CPPUNIT_ASSERT_EQUAL(23, a.REsteps);
+    CPPUNIT_ASSERT_EQUAL(23, a.replicas);
+    CPPUNIT_ASSERT_EQUAL(5000, a.sampleFrequency);
+    CPPUNIT_ASSERT_EQUAL(5000, a.sampleStartsAfter);
+    CPPUNIT_ASSERT_EQUAL(true, a.inputFile); // TODO: fix this
+    CPPUNIT_ASSERT_EQUAL(0, a.nonCrowders);
+//     CPPUNIT_ASSERT_EQUAL(0, a.pid); // TODO: fix this
+    CPPUNIT_ASSERT_EQUAL(false, a.resume);
+//     CPPUNIT_ASSERT_EQUAL(0, a.currentStep); // TODO: fix this
+
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(a.bound, 23.0, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(a.temperatureMin, 23.0, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(a.temperatureMax, 23.0, 0);
+
+//     CPPUNIT_ASSERT(strcmp(a.prependageString, "") == 0); // TODO: fix this
+    CPPUNIT_ASSERT(strcmp(a.file, "my_filename") == 0);
+    CPPUNIT_ASSERT(strcmp(a.logfile, "my_suffix") == 0);
 }
 
 void TestSimulation::tearDown()
