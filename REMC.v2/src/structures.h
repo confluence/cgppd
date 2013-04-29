@@ -65,7 +65,8 @@
         float temperatureMin;
         float temperatureMax;
         int pid;
-        char checkpointfilename[256];
+        // TODO: this is gone until checkpointing goes back in
+//         char checkpointfilename[256];
         bool resume;
         int currentStep;
         std::vector<moldata> mdata;
