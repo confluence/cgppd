@@ -24,11 +24,11 @@ int main(int argc, char **argv)
 
     // get global options for the simulation
     argdata parameters;
-    parameters.pid = int(getpid());
-    parameters.inputFile = false;
-    memset(parameters.prependageString,0,256);
+//     parameters.inputFile = false;
+//     memset(parameters.prependageString,0,256);
 
-    bool use_defaults = getArgs(&parameters, argc, argv);
+    int pid = int( getpid() );
+    bool use_defaults = getArgs(&parameters, argc, argv, pid);
 
     Simulation simulation;
 
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     if (parameters.inputFile)
     {
         loadArgsFromFile(&parameters);
-        getArgs(&parameters, argc, argv); // second pass to override any variables if doing performance tests
+        getArgs(&parameters, argc, argv, pid); // second pass to override any variables if doing performance tests
     }
     else
     {
