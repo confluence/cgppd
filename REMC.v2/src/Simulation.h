@@ -13,6 +13,7 @@
 #include <gsl/gsl_randist.h>
 #include <map>
 #include <unistd.h>  // include for profiling, TAU cannot find getpid() as it is an externed call
+#include <getopt.h>
 
 #include "definitions.h"
 
@@ -71,8 +72,8 @@ public:
     void closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile);
 };
 
-void printHelp(bool badArg); // TODO: wrapper for bad args + help; rename to usage
-bool getArgs(argdata * d, int argc, char **argv);
+void printHelp();
+bool getArgs(argdata * d, int argc, char **argv, int pid);
 void loadArgsFromFile(argdata * parameters);
 void *MCthreadableFunction(void *arg);
 

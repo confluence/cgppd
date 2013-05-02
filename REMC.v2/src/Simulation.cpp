@@ -989,11 +989,9 @@ void Simulation::closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConfo
     LOG(ALWAYS, "    - output/%s_%d_acceptance_ratios\n", parameters.prependageString, parameters.pid);
 }
 
-void printHelp(bool badArg)
+void printHelp()
 {
-    if (badArg)
-        cout << " * Bad arguments" << endl;
-    cout << "Usage: REMCDockingXXX -f <filename> [-c] [-h] [-v] [-0] [-t x] [-s x] [-g x] [-m x ] [-e x] [-r x] [-o x] [-b x] [-t0 x] [-t1 x] [-bx x]"<< endl;
+    cout << "Usage: cgppd -f <filename> [-c] [-h] [-v] [-q] [-t x] [-s x] [-g x] [-m x ] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
     cout << "\t-h|--help: show this dialog" << endl;
     cout << "\t-c: Check, perform 10 reference potential sums, gpu vs cpu" << endl;
     cout << "\t-f|--file <file>: Input config file" << endl;
@@ -1008,189 +1006,134 @@ void printHelp(bool badArg)
     cout << "\t-r|--replicas x: How many replicas" << endl;
     cout << "\t-o|--output x:   The output prefix for files created by the simulation" << endl;
     cout << "\t-b|--boundary x:  The bounding box edge length" << endl;
-    cout << "\t-t0|--tmax x:    The temperature of the highest replica" << endl;
-    cout << "\t-t1|--tmin x:    The temperature of the lowest replica" << endl;
-    cout << "\t-bx|--blockdim x: Number of threads per CUDA block" << endl;
+    cout << "\t-x|--tmax x:    The temperature of the highest replica" << endl;
+    cout << "\t-n|--tmin x:    The temperature of the lowest replica" << endl;
+    cout << "\t-d|--blockdim x: Number of threads per CUDA block" << endl;
 
     exit(0);
 }
 
-// TODO: COPYPASTA! Surely, there is a standard library for commandline parameters?
-bool getArgs(argdata * d, int argc, char **argv)
+bool getArgs(argdata * d, int argc, char **argv, int pid)
 {
-    d->resume = false;
-    d->nonCrowders = 0;
-    d->viewConditions = false;
-    d->skipsimulation = false;
-
-#if USING_CUDA
-    d->cuda_blockSize = TILE_DIM;
-    d->auto_blockdim = true;
-#endif
-
-    if (!d->inputFile)
-    {
-        d->gpus = 1;
-        d->threads = THREAD_COUNT;
-        d->streams = STREAM_COUNT;
-        d->MCsteps = MC_STEPS;
-        d->REsteps = REMC_STEPS;
-        d->sampleFrequency = SAMPLE_FREQ;
-        d->sampleStartsAfter = STEPS_BEFORE_SAMPLE;
-        d->inputFile = false;
-        d->replicas = REPLICA_COUNT;
-        d->bound = BOUNDING_VALUE;
-        d->temperatureMin = LOWTEMP;
-        d->temperatureMax = HIGHTEMP;
-    }
-
-    memset(&d->logfile,0,256);
+    d->pid = pid;
     sprintf(d->logfile,"output/%d_logfile",d->pid);
 
+    // TODO: what parameters are actually required?
     if (argc <= 1)
     {
         cout << "No arguments." << endl;
-        printHelp(false);
+        printHelp();
         return true;  // use default values
     }
 
-    int i = 1;
-    while (i<argc)
+    const struct option long_options[] =
     {
-        // threads to be used
-        if (strcmp(argv[i],"-v")==0 || strcmp(argv[i],"--view")==0)
+        {"help", no_argument, 0, 'h'},
+        {"check", no_argument, 0, 'c'},
+        {"file", required_argument, 0, 'f'},
+        {"view", no_argument, 0, 'v'},
+        {"nosim", no_argument, 0, 'q'},
+
+        {"threads", required_argument, 0, 't'},
+        {"streams", required_argument, 0, 's'},
+        {"gpus", required_argument, 0, 'g'},
+        {"mcsteps", required_argument, 0, 'm'},
+        {"resteps", required_argument, 0, 'e'},
+        {"replicas", required_argument, 0, 'r'},
+
+        {"output", required_argument, 0, 'o'},
+        {"boundary", required_argument, 0, 'b'},
+        {"tmax", required_argument, 0, 'x'},
+        {"tmin", required_argument, 0, 'n'},
+        {"blockdim", required_argument, 0, 'd'},
+
+        {0, 0, 0, 0},
+    };
+
+    int opt_index = 0;
+
+    while (1)
+    {
+        int opt = getopt_long(argc, argv, "hcf:vqt:s:g:m:e:r:o:b:x:n:d:", long_options, &opt_index);
+
+        if (opt == -1)
+            break;
+
+        switch(opt)
         {
-#ifndef EnableOPENGL
-            cout << "!!! This build does not support OpenGL and the -v option" << endl;
+            case 'h':
+                printHelp();
+                break;
+            case 'c':
+                //TODO: what?
+                break;
+            case 'f':
+                strcpy(d->file, optarg);
+                d->inputFile = true;
+                break;
+            case 'v':
+#if GLVIS
+                d->viewConditions = true;
 #else
-            d->viewConditions = true;
+                cout << "This build does not support OpenGL." << endl;
 #endif
-            i++;
-        }
-
-        else if (strcmp(argv[i],"-q")==0 || strcmp(argv[i],"--nosim")==0)
-        {
-            d->skipsimulation = true;
-            i++;
-        }
-
+                break;
+            case 'q':
+                d->skipsimulation = true;
+                break;
+            case 't':
+                d->threads = atoi(optarg);
+                break;
+            case 's':
+                d->streams = atoi(optarg);
+                break;
+            case 'g':
+                d->gpus = atoi(optarg);
+                break;
+            case 'm':
+                d->MCsteps = atoi(optarg);
+                break;
+            case 'e':
+                d->REsteps = atoi(optarg);
+                break;
+            case 'r':
+                d->replicas = atoi(optarg);
+                break;
+            case 'o':
+                strcpy(d->logfile, optarg);
+                break;
+            case 'b':
+                d->bound = atof(optarg);
+                break;
+            case 'x':
+                d->temperatureMax = atof(optarg);
+                break;
+            case 'n':
+                d->temperatureMin = atof(optarg);
+                break;
+            case 'd':
 #if USING_CUDA
-        else if (strcmp(argv[i],"-bx")==0 || strcmp(argv[i],"--blockdim")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            d->cuda_blockSize = atoi(argv[i+1]);
-            cout << "Block size changed to: " << d->cuda_blockSize << endl;
-            i+=2;
-            d->auto_blockdim = false;
-        }
+                d->cuda_blockSize = atoi(optarg);
+                d->auto_blockdim = false;
+                cout << "Block size changed to: " << d->cuda_blockSize << endl;
+#else
+                cout << "This build does not support CUDA." << endl;
 #endif
-        // threads to be used
-        else if (strcmp(argv[i],"-t")==0 || strcmp(argv[i],"--threads")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-
-            d->threads = atoi(argv[i+1]);
-            i+=2;
-        }
-
-        // streams to be used
-        else if (strcmp(argv[i],"-s")==0 || strcmp(argv[i],"--streams")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            d->streams = atoi(argv[i+1]);
-            i+=2;
-        }
-
-        // gpus to be used
-        else if (strcmp(argv[i],"-g")==0 || strcmp(argv[i],"--gpus")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-
-            d->gpus = atoi(argv[i+1]);
-            i+=2;
-        }
-
-        //input file for molecules
-        else if (strcmp(argv[i],"-f")==0 || strcmp(argv[i],"--file")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            strcpy(d->file,argv[i+1]);
-            d->inputFile = true;
-            i+=2;
-        }
-
-        else if (strcmp(argv[i],"-m")==0 || strcmp(argv[i],"--mcsteps")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-
-            d->MCsteps = atoi(argv[i+1]);
-            i+=2;
-        }
-
-        else if (strcmp(argv[i],"-e")==0 || strcmp(argv[i],"--resteps")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            d->REsteps = atoi(argv[i+1]);
-            i+=2;
-        }
-
-        else if (strcmp(argv[i],"-r")==0 || strcmp(argv[i],"--replicas")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            d->replicas = atoi(argv[i+1]);
-            i+=2;
-        }
-
-        else if (strcmp(argv[i],"-o")==0 || strcmp(argv[i],"--output")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            strcpy(d->logfile,argv[i+1]);
-            i+=2;
-        }
-        else if (strcmp(argv[i],"-b")==0 || strcmp(argv[i],"--boundary")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            d->bound = atof(argv[i+1]);
-            i+=2;
-        }
-        else if (strcmp(argv[i],"-t0")==0 || strcmp(argv[i],"--tmin")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            d->temperatureMin = atof(argv[i+1]);
-            i+=2;
-        }
-        else if (strcmp(argv[i],"-t1")==0 || strcmp(argv[i],"--tmax")==0)
-        {
-            if (i+1>=argc)
-                printHelp(true);
-            d->temperatureMax = atof(argv[i+1]);
-            i+=2;
-        }
-        else if (strcmp(argv[i],"-h")==0 || strcmp(argv[i],"--help")==0)
-        {
-            printHelp(false);
-        }
-        else if (strcmp(argv[i],"-z")==0 || strcmp(argv[i],"--resume")==0)
-        {
-            cout << "!!! Checkpointing is not enabled in this build, cannot resume" << endl;
-            i++;
-        }
-        else
-        {
-            i++;
+                break;
+            default:
+                cout << "Unknown option." << endl;
+                printHelp();
+                break;
         }
     }
+
+// TODO: put this back when we have checkpointing again
+//         else if (strcmp(argv[i],"-z")==0 || strcmp(argv[i],"--resume")==0)
+//         {
+//             cout << "!!! Checkpointing is not enabled in this build, cannot resume" << endl;
+//             i++;
+//         }
+
     return false;
 }
 
