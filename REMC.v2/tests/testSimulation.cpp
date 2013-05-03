@@ -16,6 +16,7 @@ class TestSimulation : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(TestSimulation);
     CPPUNIT_TEST(testGetArgs);
 //     CPPUNIT_TEST(testLoadArgsFromFile);
+//     CPPUNIT_TEST(testPrintArgs);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -25,6 +26,7 @@ public:
     void setUp();
     void testGetArgs();
 //     void testLoadArgsFromFile();
+//     void testPrintArgs();
     void tearDown();
 };
 

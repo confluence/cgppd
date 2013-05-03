@@ -1264,64 +1264,38 @@ void loadArgsFromFile(argdata * parameters)
             }
             else if (moleculeSection||crowdersSection) // files
             {
-                // TODO: read this into a vector of moldata; initialise replica afterwards
-//                 float px,py,pz,rx,ry,rz,ra;
-//                 char *pdbfilename = new char [256];
-//                 bool translate = true;
+
                 moldata m;
                 int result = 0;
+
                 if (saveline[0]=='t')
                 {
-                    result = sscanf(saveline,"t(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px,&m.py,&m.pz,&m.rx,&m.ry,&m.rz,&m.ra,m.pdbfilename);
+                    result = sscanf(saveline, "t(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
                     m.translate = true;
                 }
+
                 if (saveline[0]=='p')
                 {
-                    result = sscanf(saveline,"p(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px,&m.py,&m.pz,&m.rx,&m.ry,&m.rz,&m.ra,m.pdbfilename);
+                    result = sscanf(saveline, "p(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
                     m.translate = false;
                 }
+
                 if (result<8)
                 {
                     cout << "Failed to parse line " << lc << ": " << saveline << endl;
                 }
+
                 else
                 {
-//                     int moleculeId = initialReplica->loadMolecule(pdbfilename);
-//                     if (translate)
-//                     {
-//                         initialReplica->molecules[moleculeId].translate(Vector3f(px,py,pz));
-//                     }
-//                     else
-//                     {
-//                         initialReplica->molecules[moleculeId].setPosition(Vector3f(px,py,pz));
-//
-//                     }
-//
-//                     if (ra >= 0.000)
-//                     {
-//                         Vector3double v = Vector3double(rx,ry,rz);
-//                         v.normalizeInPlace();
-//                         initialReplica->molecules[moleculeId].rotate(v,ra);
-//                     }
                     m.crowder = crowdersSection;
                     // TODO: remove this later
                     if (!crowdersSection)
                     {
                         parameters->nonCrowders++;
                     }
-//                     if(crowdersSection)
-//                     {
-//                         initialReplica->molecules[moleculeId].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
-//                     }
-//                     else
-//                     {
-//                         parameters->nonCrowders++;
-//                         initialReplica->nonCrowderResidues += initialReplica->molecules[moleculeId].residueCount;
-//                     }
+
                     parameters->mdata.push_back(m);
                 }
-
-//                 delete [] pdbfilename;
             }
         }
         input.close();
@@ -1358,44 +1332,58 @@ void loadArgsFromFile(argdata * parameters)
         }
     }
 
-//     initialReplica->nonCrowderCount = parameters->nonCrowders;
     char * fileindex = new char[256];
     sprintf(fileindex,"output/%s_%d_fileindex",parameters->prependageString,parameters->pid);
     FILE * fileindexf = fopen (fileindex,"w");
     fprintf(fileindexf,"index molecule_file_path crowder(Y/N)\n");
     delete [] fileindex;
 
-// #if OUTPUT_LEVEL > 0
-// TODO: move this outside, use initialReplica, remove nonCrowders from parameters; use new logging
+// TODO rewrite this to print Y or N depending on mdata[z].crowder
+// Then can we finally eliminate nonCrowders?
 
-//     cout << "Argument data from file:" << endl;
-//     cout << "-------------------------------------" << endl;
-//     cout << "threads " << parameters->threads << endl;
-//     cout << "streams " << parameters->streams << endl;
-//     cout << "GPUs " << parameters->gpus << endl;
-//     cout << "mc steps " << parameters->MCsteps << endl;
-//     cout << "re steps " << parameters->REsteps << endl;
-//     cout << "replicas " << parameters->replicas << endl;
-//     cout << "sampling frequency (mc steps) " << parameters->sampleFrequency << endl;
-//     cout << "sampling starts after (mc steps) " << parameters->sampleStartsAfter << endl;
-//     cout << "bounding box size " << parameters->bound << endl;
-//     cout << "non-crowder molecules " << parameters->nonCrowders << endl;
-//     cout << "maximum temperature " << parameters->temperatureMax << endl;
-//     cout << "minimum temperature " << parameters->temperatureMin << endl;
-//
-//     cout << "Loaded: "<< endl;
-//     cout << "-------------------------------------------------------------"<< endl;
-//     for (int z=0; z<parameters->nonCrowders; z++)
-//     {
-//         printf("%2d %s centered @ (%0.3f,%0.3f,%0.3f)\n",z,initialReplica->molecules[z].filename,initialReplica->molecules[z].center.x,initialReplica->molecules[z].center.y,initialReplica->molecules[z].center.z);
-//         fprintf(fileindexf,"%2d %s N\n",z,initialReplica->molecules[z].filename,initialReplica->molecules[z].center.x,initialReplica->molecules[z].center.y,initialReplica->molecules[z].center.z);
-//     }
-//     for (int z=parameters->nonCrowders; z<initialReplica->moleculeCount; z++)
-//     {
-//         printf("%2d %s crowder centered @ (%0.3f,%0.3f,%0.3f)\n",z,initialReplica->molecules[z].filename,initialReplica->molecules[z].center.x,initialReplica->molecules[z].center.y,initialReplica->molecules[z].center.z);
-//         fprintf(fileindexf,"%2d %s Y\n",z,initialReplica->molecules[z].filename);
-//     }
-//     cout << "-------------------------------------------------------------"<< endl;
-// #endif
+    for (int z = 0; z < parameters->nonCrowders; z++)
+    {
+        fprintf(fileindexf, "%2d %s N\n", z, parameters->mdata[z].pdbfilename);
+    }
+
+    for (int z = parameters->nonCrowders; z < initialReplica->moleculeCount; z++)
+    {
+        fprintf(fileindexf,"%2d %s Y\n",z,parameters->mdata[z].pdbfilename);
+    }
+
     fclose(fileindexf);
+}
+
+void printArgs(argdata * parameters)
+{
+    cout << "Argument data from file:" << endl;
+    cout << "-------------------------------------" << endl;
+    cout << "threads " << parameters->threads << endl;
+    cout << "streams " << parameters->streams << endl;
+    cout << "GPUs " << parameters->gpus << endl;
+    cout << "mc steps " << parameters->MCsteps << endl;
+    cout << "re steps " << parameters->REsteps << endl;
+    cout << "replicas " << parameters->replicas << endl;
+    cout << "sampling frequency (mc steps) " << parameters->sampleFrequency << endl;
+    cout << "sampling starts after (mc steps) " << parameters->sampleStartsAfter << endl;
+    cout << "bounding box size " << parameters->bound << endl;
+    cout << "non-crowder molecules " << parameters->nonCrowders << endl;
+    cout << "maximum temperature " << parameters->temperatureMax << endl;
+    cout << "minimum temperature " << parameters->temperatureMin << endl;
+
+    cout << "Loaded: "<< endl;
+    cout << "-------------------------------------------------------------"<< endl;
+
+    // TODO: print Y or N depending on mdata[z].crowder; also this should be applying the translation / rotation or printing it.
+    for (int z = 0; z < parameters->nonCrowders; z++)
+    {
+        printf("%2d %s centered @ (%0.3f,%0.3f,%0.3f)\n", z, parameters->mdata[z].pdbfilename, parameters->mdata[z].px, parameters->mdata[z].py, parameters->mdata[z].pz);
+    }
+
+    for (int z = parameters->nonCrowders; z < initialReplica->moleculeCount; z++)
+    {
+        printf("%2d %s crowder centered @ (%0.3f,%0.3f,%0.3f)\n", z, parameters->mdata[z].filename, parameters->mdata[z].px, parameters->mdata[z].py, parameters->mdata[z].pz);
+    }
+
+    cout << "-------------------------------------------------------------"<< endl;
 }

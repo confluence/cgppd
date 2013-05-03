@@ -75,6 +75,8 @@ public:
 void printHelp();
 bool getArgs(argdata * parameters, int argc, char **argv, int pid);
 void loadArgsFromFile(argdata * parameters);
+void printArgs(argdata * parameters);
+
 void *MCthreadableFunction(void *arg);
 
 #endif /*SIMULATION_H_*/
