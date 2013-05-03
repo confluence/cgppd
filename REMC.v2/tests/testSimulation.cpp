@@ -67,13 +67,13 @@ void TestSimulation::testGetArgs()
     CPPUNIT_ASSERT_EQUAL(0, a.nonCrowders);
     CPPUNIT_ASSERT_EQUAL(5, a.pid);
     CPPUNIT_ASSERT_EQUAL(false, a.resume);
-//     CPPUNIT_ASSERT_EQUAL(0, a.currentStep); // TODO: fix this
+    CPPUNIT_ASSERT_EQUAL(0, a.currentStep);
 
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(a.bound, 23.0, 0);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(a.temperatureMin, 23.0, 0);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(a.temperatureMax, 23.0, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, a.bound, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, a.temperatureMin, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, a.temperatureMax, 0);
 
-//     CPPUNIT_ASSERT(strcmp(a.prependageString, "") == 0); // TODO: fix this
+    CPPUNIT_ASSERT(strcmp(a.prependageString, "") == 0);
     CPPUNIT_ASSERT(strcmp(a.file, "my_filename") == 0);
     CPPUNIT_ASSERT(strcmp(a.logfile, "my_suffix") == 0);
 }
@@ -86,7 +86,34 @@ void TestSimulation::testLoadArgsFromFile()
 
     loadArgsFromFile(&a);
 
-    cout << a.MCsteps;
+    CPPUNIT_ASSERT_EQUAL(false, a.viewConditions);
+    CPPUNIT_ASSERT_EQUAL(false, a.skipsimulation);
+#if USING_CUDA
+    CPPUNIT_ASSERT_EQUAL(TILE_DIM, a.cuda_blockSize);
+    CPPUNIT_ASSERT_EQUAL(true, a.auto_blockdim);
+#endif
+    CPPUNIT_ASSERT_EQUAL(1, a.threads);
+    CPPUNIT_ASSERT_EQUAL(1, a.streams);
+    CPPUNIT_ASSERT_EQUAL(1, a.gpus);
+    CPPUNIT_ASSERT_EQUAL(10000, a.MCsteps);
+    CPPUNIT_ASSERT_EQUAL(10000, a.REsteps);
+    CPPUNIT_ASSERT_EQUAL(1, a.replicas);
+    CPPUNIT_ASSERT_EQUAL(1000, a.sampleFrequency);
+    CPPUNIT_ASSERT_EQUAL(1000, a.sampleStartsAfter);
+    CPPUNIT_ASSERT_EQUAL(true, a.inputFile);
+    CPPUNIT_ASSERT_EQUAL(2, a.nonCrowders);
+    CPPUNIT_ASSERT_EQUAL(0, a.pid);
+    CPPUNIT_ASSERT_EQUAL(false, a.resume);
+    CPPUNIT_ASSERT_EQUAL(0, a.currentStep);
+
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, a.bound, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(288.0, a.temperatureMin, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(300.0, a.temperatureMax, 0);
+
+    CPPUNIT_ASSERT(strcmp(a.prependageString, "") == 0);
+    CPPUNIT_ASSERT(strcmp(a.file, "tests/argtestfile") == 0);
+    CPPUNIT_ASSERT(strcmp(a.logfile, "") == 0);
+
 }
 
 void TestSimulation::tearDown()
