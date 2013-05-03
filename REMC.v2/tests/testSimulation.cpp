@@ -15,7 +15,7 @@ class TestSimulation : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestSimulation);
     CPPUNIT_TEST(testGetArgs);
-//     CPPUNIT_TEST(testLoadArgsFromFile);
+    CPPUNIT_TEST(testLoadArgsFromFile);
 //     CPPUNIT_TEST(testPrintArgs);
     CPPUNIT_TEST_SUITE_END();
 
@@ -25,7 +25,7 @@ private:
 public:
     void setUp();
     void testGetArgs();
-//     void testLoadArgsFromFile();
+    void testLoadArgsFromFile();
 //     void testPrintArgs();
     void tearDown();
 };
@@ -76,6 +76,17 @@ void TestSimulation::testGetArgs()
 //     CPPUNIT_ASSERT(strcmp(a.prependageString, "") == 0); // TODO: fix this
     CPPUNIT_ASSERT(strcmp(a.file, "my_filename") == 0);
     CPPUNIT_ASSERT(strcmp(a.logfile, "my_suffix") == 0);
+}
+
+void TestSimulation::testLoadArgsFromFile()
+{
+    argdata a;
+    strcpy(a.file, "tests/argtestfile");
+    a.inputFile = true;
+
+    loadArgsFromFile(&a);
+
+    cout << a.MCsteps;
 }
 
 void TestSimulation::tearDown()
