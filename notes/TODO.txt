@@ -2,11 +2,11 @@
 NOW
 --------------------------------------------------------------------------------
 
-* argh; revert GL changes and fall back to a global variable?
+* replace char[] with std:string for filenames, etc. Replace unnecessary char * with vectors.
 
-* make sure everything compiles and runs
+* add all the processing / output stuff to simulation
+
 * single rng for all replicas
-* sort out gl stuff
 * clean up CUDA a bit more (setting up and tearing down)
 
 * extend unit test to a reasonably complete normal simulation (with reading of parameters, etc.)
