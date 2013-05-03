@@ -1346,7 +1346,7 @@ void loadArgsFromFile(argdata * parameters)
         fprintf(fileindexf, "%2d %s N\n", z, parameters->mdata[z].pdbfilename);
     }
 
-    for (int z = parameters->nonCrowders; z < initialReplica->moleculeCount; z++)
+    for (int z = parameters->nonCrowders; z < parameters->mdata.size(); z++)
     {
         fprintf(fileindexf,"%2d %s Y\n",z,parameters->mdata[z].pdbfilename);
     }
@@ -1380,9 +1380,9 @@ void printArgs(argdata * parameters)
         printf("%2d %s centered @ (%0.3f,%0.3f,%0.3f)\n", z, parameters->mdata[z].pdbfilename, parameters->mdata[z].px, parameters->mdata[z].py, parameters->mdata[z].pz);
     }
 
-    for (int z = parameters->nonCrowders; z < initialReplica->moleculeCount; z++)
+    for (int z = parameters->nonCrowders; z < parameters->mdata.size(); z++)
     {
-        printf("%2d %s crowder centered @ (%0.3f,%0.3f,%0.3f)\n", z, parameters->mdata[z].filename, parameters->mdata[z].px, parameters->mdata[z].py, parameters->mdata[z].pz);
+        printf("%2d %s crowder centered @ (%0.3f,%0.3f,%0.3f)\n", z, parameters->mdata[z].pdbfilename, parameters->mdata[z].px, parameters->mdata[z].py, parameters->mdata[z].pz);
     }
 
     cout << "-------------------------------------------------------------"<< endl;
