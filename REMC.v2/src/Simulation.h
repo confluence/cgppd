@@ -73,7 +73,7 @@ public:
 };
 
 void printHelp();
-bool getArgs(argdata * d, int argc, char **argv, int pid);
+bool getArgs(argdata * parameters, int argc, char **argv, int pid);
 void loadArgsFromFile(argdata * parameters);
 void *MCthreadableFunction(void *arg);
 

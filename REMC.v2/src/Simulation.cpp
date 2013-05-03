@@ -1013,10 +1013,10 @@ void printHelp()
     exit(0);
 }
 
-bool getArgs(argdata * d, int argc, char **argv, int pid)
+bool getArgs(argdata * parameters, int argc, char **argv, int pid)
 {
-    d->pid = pid;
-    sprintf(d->logfile,"output/%d_logfile",d->pid);
+    parameters->pid = pid;
+    sprintf(parameters->logfile,"output/%d_logfile",parameters->pid);
 
     // TODO: what parameters are actually required?
     if (argc <= 1)
@@ -1068,54 +1068,54 @@ bool getArgs(argdata * d, int argc, char **argv, int pid)
                 //TODO: what?
                 break;
             case 'f':
-                strcpy(d->file, optarg);
-                d->inputFile = true;
+                strcpy(parameters->file, optarg);
+                parameters->inputFile = true;
                 break;
             case 'v':
 #if GLVIS
-                d->viewConditions = true;
+                parameters->viewConditions = true;
 #else
                 cout << "This build does not support OpenGL." << endl;
 #endif
                 break;
             case 'q':
-                d->skipsimulation = true;
+                parameters->skipsimulation = true;
                 break;
             case 't':
-                d->threads = atoi(optarg);
+                parameters->threads = atoi(optarg);
                 break;
             case 's':
-                d->streams = atoi(optarg);
+                parameters->streams = atoi(optarg);
                 break;
             case 'g':
-                d->gpus = atoi(optarg);
+                parameters->gpus = atoi(optarg);
                 break;
             case 'm':
-                d->MCsteps = atoi(optarg);
+                parameters->MCsteps = atoi(optarg);
                 break;
             case 'e':
-                d->REsteps = atoi(optarg);
+                parameters->REsteps = atoi(optarg);
                 break;
             case 'r':
-                d->replicas = atoi(optarg);
+                parameters->replicas = atoi(optarg);
                 break;
             case 'o':
-                strcpy(d->logfile, optarg);
+                strcpy(parameters->logfile, optarg);
                 break;
             case 'b':
-                d->bound = atof(optarg);
+                parameters->bound = atof(optarg);
                 break;
             case 'x':
-                d->temperatureMax = atof(optarg);
+                parameters->temperatureMax = atof(optarg);
                 break;
             case 'n':
-                d->temperatureMin = atof(optarg);
+                parameters->temperatureMin = atof(optarg);
                 break;
             case 'd':
 #if USING_CUDA
-                d->cuda_blockSize = atoi(optarg);
-                d->auto_blockdim = false;
-                cout << "Block size changed to: " << d->cuda_blockSize << endl;
+                parameters->cuda_blockSize = atoi(optarg);
+                parameters->auto_blockdim = false;
+                cout << "Block size changed to: " << parameters->cuda_blockSize << endl;
 #else
                 cout << "This build does not support CUDA." << endl;
 #endif
