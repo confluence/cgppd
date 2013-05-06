@@ -6,8 +6,8 @@
 #ifndef OPENGL_H
 #define OPENGL_H
 
-#include <GL/glut.h>
-#include <GL/gl.h>
+// #include <GL/glut.h>
+// #include <GL/gl.h>
 #include <iostream>
 #include <fstream>
 #include <cmath>

@@ -72,9 +72,11 @@ public:
     void closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile);
 };
 
+// TODO: make these into methods
 void printHelp();
 bool getArgs(argdata * parameters, int argc, char **argv, int pid);
 void loadArgsFromFile(argdata * parameters);
+void writeFileIndex(argdata * parameters);
 void printArgs(argdata * parameters);
 
 void *MCthreadableFunction(void *arg);

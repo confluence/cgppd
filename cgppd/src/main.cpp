@@ -25,9 +25,10 @@ int main(int argc, char **argv)
     // get global options for the simulation
     argdata parameters;
 //     parameters.inputFile = false;
-//     memset(parameters.prependageString,0,256);
+//     memset(parameters.prefix,0,256);
 
     int pid = int( getpid() );
+    // TODO: use_defaults isn't actually ever used anywhere; make this a void function
     bool use_defaults = getArgs(&parameters, argc, argv, pid);
 
     Simulation simulation;
@@ -43,7 +44,7 @@ int main(int argc, char **argv)
     {
         // deprecated function
         cout << "EXIT: Program requires a configuration file." << endl;
-        cout << "use: REMCDockingGPU -f filename" << endl;
+        cout << "use: cgppd -f filename" << endl;
         exit(0);
     }
 
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
             replica = &simulation.replica;
             glutInit(&argc, argv);
             camera.setPosition(Vector3f(-15,15,15),Vector3f(1,-1,-1),Vector3f(0,1,0));
-            char windowName[64] = {"REMC Protein Docker"};
+            char windowName[64] = {"Coarse-Grained Protein-Protein Docker (cgppd)"};
             GlutInit(WIDTH,HEIGHT,windowName);
             gl_replicaCount = parameters.replicas;
             gl_boundingValue = int(parameters.bound);

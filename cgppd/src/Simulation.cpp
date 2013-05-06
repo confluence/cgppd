@@ -501,7 +501,7 @@ void Simulation::run()
     LOG(ALWAYS, "Beginning simulation\n");
 
     // need at most REPLICA_COUNT threads
-    cout << "Output files will be prefixed by " << parameters.prependageString << "_" << parameters.pid << endl;
+    cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
 
     if (!parameters.resume)
         parameters.currentStep = 0;
@@ -920,7 +920,7 @@ void Simulation::run()
 void Simulation::initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConformationsFile, FILE ** acceptanceRatioFile,  FILE ** exchangeFrequencyFile)
 {
     char * sfractionBound = new char[256];
-    sprintf(sfractionBound,"output/%s_%d_fractionBound",parameters.prependageString,parameters.pid);
+    sprintf(sfractionBound,"output/%s_%d_fractionBound",parameters.prefix,parameters.pid);
     *fractionBoundFile = fopen (sfractionBound,"at"); // attempt append a file of the same name
     if (!*fractionBoundFile) *fractionBoundFile = fopen(sfractionBound, "wt"); // create if that failed, and open and append failed (eg: file permissions r--)
     if (!*fractionBoundFile)
@@ -932,7 +932,7 @@ void Simulation::initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConf
     delete [] sfractionBound;
 
     char * sboundConformationsFile = new char[256];
-    sprintf(sboundConformationsFile,"output/%s_%d_boundconformations",parameters.prependageString,parameters.pid);
+    sprintf(sboundConformationsFile,"output/%s_%d_boundconformations",parameters.prefix,parameters.pid);
     *boundConformationsFile = fopen (sboundConformationsFile,"a+");
     if (!*boundConformationsFile) *boundConformationsFile = fopen(sboundConformationsFile, "wt");
     if (!*boundConformationsFile)
@@ -944,7 +944,7 @@ void Simulation::initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConf
     delete [] sboundConformationsFile;
 
     char * acceptanceRatioName = new char[256];
-    sprintf(acceptanceRatioName,"output/%s_%d_acceptance_ratios",parameters.prependageString,parameters.pid);
+    sprintf(acceptanceRatioName,"output/%s_%d_acceptance_ratios",parameters.prefix,parameters.pid);
     *acceptanceRatioFile = fopen (acceptanceRatioName,"a+");
     if (!*acceptanceRatioFile) *acceptanceRatioFile = fopen(acceptanceRatioName, "wt");
     if (!*acceptanceRatioFile)
@@ -957,7 +957,7 @@ void Simulation::initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConf
 
 
     char * exchangeFrequencyName = new char[256];
-    sprintf(exchangeFrequencyName,"output/%s_%d_exchange_freq",parameters.prependageString,parameters.pid);
+    sprintf(exchangeFrequencyName,"output/%s_%d_exchange_freq",parameters.prefix,parameters.pid);
     *exchangeFrequencyFile = fopen (exchangeFrequencyName,"a+");
     if (!*exchangeFrequencyFile) *exchangeFrequencyFile = fopen(exchangeFrequencyName, "wt");
     if (!*exchangeFrequencyFile)
@@ -984,9 +984,9 @@ void Simulation::closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConfo
     fclose(exchangeFrequencyFile);
 
     LOG(ALWAYS, ">>> Sampling files closed.\n");
-    LOG(ALWAYS, "    - output/%s_%d_fractionBound\n", parameters.prependageString, parameters.pid);
-    LOG(ALWAYS, "    - output/%s_%d_boundconformations\n", parameters.prependageString, parameters.pid);
-    LOG(ALWAYS, "    - output/%s_%d_acceptance_ratios\n", parameters.prependageString, parameters.pid);
+    LOG(ALWAYS, "    - output/%s_%d_fractionBound\n", parameters.prefix, parameters.pid);
+    LOG(ALWAYS, "    - output/%s_%d_boundconformations\n", parameters.prefix, parameters.pid);
+    LOG(ALWAYS, "    - output/%s_%d_acceptance_ratios\n", parameters.prefix, parameters.pid);
 }
 
 void printHelp()
@@ -1253,12 +1253,12 @@ void loadArgsFromFile(argdata * parameters)
                 if (strcmp(token,"prefix")==0)
                 {
                     token = strtok(NULL," ");
-                    strcpy(parameters->prependageString,"");
-                    strcpy(parameters->prependageString,token);
+                    strcpy(parameters->prefix,"");
+                    strcpy(parameters->prefix,token);
 #if REPULSIVE_CROWDING
-                    strcat(parameters->prependageString,"_repulsive");
+                    strcat(parameters->prefix,"_repulsive");
 #else
-                    strcat(parameters->prependageString,"_full");
+                    strcat(parameters->prefix,"_full");
 #endif
                 }
             }
@@ -1331,24 +1331,19 @@ void loadArgsFromFile(argdata * parameters)
             cout << "! Too many streams, setting equal to " << parameters->gpus << endl;
         }
     }
+}
 
+void writeFileIndex(argdata * parameters)
+{
+    // TODO why is this dynamically allocated? wtf.
     char * fileindex = new char[256];
-    sprintf(fileindex,"output/%s_%d_fileindex",parameters->prependageString,parameters->pid);
+    sprintf(fileindex,"output/%s_%d_fileindex", parameters->prefix, parameters->pid);
     FILE * fileindexf = fopen (fileindex,"w");
     fprintf(fileindexf,"index molecule_file_path crowder(Y/N)\n");
     delete [] fileindex;
 
-// TODO rewrite this to print Y or N depending on mdata[z].crowder
-// Then can we finally eliminate nonCrowders?
-
-    for (int z = 0; z < parameters->nonCrowders; z++)
-    {
-        fprintf(fileindexf, "%2d %s N\n", z, parameters->mdata[z].pdbfilename);
-    }
-
-    for (int z = parameters->nonCrowders; z < parameters->mdata.size(); z++)
-    {
-        fprintf(fileindexf,"%2d %s Y\n",z,parameters->mdata[z].pdbfilename);
+    for (int i = 0; i < parameters->mdata.size(); i++) {
+        fprintf(fileindexf, "%2d %s %s", i, parameters->mdata[i].pdbfilename, (parameters->mdata[i].crowder ? "Y\n" : "N\n"));
     }
 
     fclose(fileindexf);
@@ -1374,15 +1369,9 @@ void printArgs(argdata * parameters)
     cout << "Loaded: "<< endl;
     cout << "-------------------------------------------------------------"<< endl;
 
-    // TODO: print Y or N depending on mdata[z].crowder; also this should be applying the translation / rotation or printing it.
-    for (int z = 0; z < parameters->nonCrowders; z++)
-    {
-        printf("%2d %s centered @ (%0.3f,%0.3f,%0.3f)\n", z, parameters->mdata[z].pdbfilename, parameters->mdata[z].px, parameters->mdata[z].py, parameters->mdata[z].pz);
-    }
 
-    for (int z = parameters->nonCrowders; z < parameters->mdata.size(); z++)
-    {
-        printf("%2d %s crowder centered @ (%0.3f,%0.3f,%0.3f)\n", z, parameters->mdata[z].pdbfilename, parameters->mdata[z].px, parameters->mdata[z].py, parameters->mdata[z].pz);
+    for (int i = 0; i < parameters->mdata.size(); i++) {
+        printf("%2d %s%s centered @ (%0.3f,%0.3f,%0.3f)\n", i, parameters->mdata[i].pdbfilename, (parameters->mdata[i].crowder ? " crowder" : ""), parameters->mdata[i].px, parameters->mdata[i].py, parameters->mdata[i].pz);
     }
 
     cout << "-------------------------------------------------------------"<< endl;

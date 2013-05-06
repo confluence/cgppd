@@ -59,7 +59,7 @@
         float bound;
         int sampleFrequency;
         int sampleStartsAfter;
-        char prependageString[256];
+        char prefix[256];
         char file[256];
         char logfile[256];
         bool inputFile;
@@ -83,7 +83,7 @@
             sampleFrequency(SAMPLE_FREQ), sampleStartsAfter(STEPS_BEFORE_SAMPLE), inputFile(false),
             replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP), pid(0), resume(false), currentStep(0)
         {
-            memset(prependageString, 0, 256);
+            memset(prefix, 0, 256);
             memset(file, 0, 256);
             memset(logfile, 0, 256);
         }

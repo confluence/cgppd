@@ -73,7 +73,7 @@ void TestSimulation::testGetArgs()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, a.temperatureMin, 0);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, a.temperatureMax, 0);
 
-    CPPUNIT_ASSERT(strcmp(a.prependageString, "") == 0);
+    CPPUNIT_ASSERT(strcmp(a.prefix, "") == 0);
     CPPUNIT_ASSERT(strcmp(a.file, "my_filename") == 0);
     CPPUNIT_ASSERT(strcmp(a.logfile, "my_suffix") == 0);
 }
@@ -110,9 +110,13 @@ void TestSimulation::testLoadArgsFromFile()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(288.0, a.temperatureMin, 0);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(300.0, a.temperatureMax, 0);
 
-    CPPUNIT_ASSERT(strcmp(a.prependageString, "") == 0);
+    CPPUNIT_ASSERT(strcmp(a.prefix, "") == 0);
     CPPUNIT_ASSERT(strcmp(a.file, "tests/argtestfile") == 0);
     CPPUNIT_ASSERT(strcmp(a.logfile, "") == 0);
+
+    CPPUNIT_ASSERT_EQUAL((int)a.mdata.size(), 7);
+
+//     writeFileIndex(&a);
 
 }
 
