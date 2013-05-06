@@ -73,10 +73,10 @@ OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
 ################################################################################
 
 ifneq ($(TEST),yes)
-REMC: obj/main.o ${OBJFILES}
+cgppd: obj/main.o ${OBJFILES}
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ $^ ${LINKS}
 else
-REMC: obj/main.o ${OBJFILES} ${TEST_SOURCES}
+cgppd: obj/main.o ${OBJFILES} ${TEST_SOURCES}
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
 	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
 endif
@@ -101,10 +101,10 @@ obj/%.o: src/%.cpp src/%.d src/%.h
 	$(COMPILER) $(CFLAGS) ${INCLUDE} ${DEFINE} -o $@ -c $<
 
 clean:
-	@rm -rf obj REMC test
+	@rm -rf obj cgppd test
 
 help:
-	@echo "Usage: make [REMC] [options]"
+	@echo "Usage: make [cgppd] [options]"
 	@echo "Options:"
 	@echo "  CUDA: use CUDA (default: yes)"
 	@echo "  GL: use GL (default: yes)"
