@@ -35,16 +35,18 @@ int main(int argc, char **argv)
     writeFileIndex(&parameters);
     getArgs(&parameters, argc, argv, pid); // second pass to override any variables if doing performance tests
 
+    // TODO: only if verbose output
     printArgs(&parameters);
 
 #if USING_CUDA
-    if (strcmp(argv[argc-1],"-c")==0)
+    if (parameters.runcheck)
     {
         simulation.run_check();
     }
     else
     {
 #endif
+        // TODO: make all the parameter functions into methods; fold everything into init:
         simulation.init(parameters);
 
 #if GLVIS
