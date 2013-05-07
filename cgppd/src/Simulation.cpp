@@ -1064,7 +1064,7 @@ void getArgs(argdata * parameters, int argc, char **argv, int pid)
                 printHelp();
                 break;
             case 'c':
-                //TODO: what?
+                parameters->runcheck = true;
                 break;
             case 'f':
                 strcpy(parameters->file, optarg);
