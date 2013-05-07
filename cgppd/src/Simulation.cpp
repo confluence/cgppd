@@ -1013,18 +1013,17 @@ void printHelp()
     exit(0);
 }
 
-bool getArgs(argdata * parameters, int argc, char **argv, int pid)
+void getArgs(argdata * parameters, int argc, char **argv, int pid)
 {
-    parameters->pid = pid;
-    sprintf(parameters->logfile,"output/%d_logfile",parameters->pid);
 
-    // TODO: what parameters are actually required?
     if (argc <= 1)
     {
-        cout << "No arguments." << endl;
+        cout << "No arguments provided." << endl;
         printHelp();
-        return true;  // use default values
     }
+
+    parameters->pid = pid;
+    sprintf(parameters->logfile,"output/%d_logfile",parameters->pid);
 
     const struct option long_options[] =
     {
@@ -1133,8 +1132,6 @@ bool getArgs(argdata * parameters, int argc, char **argv, int pid)
 //             cout << "!!! Checkpointing is not enabled in this build, cannot resume" << endl;
 //             i++;
 //         }
-
-    return false;
 }
 
 void loadArgsFromFile(argdata * parameters)
@@ -1154,152 +1151,147 @@ void loadArgsFromFile(argdata * parameters)
      * p 1 8 9 r 1 9 2 0.5 pdb data/conf1/x.pdb
      *
      */
-    if (parameters->inputFile)
-    {
-        ifstream input(parameters->file);
-        if (!input.good())
-        {
-            cout << "Failed to open file: " << parameters->file << "\n";
-            exit(0);
-        }
 
-        char line[512] = {0};
-        char saveline[512];
-
-        bool parameterSection = true; // parameters come first
-        bool moleculeSection = false;
-        bool crowdersSection = false;
-        int lc = 0;
-        // for each line in the file
-        while (!input.eof())
-        {
-            input.getline(line,512);
-            lc++;
-            strcpy(saveline,line);
-            char *token = strtok(line," ");
-
-            if (token==NULL || line[0] == '#' || strlen(token)==0)
-            {
-                // comment or blank line
-            }
-            else if (strcmp(token,"files")==0)
-            {
-                parameterSection = false;
-                moleculeSection = true;
-            }
-            else if (strcmp(token,"crowders")==0)
-            {
-                moleculeSection = false;
-                crowdersSection = true;
-            }
-            else if (parameterSection)  // parameters
-            {
-                //gpus,streams,threads,mcsteps,resteps,replicas
-                if (strcmp(token,"gpus")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->gpus = atoi(token);
-                }
-                if (strcmp(token,"streams")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->streams = atoi(token);
-                }
-                if (strcmp(token,"threads")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->threads = atoi(token);
-                }
-                if (strcmp(token,"mcsteps")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->MCsteps = atoi(token);
-                }
-                if (strcmp(token,"resteps")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->REsteps = atoi(token);
-                }
-                if (strcmp(token,"temperaturemax")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->temperatureMax = atof(token);
-                }
-                if (strcmp(token,"temperaturemin")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->temperatureMin = atof(token);
-                }
-                if (strcmp(token,"boundary")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->bound = atof(token);
-                }
-                if (strcmp(token,"replicas")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->replicas = atoi(token);
-                }
-                if (strcmp(token,"samplefrequency")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->sampleFrequency = atoi(token);
-                }
-                if (strcmp(token,"sampleafter")==0)
-                {
-                    token = strtok(NULL," ");
-                    parameters->sampleStartsAfter = atoi(token);
-                }
-                if (strcmp(token,"prefix")==0)
-                {
-                    token = strtok(NULL," ");
-                    strcpy(parameters->prefix,"");
-                    strcpy(parameters->prefix,token);
-#if REPULSIVE_CROWDING
-                    strcat(parameters->prefix,"_repulsive");
-#else
-                    strcat(parameters->prefix,"_full");
-#endif
-                }
-            }
-            else if (moleculeSection||crowdersSection) // files
-            {
-
-                moldata m;
-                int result = 0;
-
-                if (saveline[0]=='t')
-                {
-                    result = sscanf(saveline, "t(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
-                    m.translate = true;
-                }
-
-                if (saveline[0]=='p')
-                {
-                    result = sscanf(saveline, "p(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
-                    m.translate = false;
-                }
-
-                if (result<8)
-                {
-                    cout << "Failed to parse line " << lc << ": " << saveline << endl;
-                }
-
-                else
-                {
-                    m.crowder = crowdersSection;
-                    // TODO: remove this later
-                    if (!crowdersSection)
-                    {
-                        parameters->nonCrowders++;
-                    }
-
-                    parameters->mdata.push_back(m);
-                }
-            }
-        }
-        input.close();
+    if (!parameters->inputFile)
+    {// deprecated function
+        cout << "No configuration file provided." << endl;
+        printHelp();
     }
+
+    ifstream input(parameters->file);
+
+    if (!input.good())
+    {
+        cout << "Failed to open file: " << parameters->file << endl;
+        exit(0);
+    }
+
+    char line[512] = {0};
+
+#define PARAMETER_SECTION 0
+#define MOLECULE_SECTION 1
+#define CROWDER_SECTION 2
+
+    int section = PARAMETER_SECTION;
+
+    while (!input.eof())
+    {
+        input.getline(line, 512);
+
+        if (line == NULL || line[0] == '#' || strlen(line)==0)
+        {
+        }
+        else if (strcmp(line, "files") == 0)
+        {
+            section = MOLECULE_SECTION;
+        }
+        else if (strcmp(line, "crowders") == 0)
+        {
+            section = CROWDER_SECTION;
+        }
+        else if (section == MOLECULE_SECTION || section == CROWDER_SECTION)
+        {
+            moldata m;
+            int result = 0;
+
+            if (line[0]=='t')
+            {
+                result = sscanf(line, "t(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
+                m.translate = true;
+            }
+
+            if (line[0]=='p')
+            {
+                result = sscanf(line, "p(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
+                m.translate = false;
+            }
+
+            if (result<8)
+            {
+                cout << "Unable to parse molecule: " << line << endl;
+            }
+
+            else
+            {
+                m.crowder = (section == CROWDER_SECTION);
+                // TODO: remove this later?
+                if (section == MOLECULE_SECTION)
+                {
+                    parameters->nonCrowders++;
+                }
+
+                parameters->mdata.push_back(m);
+            }
+        }
+        else if (section == PARAMETER_SECTION)
+        {
+            char * key = strtok(line," ");
+            char * value = strtok(NULL," ");
+
+            if (strcmp(key, "gpus") == 0)
+            {
+                parameters->gpus = atoi(value);
+            }
+            else if (strcmp(key, "streams") == 0)
+            {
+                parameters->streams = atoi(value);
+            }
+            else if (strcmp(key, "threads") == 0)
+            {
+                parameters->threads = atoi(value);
+            }
+            else if (strcmp(key, "mcsteps") == 0)
+            {
+                parameters->MCsteps = atoi(value);
+            }
+            else if (strcmp(key, "resteps") == 0)
+            {
+                parameters->REsteps = atoi(value);
+            }
+            else if (strcmp(key, "temperaturemax") == 0)
+            {
+                parameters->temperatureMax = atof(value);
+            }
+            else if (strcmp(key, "temperaturemin") == 0)
+            {
+                parameters->temperatureMin = atof(value);
+            }
+            else if (strcmp(key, "boundary") == 0)
+            {
+                parameters->bound = atof(value);
+            }
+            else if (strcmp(key, "replicas") == 0)
+            {
+                parameters->replicas = atoi(value);
+            }
+            else if (strcmp(key, "samplefrequency") == 0)
+            {
+                parameters->sampleFrequency = atoi(value);
+            }
+            else if (strcmp(key, "sampleafter") == 0)
+            {
+                parameters->sampleStartsAfter = atoi(value);
+            }
+            else if (strcmp(key, "prefix") == 0)
+            {
+                strcpy(parameters->prefix, "");
+                strcpy(parameters->prefix, value);
+#if REPULSIVE_CROWDING
+                strcat(parameters->prefix, "_repulsive");
+#else
+                strcat(parameters->prefix, "_full");
+#endif
+            }
+            else {
+                cout << "Unknown parameter: "<< key << endl;
+            }
+        }
+    }
+    input.close();
+}
+
+void checkParameterSanity(argdata * parameters)
+{
     if (parameters->bound <= 0)
     {
         cout << "! Bounding value too small, setting equal to " << BOUNDING_VALUE << endl;
@@ -1321,7 +1313,6 @@ void loadArgsFromFile(argdata * parameters)
     }
     if (parameters->threads > parameters->streams)
     {
-        // TODO: is this right? Should it be set to the default threads?
         parameters->streams = parameters->threads;
         if (parameters->streams > 16*parameters->gpus)
         {

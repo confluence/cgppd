@@ -74,8 +74,9 @@ public:
 
 // TODO: make these into methods
 void printHelp();
-bool getArgs(argdata * parameters, int argc, char **argv, int pid);
+void getArgs(argdata * parameters, int argc, char **argv, int pid);
 void loadArgsFromFile(argdata * parameters);
+void checkParameterSanity(argdata * parameters);
 void writeFileIndex(argdata * parameters);
 void printArgs(argdata * parameters);
 

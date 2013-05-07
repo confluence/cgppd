@@ -24,29 +24,18 @@ int main(int argc, char **argv)
 
     // get global options for the simulation
     argdata parameters;
-//     parameters.inputFile = false;
-//     memset(parameters.prefix,0,256);
 
     int pid = int( getpid() );
-    // TODO: use_defaults isn't actually ever used anywhere; make this a void function
-    bool use_defaults = getArgs(&parameters, argc, argv, pid);
+    getArgs(&parameters, argc, argv, pid);
 
     Simulation simulation;
 
-    //if there is an input file load its contents here
+    loadArgsFromFile(&parameters);
+    checkParameterSanity(&parameters);
+    writeFileIndex(&parameters);
+    getArgs(&parameters, argc, argv, pid); // second pass to override any variables if doing performance tests
 
-    if (parameters.inputFile)
-    {
-        loadArgsFromFile(&parameters);
-        getArgs(&parameters, argc, argv, pid); // second pass to override any variables if doing performance tests
-    }
-    else
-    {
-        // deprecated function
-        cout << "EXIT: Program requires a configuration file." << endl;
-        cout << "use: cgppd -f filename" << endl;
-        exit(0);
-    }
+    printArgs(&parameters);
 
 #if USING_CUDA
     if (strcmp(argv[argc-1],"-c")==0)
