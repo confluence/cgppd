@@ -39,7 +39,7 @@ void TestSimulation::setUp()
 void TestSimulation::testGetArgs()
 {
 #define LEN_TEST_ARGV 28
-    argdata a;
+    Simulation s;
     const char * c_argv[LEN_TEST_ARGV] = {"my_programname", "-f", "my_filename", "-c", "-v", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-o", "my_suffix", "-b", "23", "-n", "23", "-x", "23", "-d", "23"};
     char * argv[LEN_TEST_ARGV];
     for(int i = 0; i < LEN_TEST_ARGV; i++) {
@@ -47,74 +47,74 @@ void TestSimulation::testGetArgs()
     }
     int argc(LEN_TEST_ARGV);
 
-    getArgs(&a, argc, argv, 5);
+    s.getArgs(argc, argv);
 
-    CPPUNIT_ASSERT_EQUAL(true, a.viewConditions);
-    CPPUNIT_ASSERT_EQUAL(true, a.skipsimulation);
+    CPPUNIT_ASSERT_EQUAL(true, s.parameters.viewConditions);
+    CPPUNIT_ASSERT_EQUAL(true, s.parameters.skipsimulation);
 #if USING_CUDA
-    CPPUNIT_ASSERT_EQUAL(23, a.cuda_blockSize);
-    CPPUNIT_ASSERT_EQUAL(false, a.auto_blockdim);
+    CPPUNIT_ASSERT_EQUAL(23, s.parameters.cuda_blockSize);
+    CPPUNIT_ASSERT_EQUAL(false, s.parameters.auto_blockdim);
 #endif
-    CPPUNIT_ASSERT_EQUAL(23, a.threads);
-    CPPUNIT_ASSERT_EQUAL(23, a.streams);
-    CPPUNIT_ASSERT_EQUAL(23, a.gpus);
-    CPPUNIT_ASSERT_EQUAL(23, a.MCsteps);
-    CPPUNIT_ASSERT_EQUAL(23, a.REsteps);
-    CPPUNIT_ASSERT_EQUAL(23, a.replicas);
-    CPPUNIT_ASSERT_EQUAL(5000, a.sampleFrequency);
-    CPPUNIT_ASSERT_EQUAL(5000, a.sampleStartsAfter);
-    CPPUNIT_ASSERT_EQUAL(true, a.inputFile);
-    CPPUNIT_ASSERT_EQUAL(0, a.nonCrowders);
-    CPPUNIT_ASSERT_EQUAL(5, a.pid);
-    CPPUNIT_ASSERT_EQUAL(false, a.resume);
-    CPPUNIT_ASSERT_EQUAL(0, a.currentStep);
+    CPPUNIT_ASSERT_EQUAL(23, s.parameters.threads);
+    CPPUNIT_ASSERT_EQUAL(23, s.parameters.streams);
+    CPPUNIT_ASSERT_EQUAL(23, s.parameters.gpus);
+    CPPUNIT_ASSERT_EQUAL(23, s.parameters.MCsteps);
+    CPPUNIT_ASSERT_EQUAL(23, s.parameters.REsteps);
+    CPPUNIT_ASSERT_EQUAL(23, s.parameters.replicas);
+    CPPUNIT_ASSERT_EQUAL(5000, s.parameters.sampleFrequency);
+    CPPUNIT_ASSERT_EQUAL(5000, s.parameters.sampleStartsAfter);
+    CPPUNIT_ASSERT_EQUAL(true, s.parameters.inputFile);
+    CPPUNIT_ASSERT_EQUAL(0, s.parameters.nonCrowders);
+    CPPUNIT_ASSERT_EQUAL(0, s.parameters.pid);
+    CPPUNIT_ASSERT_EQUAL(false, s.parameters.resume);
+    CPPUNIT_ASSERT_EQUAL(0, s.parameters.currentStep);
 
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, a.bound, 0);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, a.temperatureMin, 0);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, a.temperatureMax, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.bound, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.temperatureMin, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.temperatureMax, 0);
 
-    CPPUNIT_ASSERT(strcmp(a.prefix, "") == 0);
-    CPPUNIT_ASSERT(strcmp(a.file, "my_filename") == 0);
-    CPPUNIT_ASSERT(strcmp(a.logfile, "my_suffix") == 0);
+    CPPUNIT_ASSERT(strcmp(s.parameters.prefix, "") == 0);
+    CPPUNIT_ASSERT(strcmp(s.parameters.file, "my_filename") == 0);
+    CPPUNIT_ASSERT(strcmp(s.parameters.logfile, "my_suffix") == 0);
 }
 
 void TestSimulation::testLoadArgsFromFile()
 {
-    argdata a;
-    strcpy(a.file, "tests/argtestfile");
-    a.inputFile = true;
+    Simulation s;
+    strcpy(s.parameters.file, "tests/argtestfile");
+    s.parameters.inputFile = true;
 
-    loadArgsFromFile(&a);
+    s.loadArgsFromFile();
 
-    CPPUNIT_ASSERT_EQUAL(false, a.viewConditions);
-    CPPUNIT_ASSERT_EQUAL(false, a.skipsimulation);
+    CPPUNIT_ASSERT_EQUAL(false, s.parameters.viewConditions);
+    CPPUNIT_ASSERT_EQUAL(false, s.parameters.skipsimulation);
 #if USING_CUDA
-    CPPUNIT_ASSERT_EQUAL(TILE_DIM, a.cuda_blockSize);
-    CPPUNIT_ASSERT_EQUAL(true, a.auto_blockdim);
+    CPPUNIT_ASSERT_EQUAL(TILE_DIM, s.parameters.cuda_blockSize);
+    CPPUNIT_ASSERT_EQUAL(true, s.parameters.auto_blockdim);
 #endif
-    CPPUNIT_ASSERT_EQUAL(1, a.threads);
-    CPPUNIT_ASSERT_EQUAL(1, a.streams);
-    CPPUNIT_ASSERT_EQUAL(1, a.gpus);
-    CPPUNIT_ASSERT_EQUAL(10000, a.MCsteps);
-    CPPUNIT_ASSERT_EQUAL(10000, a.REsteps);
-    CPPUNIT_ASSERT_EQUAL(1, a.replicas);
-    CPPUNIT_ASSERT_EQUAL(1000, a.sampleFrequency);
-    CPPUNIT_ASSERT_EQUAL(1000, a.sampleStartsAfter);
-    CPPUNIT_ASSERT_EQUAL(true, a.inputFile);
-    CPPUNIT_ASSERT_EQUAL(2, a.nonCrowders);
-    CPPUNIT_ASSERT_EQUAL(0, a.pid);
-    CPPUNIT_ASSERT_EQUAL(false, a.resume);
-    CPPUNIT_ASSERT_EQUAL(0, a.currentStep);
+    CPPUNIT_ASSERT_EQUAL(1, s.parameters.threads);
+    CPPUNIT_ASSERT_EQUAL(1, s.parameters.streams);
+    CPPUNIT_ASSERT_EQUAL(1, s.parameters.gpus);
+    CPPUNIT_ASSERT_EQUAL(10000, s.parameters.MCsteps);
+    CPPUNIT_ASSERT_EQUAL(10000, s.parameters.REsteps);
+    CPPUNIT_ASSERT_EQUAL(1, s.parameters.replicas);
+    CPPUNIT_ASSERT_EQUAL(1000, s.parameters.sampleFrequency);
+    CPPUNIT_ASSERT_EQUAL(1000, s.parameters.sampleStartsAfter);
+    CPPUNIT_ASSERT_EQUAL(true, s.parameters.inputFile);
+    CPPUNIT_ASSERT_EQUAL(2, s.parameters.nonCrowders);
+    CPPUNIT_ASSERT_EQUAL(0, s.parameters.pid);
+    CPPUNIT_ASSERT_EQUAL(false, s.parameters.resume);
+    CPPUNIT_ASSERT_EQUAL(0, s.parameters.currentStep);
 
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, a.bound, 0);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(288.0, a.temperatureMin, 0);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(300.0, a.temperatureMax, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, s.parameters.bound, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(288.0, s.parameters.temperatureMin, 0);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(300.0, s.parameters.temperatureMax, 0);
 
-    CPPUNIT_ASSERT(strcmp(a.prefix, "") == 0);
-    CPPUNIT_ASSERT(strcmp(a.file, "tests/argtestfile") == 0);
-    CPPUNIT_ASSERT(strcmp(a.logfile, "") == 0);
+    CPPUNIT_ASSERT(strcmp(s.parameters.prefix, "") == 0);
+    CPPUNIT_ASSERT(strcmp(s.parameters.file, "tests/argtestfile") == 0);
+    CPPUNIT_ASSERT(strcmp(s.parameters.logfile, "") == 0);
 
-    CPPUNIT_ASSERT_EQUAL((int)a.mdata.size(), 7);
+    CPPUNIT_ASSERT_EQUAL((int)s.parameters.mdata.size(), 7);
 
 //     writeFileIndex(&a);
 
