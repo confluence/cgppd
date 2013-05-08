@@ -61,24 +61,23 @@ public:
     Simulation();
     ~Simulation();
 
+    void printHelp();
+    void getArgs(int argc, char **argv);
+    void loadArgsFromFile();
+    void checkParameterSanity();
+    void writeFileIndex();
+    void printArgs();
+    void init(int argc, char **argv, int pid);
+
 #if USING_CUDA
     void run_check();
 #endif
-    void init(argdata parameters);
 
     void run();
 
     void initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConformationsFile, FILE ** acceptanceRatioFile,  FILE ** exchangeFrequencyFile);
     void closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile);
 };
-
-// TODO: make these into methods
-void printHelp();
-void getArgs(argdata * parameters, int argc, char **argv, int pid);
-void loadArgsFromFile(argdata * parameters);
-void checkParameterSanity(argdata * parameters);
-void writeFileIndex(argdata * parameters);
-void printArgs(argdata * parameters);
 
 void *MCthreadableFunction(void *arg);
 

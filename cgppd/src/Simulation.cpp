@@ -114,9 +114,15 @@ void Simulation::run_check()
 }
 #endif
 
-void Simulation::init(argdata parameters)
+void Simulation::init(int argc, char **argv, int pid)
 {
-    this->parameters = parameters;
+    parameters.pid = pid;
+
+    getArgs(argc, argv);
+    loadArgsFromFile();
+    checkParameterSanity();
+    writeFileIndex();
+    getArgs(argc, argv); // second pass to override any variables if doing performance tests
 
     // TODO: we can change this to a constructor
     // TODO: remove magic number; make initial array size a constant
@@ -505,6 +511,7 @@ void Simulation::run()
 
     if (!parameters.resume)
         parameters.currentStep = 0;
+    // TODO: some of these should be attributes; some of them are pointless duplication of parameters.
     int checkpointFrequency = CHECKPOINTFREQUENCY; // in resteps steps
 
     int threadCount = parameters.threads;
@@ -989,7 +996,7 @@ void Simulation::closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConfo
     LOG(ALWAYS, "    - output/%s_%d_acceptance_ratios\n", parameters.prefix, parameters.pid);
 }
 
-void printHelp()
+void Simulation::printHelp()
 {
     cout << "Usage: cgppd -f <filename> [-c] [-h] [-v] [-q] [-t x] [-s x] [-g x] [-m x ] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
     cout << "\t-h|--help: show this dialog" << endl;
@@ -1013,7 +1020,7 @@ void printHelp()
     exit(0);
 }
 
-void getArgs(argdata * parameters, int argc, char **argv, int pid)
+void Simulation::getArgs(int argc, char **argv)
 {
 
     if (argc <= 1)
@@ -1022,8 +1029,7 @@ void getArgs(argdata * parameters, int argc, char **argv, int pid)
         printHelp();
     }
 
-    parameters->pid = pid;
-    sprintf(parameters->logfile,"output/%d_logfile",parameters->pid);
+    sprintf(parameters.logfile,"output/%d_logfile",parameters.pid);
 
     const struct option long_options[] =
     {
@@ -1064,57 +1070,57 @@ void getArgs(argdata * parameters, int argc, char **argv, int pid)
                 printHelp();
                 break;
             case 'c':
-                parameters->runcheck = true;
+                parameters.runcheck = true;
                 break;
             case 'f':
-                strcpy(parameters->file, optarg);
-                parameters->inputFile = true;
+                strcpy(parameters.file, optarg);
+                parameters.inputFile = true;
                 break;
             case 'v':
 #if GLVIS
-                parameters->viewConditions = true;
+                parameters.viewConditions = true;
 #else
                 cout << "This build does not support OpenGL." << endl;
 #endif
                 break;
             case 'q':
-                parameters->skipsimulation = true;
+                parameters.skipsimulation = true;
                 break;
             case 't':
-                parameters->threads = atoi(optarg);
+                parameters.threads = atoi(optarg);
                 break;
             case 's':
-                parameters->streams = atoi(optarg);
+                parameters.streams = atoi(optarg);
                 break;
             case 'g':
-                parameters->gpus = atoi(optarg);
+                parameters.gpus = atoi(optarg);
                 break;
             case 'm':
-                parameters->MCsteps = atoi(optarg);
+                parameters.MCsteps = atoi(optarg);
                 break;
             case 'e':
-                parameters->REsteps = atoi(optarg);
+                parameters.REsteps = atoi(optarg);
                 break;
             case 'r':
-                parameters->replicas = atoi(optarg);
+                parameters.replicas = atoi(optarg);
                 break;
             case 'o':
-                strcpy(parameters->logfile, optarg);
+                strcpy(parameters.logfile, optarg);
                 break;
             case 'b':
-                parameters->bound = atof(optarg);
+                parameters.bound = atof(optarg);
                 break;
             case 'x':
-                parameters->temperatureMax = atof(optarg);
+                parameters.temperatureMax = atof(optarg);
                 break;
             case 'n':
-                parameters->temperatureMin = atof(optarg);
+                parameters.temperatureMin = atof(optarg);
                 break;
             case 'd':
 #if USING_CUDA
-                parameters->cuda_blockSize = atoi(optarg);
-                parameters->auto_blockdim = false;
-                cout << "Block size changed to: " << parameters->cuda_blockSize << endl;
+                parameters.cuda_blockSize = atoi(optarg);
+                parameters.auto_blockdim = false;
+                cout << "Block size changed to: " << parameters.cuda_blockSize << endl;
 #else
                 cout << "This build does not support CUDA." << endl;
 #endif
@@ -1134,7 +1140,7 @@ void getArgs(argdata * parameters, int argc, char **argv, int pid)
 //         }
 }
 
-void loadArgsFromFile(argdata * parameters)
+void Simulation::loadArgsFromFile()
 {
     /* use an input file
      * files start after the "files" word in a file.
@@ -1152,17 +1158,17 @@ void loadArgsFromFile(argdata * parameters)
      *
      */
 
-    if (!parameters->inputFile)
+    if (!parameters.inputFile)
     {// deprecated function
         cout << "No configuration file provided." << endl;
         printHelp();
     }
 
-    ifstream input(parameters->file);
+    ifstream input(parameters.file);
 
     if (!input.good())
     {
-        cout << "Failed to open file: " << parameters->file << endl;
+        cout << "Failed to open file: " << parameters.file << endl;
         exit(0);
     }
 
@@ -1217,10 +1223,10 @@ void loadArgsFromFile(argdata * parameters)
                 // TODO: remove this later?
                 if (section == MOLECULE_SECTION)
                 {
-                    parameters->nonCrowders++;
+                    parameters.nonCrowders++;
                 }
 
-                parameters->mdata.push_back(m);
+                parameters.mdata.push_back(m);
             }
         }
         else if (section == PARAMETER_SECTION)
@@ -1230,56 +1236,56 @@ void loadArgsFromFile(argdata * parameters)
 
             if (strcmp(key, "gpus") == 0)
             {
-                parameters->gpus = atoi(value);
+                parameters.gpus = atoi(value);
             }
             else if (strcmp(key, "streams") == 0)
             {
-                parameters->streams = atoi(value);
+                parameters.streams = atoi(value);
             }
             else if (strcmp(key, "threads") == 0)
             {
-                parameters->threads = atoi(value);
+                parameters.threads = atoi(value);
             }
             else if (strcmp(key, "mcsteps") == 0)
             {
-                parameters->MCsteps = atoi(value);
+                parameters.MCsteps = atoi(value);
             }
             else if (strcmp(key, "resteps") == 0)
             {
-                parameters->REsteps = atoi(value);
+                parameters.REsteps = atoi(value);
             }
             else if (strcmp(key, "temperaturemax") == 0)
             {
-                parameters->temperatureMax = atof(value);
+                parameters.temperatureMax = atof(value);
             }
             else if (strcmp(key, "temperaturemin") == 0)
             {
-                parameters->temperatureMin = atof(value);
+                parameters.temperatureMin = atof(value);
             }
             else if (strcmp(key, "boundary") == 0)
             {
-                parameters->bound = atof(value);
+                parameters.bound = atof(value);
             }
             else if (strcmp(key, "replicas") == 0)
             {
-                parameters->replicas = atoi(value);
+                parameters.replicas = atoi(value);
             }
             else if (strcmp(key, "samplefrequency") == 0)
             {
-                parameters->sampleFrequency = atoi(value);
+                parameters.sampleFrequency = atoi(value);
             }
             else if (strcmp(key, "sampleafter") == 0)
             {
-                parameters->sampleStartsAfter = atoi(value);
+                parameters.sampleStartsAfter = atoi(value);
             }
             else if (strcmp(key, "prefix") == 0)
             {
-                strcpy(parameters->prefix, "");
-                strcpy(parameters->prefix, value);
+                strcpy(parameters.prefix, "");
+                strcpy(parameters.prefix, value);
 #if REPULSIVE_CROWDING
-                strcat(parameters->prefix, "_repulsive");
+                strcat(parameters.prefix, "_repulsive");
 #else
-                strcat(parameters->prefix, "_full");
+                strcat(parameters.prefix, "_full");
 #endif
             }
             else {
@@ -1290,79 +1296,79 @@ void loadArgsFromFile(argdata * parameters)
     input.close();
 }
 
-void checkParameterSanity(argdata * parameters)
+void Simulation::checkParameterSanity()
 {
-    if (parameters->bound <= 0)
+    if (parameters.bound <= 0)
     {
         cout << "! Bounding value too small, setting equal to " << BOUNDING_VALUE << endl;
-        parameters->bound = BOUNDING_VALUE;
+        parameters.bound = BOUNDING_VALUE;
     }
 
-    if (parameters->temperatureMax < parameters->temperatureMin)
+    if (parameters.temperatureMax < parameters.temperatureMin)
     {
-        cout << "! Maximum temperature < minimum temperature, swapping " << parameters->temperatureMax << " <-> " << parameters->temperatureMin << endl;
-        float tmp = parameters->temperatureMax;
-        parameters->temperatureMax = parameters->temperatureMin;
-        parameters->temperatureMin = tmp;
+        cout << "! Maximum temperature < minimum temperature, swapping " << parameters.temperatureMax << " <-> " << parameters.temperatureMin << endl;
+        float tmp = parameters.temperatureMax;
+        parameters.temperatureMax = parameters.temperatureMin;
+        parameters.temperatureMin = tmp;
     }
 
-    if (parameters->threads > parameters->replicas)
+    if (parameters.threads > parameters.replicas)
     {
-        cout << "! Too many threads, setting equal to " << parameters->replicas << endl;
-        parameters->threads = parameters->replicas;
+        cout << "! Too many threads, setting equal to " << parameters.replicas << endl;
+        parameters.threads = parameters.replicas;
     }
-    if (parameters->threads > parameters->streams)
+    if (parameters.threads > parameters.streams)
     {
-        parameters->streams = parameters->threads;
-        if (parameters->streams > 16*parameters->gpus)
+        parameters.streams = parameters.threads;
+        if (parameters.streams > 16*parameters.gpus)
         {
-            parameters->streams = 16*parameters->gpus;
-            if (parameters->streams > parameters->replicas)
-                parameters->streams = parameters->replicas;
-            cout << "! Too many streams, setting equal to " << parameters->gpus << endl;
+            parameters.streams = 16*parameters.gpus;
+            if (parameters.streams > parameters.replicas)
+                parameters.streams = parameters.replicas;
+            cout << "! Too many streams, setting equal to " << parameters.gpus << endl;
         }
     }
 }
 
-void writeFileIndex(argdata * parameters)
+void Simulation::writeFileIndex()
 {
     // TODO why is this dynamically allocated? wtf.
     char * fileindex = new char[256];
-    sprintf(fileindex,"output/%s_%d_fileindex", parameters->prefix, parameters->pid);
+    sprintf(fileindex,"output/%s_%d_fileindex", parameters.prefix, parameters.pid);
     FILE * fileindexf = fopen (fileindex,"w");
     fprintf(fileindexf,"index molecule_file_path crowder(Y/N)\n");
     delete [] fileindex;
 
-    for (int i = 0; i < parameters->mdata.size(); i++) {
-        fprintf(fileindexf, "%2d %s %s", i, parameters->mdata[i].pdbfilename, (parameters->mdata[i].crowder ? "Y\n" : "N\n"));
+    for (int i = 0; i < parameters.mdata.size(); i++) {
+        fprintf(fileindexf, "%2d %s %s", i, parameters.mdata[i].pdbfilename, (parameters.mdata[i].crowder ? "Y\n" : "N\n"));
     }
 
     fclose(fileindexf);
 }
 
-void printArgs(argdata * parameters)
+void Simulation::printArgs()
 {
     cout << "Argument data from file:" << endl;
     cout << "-------------------------------------" << endl;
-    cout << "threads " << parameters->threads << endl;
-    cout << "streams " << parameters->streams << endl;
-    cout << "GPUs " << parameters->gpus << endl;
-    cout << "mc steps " << parameters->MCsteps << endl;
-    cout << "re steps " << parameters->REsteps << endl;
-    cout << "replicas " << parameters->replicas << endl;
-    cout << "sampling frequency (mc steps) " << parameters->sampleFrequency << endl;
-    cout << "sampling starts after (mc steps) " << parameters->sampleStartsAfter << endl;
-    cout << "bounding box size " << parameters->bound << endl;
-    cout << "non-crowder molecules " << parameters->nonCrowders << endl;
-    cout << "maximum temperature " << parameters->temperatureMax << endl;
-    cout << "minimum temperature " << parameters->temperatureMin << endl;
+    cout << "threads " << parameters.threads << endl;
+    cout << "streams " << parameters.streams << endl;
+    cout << "GPUs " << parameters.gpus << endl;
+    cout << "mc steps " << parameters.MCsteps << endl;
+    cout << "re steps " << parameters.REsteps << endl;
+    cout << "replicas " << parameters.replicas << endl;
+    cout << "sampling frequency (mc steps) " << parameters.sampleFrequency << endl;
+    cout << "sampling starts after (mc steps) " << parameters.sampleStartsAfter << endl;
+    cout << "bounding box size " << parameters.bound << endl;
+    cout << "non-crowder molecules " << parameters.nonCrowders << endl;
+    cout << "maximum temperature " << parameters.temperatureMax << endl;
+    cout << "minimum temperature " << parameters.temperatureMin << endl;
 
     cout << "Loaded: "<< endl;
     cout << "-------------------------------------------------------------"<< endl;
 
 
-    for (int i = 0; i < parameters->mdata.size(); i++) {
-        printf("%2d %s%s centered @ (%0.3f,%0.3f,%0.3f)\n", i, parameters->mdata[i].pdbfilename, (parameters->mdata[i].crowder ? " crowder" : ""), parameters->mdata[i].px, parameters->mdata[i].py, parameters->mdata[i].pz);
+    for (int i = 0; i < parameters.mdata.size(); i++) {
+        printf("%2d %s%s centered @ (%0.3f,%0.3f,%0.3f)\n", i, parameters.mdata[i].pdbfilename, (parameters.mdata[i].crowder ? " crowder" : ""), parameters.mdata[i].px, parameters.mdata[i].py, parameters.mdata[i].pz);
     }
 
     cout << "-------------------------------------------------------------"<< endl;

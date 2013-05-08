@@ -23,53 +23,48 @@ int main(int argc, char **argv)
 #endif
 
     // get global options for the simulation
-    argdata parameters;
 
     int pid = int( getpid() );
-    getArgs(&parameters, argc, argv, pid);
+
 
     Simulation simulation;
 
-    loadArgsFromFile(&parameters);
-    checkParameterSanity(&parameters);
-    writeFileIndex(&parameters);
-    getArgs(&parameters, argc, argv, pid); // second pass to override any variables if doing performance tests
+    // TODO: make all the parameter functions into methods; fold everything into init:
+    simulation.init(argc, argv, pid);
 
     // TODO: only if verbose output
-    printArgs(&parameters);
+    simulation.printArgs();
 
 #if USING_CUDA
-    if (parameters.runcheck)
+    if (simulation.parameters.runcheck)
     {
         simulation.run_check();
     }
     else
     {
 #endif
-        // TODO: make all the parameter functions into methods; fold everything into init:
-        simulation.init(parameters);
 
 #if GLVIS
-        if (parameters.viewConditions)
+        if (simulation.parameters.viewConditions)
         {
             replica = &simulation.replica;
             glutInit(&argc, argv);
             camera.setPosition(Vector3f(-15,15,15),Vector3f(1,-1,-1),Vector3f(0,1,0));
             char windowName[64] = {"Coarse-Grained Protein-Protein Docker (cgppd)"};
             GlutInit(WIDTH,HEIGHT,windowName);
-            gl_replicaCount = parameters.replicas;
-            gl_boundingValue = int(parameters.bound);
+            gl_replicaCount = simulation.parameters.replicas;
+            gl_boundingValue = int(simulation.parameters.bound);
             GLreplica = &simulation.initialReplica;
         }
 #endif
 
-        if (!parameters.skipsimulation)
+        if (!simulation.parameters.skipsimulation)
         {
             simulation.run();
         }
 
 #if GLVIS
-        if (parameters.viewConditions)
+        if (simulation.parameters.viewConditions)
         {
             // TODO: this is overwritten inside run. Why do we set it back here?
             GLreplica = &simulation.initialReplica;
