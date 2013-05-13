@@ -5,6 +5,6 @@
 .*/obj/.*
 .*/output/.*
 .*\.cubin
-^REMC.v2/REMC$
-^REMC.v2/test$
+^cgppd/cgppd$
+^cgppd/test$
 .*\.d

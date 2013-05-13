@@ -26,10 +26,7 @@ int main(int argc, char **argv)
 
     int pid = int( getpid() );
 
-
     Simulation simulation;
-
-    // TODO: make all the parameter functions into methods; fold everything into init:
     simulation.init(argc, argv, pid);
 
     // TODO: only if verbose output
