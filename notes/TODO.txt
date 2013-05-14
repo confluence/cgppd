@@ -2,9 +2,25 @@
 NOW
 --------------------------------------------------------------------------------
 
-* replace char[] with std:string for filenames, etc. Replace unnecessary char * with vectors.
-
 * add all the processing / output stuff to simulation
+
+* how to merge
+    * create postprocess and pdbgen headers and cpp files
+    * call from maim
+    * commands distinguish between actions? Compile main + other things into different executables?
+
+* pdbgen:
+    * get saveAsSinglePDB from pdbgen Replica
+    * move code from main to a method
+    * need to handle local moves somehow -- log each move; reproduce cumulatively as the file is processed?
+
+"Cluster.sh"
+* all pdb files concatenated into a single file
+* g_cluster -- part of GROMACS
+* takes this concatenated file as input and produces a trajectory file?
+
+* postprocess:
+    * process trajectories produced by g_cluster
 
 * single rng for all replicas
 * clean up CUDA a bit more (setting up and tearing down)
@@ -12,16 +28,7 @@ NOW
 * extend unit test to a reasonably complete normal simulation (with reading of parameters, etc.)
 * mock rng (?) for a predictable set of steps?
 
-* figure out how data processing works
-    * first PDB files are created; then they are postprocessed?
-    * we will probably need the DCD thing for this; can't create a PDB file just from the translations and rotations anymore!
-        * why DCD and not PDB? Existing tools for converting PDB to DCD? Yes! https://research.cchmc.org/wiki/index.php/Catdcd
-    * So, add functionality for writing out PDB snapshot into the right format.
-* get rid of the code duplication; put all the functionality in the same executable!
-
-* we can output parameters for mutations, and replay them later to output PDBs? Or output regular snapshots of PDBs? Do we need a PDB for every mutation, to collect data?
-
-* this fixes checkpointing for free
+* put checkpointing back in
 
 * start writing up
 

@@ -50,11 +50,10 @@ OBJS+=Camera openglvis
 DEFINE+=-DEnableOPENGL
 endif
 
-ifeq ($(TEST),yes)
+# Always create these, because we might make test with TEST=no (although that would be silly)
 TEST_INCLUDE=${INCLUDE} -I/usr/include/cppunit/ -Isrc
 TEST_LINKS=${LINKS} -lcppunit
 TEST_SOURCES:=$(shell find tests/ -name "*.cpp")
-endif
 
 ifeq ($(DEBUG),yes)
 CFLAGS+=-g
@@ -74,12 +73,13 @@ OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
 
 ifneq ($(TEST),yes)
 cgppd: obj/main.o ${OBJFILES}
-	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ $^ ${LINKS}
 else
-cgppd: obj/main.o ${OBJFILES} ${TEST_SOURCES}
-	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
-	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
+cgppd: obj/main.o ${OBJFILES} test
 endif
+	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
+
+test: ${OBJFILES} ${TEST_SOURCES}
+	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
 
 obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
 	@echo Making CUDA files.
