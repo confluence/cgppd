@@ -2,17 +2,11 @@
 NOW
 --------------------------------------------------------------------------------
 
-* add all the processing / output stuff to simulation
+* postprocess: should it even go in the C++ code? Do it all in Python?
+* pdbgen: instead of generating PDBs from the sampling files retroactively, we are (for now) going to output the PDB files straight away and see if this is going to be a problem.
 
-* how to merge
-    * create postprocess and pdbgen headers and cpp files
-    * call from maim
-    * commands distinguish between actions? Compile main + other things into different executables?
-
-* pdbgen:
-    * get saveAsSinglePDB from pdbgen Replica
-    * move code from main to a method
-    * need to handle local moves somehow -- log each move; reproduce cumulatively as the file is processed?
+    * repurpose stuff from pdbgen and put in a method in replica
+    * call method from sample
 
 "Cluster.sh"
 * all pdb files concatenated into a single file
@@ -21,6 +15,7 @@ NOW
 
 * postprocess:
     * process trajectories produced by g_cluster
+    * replace this with Python? Cluster + postprocess currently run from bash script
 
 * single rng for all replicas
 * clean up CUDA a bit more (setting up and tearing down)

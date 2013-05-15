@@ -1060,9 +1060,8 @@ void Replica::cudaRollbackMutation()
 
 // TODO: it's completely unnecessary to pass data in here; we only use the bound conformations. Eliminating this eliminates the circular dependency between SimulationData and Replica.
 // this code is a bit special...
-bool Replica::sample(SimulationData *data, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex)
+void Replica::sample(SimulationData *data, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex)
 {
-    bool isBound = false;
     float nonCrowderPotential(0.0f);
     samplesSinceLastExchange++;
 
@@ -1074,11 +1073,11 @@ bool Replica::sample(SimulationData *data, int current_step, float boundEnergyTh
 #else
         // if there are crowders and molecules of interest the only use the energy of the interesting ones
         // TODO: does this work?! Are all the NC molecules at the front of the list?
-        for (int i=0;i<nonCrowderCount;i++)
+        for (int i=0; i < nonCrowderCount; i++)
         {
-            for (int j=i+1;j<nonCrowderCount;j++)
+            for (int j = i+1; j < nonCrowderCount; j++)
             {
-                nonCrowderPotential += E(&molecules[i],&molecules[j]); // CPU failsafe
+                nonCrowderPotential += E(&molecules[i], &molecules[j]); // CPU failsafe
             }
         }
 #endif
@@ -1090,30 +1089,19 @@ bool Replica::sample(SimulationData *data, int current_step, float boundEnergyTh
 
     if (nonCrowderPotential < boundEnergyThreshHold)
     {
-        isBound = true;
         boundSamples++;
-        pthread_mutex_lock(writeFileMutex);
-        fprintf(data->boundConformations, "%d; %0.5f (%0.5f); %0.1f\n", current_step,nonCrowderPotential,potential,temperature);
-
-        for (int a=0; a<moleculeCount; a++)
-        {
-            if (a<nonCrowderCount)
-                fprintf(data->boundConformations,"0 %2d: %f %f %f %f %f %f %f\n", a, molecules[a].rotation.w,molecules[a].rotation.x,molecules[a].rotation.y,molecules[a].rotation.z,molecules[a].center.x,molecules[a].center.y,molecules[a].center.z);
-            else
-                fprintf(data->boundConformations,"1 %2d: %f %f %f %f %f %f %f\n", a, molecules[a].rotation.w,molecules[a].rotation.x,molecules[a].rotation.y,molecules[a].rotation.z,molecules[a].center.x,molecules[a].center.y,molecules[a].center.z);
-        }
-
-        pthread_mutex_unlock(writeFileMutex);
     }
 
-    // record the other samples, should be merged with the above block some time since we should record all samples anyway
-    if (bool_recordAllSamples && !isBound)
+    if (bool_recordAllSamples || nonCrowderPotential < boundEnergyThreshHold)
     {
         pthread_mutex_lock(writeFileMutex);
         fprintf(data->boundConformations, "%d; %0.5f (%0.5f); %0.1f\n", current_step,nonCrowderPotential,potential,temperature);
 
         for (int a=0; a<moleculeCount; a++)
         {
+            // TODO use ternary expression instead of this stupid if
+            // TODO: we only use this file now to generate PDBs, so if we write the PDBs straight away we don't need it at all?
+            // TODO: we need to omit crowders from the PDB
             if (a<nonCrowderCount)
                 fprintf(data->boundConformations,"0 %2d: %f %f %f %f %f %f %f\n", a, molecules[a].rotation.w,molecules[a].rotation.x,molecules[a].rotation.y,molecules[a].rotation.z,molecules[a].center.x,molecules[a].center.y,molecules[a].center.z);
             else
@@ -1122,7 +1110,58 @@ bool Replica::sample(SimulationData *data, int current_step, float boundEnergyTh
 
         pthread_mutex_unlock(writeFileMutex);
     }
-
-    return isBound;
 }
 
+// TODO: option to omit crowders
+bool Replica::savePDB(const char *filename)
+{
+    char filenameExt[256];
+    char tmp[64];
+    for (size_t i=0;i<moleculeCount;i++)
+    {
+        strcpy (filenameExt,filename);
+        sprintf (tmp,"%02d",int(i));
+        strcat (filenameExt,tmp);
+        strcat (filenameExt,".pdb");
+        molecules[i].saveAsPDB(filenameExt);
+    }
+    return true;
+}
+
+// TODO: option to omit crowders
+void Replica::saveAsSinglePDB(const char *filename)
+{
+    FILE * output;
+    output = fopen (filename,"w");
+    fprintf(output,"REMARK %s \n",filename);
+    fprintf(output,"REMARK potential: %0.10f \n",float(potential));
+    fprintf(output,"REMARK temperature: %5.1f \n",temperature);
+
+    for (size_t i=0;i<moleculeCount;i++)
+    {
+        fprintf(output,"REMARK Molecule: %d\n",int(i));
+        fprintf(output,"REMARK Rotation relative to input Q(w,x,y,z): %f %f %f %f\n",molecules[i].rotation.w,molecules[i].rotation.x,molecules[i].rotation.y,molecules[i].rotation.z);
+        fprintf(output,"REMARK Centroid position P(x,y,z): %f %f %f\n",molecules[i].center.x,molecules[i].center.y,molecules[i].center.z);
+    }
+
+    char chainId = 'A';
+    int itemcount = 0;
+    int lastSeqNo = 0;
+    for (size_t m=0;m<moleculeCount;m++)
+    {
+        size_t i=0;
+        while (i<molecules[m].residueCount)
+        {
+            itemcount++;
+            fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',aminoAcids.get(molecules[m].Residues[i].aminoAcidIndex).getSNAME(),chainId,molecules[m].Residues[i].resSeq,' ',molecules[m].Residues[i].position.x,molecules[m].Residues[i].position.y,molecules[m].Residues[i].position.z,1.0f,1.0f);
+            lastSeqNo = molecules[m].Residues[i].resSeq;
+            i++;
+        }
+        fprintf(output,"TER   %5d      %3s %C%4d \n",itemcount,aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(),chainId,lastSeqNo);
+        chainId++;
+        fflush(output);
+    }
+    fprintf(output,"END \n");
+    fflush(output);
+    fclose(output);
+}

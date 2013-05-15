@@ -54,6 +54,9 @@ public:
 
     int loadMolecule(const char *pdbfilename);
 
+    bool savePDB(const char *filename);
+    void saveAsSinglePDB(const char *filename);
+
     AminoAcids aminoAcids;
 
 #if FLEXIBLE_LINKS
@@ -108,7 +111,7 @@ public:
     int totalBoundSamples;
     int totalSamples;
 
-    bool sample(SimulationData *data, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex);
+    void sample(SimulationData *data, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex);
 
     int countpairs();
     int paircount;
