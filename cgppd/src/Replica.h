@@ -54,8 +54,8 @@ public:
 
     int loadMolecule(const char *pdbfilename);
 
-    bool savePDB(const char *filename);
-    void saveAsSinglePDB(const char *filename);
+    bool savePDB(const char *filename, bool skip_crowders=true);
+    void saveAsSinglePDB(const char *filename, bool skip_crowders=true);
 
     AminoAcids aminoAcids;
 
@@ -111,7 +111,7 @@ public:
     int totalBoundSamples;
     int totalSamples;
 
-    void sample(SimulationData *data, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex);
+    void sample(FILE * boundConformations, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex);
 
     int countpairs();
     int paircount;

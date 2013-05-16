@@ -369,7 +369,7 @@ void *MCthreadableFunction(void *arg)
                 {
                     // cout << "Sampling at step:" << mcstep+(s+1)*data->sampleFrequency << endl;
                     // if E < -1.1844 kcal/mol then its bound
-                    replica[tx+threadIndex*tReplicas].sample(data,mcstep+s*data->sampleFrequency,BOUND_ENERGY_VALUE,&writeFileMutex);
+                    replica[tx+threadIndex*tReplicas].sample(data->boundConformations,mcstep+s*data->sampleFrequency,BOUND_ENERGY_VALUE,&writeFileMutex);
                 }
             }
         }
@@ -434,7 +434,7 @@ void *MCthreadableFunction(void *arg)
                     //sampleAsync
                     if (mcstep%data->sampleFrequency == 0 && mcstep >= data->sampleStartsAfter) // when enough steps are taken && sampleFrequency steps have passed
                     {
-                        replica[threadIndex*tReplicas+index+rps].sample(data,mcstep+mcx*data->sampleFrequency,BOUND_ENERGY_VALUE,&writeFileMutex);
+                        replica[threadIndex*tReplicas+index+rps].sample(data->boundConformations,mcstep+mcx*data->sampleFrequency,BOUND_ENERGY_VALUE,&writeFileMutex);
 
                         //if (abs(replica[threadIndex*tReplicas+index+rps].temperature-300.0f)<1.0f)
                         //  cout << "Sampled: t=" << replica[threadIndex*tReplicas+index+rps].temperature << " mcstep=" << mcstep << endl;

@@ -2,6 +2,8 @@
 NOW
 --------------------------------------------------------------------------------
 
+* make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
+
 * postprocess: should it even go in the C++ code? Do it all in Python?
 * pdbgen: instead of generating PDBs from the sampling files retroactively, we are (for now) going to output the PDB files straight away and see if this is going to be a problem.
 
