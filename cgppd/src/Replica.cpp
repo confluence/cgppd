@@ -1094,18 +1094,20 @@ void Replica::sample(FILE * boundConformations, int current_step, float boundEne
     if (bool_recordAllSamples || nonCrowderPotential < boundEnergyThreshHold)
     {
 
-        char savename[256];
-        memset(savename,0,256);
-        sprintf(savename, "pdbgen_results/sample_%d_%0.1fK_%5.2f.pdb", current_step, temperature, nonCrowderPotential);
-        saveAsSinglePDB(savename);
+//         char savename[256];
+//         memset(savename,0,256);
+//         sprintf(savename, "output_pdb/sample_%d_%0.1fK_%5.2f.pdb", current_step, temperature, nonCrowderPotential);
+//         saveAsSinglePDB(savename);
+
+        cout << "I should be writing something to the file now" << endl;
 
         pthread_mutex_lock(writeFileMutex);
-        fprintf(boundConformations, "%d; %0.5f (%0.5f); %0.1f\n%s\n", current_step, nonCrowderPotential, potential, temperature, savename);
+//         fprintf(boundConformations, "%d; %0.5f (%0.5f); %0.1f\n%s\n", current_step, nonCrowderPotential, potential, temperature, savename);
+        fprintf(boundConformations, "%d; %0.5f (%0.5f); %0.1f\n", current_step, nonCrowderPotential, potential, temperature);
         pthread_mutex_unlock(writeFileMutex);
     }
 }
 
-// TODO: option to omit crowders
 bool Replica::savePDB(const char *filename, bool skip_crowders)
 {
     char filenameExt[256];
@@ -1127,7 +1129,6 @@ bool Replica::savePDB(const char *filename, bool skip_crowders)
     return true;
 }
 
-// TODO: option to omit crowders
 void Replica::saveAsSinglePDB(const char *filename, bool skip_crowders)
 {
     FILE * output;
@@ -1146,6 +1147,7 @@ void Replica::saveAsSinglePDB(const char *filename, bool skip_crowders)
     char chainId = 'A';
     int itemcount = 0;
     int lastSeqNo = 0;
+    size_t i;
     for (size_t m = 0; m < moleculeCount; m++)
     {
         if (skip_crowders && m >= nonCrowderCount)
@@ -1153,7 +1155,7 @@ void Replica::saveAsSinglePDB(const char *filename, bool skip_crowders)
             break;
         }
 
-        for (size_t i = 0; i < molecules[m].residueCount; i++)
+        for (i = 0; i < molecules[m].residueCount; i++)
         {
             itemcount++;
             fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',aminoAcids.get(molecules[m].Residues[i].aminoAcidIndex).getSNAME(),chainId,molecules[m].Residues[i].resSeq,' ',molecules[m].Residues[i].position.x,molecules[m].Residues[i].position.y,molecules[m].Residues[i].position.z,1.0f,1.0f);

@@ -5,7 +5,7 @@ int main(int argc, char **argv)
     cout.precision(8);
     int sysreturn;
     // TODO: move this inside Simulation init?
-    sysreturn = system("mkdir -p checkpoints");
+    sysreturn = system("mkdir -p output_pdb");
     sysreturn = system("mkdir -p output");
     cout << "Version: " << HGVERSION << endl;
     cout << "Compiled with:" << endl;
