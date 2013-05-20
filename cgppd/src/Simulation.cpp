@@ -354,7 +354,7 @@ void *MCthreadableFunction(void *arg)
 #if !CUDA_MC && !CUDA_STREAMS   // if no MC on device
     int mcstep = 0;
     int samples = 0;
-    while (mcstep<data->MCsteps)
+    while (mcstep < data->MCsteps)
     {
         //cout << "Starting mc loop at " << mcstep << " steps" << endl;
         // do all MC steps before RE
@@ -365,7 +365,7 @@ void *MCthreadableFunction(void *arg)
             {
                 replica[tx+threadIndex*tReplicas].MCSearch(data->sampleFrequency);
 
-                if (mcstep+s*data->sampleFrequency >= data->sampleStartsAfter)
+                if (mcstep + s*data->sampleFrequency >= data->sampleStartsAfter)
                 {
                     // cout << "Sampling at step:" << mcstep+(s+1)*data->sampleFrequency << endl;
                     // if E < -1.1844 kcal/mol then its bound

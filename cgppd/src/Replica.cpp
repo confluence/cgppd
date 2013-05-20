@@ -1094,16 +1094,13 @@ void Replica::sample(FILE * boundConformations, int current_step, float boundEne
     if (bool_recordAllSamples || nonCrowderPotential < boundEnergyThreshHold)
     {
 
-//         char savename[256];
-//         memset(savename,0,256);
-//         sprintf(savename, "output_pdb/sample_%d_%0.1fK_%5.2f.pdb", current_step, temperature, nonCrowderPotential);
-//         saveAsSinglePDB(savename);
-
-        cout << "I should be writing something to the file now" << endl;
+        char savename[256];
+        memset(savename,0,256);
+        sprintf(savename, "output_pdb/sample_%d_%0.1fK_%5.2f.pdb", current_step, temperature, nonCrowderPotential);
+        saveAsSinglePDB(savename);
 
         pthread_mutex_lock(writeFileMutex);
-//         fprintf(boundConformations, "%d; %0.5f (%0.5f); %0.1f\n%s\n", current_step, nonCrowderPotential, potential, temperature, savename);
-        fprintf(boundConformations, "%d; %0.5f (%0.5f); %0.1f\n", current_step, nonCrowderPotential, potential, temperature);
+        fprintf(boundConformations, "%d; %0.5f (%0.5f); %0.1f\n%s\n", current_step, nonCrowderPotential, potential, temperature, savename);
         pthread_mutex_unlock(writeFileMutex);
     }
 }
