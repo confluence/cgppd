@@ -1057,6 +1057,9 @@ void Simulation::getArgs(int argc, char **argv)
 
     int opt_index = 0;
 
+    // Important! This is a getopt variable which we need to reset if we want to do a second pass over the same options. Which we do.
+    optind = 1;
+
     while (1)
     {
         int opt = getopt_long(argc, argv, "hcf:vqt:s:g:m:e:r:o:b:x:n:d:", long_options, &opt_index);
@@ -1102,6 +1105,7 @@ void Simulation::getArgs(int argc, char **argv)
                 parameters.REsteps = atoi(optarg);
                 break;
             case 'r':
+                cout << "trying to set the number of replicas to " << optarg << endl;
                 parameters.replicas = atoi(optarg);
                 break;
             case 'o':
