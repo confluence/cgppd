@@ -1096,6 +1096,7 @@ void Replica::sample(FILE * boundConformations, int current_step, float boundEne
 
         char savename[256];
         memset(savename,0,256);
+        // TODO: add file prefix to these
         sprintf(savename, "output_pdb/sample_%d_%0.1fK_%5.2f.pdb", current_step, temperature, nonCrowderPotential);
         saveAsSinglePDB(savename);
 
