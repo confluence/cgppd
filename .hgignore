@@ -4,6 +4,7 @@
 .*~
 .*/obj/.*
 .*/output/.*
+.*/output_pdb/.*
 .*\.cubin
 ^cgppd/cgppd$
 ^cgppd/test$
