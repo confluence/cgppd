@@ -2,41 +2,33 @@
 NOW
 --------------------------------------------------------------------------------
 
+* put checkpointing back in
+** output sets of individual pdbs once every N samples
+** when resuming, set the sample delay to zero
+
+* start writing up
+** skeleton
+** design / implementation of changes chapter
+
 * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
-
-* postprocess: should it even go in the C++ code? Do it all in Python?
-* pdbgen: instead of generating PDBs from the sampling files retroactively, we are (for now) going to output the PDB files straight away and see if this is going to be a problem.
-
-    * repurpose stuff from pdbgen and put in a method in replica
-    * call method from sample
-
-"Cluster.sh"
-* all pdb files concatenated into a single file
-* g_cluster -- part of GROMACS
-* takes this concatenated file as input and produces a trajectory file?
-
-* postprocess:
-    * process trajectories produced by g_cluster
-    * replace this with Python? Cluster + postprocess currently run from bash script
-
 * single rng for all replicas
 * clean up CUDA a bit more (setting up and tearing down)
+* clean up the file stuff
+
+* figure out how run / the threadable function actually work
 
 * extend unit test to a reasonably complete normal simulation (with reading of parameters, etc.)
 * mock rng (?) for a predictable set of steps?
-
-* put checkpointing back in
-
-* start writing up
 
 --------------------------------------------------------------------------------
 THEN
 --------------------------------------------------------------------------------
 
+* postprocess: write it completely separately in Python
+
 * make flex and crankshaft moves optional
 
 * Linkers, etc. don't actually *need* to be arrays. Just keep them as vectors.
-* clean up stuff for reading commandline params and reading args from file (look for examples of dispatch in c++, unless can find existing library).
 * is it really necessary to use custom vector3f and vector3d types?
 * is it really necessary to use size_t for iterators instead of int?
 
