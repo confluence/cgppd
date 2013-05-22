@@ -512,6 +512,7 @@ void Simulation::run()
     if (!parameters.resume)
         parameters.currentStep = 0;
     // TODO: some of these should be attributes; some of them are pointless duplication of parameters.
+    // TODO: also, all this parameter fixing should go in a different function.
     int checkpointFrequency = CHECKPOINTFREQUENCY; // in resteps steps
 
     int threadCount = parameters.threads;

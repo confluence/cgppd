@@ -7,6 +7,7 @@ int main(int argc, char **argv)
     // TODO: move this inside Simulation init?
     sysreturn = system("mkdir -p output_pdb");
     sysreturn = system("mkdir -p output");
+    sysreturn = system("mkdir -p checkpoints");
     cout << "Version: " << HGVERSION << endl;
     cout << "Compiled with:" << endl;
 #ifdef GLVIS

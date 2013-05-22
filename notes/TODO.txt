@@ -2,9 +2,12 @@
 NOW
 --------------------------------------------------------------------------------
 
+* move various weird parameter-overriding things to the same place
+
 * put checkpointing back in
-** output sets of individual pdbs once every N samples
-** when resuming, set the sample delay to zero
+** save individual pdb files
+** save checkpointing file with list of pdb files to load and iteration count
+** when resuming, make sure the iteration count is increased and e.g. sampling starts immediately if it needs to
 
 * start writing up
 ** skeleton
