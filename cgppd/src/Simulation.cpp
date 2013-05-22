@@ -539,6 +539,7 @@ void Simulation::run()
         return;
     }
 
+// TODO: move these to the object
 #if INCLUDE_TIMERS
     uint RELoopTimer;
     uint MCLoopTimer;
@@ -661,11 +662,7 @@ void Simulation::run()
     if (parameters.gpus > availableGpus)
         parameters.gpus = availableGpus;
 
-    int gpuid = 0; // the first device, increment per thread
-
-
     int mcstepsPerRE = parameters.MCsteps/parameters.REsteps; // number of MC steps to do at a time
-    int totalMCsteps = parameters.MCsteps;
 
     // if samping does not divide into steps in this loop
     if (mcstepsPerRE % parameters.sampleFrequency > 0)// && mcstepsPerRE > data->sampleFrequency)
