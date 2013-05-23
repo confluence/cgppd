@@ -513,23 +513,13 @@ void Simulation::run()
         parameters.currentStep = 0;
     // TODO: some of these should be attributes; some of them are pointless duplication of parameters.
     // TODO: also, all this parameter fixing should go in a different function.
-    int checkpointFrequency = CHECKPOINTFREQUENCY; // in resteps steps
 
-    int availableStreams = parameters.streams;
-    int availableGpus = parameters.gpus;
     int waitingThreads = 0;
     int conformationsBound = 0;
     FILE *boundConformationsFile;
     FILE *fractionBoundFile;
     FILE *acceptanceRatioFile;
     FILE *exchangeFrequencyFile;
-
-
-#if USING_CUDA
-    cudaGetDeviceCount(&availableGpus);
-    if (availableGpus>1) cout << availableGpus << " GPUs available" << endl;
-    //cutilCheckMsg("");
-#endif
 
     if (initialReplica.moleculeCount == 0)  // make sure something is loaded
     {
@@ -657,10 +647,6 @@ void Simulation::run()
     CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
 #endif
 
-    //if there are multiple gpus then associate here
-    if (parameters.gpus > availableGpus)
-        parameters.gpus = availableGpus;
-
     int mcstepsPerRE = parameters.MCsteps/parameters.REsteps; // number of MC steps to do at a time
 
     // if samping does not divide into steps in this loop
@@ -697,7 +683,7 @@ void Simulation::run()
         data[i].replicaCount = parameters.replicas;
         data[i].index = i;
         data[i].threads = parameters.threads;
-        data[i].streams = availableStreams;///parameters.threads; //determines the number of streams available
+        data[i].streams = parameters.streams;///parameters.threads; //determines the number of streams available
         data[i].MCsteps = parameters.MCsteps;
         data[i].REsteps = parameters.REsteps;
         data[i].sampleFrequency = parameters.sampleFrequency;
@@ -885,7 +871,7 @@ void Simulation::run()
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStopTimer(RELoopTimer) );
     printf("Simulation Timers\n");
-    printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"      ,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps),parameters.MCsteps,parameters.replicas,parameters.threads,availableStreams);
+    printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"      ,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps),parameters.MCsteps,parameters.replicas,parameters.threads,parameters.streams);
     printf("Simulation:     %10.5f ms  (%d exchanges)\n"    ,cutGetTimerValue(RELoopTimer),parameters.REsteps);
     cutDeleteTimer(RELoopTimer);
     cutDeleteTimer(MCLoopTimer);
@@ -1315,9 +1301,20 @@ void Simulation::check_and_modify_parameters()
 
     if (parameters.threads > parameters.replicas)
     {
-        cout << "! Too many threads, setting equal to " << parameters.replicas << endl;
         parameters.threads = parameters.replicas;
+        cout << "! Too many threads, setting equal to " << parameters.threads << endl;
     }
+
+#if USING_CUDA
+    int availableGpus;
+    cudaGetDeviceCount(&availableGpus);
+    if (parameters.gpus > availableGpus)
+    {
+        parameters.gpus = availableGpus;
+        cout << "! Too many GPUs, setting equal to " << parameters.gpus << endl;
+    }
+#endif
+
     if (parameters.threads > parameters.streams)
     {
         parameters.streams = parameters.threads;
@@ -1326,7 +1323,7 @@ void Simulation::check_and_modify_parameters()
             parameters.streams = 16*parameters.gpus;
             if (parameters.streams > parameters.replicas)
                 parameters.streams = parameters.replicas;
-            cout << "! Too many streams, setting equal to " << parameters.gpus << endl;
+            cout << "! Too many streams, setting equal to " << parameters.streams << endl;
         }
     }
 }
