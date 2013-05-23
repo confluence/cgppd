@@ -5,13 +5,15 @@ NOW
 * move various weird parameter-overriding things to the same place
 
 * put checkpointing back in
-** save individual pdb files
-** save checkpointing file with list of pdb files to load and iteration count
-** when resuming, make sure the iteration count is increased and e.g. sampling starts immediately if it needs to
+    * save individual pdb files
+    * save checkpointing file with list of pdb files to load and iteration count
+    * when resuming, make sure the iteration count is increased and e.g. sampling starts immediately if it needs to
+    * save/load:
+        * parameters.currentStep
 
 * start writing up
-** skeleton
-** design / implementation of changes chapter
+    * skeleton
+    * design / implementation of changes chapter
 
 * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 * single rng for all replicas

@@ -1,3 +1,4 @@
+
 #ifndef STRUCTURES_H_
     #define STRUCTURES_H_
 
@@ -21,6 +22,7 @@
         int REsteps;
         int sampleFrequency;
         int sampleStartsAfter;
+        int checkpointFrequency;
         float bound;
         int * waitingThreadCount;
         int * conformationsBound;
@@ -60,6 +62,7 @@
         float bound;
         int sampleFrequency;
         int sampleStartsAfter;
+        int checkpointFrequency;
         char prefix[256];
         char file[256];
         char logfile[256];
@@ -82,7 +85,7 @@
 #endif
             gpus(1), threads(THREAD_COUNT), streams(STREAM_COUNT), MCsteps(MC_STEPS), REsteps(REMC_STEPS),
             sampleFrequency(SAMPLE_FREQ), sampleStartsAfter(STEPS_BEFORE_SAMPLE), inputFile(false),
-            replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP), pid(0), resume(false), currentStep(0)
+            replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP), pid(0), resume(false), currentStep(0), checkpointFrequency(CHECKPOINTFREQUENCY)
         {
             memset(prefix, 0, 256);
             memset(file, 0, 256);
