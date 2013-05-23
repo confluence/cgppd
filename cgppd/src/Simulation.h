@@ -64,7 +64,7 @@ public:
     void printHelp();
     void getArgs(int argc, char **argv);
     void loadArgsFromFile();
-    void checkParameterSanity();
+    void check_and_modify_parameters();
     void writeFileIndex();
     void printArgs();
     void init(int argc, char **argv, int pid);
