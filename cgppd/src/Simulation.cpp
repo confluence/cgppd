@@ -120,7 +120,7 @@ void Simulation::init(int argc, char **argv, int pid)
 
     getArgs(argc, argv);
     loadArgsFromFile();
-    checkParameterSanity();
+    check_and_modify_parameters();
     writeFileIndex();
     getArgs(argc, argv); // second pass to override any variables if doing performance tests
 
@@ -515,7 +515,6 @@ void Simulation::run()
     // TODO: also, all this parameter fixing should go in a different function.
     int checkpointFrequency = CHECKPOINTFREQUENCY; // in resteps steps
 
-    int threadCount = parameters.threads;
     int availableStreams = parameters.streams;
     int availableGpus = parameters.gpus;
     int waitingThreads = 0;
@@ -636,7 +635,7 @@ void Simulation::run()
     cout << "start energies (kcal/mol): " << startEs << endl;
     #endif*/
 
-    pthread_t *thread = new pthread_t[threadCount];;
+    pthread_t *thread = new pthread_t[parameters.threads];;
     //For portability, explicitly create threads in a joinable state
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -647,7 +646,7 @@ void Simulation::run()
     pthread_mutex_init(&waitingThreadMutex, NULL);
     pthread_mutex_init(&reMutex, NULL);
 
-    SimulationData *data = new SimulationData[threadCount];
+    SimulationData *data = new SimulationData[parameters.threads];
 
     //TODO: this seems to print "invalid device pointer", but where does that come from?
 #if USING_CUDA
@@ -692,13 +691,13 @@ void Simulation::run()
     //TODO: assign streams as a function of the number of GPUs and threads
 
     //spawn N threads to do the Monte-Carlo mutations
-    for (int i=0; i<threadCount; i++)
+    for (int i=0; i<parameters.threads; i++)
     {
         data[i].replica = replica;
         data[i].replicaCount = parameters.replicas;
         data[i].index = i;
-        data[i].threads = threadCount;
-        data[i].streams = availableStreams;///threadCount; //determines the number of streams available
+        data[i].threads = parameters.threads;
+        data[i].streams = availableStreams;///parameters.threads; //determines the number of streams available
         data[i].MCsteps = parameters.MCsteps;
         data[i].REsteps = parameters.REsteps;
         data[i].sampleFrequency = parameters.sampleFrequency;
@@ -844,7 +843,7 @@ void Simulation::run()
     printf ("--- Waiting for threads to exit. ---\n");
 
     // join the threads that have finished
-    for (int i=0; i<threadCount; i++)
+    for (int i=0; i<parameters.threads; i++)
         pthread_join(thread[i],NULL);
 
 #if INCLUDE_TIMERS
@@ -886,7 +885,7 @@ void Simulation::run()
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStopTimer(RELoopTimer) );
     printf("Simulation Timers\n");
-    printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"      ,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps),parameters.MCsteps,parameters.replicas,threadCount,availableStreams);
+    printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"      ,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps),parameters.MCsteps,parameters.replicas,parameters.threads,availableStreams);
     printf("Simulation:     %10.5f ms  (%d exchanges)\n"    ,cutGetTimerValue(RELoopTimer),parameters.REsteps);
     cutDeleteTimer(RELoopTimer);
     cutDeleteTimer(MCLoopTimer);
@@ -1298,7 +1297,7 @@ void Simulation::loadArgsFromFile()
     input.close();
 }
 
-void Simulation::checkParameterSanity()
+void Simulation::check_and_modify_parameters()
 {
     if (parameters.bound <= 0)
     {
