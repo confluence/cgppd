@@ -285,6 +285,7 @@ void *MCthreadableFunction(void *arg)
     }
     pthread_mutex_unlock( &replicaMutex );
 #endif
+
 #if USING_CUDA
 
     //initialise cuda for use in this thread
@@ -516,10 +517,6 @@ void Simulation::run()
 
     int waitingThreads = 0;
     int conformationsBound = 0;
-    FILE *boundConformationsFile;
-    FILE *fractionBoundFile;
-    FILE *acceptanceRatioFile;
-    FILE *exchangeFrequencyFile;
 
     if (initialReplica.moleculeCount == 0)  // make sure something is loaded
     {
@@ -577,7 +574,7 @@ void Simulation::run()
 
     replicasInitialised = true;
 
-    initSamplingFiles(&fractionBoundFile,&boundConformationsFile,&acceptanceRatioFile,&exchangeFrequencyFile);
+    initSamplingFiles();
 
 
     // round the ~300K replica to 300K to ensure there is at least one T/T_i == 1
@@ -878,7 +875,7 @@ void Simulation::run()
 #endif
 
     pthread_mutex_lock(&writeFileMutex);
-    closeSamplingFiles(fractionBoundFile,boundConformationsFile,acceptanceRatioFile,exchangeFrequencyFile);
+    closeSamplingFiles();
     pthread_mutex_unlock(&writeFileMutex);
 
 
@@ -907,66 +904,59 @@ void Simulation::run()
 // END OF run
 
 // TODO: can we eliminate the copypasta? Loop?
-void Simulation::initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConformationsFile, FILE ** acceptanceRatioFile,  FILE ** exchangeFrequencyFile)
+void Simulation::initSamplingFiles()
 {
-    char * sfractionBound = new char[256];
-    sprintf(sfractionBound,"output/%s_%d_fractionBound",parameters.prefix,parameters.pid);
-    *fractionBoundFile = fopen (sfractionBound,"at"); // attempt append a file of the same name
-    if (!*fractionBoundFile) *fractionBoundFile = fopen(sfractionBound, "wt"); // create if that failed, and open and append failed (eg: file permissions r--)
-    if (!*fractionBoundFile)
+    char filename[256];
+
+    sprintf(filename,"output/%s_%d_fractionBound",parameters.prefix,parameters.pid);
+    fractionBoundFile = fopen (filename,"at"); // attempt append a file of the same name
+    if (!fractionBoundFile) fractionBoundFile = fopen(filename, "wt"); // create if that failed, and open and append failed (eg: file permissions r--)
+    if (!fractionBoundFile)
     {
-        printf("Cannot open/create file: %s to record fraction bound.\n",sfractionBound);
+        printf("Cannot open/create file: %s to record fraction bound.\n",filename);
         return;
     }
-    fprintf(*fractionBoundFile,"# Fraction Bound\n#Iteration InstantaniousAve CumulativeAve\n");
-    delete [] sfractionBound;
+    fprintf(fractionBoundFile,"# Fraction Bound\n#Iteration InstantaniousAve CumulativeAve\n");
 
-    char * sboundConformationsFile = new char[256];
-    sprintf(sboundConformationsFile,"output/%s_%d_boundconformations",parameters.prefix,parameters.pid);
-    *boundConformationsFile = fopen (sboundConformationsFile,"a+");
-    if (!*boundConformationsFile) *boundConformationsFile = fopen(sboundConformationsFile, "wt");
-    if (!*boundConformationsFile)
+    sprintf(filename,"output/%s_%d_boundconformations",parameters.prefix,parameters.pid);
+    boundConformationsFile = fopen (filename,"a+");
+    if (!boundConformationsFile) boundConformationsFile = fopen(filename, "wt");
+    if (!boundConformationsFile)
     {
-        printf("Cannot open/create file: %s to record bound conformations.\n",sboundConformationsFile);
+        printf("Cannot open/create file: %s to record bound conformations.\n",filename);
         return;
     }
-    fprintf(*boundConformationsFile,"# iteration; complex free energy (replica free energy); temperature;\n# molecule: rotation(w,x,y,z) position(x,y,z) 1 line per other molecule in the bound state\n");
-    delete [] sboundConformationsFile;
+    fprintf(boundConformationsFile,"# iteration; complex free energy (replica free energy); temperature;\n# molecule: rotation(w,x,y,z) position(x,y,z) 1 line per other molecule in the bound state\n");
 
-    char * acceptanceRatioName = new char[256];
-    sprintf(acceptanceRatioName,"output/%s_%d_acceptance_ratios",parameters.prefix,parameters.pid);
-    *acceptanceRatioFile = fopen (acceptanceRatioName,"a+");
-    if (!*acceptanceRatioFile) *acceptanceRatioFile = fopen(acceptanceRatioName, "wt");
-    if (!*acceptanceRatioFile)
+    sprintf(filename,"output/%s_%d_acceptance_ratios",parameters.prefix,parameters.pid);
+    acceptanceRatioFile = fopen (filename,"a+");
+    if (!acceptanceRatioFile) acceptanceRatioFile = fopen(filename, "wt");
+    if (!acceptanceRatioFile)
     {
-        printf("Cannot open/create file: %s to record acceptance ratio.\n",acceptanceRatioName);
+        printf("Cannot open/create file: %s to record acceptance ratio.\n",filename);
         return;
     }
-    fprintf(*acceptanceRatioFile,"# Iteration AcceptanceRatio\n");
-    delete [] acceptanceRatioName;
+    fprintf(acceptanceRatioFile,"# Iteration AcceptanceRatio\n");
 
-
-    char * exchangeFrequencyName = new char[256];
-    sprintf(exchangeFrequencyName,"output/%s_%d_exchange_freq",parameters.prefix,parameters.pid);
-    *exchangeFrequencyFile = fopen (exchangeFrequencyName,"a+");
-    if (!*exchangeFrequencyFile) *exchangeFrequencyFile = fopen(exchangeFrequencyName, "wt");
-    if (!*exchangeFrequencyFile)
+    sprintf(filename,"output/%s_%d_exchange_freq",parameters.prefix,parameters.pid);
+    exchangeFrequencyFile = fopen (filename,"a+");
+    if (!exchangeFrequencyFile) exchangeFrequencyFile = fopen(filename, "wt");
+    if (!exchangeFrequencyFile)
     {
-        printf("Cannot open/create file: %s to record exchanges.\n",exchangeFrequencyName);
+        printf("Cannot open/create file: %s to record exchanges.\n",filename);
         return;
     }
-    fprintf(*exchangeFrequencyFile,"# Iteration continous_ratio, inst_ratio\n");
-    delete [] exchangeFrequencyName;
+    fprintf(exchangeFrequencyFile,"# Iteration continous_ratio, inst_ratio\n");
 
-    fflush(*acceptanceRatioFile);
-    fflush(*fractionBoundFile);
-    fflush(*boundConformationsFile);
-    fflush(*exchangeFrequencyFile);
+    fflush(acceptanceRatioFile);
+    fflush(fractionBoundFile);
+    fflush(boundConformationsFile);
+    fflush(exchangeFrequencyFile);
 
     return;
 }
 
-void Simulation::closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile)
+void Simulation::closeSamplingFiles()
 {
     fclose(fractionBoundFile);
     fclose(boundConformationsFile);
@@ -977,6 +967,7 @@ void Simulation::closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConfo
     LOG(ALWAYS, "    - output/%s_%d_fractionBound\n", parameters.prefix, parameters.pid);
     LOG(ALWAYS, "    - output/%s_%d_boundconformations\n", parameters.prefix, parameters.pid);
     LOG(ALWAYS, "    - output/%s_%d_acceptance_ratios\n", parameters.prefix, parameters.pid);
+    LOG(ALWAYS, "    - output/%s_%d_exchange_freq\n", parameters.prefix, parameters.pid);
 }
 
 void Simulation::printHelp()
