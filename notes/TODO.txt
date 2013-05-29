@@ -17,6 +17,7 @@ NOW
 
 * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 * single rng for all replicas
+    * CAUTION: this may be a problem because of threading (safety and/or performance). Look into it in greater detail.
 * clean up CUDA a bit more (setting up and tearing down)
 * clean up the file stuff
 

@@ -49,6 +49,11 @@ public:
 
     AminoAcids aminoAcidData;
 
+    FILE *boundConformationsFile;
+    FILE *fractionBoundFile;
+    FILE *acceptanceRatioFile;
+    FILE *exchangeFrequencyFile;
+
 //     float e = 2.71828182845904523536f;
     size_t lowestEnergy;
     Replica initialReplica;
@@ -75,8 +80,8 @@ public:
 
     void run();
 
-    void initSamplingFiles (FILE ** fractionBoundFile, FILE ** boundConformationsFile, FILE ** acceptanceRatioFile,  FILE ** exchangeFrequencyFile);
-    void closeSamplingFiles (FILE * fractionBoundFile, FILE * boundConformationsFile, FILE * acceptanceRatioFile, FILE * exchangeFrequencyFile);
+    void initSamplingFiles ();
+    void closeSamplingFiles ();
 };
 
 void *MCthreadableFunction(void *arg);
