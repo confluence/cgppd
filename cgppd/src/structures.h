@@ -48,7 +48,6 @@
     {
         bool viewConditions;
         bool skipsimulation;
-        bool runcheck;
 #if USING_CUDA
         int cuda_blockSize;
         bool auto_blockdim;

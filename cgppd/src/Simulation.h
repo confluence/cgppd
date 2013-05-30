@@ -74,10 +74,6 @@ public:
     void printArgs();
     void init(int argc, char **argv, int pid);
 
-#if USING_CUDA
-    void run_check();
-#endif
-
     void run();
 
     void initSamplingFiles ();
