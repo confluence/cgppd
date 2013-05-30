@@ -3,11 +3,7 @@
 int main(int argc, char **argv)
 {
     cout.precision(8);
-    int sysreturn;
-    // TODO: move this inside Simulation init?
-    sysreturn = system("mkdir -p output_pdb");
-    sysreturn = system("mkdir -p output");
-    sysreturn = system("mkdir -p checkpoints");
+
     cout << "Version: " << HGVERSION << endl;
     cout << "Compiled with:" << endl;
 #ifdef GLVIS
@@ -33,47 +29,36 @@ int main(int argc, char **argv)
     // TODO: only if verbose output
     simulation.printArgs();
 
-#if USING_CUDA
-    if (simulation.parameters.runcheck)
-    {
-        simulation.run_check();
-    }
-    else
-    {
-#endif
-
+// TODO: this is pretty gross; hide it in a function.
 #if GLVIS
-        if (simulation.parameters.viewConditions)
-        {
-            replica = &simulation.replica;
-            glutInit(&argc, argv);
-            camera.setPosition(Vector3f(-15,15,15),Vector3f(1,-1,-1),Vector3f(0,1,0));
-            char windowName[64] = {"Coarse-Grained Protein-Protein Docker (cgppd)"};
-            GlutInit(WIDTH,HEIGHT,windowName);
-            gl_replicaCount = simulation.parameters.replicas;
-            gl_boundingValue = int(simulation.parameters.bound);
-            GLreplica = &simulation.initialReplica;
-        }
-#endif
-
-        if (!simulation.parameters.skipsimulation)
-        {
-            simulation.run();
-        }
-
-#if GLVIS
-        if (simulation.parameters.viewConditions)
-        {
-            // TODO: this is overwritten inside run. Why do we set it back here?
-            GLreplica = &simulation.initialReplica;
-            cout << "Entering free gl viewing mode." << endl;
-            glutMainLoop();
-        }
-#endif
-
-#if USING_CUDA
+    if (simulation.parameters.viewConditions)
+    {
+        replica = &simulation.replica;
+        glutInit(&argc, argv);
+        camera.setPosition(Vector3f(-15,15,15),Vector3f(1,-1,-1),Vector3f(0,1,0));
+        char windowName[64] = {"Coarse-Grained Protein-Protein Docker (cgppd)"};
+        GlutInit(WIDTH,HEIGHT,windowName);
+        gl_replicaCount = simulation.parameters.replicas;
+        gl_boundingValue = int(simulation.parameters.bound);
+        GLreplica = &simulation.initialReplica;
     }
 #endif
+
+    if (!simulation.parameters.skipsimulation)
+    {
+        simulation.run();
+    }
+
+#if GLVIS
+    if (simulation.parameters.viewConditions)
+    {
+        // TODO: this is overwritten inside run. Why do we set it back here?
+        GLreplica = &simulation.initialReplica;
+        cout << "Entering free gl viewing mode." << endl;
+        glutMainLoop();
+    }
+#endif
+
     cout << "Finished." << endl;
     return 0;
 }

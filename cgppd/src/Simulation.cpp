@@ -51,71 +51,11 @@ Simulation::~Simulation()
     }
 }
 
-#if USING_CUDA
-void Simulation::run_check()
-{
-
-    cout << "performing check..." << endl;
-    // get values for the example conformations
-    Replica exampleReplicas[10];
-    char *egnames = new char[60];
-    float * ljp_t;
-    cudaMalloc((void**)&ljp_t,LJArraySize);
-    cutilCheckMsg("Failed to cudaMalloc");
-    copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
-    // set box dimensions
-    float testboxdim(118.4f);
-    CUDA_setBoxDimension(testboxdim);
-
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    bindLJTexture(ljp_t);
-    //bindLJTexture2D(ljp_t);
-#endif
-    //cout << "Reference Conformation energies:" << endl;
-    //printf ("U           LJ         DH\n");
-    for (int i = 1; i<=10; i++)
-    {
-        exampleReplicas[i-1].aminoAcids = aminoAcidData;
-        exampleReplicas[i-1].label = i;
-        exampleReplicas[i-1].boundingValue = testboxdim;
-        exampleReplicas[i-1].reserveContiguousMoleculeArray(2);
-        sprintf(egnames,"data/conf%d/1a.pdb",i);
-        exampleReplicas[i-1].loadMolecule(egnames);
-        sprintf(egnames,"data/conf%d/1b.pdb",i);
-        exampleReplicas[i-1].loadMolecule(egnames);
-        exampleReplicas[i-1].initTimers();
-        uint cpu_E_timer;
-        exampleReplicas[i-1].countNonCrowdingResidues();
-        exampleReplicas[i-1].E();
-
-        //show that cuda returns the same energys for each
-        // make sure the replicas know where to find the data, as the use it for calling cuda kernels
-        exampleReplicas[i-1].device_LJPotentials = ljp_t;
-        exampleReplicas[i-1].setBlockSize(TILE_DIM);
-        exampleReplicas[i-1].ReplicaDataToDevice();
-        ///cout << "CPU execution time: " << cutGetTimerValue(cpu_E_timer)/100.0f << "ms"<<  endl;
-        uint gpu_E_timer;
-        double r = exampleReplicas[i-1].EonDevice();
-        double r2 = exampleReplicas[i-1].EonDeviceNC();
-
-        double cpu_ee = exampleReplicas[i-1].E();
-        double cpu_ee2 = exampleReplicas[i-1].E(&exampleReplicas[i-1].molecules[0],&exampleReplicas[i-1].molecules[1]);
-
-        printf ("CPU (CPUnc), GPU (NC), diff(diff): %13f (%13f), %13f (%13f)    \n",cpu_ee,cpu_ee2,r,r2,abs(cpu_ee-r),abs(cpu_ee2-r2));
-        //exampleReplicas[i-1].printTimers();
-        exampleReplicas[i-1].FreeDevice();
-
-    }
-    cudaFree(ljp_t);
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    unbindLJTexture();
-#endif
-    cout.flush();
-}
-#endif
-
 void Simulation::init(int argc, char **argv, int pid)
 {
+    int sysreturn;
+    sysreturn = system("mkdir -p output output_pdb checkpoints");
+
     parameters.pid = pid;
 
     getArgs(argc, argv);
@@ -124,13 +64,12 @@ void Simulation::init(int argc, char **argv, int pid)
     writeFileIndex();
     getArgs(argc, argv); // second pass to override any variables if doing performance tests
 
-    // TODO: we can change this to a constructor
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters.mdata, aminoAcidData, parameters.bound, 30);
 
     cout << "Loaded: " << initialReplica.residueCount << " residues in " << initialReplica.moleculeCount << " molecules:\n";
 
-    for (int i=0; i<initialReplica.moleculeCount; i++)
+    for (int i=0; i < initialReplica.moleculeCount; i++)
     {
         printf("%2d: %3d %12.3f A^3 %s\n",i , initialReplica.molecules[i].residueCount, initialReplica.molecules[i].volume,initialReplica.molecules[i].filename);
     }
@@ -164,16 +103,13 @@ void Simulation::init(int argc, char **argv, int pid)
 #endif
     initialReplica.ReplicaDataToDevice();
 
-    float * ljp_tmp;
-    cudaMalloc((void**)&ljp_tmp,LJArraySize);
-    copyLJPotentialDataToDevice(ljp_tmp,&aminoAcidData);
-    initialReplica.device_LJPotentials = ljp_tmp;
+    cudaMalloc((void**)&initialReplica.device_LJPotentials, LJArraySize);
+    copyLJPotentialDataToDevice(initialReplica.device_LJPotentials, &aminoAcidData);
 
 
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     bindLJTexture(initialReplica.device_LJPotentials);
 #endif
-
 
     double GPUE = initialReplica.EonDevice();
     double GPUE_NC = initialReplica.EonDeviceNC();
@@ -182,8 +118,6 @@ void Simulation::init(int argc, char **argv, int pid)
     printf("GPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
     printf("Absolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
     printf("Relative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
-
-
 
 #if CUDA_STREAMS
     cudaStreamSynchronize(initialReplica.cudaStream);
@@ -200,36 +134,10 @@ void Simulation::init(int argc, char **argv, int pid)
     unbindLJTexture();
     cutilCheckMsg("Error freeing texture");
 #endif
-    cudaFree(initialReplica.device_LJPotentials);
-    cudaFree(ljp_tmp);
 
-    //cutilCheckMsg("Last Cuda Error");
+    cudaFree(initialReplica.device_LJPotentials);
 
 #endif
-    /*#if INCLUDE_TIMERS
-        initialReplica.printTimers();
-    #endif*/
-
-    // Collision tests
-    /*  GlutDisplay();
-        sleep(5);
-
-        replica[0].molecules[0].translate(Vector3f(-25,0,0));
-        replica[0].molecules[1].translate(Vector3f(25,0,0));
-
-        for (int i = 0; i < 100; i++)
-        {
-            replica[0].molecules[0].translate(Vector3f(1,0,0));
-            GlutDisplay();
-        sleep(1);
-
-            float separationDistance = (replica[0].molecules[1].center - replica[0].molecules[0].center).magnitude();
-            replica[0].E();
-            cout << separationDistance << " " << replica[0].potential << endl;
-        }
-
-        // End: Collision tests
-    */
 
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
     {
@@ -240,6 +148,7 @@ void Simulation::init(int argc, char **argv, int pid)
 #endif
     }
 
+    cout << "Last CUDA error: " << cudaGetErrorString(cudaGetLastError()) << endl;
     cout.flush();
 }
 
@@ -635,11 +544,6 @@ void Simulation::run()
 
     SimulationData *data = new SimulationData[parameters.threads];
 
-    //TODO: this seems to print "invalid device pointer", but where does that come from?
-#if USING_CUDA
-    cout << cudaGetErrorString(cudaGetLastError()) << endl;
-#endif
-
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
 #endif
@@ -974,7 +878,6 @@ void Simulation::printHelp()
 {
     cout << "Usage: cgppd -f <filename> [-c] [-h] [-v] [-q] [-t x] [-s x] [-g x] [-m x ] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
     cout << "\t-h|--help: show this dialog" << endl;
-    cout << "\t-c: Check, perform 10 reference potential sums, gpu vs cpu" << endl;
     cout << "\t-f|--file <file>: Input config file" << endl;
     cout << "\t-v|--view:        use the open GL preview of this configuration, performs no simulation" << endl;
     cout << "\t-q|--nosim:       Do everything except the simulation (for use with -v)" << endl;
@@ -1008,7 +911,6 @@ void Simulation::getArgs(int argc, char **argv)
     const struct option long_options[] =
     {
         {"help", no_argument, 0, 'h'},
-        {"check", no_argument, 0, 'c'},
         {"file", required_argument, 0, 'f'},
         {"view", no_argument, 0, 'v'},
         {"nosim", no_argument, 0, 'q'},
@@ -1036,7 +938,7 @@ void Simulation::getArgs(int argc, char **argv)
 
     while (1)
     {
-        int opt = getopt_long(argc, argv, "hcf:vqt:s:g:m:e:r:o:b:x:n:d:", long_options, &opt_index);
+        int opt = getopt_long(argc, argv, "hf:vqt:s:g:m:e:r:o:b:x:n:d:", long_options, &opt_index);
 
         if (opt == -1)
             break;
@@ -1045,9 +947,6 @@ void Simulation::getArgs(int argc, char **argv)
         {
             case 'h':
                 printHelp();
-                break;
-            case 'c':
-                parameters.runcheck = true;
                 break;
             case 'f':
                 strcpy(parameters.file, optarg);
