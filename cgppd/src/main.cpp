@@ -19,13 +19,32 @@ int main(int argc, char **argv)
     cout << "  Kahan summation in kernels" << endl;
 #endif
 
-    // get global options for the simulation
+#if USING_CUDA
+#if LOGLEVEL >= 0
+    cout << "CUDA parameters and options for this run:\n" ;
+    cout << "-----------------------------------------\n" ;
+    cout << "Tile Size " << TILE_DIM << endl;
+    cout << "LJ lookup memory type: ";
+#if LJ_LOOKUP_METHOD == SHARED_MEM
+    cout << "Shared" << endl;
+#elif LJ_LOOKUP_METHOD == CONST_MEM
+    cout << "Constant" << endl;
+#elif LJ_LOOKUP_METHOD == GLOBAL_MEM
+    cout << "Global" << endl;
+#elif LJ_LOOKUP_METHOD == TEXTURE_MEM
+    cout << "Texture" << endl;
+#endif // LJ_LOOKUP_METHOD
+    cout << "-----------------------------------------\n" ;
+#endif // LOGLEVEL
+#endif // USING_CUDA
 
     int pid = int( getpid() );
 
     Simulation simulation;
     simulation.init(argc, argv, pid);
 
+    // Run a basic test of the potential calculation
+    simulation.calibrate();
     // TODO: only if verbose output
     simulation.printArgs();
 
