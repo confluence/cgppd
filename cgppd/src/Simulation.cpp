@@ -3,7 +3,9 @@
 Simulation::Simulation()
 {
     replicasInitialised = false;
+    REMCRng = gsl_rng_alloc(gsl_rng_mt19937);
 
+    // TODO: move these to an init method on aminoAcidData
     LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
     aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
 
@@ -18,24 +20,12 @@ Simulation::Simulation()
     cout << "Initialising CUDA. "<< endl ;
     cuInit(0);
     cudaInfo();
-
-#if LOGLEVEL >= 0
-    cout << "CUDA parameters and options for this run:\n" ;
-    cout << "-----------------------------------------\n" ;
-    cout << "Tile Size " << TILE_DIM << endl;
-    cout << "LJ lookup memory type: ";
-#if LJ_LOOKUP_METHOD == SHARED_MEM
-    cout << "Shared" << endl;
-#elif LJ_LOOKUP_METHOD == CONST_MEM
-    cout << "Constant" << endl;
-#elif LJ_LOOKUP_METHOD == GLOBAL_MEM
-    cout << "Global" << endl;
-#elif LJ_LOOKUP_METHOD == TEXTURE_MEM
-    cout << "Texture" << endl;
-#endif // LJ_LOOKUP_METHOD
-    cout << "-----------------------------------------\n" ;
-#endif // LOGLEVEL
 #endif // USING_CUDA
+
+#if INCLUDE_TIMERS
+    cutCreateTimer(&RELoopTimer);
+    cutCreateTimer(&MCLoopTimer);
+#endif
 }
 
 Simulation::~Simulation()
@@ -66,7 +56,10 @@ void Simulation::init(int argc, char **argv, int pid)
 
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters.mdata, aminoAcidData, parameters.bound, 30);
+}
 
+void Simulation::calibrate()
+{
     cout << "Loaded: " << initialReplica.residueCount << " residues in " << initialReplica.moleculeCount << " molecules:\n";
 
     for (int i=0; i < initialReplica.moleculeCount; i++)
@@ -77,7 +70,7 @@ void Simulation::init(int argc, char **argv, int pid)
     printf("counted : %3d complex residues\n",initialReplica.nonCrowderResidues);
 
 #if INCLUDE_TIMERS
-    initialReplica.initTimers(); // TODO: this will be done again in child replicas! Eliminate?
+    initialReplica.initTimers();
 #endif
 
     float p = initialReplica.E();
@@ -88,12 +81,12 @@ void Simulation::init(int argc, char **argv, int pid)
 
 
 #if USING_CUDA
+    // set box size
     if (parameters.auto_blockdim)
         (initialReplica.residueCount < 1024) ? parameters.cuda_blockSize = 32 : parameters.cuda_blockSize = 64;
 
-    // set box size
     initialReplica.setBlockSize(parameters.cuda_blockSize);
-    initialReplica.boundingValue = parameters.bound; // TODO: we already did that. Eliminate?
+
     // set box dimensions
     CUDA_setBoxDimension(parameters.bound);
 
@@ -101,6 +94,7 @@ void Simulation::init(int argc, char **argv, int pid)
 #if CUDA_STREAMS
     cudaStreamCreate(&initialReplica.cudaStream);
 #endif
+
     initialReplica.ReplicaDataToDevice();
 
     cudaMalloc((void**)&initialReplica.device_LJPotentials, LJArraySize);
@@ -152,14 +146,369 @@ void Simulation::init(int argc, char **argv, int pid)
     cout.flush();
 }
 
-// WTF is going on with these?
 pthread_mutex_t waitingThreadMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t reMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t waitingThreadCond;
 pthread_cond_t waitingReplicaExchangeCond;
-int waitingThreadCount;
+
+void Simulation::run()
+{
+    LOG(ALWAYS, "Beginning simulation\n");
+
+    // need at most REPLICA_COUNT threads
+    cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
+
+    if (!parameters.resume)
+        // TODO: remove this; it's not actually used (and is a dupliacte of steps)
+        parameters.currentStep = 0;
+    // TODO: some of these should be attributes; some of them are pointless duplication of parameters.
+    // TODO: also, all this parameter fixing should go in a different function.
+
+    int waitingThreads = 0;
+    int conformationsBound = 0;
+
+    if (initialReplica.moleculeCount == 0)  // make sure something is loaded
+    {
+        cout << "-!- No molecules loaded. -!-" << endl;
+        cout << "-!- Aborting run. -!- " << endl;
+        return;
+    }
+
+    // copy the data into each replica
+    // copy initial replica to other replicas and init the rngs for each
+    // we can't use pthreads and CUDA at the moment, but we are going to use streams
+
+    //basically we change the simulation to spawn N threads N = number of CPU cores
+
+    //initialise the replicas data
+    int _300kReplica = 0;
+
+    double geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
+    double geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
+    double geometricRotation = pow(double(MAX_ROTATION/MIN_ROTATION),double(1.0/double(parameters.replicas-1)));
+
+    for (size_t i=0; i<parameters.replicas; i++)
+    {
+        // changed to geometric sequence
+        float temperature = parameters.temperatureMin * pow(geometricTemperature, int(i));
+        float rotate_step = MIN_ROTATION * pow(geometricRotation, int(i));
+        float translate_step = MIN_TRANSLATION * pow(geometricTranslate, int(i));
+
+        // note which replica is the 300K replica for sampling
+        // if there is no replica at 300K then choose the closest one.
+        if ( abs(replica[i].temperature-300.0f) < abs(replica[_300kReplica].temperature-300.0f))
+            _300kReplica = i;
+
+        replica[i].init_child_replica(initialReplica, i, temperature, rotate_step, translate_step, parameters.threads);
+        printf ("Replica %d %.3f %.3f %.3f\n",int(i),replica[i].temperature,replica[i].translateStep,replica[i].rotateStep);
+
+    }
+
+    replicasInitialised = true;
+
+    initSamplingFiles();
+
+
+    // round the ~300K replica to 300K to ensure there is at least one T/T_i == 1
+    //replica[_300kReplica].temperature = 300.0f;
+
+    // create a lookup map for replica temperatures to allow for sampling temperatures and in place exchanges
+    // samples are by temperature not replica index, hence temperatures get shuffled about in replica[],
+    // so use replicaTemperaturesmap[] to track where a specific temperature is
+
+    typedef map<float, int> KRmap;
+    KRmap replicaTemperatureMap;
+    typedef map<int,float> RKmap;
+    RKmap temperatureMap;
+
+
+    // build a map of lookups for temperature lookups while sampling
+    for (size_t i=0; i<parameters.replicas; i++)
+    {
+        // lookup of where replica with temperature x is
+        replicaTemperatureMap[replica[i].temperature] = i;
+        // lookup of which replica has temperature x
+        temperatureMap[i] = replica[i].temperature;
+    }
+
+    fprintf(fractionBoundFile,"Iteration:  ");
+    fprintf(acceptanceRatioFile,"Iteration:  ");
+
+    for(KRmap::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
+    {
+        float temperature = iterator->first;
+        fprintf(fractionBoundFile,  "%0.1fKi %0.1fKc ",temperature,temperature);
+        fprintf(acceptanceRatioFile,"%0.1fKi %0.1fKc ",temperature,temperature);
+    }
+
+    fprintf(fractionBoundFile," \n");
+    fprintf(acceptanceRatioFile,"\n");
+
+
+    /*#if OUTPUT_LEVEL > 1
+    for (int i=0;i<parameters.replicas;i++)
+    {
+        sprintf (tmps,"%3d: %1.1e",i,replica[i].potential);
+        strcat(startEs,tmps);
+    }
+    cout << "start energies (kcal/mol): " << startEs << endl;
+    #endif*/
+
+    pthread_t *thread = new pthread_t[parameters.threads];;
+    //For portability, explicitly create threads in a joinable state
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    pthread_cond_init (&waitingThreadCond, NULL);
+    pthread_cond_init (&waitingReplicaExchangeCond, NULL);
+    pthread_mutex_init(&waitingCounterMutex, NULL);
+    pthread_mutex_init(&waitingThreadMutex, NULL);
+    pthread_mutex_init(&reMutex, NULL);
+
+    SimulationData *data = new SimulationData[parameters.threads];
+
+#if INCLUDE_TIMERS
+    CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
+#endif
+
+    printf ("--- Starting simulation ---.\n");
+
+
+    pthread_mutex_lock(&waitingCounterMutex);
+
+    //TODO: assign streams as a function of the number of GPUs and threads
+
+    //spawn N threads to do the Monte-Carlo mutations
+    for (int i=0; i<parameters.threads; i++)
+    {
+        data[i].replica = replica;
+        data[i].replicaCount = parameters.replicas;
+        data[i].index = i;
+        data[i].threads = parameters.threads;
+        data[i].streams = parameters.streams;///parameters.threads; //determines the number of streams available
+        data[i].MCsteps = parameters.MCsteps;
+        data[i].REsteps = parameters.REsteps;
+        data[i].sampleFrequency = parameters.sampleFrequency;
+        data[i].sampleStartsAfter = parameters.sampleStartsAfter;
+        data[i].bound = parameters.bound;
+        data[i].streams = parameters.streams;
+        data[i].waitingThreadCount = &waitingThreads;
+        data[i].conformationsBound = &conformationsBound;
+        data[i].fractionBound = fractionBoundFile;
+        data[i].boundConformations = boundConformationsFile;
+
+        // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
+        // % #gpus so they share if threads > gpus
+        // will perform best if threads:gpus = 1:1
+        data[i].GPUID = i % parameters.gpus;
+        cout << "Assign thread " << i << " to GPU " << data[i].GPUID << endl;
+
+        //start the MC loops
+        pthread_create(&thread[i], &attr, MCthreadableFunction, (void*)&data[i]);
+        //MCthreadableFunction(&data[i]);
+    }
+
+    int exchanges = 0;  // number of exchanges performed
+    int tests = 0;      // number of replica exchange tests
+    int totalExchanges = 0; // total number of exchanges
+    int totalTests = 0; // total number of exchanges
+
+    int offset = 0;  // RE offset
+    int steps = 0;   // # re steps performed
+    while (++steps < parameters.REsteps)  // until enough steps taken
+    {
+#if INCLUDE_TIMERS
+        CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
+#endif
+
+        pthread_cond_wait(&waitingReplicaExchangeCond,&waitingCounterMutex);
+
+#if INCLUDE_TIMERS
+        CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
+#endif
+
+        //if the sampling has started
+        if (parameters.MCsteps/parameters.REsteps*(steps-1) >= parameters.sampleStartsAfter)
+        {
+            // do fraction bound and acceptance ratio
+
+            fprintf(fractionBoundFile,"%9d: ",parameters.MCsteps/parameters.REsteps*steps);
+            fprintf(acceptanceRatioFile,"%9d: ",parameters.MCsteps/parameters.REsteps*steps);
+
+            for(RKmap::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
+            {
+                int index = replicaTemperatureMap[iterator->second];
+
+
+                // fraction bound
+                float fractionBound = float(replica[index].boundSamples)/max(1.0f,float(replica[index].samplesSinceLastExchange));
+                replica[index].totalBoundSamples += replica[index].boundSamples;
+                replica[index].totalSamples += replica[index].samplesSinceLastExchange;
+                replica[index].boundSamples = 0;
+                replica[index].samplesSinceLastExchange = 0;
+                float accumulativeFractionBound = float(replica[index].totalBoundSamples)/max(1.0f,float(replica[index].totalSamples));
+                fprintf(fractionBoundFile,"| %6.4f %6.4f ",fractionBound,accumulativeFractionBound);
+
+                // acceptance rate
+                float acceptanceRatio =  float(replica[index].acceptA + replica[index].accept)/float(replica[index].acceptA + replica[index].accept + replica[index].reject);
+                replica[index].totalAccept += replica[index].acceptA+replica[index].accept ;
+                replica[index].totalAcceptReject += replica[index].acceptA+replica[index].accept+replica[index].reject ;
+                fprintf(acceptanceRatioFile,"| %6.4f %6.4f ",acceptanceRatio , float(replica[index].totalAccept)/float(replica[index].totalAcceptReject));
+                replica[index].acceptA=0 ;
+                replica[index].accept=0 ;
+                replica[index].reject=0 ;
+            }
+
+            fprintf(fractionBoundFile,"\n");
+            fflush(fractionBoundFile);
+            fprintf(acceptanceRatioFile,"\n");
+            fflush(acceptanceRatioFile);
+        }
+
+        int i = offset;  // replica exchange offset
+        while (i < parameters.replicas-1) // loop through the replicas in pairs
+        {
+            int j = i+1; // replica to swap with current replica
+
+            // i and j represent temperatures, hence we need to map temperature to position
+            // z = temperatureMap[x] -> temperature of position i
+            // replicaTemperatureMap[z] -> where the replica with temperature z actually is
+
+            int t_i = replicaTemperatureMap[temperatureMap[i]];
+            int t_j = replicaTemperatureMap[temperatureMap[j]];
+
+
+            double delta = (1.0/replica[t_i].temperature - 1.0/replica[t_j].temperature)*(replica[t_i].potential - replica[t_j].potential)*(4184.0f/Rgas);
+            if (gsl_rng_uniform(REMCRng) < min(1.0,exp(delta)))
+            {
+                replica[t_i].exchangeReplicas(replica[t_j]);
+
+                replicaTemperatureMap[replica[t_i].temperature] = t_i;
+                replicaTemperatureMap[replica[t_j].temperature] = t_j;
+
+                exchanges++; // sampling
+            }
+            i += 2; // compare the next two neighbours
+            tests++;// tests performed samplng
+        }
+        offset = 1-offset; // switch the swap neighbours in the replica exchange
+
+        parameters.currentStep = mcstepsPerRE*steps;
+
+        waitingThreads = 0;
+        pthread_cond_broadcast(&waitingThreadCond);
+
+#if GLVIS
+        GLreplica = &replica[_300kReplica];
+        GlutDisplay();
+#endif
+
+        int tempI = replicaTemperatureMap[300.0f];
+        float frac = float(replica[tempI].totalBoundSamples)/max(1.0f,float(replica[tempI].totalSamples));
+        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, frac);
+
+        totalExchanges += exchanges;
+        totalTests += tests;
+
+        fprintf(exchangeFrequencyFile,"%10d %6.4f %6.4f\n",steps, float(totalExchanges)/float(totalTests), float(exchanges)/float(tests));
+        tests = 0;
+        exchanges = 0;
+
+    }
+
+    //printf ("Replica Exchange step %d skipped as it has no effect\n",steps);
+
+#if INCLUDE_TIMERS
+    CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
+#endif
+
+
+    pthread_cond_broadcast(&waitingThreadCond);
+    pthread_mutex_unlock(&waitingCounterMutex);  // release the mutex so MC threads can continue.
+
+
+    printf ("--- Replica Exchanges Complete.---\n");
+    printf ("--- Waiting for threads to exit. ---\n");
+
+    // join the threads that have finished
+    for (int i=0; i<parameters.threads; i++)
+        pthread_join(thread[i],NULL);
+
+#if INCLUDE_TIMERS
+    CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
+#endif
+
+    printf ("--- All threads complete.---\n");
+    fprintf(fractionBoundFile,"%9d: ",parameters.MCsteps);
+    fprintf(acceptanceRatioFile,"%9d: ",parameters.MCsteps);
+
+    //final fraction bound
+    for(RKmap::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
+    {
+        int index = replicaTemperatureMap[iterator->second];
+
+        // fraction bound
+        float fractionBound = float(replica[index].boundSamples)/float(replica[index].samplesSinceLastExchange);
+        replica[index].totalBoundSamples += replica[index].boundSamples;
+        replica[index].totalSamples += replica[index].samplesSinceLastExchange;
+        replica[index].boundSamples = 0;
+        replica[index].samplesSinceLastExchange = 0;
+        float accumulativeFractionBound = float(replica[index].totalBoundSamples)/float(replica[index].totalSamples);
+        fprintf(fractionBoundFile,"| %6.4f %6.4f  ",fractionBound,accumulativeFractionBound);
+
+        // acceptance rate
+        float acceptanceRatio =  float(replica[index].acceptA)/float(replica[index].acceptA + replica[index].accept + replica[index].reject);
+        fprintf(acceptanceRatioFile,"| %6.4f %6.4f ",acceptanceRatio , float(replica[index].totalAccept)/float(replica[index].totalAcceptReject));
+
+
+    }
+    fprintf(fractionBoundFile,"\n");
+    fflush(fractionBoundFile);
+    fprintf(acceptanceRatioFile,"\n");
+    fflush(acceptanceRatioFile);
+
+    printf ("--- Simulation finished.---.\n\n");
+
+
+#if INCLUDE_TIMERS
+    CUT_SAFE_CALL( cutStopTimer(RELoopTimer) );
+    printf("Simulation Timers\n");
+    printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"      ,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps),parameters.MCsteps,parameters.replicas,parameters.threads,parameters.streams);
+    printf("Simulation:     %10.5f ms  (%d exchanges)\n"    ,cutGetTimerValue(RELoopTimer),parameters.REsteps);
+    cutDeleteTimer(RELoopTimer);
+    cutDeleteTimer(MCLoopTimer);
+#endif
+
+    pthread_mutex_lock(&writeFileMutex);
+    closeSamplingFiles();
+    pthread_mutex_unlock(&writeFileMutex);
+
+
+    // Clean up/
+    pthread_attr_destroy(&attr);
+    pthread_mutex_destroy(&waitingCounterMutex);
+    pthread_mutex_destroy(&waitingThreadMutex);
+    pthread_cond_destroy(&waitingThreadCond);
+    pthread_cond_destroy(&waitingReplicaExchangeCond);
+    gsl_rng_free(REMCRng);
+    delete [] data;
+    delete [] thread;
+
+    LOG(ALWAYS, "Simulation done\n");
+
+#if INCLUDE_TIMERS
+    for (size_t i=0; i<parameters.replicas; i++)
+    {
+        cout << "Replica " << i << " timers" << endl;
+        replica[i].printTimers();
+    }
+#endif
+
+    return;
+}
+// END OF run
 
 void *MCthreadableFunction(void *arg)
 {
@@ -410,403 +759,6 @@ void *MCthreadableFunction(void *arg)
 }
 // END OF *MCthreadableFunction
 
-// Multithreaded simulation
-// TODO: remove initialReplica parameter; make it an attribute
-void Simulation::run()
-{
-    LOG(ALWAYS, "Beginning simulation\n");
-
-    // need at most REPLICA_COUNT threads
-    cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
-
-    if (!parameters.resume)
-        parameters.currentStep = 0;
-    // TODO: some of these should be attributes; some of them are pointless duplication of parameters.
-    // TODO: also, all this parameter fixing should go in a different function.
-
-    int waitingThreads = 0;
-    int conformationsBound = 0;
-
-    if (initialReplica.moleculeCount == 0)  // make sure something is loaded
-    {
-        cout << "-!- No molecules loaded. -!-" << endl;
-        cout << "-!- Aborting run. -!- " << endl;
-        return;
-    }
-
-// TODO: move these to the object
-#if INCLUDE_TIMERS
-    uint RELoopTimer;
-    uint MCLoopTimer;
-    cutCreateTimer(&RELoopTimer);
-    cutCreateTimer(&MCLoopTimer);
-#endif
-
-    //char *startEs = new char[512];
-    //char *currentEs = new char[512];
-    //char *tmps = new char[64];
-
-    float lowestPairwisePotential = 1000000000;
-
-    REMCRng = gsl_rng_alloc (gsl_rng_mt19937);
-    //strcpy (startEs,"");
-
-    // copy the data into each replica
-    // copy initial replica to other replicas and init the rngs for each
-    // we can't use pthreads and CUDA at the moment, but we are going to use streams
-
-    //basically we change the simulation to spawn N threads N = number of CPU cores
-
-    //initialise the replicas data
-    int _300kReplica = 0;
-
-    double geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
-    double geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
-    double geometricRotation = pow(double(MAX_ROTATION/MIN_ROTATION),double(1.0/double(parameters.replicas-1)));
-
-    for (size_t i=0; i<parameters.replicas; i++)
-    {
-        // changed to geometric sequence
-        float temperature = parameters.temperatureMin * pow(geometricTemperature, int(i));
-        float rotate_step = MIN_ROTATION * pow(geometricRotation, int(i));
-        float translate_step = MIN_TRANSLATION * pow(geometricTranslate, int(i));
-
-        // note which replica is the 300K replica for sampling
-        // if there is no replica at 300K then choose the closest one.
-        if ( abs(replica[i].temperature-300.0f) < abs(replica[_300kReplica].temperature-300.0f))
-            _300kReplica = i;
-
-        replica[i].init_child_replica(initialReplica, i, temperature, rotate_step, translate_step, parameters.threads);
-        printf ("Replica %d %.3f %.3f %.3f\n",int(i),replica[i].temperature,replica[i].translateStep,replica[i].rotateStep);
-
-    }
-
-    replicasInitialised = true;
-
-    initSamplingFiles();
-
-
-    // round the ~300K replica to 300K to ensure there is at least one T/T_i == 1
-    //replica[_300kReplica].temperature = 300.0f;
-
-    // create a lookup map for replica temperatures to allow for sampling temperatures and in place exchanges
-    // samples are by temperature not replica index, hence temperatures get shuffled about in replica[],
-    // so use replicaTemperaturesmap[] to track where a specific temperature is
-
-    typedef map<float, int> KRmap;
-    KRmap replicaTemperatureMap;
-    typedef map<int,float> RKmap;
-    RKmap temperatureMap;
-
-
-    // build a map of lookups for temperature lookups while sampling
-    for (size_t i=0; i<parameters.replicas; i++)
-    {
-        // lookup of where replica with temperature x is
-        replicaTemperatureMap[replica[i].temperature] = i;
-        // lookup of which replica has temperature x
-        temperatureMap[i] = replica[i].temperature;
-    }
-
-    fprintf(fractionBoundFile,"Iteration:  ");
-    fprintf(acceptanceRatioFile,"Iteration:  ");
-
-    for(KRmap::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
-    {
-        float temperature = iterator->first;
-        fprintf(fractionBoundFile,  "%0.1fKi %0.1fKc ",temperature,temperature);
-        fprintf(acceptanceRatioFile,"%0.1fKi %0.1fKc ",temperature,temperature);
-    }
-
-    fprintf(fractionBoundFile," \n");
-    fprintf(acceptanceRatioFile,"\n");
-
-
-    /*#if OUTPUT_LEVEL > 1
-    for (int i=0;i<parameters.replicas;i++)
-    {
-        sprintf (tmps,"%3d: %1.1e",i,replica[i].potential);
-        strcat(startEs,tmps);
-    }
-    cout << "start energies (kcal/mol): " << startEs << endl;
-    #endif*/
-
-    pthread_t *thread = new pthread_t[parameters.threads];;
-    //For portability, explicitly create threads in a joinable state
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_cond_init (&waitingThreadCond, NULL);
-    pthread_cond_init (&waitingReplicaExchangeCond, NULL);
-    pthread_mutex_init(&waitingCounterMutex, NULL);
-    pthread_mutex_init(&waitingThreadMutex, NULL);
-    pthread_mutex_init(&reMutex, NULL);
-
-    SimulationData *data = new SimulationData[parameters.threads];
-
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
-#endif
-
-    int mcstepsPerRE = parameters.MCsteps/parameters.REsteps; // number of MC steps to do at a time
-
-    // if samping does not divide into steps in this loop
-    if (mcstepsPerRE % parameters.sampleFrequency > 0)// && mcstepsPerRE > data->sampleFrequency)
-    {
-        if (mcstepsPerRE > parameters.sampleFrequency)
-        {
-            // fit sampling frequency such that its a divisor or equal to the mc steps we do before RE
-            while (mcstepsPerRE % parameters.sampleFrequency != 0)
-                parameters.sampleFrequency++;
-            cout << "-!- CHANGED: sample frequency changed as it does divide into the replica exchange frequency. -!-" << endl;
-            cout << "-!- CHANGED: sample frequency <- "<< parameters.sampleFrequency <<". -!-" << endl;
-
-        }
-        if (mcstepsPerRE < parameters.sampleFrequency)
-        {
-            parameters.sampleFrequency = mcstepsPerRE;
-            cout << "-!- CHANGED: sample frequency too long for MC loop. -!-" << endl;
-            cout << "-!- CHANGED: sample frequency <- "<< mcstepsPerRE <<". -!-" << endl;
-        }
-    }
-
-    printf ("--- Starting simulation ---.\n");
-
-
-    pthread_mutex_lock(&waitingCounterMutex);
-
-    //TODO: assign streams as a function of the number of GPUs and threads
-
-    //spawn N threads to do the Monte-Carlo mutations
-    for (int i=0; i<parameters.threads; i++)
-    {
-        data[i].replica = replica;
-        data[i].replicaCount = parameters.replicas;
-        data[i].index = i;
-        data[i].threads = parameters.threads;
-        data[i].streams = parameters.streams;///parameters.threads; //determines the number of streams available
-        data[i].MCsteps = parameters.MCsteps;
-        data[i].REsteps = parameters.REsteps;
-        data[i].sampleFrequency = parameters.sampleFrequency;
-        data[i].sampleStartsAfter = parameters.sampleStartsAfter;
-        data[i].bound = parameters.bound;
-        data[i].streams = parameters.streams;
-        data[i].waitingThreadCount = &waitingThreads;
-        data[i].conformationsBound = &conformationsBound;
-        data[i].fractionBound = fractionBoundFile;
-        data[i].boundConformations = boundConformationsFile;
-
-        // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
-        // % #gpus so they share if threads > gpus
-        // will perform best if threads:gpus = 1:1
-        data[i].GPUID = i % parameters.gpus;
-        cout << "Assign thread " << i << " to GPU " << data[i].GPUID << endl;
-
-        //start the MC loops
-        pthread_create(&thread[i], &attr, MCthreadableFunction, (void*)&data[i]);
-        //MCthreadableFunction(&data[i]);
-    }
-
-    int exchanges = 0;  // number of exchanges performed
-    int tests = 0;      // number of replica exchange tests
-    int totalExchanges = 0; // total number of exchanges
-    int totalTests = 0; // total number of exchanges
-
-    int offset = 0;  // RE offset
-    int steps = 0;   // # re steps performed
-    while (++steps < parameters.REsteps)  // until enough steps taken
-    {
-#if INCLUDE_TIMERS
-        CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
-#endif
-
-        pthread_cond_wait(&waitingReplicaExchangeCond,&waitingCounterMutex);
-
-#if INCLUDE_TIMERS
-        CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
-#endif
-
-        //if the sampling has started
-        if (parameters.MCsteps/parameters.REsteps*(steps-1) >= parameters.sampleStartsAfter)
-        {
-            // do fraction bound and acceptance ratio
-
-            fprintf(fractionBoundFile,"%9d: ",parameters.MCsteps/parameters.REsteps*steps);
-            fprintf(acceptanceRatioFile,"%9d: ",parameters.MCsteps/parameters.REsteps*steps);
-
-            for(RKmap::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
-            {
-                int index = replicaTemperatureMap[iterator->second];
-
-
-                // fraction bound
-                float fractionBound = float(replica[index].boundSamples)/max(1.0f,float(replica[index].samplesSinceLastExchange));
-                replica[index].totalBoundSamples += replica[index].boundSamples;
-                replica[index].totalSamples += replica[index].samplesSinceLastExchange;
-                replica[index].boundSamples = 0;
-                replica[index].samplesSinceLastExchange = 0;
-                float accumulativeFractionBound = float(replica[index].totalBoundSamples)/max(1.0f,float(replica[index].totalSamples));
-                fprintf(fractionBoundFile,"| %6.4f %6.4f ",fractionBound,accumulativeFractionBound);
-
-                // acceptance rate
-                float acceptanceRatio =  float(replica[index].acceptA + replica[index].accept)/float(replica[index].acceptA + replica[index].accept + replica[index].reject);
-                replica[index].totalAccept += replica[index].acceptA+replica[index].accept ;
-                replica[index].totalAcceptReject += replica[index].acceptA+replica[index].accept+replica[index].reject ;
-                fprintf(acceptanceRatioFile,"| %6.4f %6.4f ",acceptanceRatio , float(replica[index].totalAccept)/float(replica[index].totalAcceptReject));
-                replica[index].acceptA=0 ;
-                replica[index].accept=0 ;
-                replica[index].reject=0 ;
-            }
-
-            fprintf(fractionBoundFile,"\n");
-            fflush(fractionBoundFile);
-            fprintf(acceptanceRatioFile,"\n");
-            fflush(acceptanceRatioFile);
-        }
-
-        int i = offset;  // replica exchange offset
-        while (i < parameters.replicas-1) // loop through the replicas in pairs
-        {
-            int j = i+1; // replica to swap with current replica
-
-            // i and j represent temperatures, hence we need to map temperature to position
-            // z = temperatureMap[x] -> temperature of position i
-            // replicaTemperatureMap[z] -> where the replica with temperature z actually is
-
-            int t_i = replicaTemperatureMap[temperatureMap[i]];
-            int t_j = replicaTemperatureMap[temperatureMap[j]];
-
-
-            double delta = (1.0/replica[t_i].temperature - 1.0/replica[t_j].temperature)*(replica[t_i].potential - replica[t_j].potential)*(4184.0f/Rgas);
-            if (gsl_rng_uniform(REMCRng) < min(1.0,exp(delta)))
-            {
-                replica[t_i].exchangeReplicas(replica[t_j]);
-
-                replicaTemperatureMap[replica[t_i].temperature] = t_i;
-                replicaTemperatureMap[replica[t_j].temperature] = t_j;
-
-                exchanges++; // sampling
-            }
-            i += 2; // compare the next two neighbours
-            tests++;// tests performed samplng
-        }
-        offset = 1-offset; // switch the swap neighbours in the replica exchange
-
-        parameters.currentStep = mcstepsPerRE*steps;
-
-        waitingThreads = 0;
-        pthread_cond_broadcast(&waitingThreadCond);
-
-#if GLVIS
-        GLreplica = &replica[_300kReplica];
-        GlutDisplay();
-#endif
-
-        int tempI = replicaTemperatureMap[300.0f];
-        float frac = float(replica[tempI].totalBoundSamples)/max(1.0f,float(replica[tempI].totalSamples));
-        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, frac);
-
-        totalExchanges += exchanges;
-        totalTests += tests;
-
-        fprintf(exchangeFrequencyFile,"%10d %6.4f %6.4f\n",steps, float(totalExchanges)/float(totalTests), float(exchanges)/float(tests));
-        tests = 0;
-        exchanges = 0;
-
-    }
-
-    //printf ("Replica Exchange step %d skipped as it has no effect\n",steps);
-
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
-#endif
-
-
-    pthread_cond_broadcast(&waitingThreadCond);
-    pthread_mutex_unlock(&waitingCounterMutex);  // release the mutex so MC threads can continue.
-
-
-    printf ("--- Replica Exchanges Complete.---\n");
-    printf ("--- Waiting for threads to exit. ---\n");
-
-    // join the threads that have finished
-    for (int i=0; i<parameters.threads; i++)
-        pthread_join(thread[i],NULL);
-
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
-#endif
-
-    printf ("--- All threads complete.---\n");
-    fprintf(fractionBoundFile,"%9d: ",parameters.MCsteps);
-    fprintf(acceptanceRatioFile,"%9d: ",parameters.MCsteps);
-
-    //final fraction bound
-    for(RKmap::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
-    {
-        int index = replicaTemperatureMap[iterator->second];
-
-        // fraction bound
-        float fractionBound = float(replica[index].boundSamples)/float(replica[index].samplesSinceLastExchange);
-        replica[index].totalBoundSamples += replica[index].boundSamples;
-        replica[index].totalSamples += replica[index].samplesSinceLastExchange;
-        replica[index].boundSamples = 0;
-        replica[index].samplesSinceLastExchange = 0;
-        float accumulativeFractionBound = float(replica[index].totalBoundSamples)/float(replica[index].totalSamples);
-        fprintf(fractionBoundFile,"| %6.4f %6.4f  ",fractionBound,accumulativeFractionBound);
-
-        // acceptance rate
-        float acceptanceRatio =  float(replica[index].acceptA)/float(replica[index].acceptA + replica[index].accept + replica[index].reject);
-        fprintf(acceptanceRatioFile,"| %6.4f %6.4f ",acceptanceRatio , float(replica[index].totalAccept)/float(replica[index].totalAcceptReject));
-
-
-    }
-    fprintf(fractionBoundFile,"\n");
-    fflush(fractionBoundFile);
-    fprintf(acceptanceRatioFile,"\n");
-    fflush(acceptanceRatioFile);
-
-    printf ("--- Simulation finished.---.\n\n");
-
-
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(RELoopTimer) );
-    printf("Simulation Timers\n");
-    printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"      ,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps),parameters.MCsteps,parameters.replicas,parameters.threads,parameters.streams);
-    printf("Simulation:     %10.5f ms  (%d exchanges)\n"    ,cutGetTimerValue(RELoopTimer),parameters.REsteps);
-    cutDeleteTimer(RELoopTimer);
-    cutDeleteTimer(MCLoopTimer);
-#endif
-
-    pthread_mutex_lock(&writeFileMutex);
-    closeSamplingFiles();
-    pthread_mutex_unlock(&writeFileMutex);
-
-
-    // Clean up/
-    pthread_attr_destroy(&attr);
-    pthread_mutex_destroy(&waitingCounterMutex);
-    pthread_mutex_destroy(&waitingThreadMutex);
-    pthread_cond_destroy(&waitingThreadCond);
-    pthread_cond_destroy(&waitingReplicaExchangeCond);
-    gsl_rng_free(REMCRng);
-    delete [] data;
-    delete [] thread;
-
-    LOG(ALWAYS, "Simulation done\n");
-
-#if INCLUDE_TIMERS
-    for (size_t i=0; i<parameters.replicas; i++)
-    {
-        cout << "Replica " << i << " timers" << endl;
-        replica[i].printTimers();
-    }
-#endif
-
-    return;
-}
-// END OF run
-
 // TODO: can we eliminate the copypasta? Loop?
 void Simulation::initSamplingFiles()
 {
@@ -978,7 +930,6 @@ void Simulation::getArgs(int argc, char **argv)
                 parameters.REsteps = atoi(optarg);
                 break;
             case 'r':
-                cout << "trying to set the number of replicas to " << optarg << endl;
                 parameters.replicas = atoi(optarg);
                 break;
             case 'o':
@@ -1216,16 +1167,36 @@ void Simulation::check_and_modify_parameters()
             cout << "! Too many streams, setting equal to " << parameters.streams << endl;
         }
     }
+
+    mcstepsPerRE = parameters.MCsteps/parameters.REsteps; // number of MC steps to do at a time
+
+    // if samping does not divide into steps in this loop
+    if (mcstepsPerRE % parameters.sampleFrequency > 0)// && mcstepsPerRE > data->sampleFrequency)
+    {
+        if (mcstepsPerRE > parameters.sampleFrequency)
+        {
+            // fit sampling frequency such that its a divisor or equal to the mc steps we do before RE
+            while (mcstepsPerRE % parameters.sampleFrequency != 0)
+                parameters.sampleFrequency++;
+            cout << "-!- CHANGED: sample frequency changed as it does divide into the replica exchange frequency. -!-" << endl;
+            cout << "-!- CHANGED: sample frequency <- "<< parameters.sampleFrequency <<". -!-" << endl;
+
+        }
+        if (mcstepsPerRE < parameters.sampleFrequency)
+        {
+            parameters.sampleFrequency = mcstepsPerRE;
+            cout << "-!- CHANGED: sample frequency too long for MC loop. -!-" << endl;
+            cout << "-!- CHANGED: sample frequency <- "<< mcstepsPerRE <<". -!-" << endl;
+        }
+    }
 }
 
 void Simulation::writeFileIndex()
 {
-    // TODO why is this dynamically allocated? wtf.
-    char * fileindex = new char[256];
+    char fileindex[256];
     sprintf(fileindex,"output/%s_%d_fileindex", parameters.prefix, parameters.pid);
     FILE * fileindexf = fopen (fileindex,"w");
     fprintf(fileindexf,"index molecule_file_path crowder(Y/N)\n");
-    delete [] fileindex;
 
     for (int i = 0; i < parameters.mdata.size(); i++) {
         fprintf(fileindexf, "%2d %s %s", i, parameters.mdata[i].pdbfilename, (parameters.mdata[i].crowder ? "Y\n" : "N\n"));

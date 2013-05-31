@@ -54,17 +54,24 @@ public:
     FILE *acceptanceRatioFile;
     FILE *exchangeFrequencyFile;
 
-//     float e = 2.71828182845904523536f;
-    size_t lowestEnergy;
     Replica initialReplica;
     Replica replica[REPLICA_COUNT];   // container for all replicas in the simulation
     bool replicasInitialised;
 
-    // TODO: create one rng; pass into replicas! Thesis assumes one rng for all replicas.
     gsl_rng  * REMCRng;         // random numbers for the REMC method to swap labels
+    int mcstepsPerRE;
+
+#if INCLUDE_TIMERS
+    uint RELoopTimer;
+    uint MCLoopTimer;
+#endif
 
     Simulation();
     ~Simulation();
+
+
+    void init(int argc, char **argv, int pid);
+    void calibrate();
 
     void printHelp();
     void getArgs(int argc, char **argv);
@@ -72,12 +79,11 @@ public:
     void check_and_modify_parameters();
     void writeFileIndex();
     void printArgs();
-    void init(int argc, char **argv, int pid);
 
     void run();
 
-    void initSamplingFiles ();
-    void closeSamplingFiles ();
+    void initSamplingFiles();
+    void closeSamplingFiles();
 };
 
 void *MCthreadableFunction(void *arg);
