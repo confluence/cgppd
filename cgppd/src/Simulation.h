@@ -57,6 +57,14 @@ public:
     Replica initialReplica;
     Replica replica[REPLICA_COUNT];   // container for all replicas in the simulation
     bool replicasInitialised;
+    int waitingThreads;
+
+    int exchanges;  // number of exchanges performed
+    int tests;      // number of replica exchange tests
+    int totalExchanges; // total number of exchanges
+    int totalTests; // total number of exchanges
+    int offset;  // RE offset
+    int steps;   // # re steps performed
 
     gsl_rng  * REMCRng;         // random numbers for the REMC method to swap labels
     int mcstepsPerRE;

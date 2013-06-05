@@ -1,8 +1,7 @@
 #include "Simulation.h"
 
-Simulation::Simulation()
+Simulation::Simulation() : replicasInitialised(false), waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), offset(0), steps(0)
 {
-    replicasInitialised = false;
     REMCRng = gsl_rng_alloc(gsl_rng_mt19937);
 
     // TODO: move these to an init method on aminoAcidData
@@ -146,9 +145,8 @@ void Simulation::calibrate()
     cout.flush();
 }
 
-pthread_mutex_t waitingThreadMutex = PTHREAD_MUTEX_INITIALIZER;
+// TODO: make these not global
 pthread_mutex_t waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t reMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t waitingThreadCond;
 pthread_cond_t waitingReplicaExchangeCond;
@@ -161,13 +159,10 @@ void Simulation::run()
     cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
 
     if (!parameters.resume)
-        // TODO: remove this; it's not actually used (and is a dupliacte of steps)
+        // TODO: remove this; it's not actually used (and is a duplicate of steps)
         parameters.currentStep = 0;
     // TODO: some of these should be attributes; some of them are pointless duplication of parameters.
     // TODO: also, all this parameter fixing should go in a different function.
-
-    int waitingThreads = 0;
-    int conformationsBound = 0;
 
     if (initialReplica.moleculeCount == 0)  // make sure something is loaded
     {
@@ -264,8 +259,6 @@ void Simulation::run()
     pthread_cond_init (&waitingThreadCond, NULL);
     pthread_cond_init (&waitingReplicaExchangeCond, NULL);
     pthread_mutex_init(&waitingCounterMutex, NULL);
-    pthread_mutex_init(&waitingThreadMutex, NULL);
-    pthread_mutex_init(&reMutex, NULL);
 
     SimulationData *data = new SimulationData[parameters.threads];
 
@@ -274,7 +267,6 @@ void Simulation::run()
 #endif
 
     printf ("--- Starting simulation ---.\n");
-
 
     pthread_mutex_lock(&waitingCounterMutex);
 
@@ -295,7 +287,6 @@ void Simulation::run()
         data[i].bound = parameters.bound;
         data[i].streams = parameters.streams;
         data[i].waitingThreadCount = &waitingThreads;
-        data[i].conformationsBound = &conformationsBound;
         data[i].fractionBound = fractionBoundFile;
         data[i].boundConformations = boundConformationsFile;
 
@@ -310,13 +301,6 @@ void Simulation::run()
         //MCthreadableFunction(&data[i]);
     }
 
-    int exchanges = 0;  // number of exchanges performed
-    int tests = 0;      // number of replica exchange tests
-    int totalExchanges = 0; // total number of exchanges
-    int totalTests = 0; // total number of exchanges
-
-    int offset = 0;  // RE offset
-    int steps = 0;   // # re steps performed
     while (++steps < parameters.REsteps)  // until enough steps taken
     {
 #if INCLUDE_TIMERS
@@ -367,6 +351,7 @@ void Simulation::run()
             fflush(acceptanceRatioFile);
         }
 
+        // TODO: I'm pretty sure this can be a less horrible for loop
         int i = offset;  // replica exchange offset
         while (i < parameters.replicas-1) // loop through the replicas in pairs
         {
@@ -489,7 +474,6 @@ void Simulation::run()
     // Clean up/
     pthread_attr_destroy(&attr);
     pthread_mutex_destroy(&waitingCounterMutex);
-    pthread_mutex_destroy(&waitingThreadMutex);
     pthread_cond_destroy(&waitingThreadCond);
     pthread_cond_destroy(&waitingReplicaExchangeCond);
     gsl_rng_free(REMCRng);
