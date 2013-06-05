@@ -25,7 +25,6 @@
         int checkpointFrequency;
         float bound;
         int * waitingThreadCount;
-        int * conformationsBound;
         FILE * fractionBound;
         FILE * boundConformations;
     };
