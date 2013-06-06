@@ -1,8 +1,9 @@
 #include "Simulation.h"
 
-Simulation::Simulation() : replicasInitialised(false), waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), offset(0), steps(0)
+Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), offset(0), steps(0)
 {
     REMCRng = gsl_rng_alloc(gsl_rng_mt19937);
+    _300kReplica = &replica[0];
 
     // TODO: move these to an init method on aminoAcidData
     LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
@@ -29,15 +30,6 @@ Simulation::Simulation() : replicasInitialised(false), waitingThreads(0), exchan
 
 Simulation::~Simulation()
 {
-    if (replicasInitialised)
-    {
-        for (size_t i=0; i<parameters.replicas; i++)
-        {
-            // TODO: WTF, why are these not in the replica destructor?!
-            replica[i].freeRNGs();
-//             delete [] replica[i].contiguousResidues; // this is now
-        }
-    }
 }
 
 void Simulation::init(int argc, char **argv, int pid)
@@ -174,9 +166,6 @@ void Simulation::run()
 
     //basically we change the simulation to spawn N threads N = number of CPU cores
 
-    //initialise the replicas data
-    _300kReplica = &replica[0];
-
     double geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
     double geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
     double geometricRotation = pow(double(MAX_ROTATION/MIN_ROTATION),double(1.0/double(parameters.replicas-1)));
@@ -191,8 +180,6 @@ void Simulation::run()
         if ( abs(replica[i].temperature - 300.0f) < abs(_300kReplica->temperature - 300.0f))
             _300kReplica = &replica[i];
     }
-
-    replicasInitialised = true;
 
     initSamplingFiles();
 

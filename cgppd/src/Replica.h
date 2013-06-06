@@ -31,6 +31,7 @@ using namespace std;
 class Replica
 {
 public:
+
     Replica();
     ~Replica();
 
@@ -40,6 +41,7 @@ public:
     void reserveContiguousMoleculeArray(int size);
     void initRNGs();
     void freeRNGs();
+    bool RNGs_initialised;
 
     // TODO: remove this once it's incorporated into final replica constructor
     void copy(const Replica& r); 						// assignment copy, duplicate it.
