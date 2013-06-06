@@ -80,7 +80,8 @@ void TestReplica::tearDown()
 void TestReplica::testMC()
 {
     Replica child_replica;
-    child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, 1);
+    argdata parameters;
+    child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, parameters);
 #if USING_CUDA
     child_replica.device_LJPotentials = ljp_t;
     child_replica.ReplicaDataToDevice();

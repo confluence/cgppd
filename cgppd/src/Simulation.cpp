@@ -158,11 +158,8 @@ void Simulation::run()
     // need at most REPLICA_COUNT threads
     cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
 
-    if (!parameters.resume)
-        // TODO: remove this; it's not actually used (and is a duplicate of steps)
-        parameters.currentStep = 0;
-    // TODO: some of these should be attributes; some of them are pointless duplication of parameters.
-    // TODO: also, all this parameter fixing should go in a different function.
+    // TODO: add stuff for resuming here
+    // TODO: move all the parameter checking stuff somewhere else
 
     if (initialReplica.moleculeCount == 0)  // make sure something is loaded
     {
@@ -184,30 +181,20 @@ void Simulation::run()
     double geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
     double geometricRotation = pow(double(MAX_ROTATION/MIN_ROTATION),double(1.0/double(parameters.replicas-1)));
 
-    for (size_t i=0; i<parameters.replicas; i++)
+    for (size_t i = 0; i < parameters.replicas; i++)
     {
-        // changed to geometric sequence
-        float temperature = parameters.temperatureMin * pow(geometricTemperature, int(i));
-        float rotate_step = MIN_ROTATION * pow(geometricRotation, int(i));
-        float translate_step = MIN_TRANSLATION * pow(geometricTranslate, int(i));
+        replica[i].init_child_replica(initialReplica, int(i), geometricTemperature, geometricRotation, geometricTranslate, parameters);
+        printf ("Replica %d %.3f %.3f %.3f\n", int(i), replica[i].temperature, replica[i].translateStep, replica[i].rotateStep);
 
         // note which replica is the 300K replica for sampling
         // if there is no replica at 300K then choose the closest one.
-        if ( abs(replica[i].temperature-300.0f) < abs(replica[_300kReplica].temperature-300.0f))
+        if ( abs(replica[i].temperature - 300.0f) < abs(replica[_300kReplica].temperature - 300.0f))
             _300kReplica = i;
-
-        replica[i].init_child_replica(initialReplica, i, temperature, rotate_step, translate_step, parameters.threads);
-        printf ("Replica %d %.3f %.3f %.3f\n",int(i),replica[i].temperature,replica[i].translateStep,replica[i].rotateStep);
-
     }
 
     replicasInitialised = true;
 
     initSamplingFiles();
-
-
-    // round the ~300K replica to 300K to ensure there is at least one T/T_i == 1
-    //replica[_300kReplica].temperature = 300.0f;
 
     // create a lookup map for replica temperatures to allow for sampling temperatures and in place exchanges
     // samples are by temperature not replica index, hence temperatures get shuffled about in replica[],
@@ -379,8 +366,6 @@ void Simulation::run()
             tests++;// tests performed samplng
         }
         offset = 1-offset; // switch the swap neighbours in the replica exchange
-
-        parameters.currentStep = mcstepsPerRE*steps;
 
         waitingThreads = 0;
         pthread_cond_broadcast(&waitingThreadCond);

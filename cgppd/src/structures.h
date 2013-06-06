@@ -73,7 +73,6 @@
         // TODO: this is gone until checkpointing goes back in
 //         char checkpointfilename[256];
         bool resume;
-        int currentStep;
         std::vector<moldata> mdata;
 
         argdata() :
@@ -83,7 +82,8 @@
 #endif
             gpus(1), threads(THREAD_COUNT), streams(STREAM_COUNT), MCsteps(MC_STEPS), REsteps(REMC_STEPS),
             sampleFrequency(SAMPLE_FREQ), sampleStartsAfter(STEPS_BEFORE_SAMPLE), inputFile(false),
-            replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP), pid(0), resume(false), currentStep(0), checkpointFrequency(CHECKPOINTFREQUENCY)
+            replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP),
+            pid(0), resume(false), checkpointFrequency(CHECKPOINTFREQUENCY)
         {
             memset(prefix, 0, 256);
             memset(file, 0, 256);

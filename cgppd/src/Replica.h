@@ -35,7 +35,7 @@ public:
     ~Replica();
 
     void init_first_replica(const vector<moldata> mdata, AminoAcids amino_acid_data, const float bounding_value, const int initial_molecule_array_size);
-    void init_child_replica(const Replica& ir, const int label, const float temperature, const float rotate_step, const float translate_step, const int thread_count);
+    void init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters);
 
     void reserveContiguousMoleculeArray(int size);
     void initRNGs();
