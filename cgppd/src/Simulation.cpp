@@ -30,6 +30,7 @@ Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExch
 
 Simulation::~Simulation()
 {
+    gsl_rng_free(REMCRng);
 }
 
 void Simulation::init(int argc, char **argv, int pid)
@@ -443,12 +444,12 @@ void Simulation::run()
     pthread_mutex_unlock(&writeFileMutex);
 
 
+    // TODO: move all / most of this stuff to the destructor
     // Clean up/
     pthread_attr_destroy(&attr);
     pthread_mutex_destroy(&waitingCounterMutex);
     pthread_cond_destroy(&waitingThreadCond);
     pthread_cond_destroy(&waitingReplicaExchangeCond);
-    gsl_rng_free(REMCRng);
     delete [] data;
     delete [] thread;
 
