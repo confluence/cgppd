@@ -57,7 +57,7 @@ public:
     Replica initialReplica;
     Replica replica[REPLICA_COUNT];   // container for all replicas in the simulation
     bool replicasInitialised;
-    Replica * _300kreplica;
+    Replica * _300kReplica;
 
     int waitingThreads;
     int exchanges;  // number of exchanges performed
