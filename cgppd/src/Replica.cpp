@@ -80,20 +80,22 @@ void Replica::init_first_replica(const vector<moldata> mdata, AminoAcids amino_a
     }
 }
 
-void Replica::init_child_replica(const Replica& ir, const int label, const float temperature, const float rotate_step, const float translate_step, const int thread_count)// constructor for final replicas; not final parameter list
+void Replica::init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters)
 {
     // TODO: incorporate copy method into this one and try to clean it up
     copy(ir);
 #if INCLUDE_TIMERS
     initTimers();
 #endif
-    this->label = label;
-    this->temperature = temperature;
-    rotateStep = rotate_step;
-    translateStep = translate_step;
+
+    this->label = index;
+    this->temperature = parameters.temperatureMin * pow(geometricTemperature, index);
+    rotateStep = MIN_ROTATION * pow(geometricRotation, index);
+    translateStep = MIN_TRANSLATION * pow(geometricTranslate, index);
+    threadCount = parameters.threads;
+
     // TODO: only one range for entire simulation (but is the library threadsafe?)
     initRNGs();
-    threadCount = thread_count;
 #if FLEXIBLE_LINKS
     savedMolecule.init_saved_molecule(max_residue_count, max_segment_count);
 #else

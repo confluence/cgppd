@@ -67,7 +67,6 @@ void TestSimulation::testGetArgs()
     CPPUNIT_ASSERT_EQUAL(0, s.parameters.nonCrowders);
     CPPUNIT_ASSERT_EQUAL(0, s.parameters.pid);
     CPPUNIT_ASSERT_EQUAL(false, s.parameters.resume);
-    CPPUNIT_ASSERT_EQUAL(0, s.parameters.currentStep);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.bound, 0);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.temperatureMin, 0);
@@ -104,7 +103,6 @@ void TestSimulation::testLoadArgsFromFile()
     CPPUNIT_ASSERT_EQUAL(2, s.parameters.nonCrowders);
     CPPUNIT_ASSERT_EQUAL(0, s.parameters.pid);
     CPPUNIT_ASSERT_EQUAL(false, s.parameters.resume);
-    CPPUNIT_ASSERT_EQUAL(0, s.parameters.currentStep);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, s.parameters.bound, 0);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(288.0, s.parameters.temperatureMin, 0);
