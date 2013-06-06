@@ -175,7 +175,7 @@ void Simulation::run()
     //basically we change the simulation to spawn N threads N = number of CPU cores
 
     //initialise the replicas data
-    _300kReplica = &replica[0]
+    _300kReplica = &replica[0];
 
     double geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
     double geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
