@@ -6,7 +6,7 @@ using namespace std;
 #include <cutil.h>
 #endif
 
-Replica::Replica()
+Replica::Replica() : RNGs_initialised(false)
 {
     temperature = 300.0f;
     label = -1;
@@ -142,6 +142,10 @@ Replica::~Replica()
         CUT_SAFE_CALL( cutDeleteTimer(replicaEHostTimer) )
     }
 #endif
+
+    if (RNGs_initialised) {
+        freeRNGs();
+    }
 
     if (moleculeCount > 0)
     {
@@ -285,6 +289,7 @@ void Replica::initRNGs()
         molecules[m].MC_discrete_table = MC_discrete_table;
     }
 #endif
+    RNGs_initialised = true;
 }
 
 // TODO: why is this not called from the destructor?!
