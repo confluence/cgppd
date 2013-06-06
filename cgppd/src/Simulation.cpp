@@ -193,7 +193,6 @@ void Simulation::run()
     typedef map<int,float> RKmap;
     RKmap temperatureMap;
 
-
     // build a map of lookups for temperature lookups while sampling
     for (size_t i=0; i<parameters.replicas; i++)
     {
@@ -216,17 +215,7 @@ void Simulation::run()
     fprintf(fractionBoundFile," \n");
     fprintf(acceptanceRatioFile,"\n");
 
-
-    /*#if OUTPUT_LEVEL > 1
-    for (int i=0;i<parameters.replicas;i++)
-    {
-        sprintf (tmps,"%3d: %1.1e",i,replica[i].potential);
-        strcat(startEs,tmps);
-    }
-    cout << "start energies (kcal/mol): " << startEs << endl;
-    #endif*/
-
-    pthread_t *thread = new pthread_t[parameters.threads];;
+    pthread_t *thread = new pthread_t[parameters.threads];
     //For portability, explicitly create threads in a joinable state
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -298,6 +287,7 @@ void Simulation::run()
 
             for(RKmap::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
             {
+                // TODO: move this into a method on replica
                 int index = replicaTemperatureMap[iterator->second];
 
 
