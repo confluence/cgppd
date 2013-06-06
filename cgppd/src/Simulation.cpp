@@ -175,7 +175,7 @@ void Simulation::run()
     //basically we change the simulation to spawn N threads N = number of CPU cores
 
     //initialise the replicas data
-    int _300kReplica = 0;
+    _300kReplica = &replica[0]
 
     double geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
     double geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
@@ -188,8 +188,8 @@ void Simulation::run()
 
         // note which replica is the 300K replica for sampling
         // if there is no replica at 300K then choose the closest one.
-        if ( abs(replica[i].temperature - 300.0f) < abs(replica[_300kReplica].temperature - 300.0f))
-            _300kReplica = i;
+        if ( abs(replica[i].temperature - 300.0f) < abs(_300kReplica->temperature - 300.0f))
+            _300kReplica = &replica[i];
     }
 
     replicasInitialised = true;
@@ -371,7 +371,7 @@ void Simulation::run()
         pthread_cond_broadcast(&waitingThreadCond);
 
 #if GLVIS
-        GLreplica = &replica[_300kReplica];
+        GLreplica = _300kReplica;
         GlutDisplay();
 #endif
 
