@@ -56,7 +56,7 @@
     #define DEBUG_POTENTIAL false
     #define DEBUG_LOCAL_TRANSLATE false
     #define DEBUG_LJ false
-    #define DEBUG_CUDA false
+    #define DEBUG_CUDA true
 
     #define LOG(level, ...) \
             do { if (level) printf(__VA_ARGS__); } while (0)
