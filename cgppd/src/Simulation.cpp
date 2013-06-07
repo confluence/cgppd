@@ -72,6 +72,14 @@ void Simulation::init(int argc, char **argv, int pid)
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters.mdata, aminoAcidData, parameters.bound, 30);
 
+#if USING_CUDA
+        // set box size
+    if (parameters.auto_blockdim)
+        (initialReplica.residueCount < 1024) ? parameters.cuda_blockSize = 32 : parameters.cuda_blockSize = 64;
+
+    initialReplica.setBlockSize(parameters.cuda_blockSize);
+#endif
+
     // now set up all the replicas
 
     geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
@@ -127,12 +135,6 @@ void Simulation::calibrate()
 
 
 #if USING_CUDA
-    // set box size
-    if (parameters.auto_blockdim)
-        (initialReplica.residueCount < 1024) ? parameters.cuda_blockSize = 32 : parameters.cuda_blockSize = 64;
-
-    initialReplica.setBlockSize(parameters.cuda_blockSize);
-
     // set box dimensions
     CUDA_setBoxDimension(parameters.bound);
 
