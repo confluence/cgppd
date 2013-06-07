@@ -1114,6 +1114,7 @@ void Simulation::check_and_modify_parameters()
             cout << "! Too many streams, setting equal to " << parameters.streams << endl;
         }
     }
+
 }
 
 void Simulation::writeFileIndex()

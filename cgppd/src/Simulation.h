@@ -67,7 +67,6 @@ public:
     int steps;   // # re steps performed
 
     gsl_rng  * REMCRng;         // random numbers for the REMC method to swap labels
-    int mcstepsPerRE;
 
 #if INCLUDE_TIMERS
     uint RELoopTimer;
