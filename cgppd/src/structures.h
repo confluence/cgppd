@@ -27,6 +27,10 @@
         int * waitingThreadCount;
         FILE * fractionBound;
         FILE * boundConformations;
+        pthread_mutex_t * waitingCounterMutex;
+        pthread_mutex_t * writeFileMutex;
+        pthread_cond_t * waitingThreadCond;
+        pthread_cond_t * waitingReplicaExchangeCond;
     };
 
     struct moldata

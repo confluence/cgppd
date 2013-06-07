@@ -1,9 +1,17 @@
 #include "Simulation.h"
 
-Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), offset(0), steps(0)
+Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), offset(0), steps(0), thread_created(false)
 {
     REMCRng = gsl_rng_alloc(gsl_rng_mt19937);
     _300kReplica = &replica[0];
+
+    // thread is created in init, because parameters.threads is needed
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    pthread_cond_init (&waitingThreadCond, NULL);
+    pthread_cond_init (&waitingReplicaExchangeCond, NULL);
+    pthread_mutex_init(&waitingCounterMutex, NULL);
+    pthread_mutex_init(&writeFileMutex, NULL);
 
     // TODO: move these to an init method on aminoAcidData
     LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
@@ -31,23 +39,69 @@ Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExch
 Simulation::~Simulation()
 {
     gsl_rng_free(REMCRng);
+    pthread_attr_destroy(&attr);
+    pthread_mutex_destroy(&waitingCounterMutex);
+    pthread_mutex_destroy(&writeFileMutex);
+    pthread_cond_destroy(&waitingThreadCond);
+    pthread_cond_destroy(&waitingReplicaExchangeCond);
+    if (thread_created)
+    {
+        delete [] thread;
+        delete [] data;
+    }
+
+#if INCLUDE_TIMERS
+    cutDeleteTimer(RELoopTimer);
+    cutDeleteTimer(MCLoopTimer);
+#endif
 }
 
 void Simulation::init(int argc, char **argv, int pid)
 {
-    int sysreturn;
-    sysreturn = system("mkdir -p output output_pdb checkpoints");
+    // Get the parameters
 
     parameters.pid = pid;
 
     getArgs(argc, argv);
     loadArgsFromFile();
     check_and_modify_parameters();
-    writeFileIndex();
     getArgs(argc, argv); // second pass to override any variables if doing performance tests
+
+    // Create the initial replica
 
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters.mdata, aminoAcidData, parameters.bound, 30);
+
+    // now set up all the replicas
+
+    geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
+    geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
+    geometricRotation = pow(double(MAX_ROTATION/MIN_ROTATION),double(1.0/double(parameters.replicas-1)));
+
+    for (size_t i = 0; i < parameters.replicas; i++)
+    {
+        replica[i].init_child_replica(initialReplica, int(i), geometricTemperature, geometricRotation, geometricTranslate, parameters);
+        printf ("Replica %d %.3f %.3f %.3f\n", int(i), replica[i].temperature, replica[i].translateStep, replica[i].rotateStep);
+
+        // note which replica is the 300K replica for sampling
+        // if there is no replica at 300K then choose the closest one.
+        if ( abs(replica[i].temperature - 300.0f) < abs(_300kReplica->temperature - 300.0f))
+            _300kReplica = &replica[i];
+    }
+
+    // Thread stuff
+
+    thread = new pthread_t[parameters.threads];
+    data = new SimulationData[parameters.threads];
+    thread_created = true;
+
+    // File stuff
+
+    int make_dirs = system("mkdir -p output output_pdb checkpoints");
+    writeFileIndex();
+    // TODO: fix this to do a file at a time; pass in string variables
+    initSamplingFiles();
+
 }
 
 void Simulation::calibrate()
@@ -138,12 +192,6 @@ void Simulation::calibrate()
     cout.flush();
 }
 
-// TODO: make these not global
-pthread_mutex_t waitingCounterMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t writeFileMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t waitingThreadCond;
-pthread_cond_t waitingReplicaExchangeCond;
-
 void Simulation::run()
 {
     LOG(ALWAYS, "Beginning simulation\n");
@@ -152,7 +200,6 @@ void Simulation::run()
     cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
 
     // TODO: add stuff for resuming here
-    // TODO: move all the parameter checking stuff somewhere else
 
     if (initialReplica.moleculeCount == 0)  // make sure something is loaded
     {
@@ -161,28 +208,7 @@ void Simulation::run()
         return;
     }
 
-    // copy the data into each replica
-    // copy initial replica to other replicas and init the rngs for each
     // we can't use pthreads and CUDA at the moment, but we are going to use streams
-
-    //basically we change the simulation to spawn N threads N = number of CPU cores
-
-    double geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
-    double geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
-    double geometricRotation = pow(double(MAX_ROTATION/MIN_ROTATION),double(1.0/double(parameters.replicas-1)));
-
-    for (size_t i = 0; i < parameters.replicas; i++)
-    {
-        replica[i].init_child_replica(initialReplica, int(i), geometricTemperature, geometricRotation, geometricTranslate, parameters);
-        printf ("Replica %d %.3f %.3f %.3f\n", int(i), replica[i].temperature, replica[i].translateStep, replica[i].rotateStep);
-
-        // note which replica is the 300K replica for sampling
-        // if there is no replica at 300K then choose the closest one.
-        if ( abs(replica[i].temperature - 300.0f) < abs(_300kReplica->temperature - 300.0f))
-            _300kReplica = &replica[i];
-    }
-
-    initSamplingFiles();
 
     // create a lookup map for replica temperatures to allow for sampling temperatures and in place exchanges
     // samples are by temperature not replica index, hence temperatures get shuffled about in replica[],
@@ -215,17 +241,6 @@ void Simulation::run()
     fprintf(fractionBoundFile," \n");
     fprintf(acceptanceRatioFile,"\n");
 
-    pthread_t *thread = new pthread_t[parameters.threads];
-    //For portability, explicitly create threads in a joinable state
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_cond_init (&waitingThreadCond, NULL);
-    pthread_cond_init (&waitingReplicaExchangeCond, NULL);
-    pthread_mutex_init(&waitingCounterMutex, NULL);
-
-    SimulationData *data = new SimulationData[parameters.threads];
-
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
 #endif
@@ -237,7 +252,7 @@ void Simulation::run()
     //TODO: assign streams as a function of the number of GPUs and threads
 
     //spawn N threads to do the Monte-Carlo mutations
-    for (int i=0; i<parameters.threads; i++)
+    for (int i = 0; i < parameters.threads; i++)
     {
         data[i].replica = replica;
         data[i].replicaCount = parameters.replicas;
@@ -253,6 +268,11 @@ void Simulation::run()
         data[i].waitingThreadCount = &waitingThreads;
         data[i].fractionBound = fractionBoundFile;
         data[i].boundConformations = boundConformationsFile;
+
+        data[i].waitingCounterMutex = &waitingCounterMutex;
+        data[i].writeFileMutex = &writeFileMutex;
+        data[i].waitingThreadCond = &waitingThreadCond;
+        data[i].waitingReplicaExchangeCond = &waitingReplicaExchangeCond;
 
         // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
         // % #gpus so they share if threads > gpus
@@ -425,23 +445,12 @@ void Simulation::run()
     printf("Simulation Timers\n");
     printf("MC Loop:   Tot  %10.5f ms  Ave %10.5fms (%d steps, %d replicas, %d threads, %d streams)\n"      ,cutGetTimerValue(MCLoopTimer),cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps),parameters.MCsteps,parameters.replicas,parameters.threads,parameters.streams);
     printf("Simulation:     %10.5f ms  (%d exchanges)\n"    ,cutGetTimerValue(RELoopTimer),parameters.REsteps);
-    cutDeleteTimer(RELoopTimer);
-    cutDeleteTimer(MCLoopTimer);
+
 #endif
 
     pthread_mutex_lock(&writeFileMutex);
     closeSamplingFiles();
     pthread_mutex_unlock(&writeFileMutex);
-
-
-    // TODO: move all / most of this stuff to the destructor
-    // Clean up/
-    pthread_attr_destroy(&attr);
-    pthread_mutex_destroy(&waitingCounterMutex);
-    pthread_cond_destroy(&waitingThreadCond);
-    pthread_cond_destroy(&waitingReplicaExchangeCond);
-    delete [] data;
-    delete [] thread;
 
     LOG(ALWAYS, "Simulation done\n");
 
@@ -575,7 +584,7 @@ void *MCthreadableFunction(void *arg)
                 {
                     // cout << "Sampling at step:" << mcstep+(s+1)*data->sampleFrequency << endl;
                     // if E < -1.1844 kcal/mol then its bound
-                    replica[tx+threadIndex*tReplicas].sample(data->boundConformations,mcstep+s*data->sampleFrequency,BOUND_ENERGY_VALUE,&writeFileMutex);
+                    replica[tx+threadIndex*tReplicas].sample(data->boundConformations,mcstep+s*data->sampleFrequency,BOUND_ENERGY_VALUE,data->writeFileMutex);
                 }
             }
         }
@@ -583,29 +592,29 @@ void *MCthreadableFunction(void *arg)
         //cout << "thread " << threadIndex << " waits for mutex " << endl;
 
         // do replica exchange
-        pthread_mutex_lock(&waitingCounterMutex);                 // lock the counter
+        pthread_mutex_lock(data->waitingCounterMutex);                 // lock the counter
         //cout << "thread " << threadIndex << " gets mutex " << endl;
 
         data->waitingThreadCount[0] = data->waitingThreadCount[0]+1;
         if (data->waitingThreadCount[0]==data->threads)                 // if all threads in waiting state
         {
-            pthread_cond_signal(&waitingReplicaExchangeCond);
+            pthread_cond_signal(data->waitingReplicaExchangeCond);
             //cout << "thread " << threadIndex << " signals parent" << endl;
         }
         if (mcstep<data->MCsteps)                       // wait if another MC loop must be done
         {
             //cout << "thread " << threadIndex << " waits after " << mcstep << endl;
 
-            pthread_cond_wait(&waitingThreadCond,&waitingCounterMutex); // wait for replica exchange to finish.
+            pthread_cond_wait(data->waitingThreadCond,data->waitingCounterMutex); // wait for replica exchange to finish.
             // NB! unlock the mutex locked upon the condition above
             // being met because this will unblock all threads such
             // that they will continue concurrently, if not unlocked
             // other threads will run sequentially
             //cout << "thread " << threadIndex << " releases mutex after wait" << endl;
 
-            //  pthread_mutex_unlock(&waitingCounterMutex);
+            //  pthread_mutex_unlock(data->waitingCounterMutex);
         }
-        pthread_mutex_unlock(&waitingCounterMutex);
+        pthread_mutex_unlock(data->waitingCounterMutex);
 
 
     } // continue MC
@@ -640,7 +649,7 @@ void *MCthreadableFunction(void *arg)
                     //sampleAsync
                     if (mcstep%data->sampleFrequency == 0 && mcstep >= data->sampleStartsAfter) // when enough steps are taken && sampleFrequency steps have passed
                     {
-                        replica[threadIndex*tReplicas+index+rps].sample(data->boundConformations,mcstep+mcx*data->sampleFrequency,BOUND_ENERGY_VALUE,&writeFileMutex);
+                        replica[threadIndex*tReplicas+index+rps].sample(data->boundConformations,mcstep+mcx*data->sampleFrequency,BOUND_ENERGY_VALUE,data->writeFileMutex);
 
                         //if (abs(replica[threadIndex*tReplicas+index+rps].temperature-300.0f)<1.0f)
                         //  cout << "Sampled: t=" << replica[threadIndex*tReplicas+index+rps].temperature << " mcstep=" << mcstep << endl;
@@ -652,17 +661,17 @@ void *MCthreadableFunction(void *arg)
         }
 
         // do replica exchange
-        pthread_mutex_lock(&waitingCounterMutex);                 // lock the counter
+        pthread_mutex_lock(data->waitingCounterMutex);                 // lock the counter
         data->waitingThreadCount[0] = data->waitingThreadCount[0]+1;
         if (data->waitingThreadCount[0]==data->threads)
         {
-            pthread_cond_signal(&waitingReplicaExchangeCond);
+            pthread_cond_signal(data->waitingReplicaExchangeCond);
         }
         if (mcstep<data->MCsteps)                                           // wait if another MC loop must be done
         {
-            pthread_cond_wait(&waitingThreadCond,&waitingCounterMutex);     // wait for replica exchange to finish.
+            pthread_cond_wait(data->waitingThreadCond,data->waitingCounterMutex);     // wait for replica exchange to finish.
         }
-        pthread_mutex_unlock(&waitingCounterMutex);
+        pthread_mutex_unlock(data->waitingCounterMutex);
 
     } // continue MC
 #endif
@@ -697,7 +706,7 @@ void *MCthreadableFunction(void *arg)
     data->waitingThreadCount[0] = data->waitingThreadCount[0]+1;        // wait one last time for all threads to complete before joining them.
     if (data->waitingThreadCount[0]==data->threads)
     {
-        pthread_cond_signal(&waitingReplicaExchangeCond);
+        pthread_cond_signal(data->waitingReplicaExchangeCond);
     }
     pthread_mutex_unlock(&waitingCounterMutex);             //unlock the counter
     */

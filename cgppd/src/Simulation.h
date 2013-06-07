@@ -66,6 +66,19 @@ public:
     int offset;  // RE offset
     int steps;   // # re steps performed
 
+    double geometricTemperature;
+    double geometricTranslate;
+    double geometricRotation;
+
+    pthread_t *thread;
+    SimulationData *data;
+    bool thread_created;
+    pthread_attr_t attr;
+    pthread_mutex_t waitingCounterMutex;
+    pthread_mutex_t writeFileMutex;
+    pthread_cond_t waitingThreadCond;
+    pthread_cond_t waitingReplicaExchangeCond;
+
     gsl_rng  * REMCRng;         // random numbers for the REMC method to swap labels
 
 #if INCLUDE_TIMERS
