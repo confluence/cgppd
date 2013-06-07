@@ -1114,28 +1114,6 @@ void Simulation::check_and_modify_parameters()
             cout << "! Too many streams, setting equal to " << parameters.streams << endl;
         }
     }
-
-    mcstepsPerRE = parameters.MCsteps/parameters.REsteps; // number of MC steps to do at a time
-
-    // if samping does not divide into steps in this loop
-    if (mcstepsPerRE % parameters.sampleFrequency > 0)// && mcstepsPerRE > data->sampleFrequency)
-    {
-        if (mcstepsPerRE > parameters.sampleFrequency)
-        {
-            // fit sampling frequency such that its a divisor or equal to the mc steps we do before RE
-            while (mcstepsPerRE % parameters.sampleFrequency != 0)
-                parameters.sampleFrequency++;
-            cout << "-!- CHANGED: sample frequency changed as it does divide into the replica exchange frequency. -!-" << endl;
-            cout << "-!- CHANGED: sample frequency <- "<< parameters.sampleFrequency <<". -!-" << endl;
-
-        }
-        if (mcstepsPerRE < parameters.sampleFrequency)
-        {
-            parameters.sampleFrequency = mcstepsPerRE;
-            cout << "-!- CHANGED: sample frequency too long for MC loop. -!-" << endl;
-            cout << "-!- CHANGED: sample frequency <- "<< mcstepsPerRE <<". -!-" << endl;
-        }
-    }
 }
 
 void Simulation::writeFileIndex()
