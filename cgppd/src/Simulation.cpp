@@ -168,6 +168,21 @@ void Simulation::init(int argc, char **argv, int pid)
             _300kReplica = &replica[i];
     }
 
+    // Temperature map stuff
+
+    // create a lookup map for replica temperatures to allow for sampling temperatures and in place exchanges
+    // samples are by temperature not replica index, hence temperatures get shuffled about in replica[],
+    // so use replicaTemperaturesmap[] to track where a specific temperature is
+
+    // build a map of lookups for temperature lookups while sampling
+    for (size_t i=0; i<parameters.replicas; i++)
+    {
+        // lookup of where replica with temperature x is
+        replicaTemperatureMap[replica[i].temperature] = i;
+        // lookup of which replica has temperature x
+        temperatureMap[i] = replica[i].temperature;
+    }
+
     // Thread stuff
 
     thread = new pthread_t[parameters.threads];
@@ -177,9 +192,6 @@ void Simulation::init(int argc, char **argv, int pid)
     // File stuff
 
     int make_dirs = system("mkdir -p output output_pdb checkpoints");
-    writeFileIndex();
-    // TODO: fix this to do a file at a time; pass in string variables
-    initSamplingFiles();
 
     cout << "Last CUDA error: " << cudaGetErrorString(cudaGetLastError()) << endl;
     cout.flush();
@@ -203,24 +215,9 @@ void Simulation::run()
 
     // we can't use pthreads and CUDA at the moment, but we are going to use streams
 
-
-
-
-    // create a lookup map for replica temperatures to allow for sampling temperatures and in place exchanges
-    // samples are by temperature not replica index, hence temperatures get shuffled about in replica[],
-    // so use replicaTemperaturesmap[] to track where a specific temperature is
-
-    map<float, int> replicaTemperatureMap;
-    map<int, float> temperatureMap;
-
-    // build a map of lookups for temperature lookups while sampling
-    for (size_t i=0; i<parameters.replicas; i++)
-    {
-        // lookup of where replica with temperature x is
-        replicaTemperatureMap[replica[i].temperature] = i;
-        // lookup of which replica has temperature x
-        temperatureMap[i] = replica[i].temperature;
-    }
+    writeFileIndex();
+    // TODO: fix this to do a file at a time; pass in string variables
+    initSamplingFiles();
 
     fprintf(fractionBoundFile,"Iteration:  ");
     fprintf(acceptanceRatioFile,"Iteration:  ");
@@ -228,8 +225,8 @@ void Simulation::run()
     for(map<float, int>::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
     {
         float temperature = iterator->first;
-        fprintf(fractionBoundFile,  "%0.1fKi %0.1fKc ",temperature,temperature);
-        fprintf(acceptanceRatioFile,"%0.1fKi %0.1fKc ",temperature,temperature);
+        fprintf(fractionBoundFile,  "%0.1fKi %0.1fKc ",temperature, temperature);
+        fprintf(acceptanceRatioFile,"%0.1fKi %0.1fKc ",temperature, temperature);
     }
 
     fprintf(fractionBoundFile," \n");
