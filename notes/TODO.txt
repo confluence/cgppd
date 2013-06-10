@@ -2,6 +2,8 @@
 NOW
 --------------------------------------------------------------------------------
 
+VERY NEXT THING: Replica method for calculating fraction bound and acceptance ratio
+
 * move more init stuff out of run
 * clean up the messages a bit
 
