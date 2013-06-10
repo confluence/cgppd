@@ -67,10 +67,11 @@ void Simulation::init(int argc, char **argv, int pid)
     check_and_modify_parameters();
     getArgs(argc, argv); // second pass to override any variables if doing performance tests
 
-    // Create the initial replica
+    // Create the initial replica, and compare CPU and GPU potential
 
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters.mdata, aminoAcidData, parameters.bound, 30);
+    cout << "Loaded: " << initialReplica.residueCount << " residues in " << initialReplica.moleculeCount << " molecules:\n";
 
 #if USING_CUDA
         // set box size
@@ -79,6 +80,76 @@ void Simulation::init(int argc, char **argv, int pid)
 
     initialReplica.setBlockSize(parameters.cuda_blockSize);
 #endif
+
+    for (int i=0; i < initialReplica.moleculeCount; i++)
+    {
+        printf("%2d: %3d %12.3f A^3 %s\n",i , initialReplica.molecules[i].residueCount, initialReplica.molecules[i].volume,initialReplica.molecules[i].filename);
+    }
+    initialReplica.countNonCrowdingResidues();
+    printf("counted : %3d complex residues\n",initialReplica.nonCrowderResidues);
+
+#if INCLUDE_TIMERS
+    initialReplica.initTimers();
+#endif
+
+    float p = initialReplica.E();
+    float pnc = initialReplica.E(&initialReplica.molecules[0],&initialReplica.molecules[1]);
+    // TODO: important: for reasons which are temporarily unclear to me, we need to set this initial potential and copy it to the child replicas, otherwise the GL display doesn't move. o_O
+    initialReplica.potential = p;
+
+    cout << initialReplica.countpairs() << " residue interaction pairs." << endl;
+    printf("CPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
+
+#if USING_CUDA
+    CUDA_setBoxDimension(parameters.bound);
+
+#if CUDA_STREAMS
+    cudaStreamCreate(&initialReplica.cudaStream);
+#endif
+
+    initialReplica.ReplicaDataToDevice();
+    cudaMalloc((void**)&initialReplica.device_LJPotentials, LJArraySize);
+    copyLJPotentialDataToDevice(initialReplica.device_LJPotentials, &aminoAcidData);
+
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    bindLJTexture(initialReplica.device_LJPotentials);
+#endif
+
+    double GPUE = initialReplica.EonDevice();
+    double GPUE_NC = initialReplica.EonDeviceNC();
+    initialReplica.potential = GPUE;
+
+    printf("GPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
+    printf("Absolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
+    printf("Relative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
+
+#if CUDA_STREAMS
+    cudaStreamSynchronize(initialReplica.cudaStream);
+    cudaStreamDestroy(initialReplica.cudaStream);
+#endif
+
+    if (abs(p-GPUE)/abs(p)>0.01)
+    {
+        cout << "!\n! WARNING: Inconsistency between GPU and CPU result, check simulation \n!" << endl;
+    }
+    initialReplica.FreeDevice();
+    cutilCheckMsg("Error freeing device");
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    unbindLJTexture();
+    cutilCheckMsg("Error freeing texture");
+#endif
+
+    cudaFree(initialReplica.device_LJPotentials);
+#endif
+
+    if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
+    {
+#if REPULSIVE_CROWDING
+        cout << "-!- Crowding modelled using: u(r) = (6/r)^(12)." << endl;
+#else
+        cout << "-!- Crowding is modelled using the full potential calculations." << endl;
+#endif
+    }
 
     // now set up all the replicas
 
@@ -110,86 +181,6 @@ void Simulation::init(int argc, char **argv, int pid)
     // TODO: fix this to do a file at a time; pass in string variables
     initSamplingFiles();
 
-}
-
-void Simulation::calibrate()
-{
-    cout << "Loaded: " << initialReplica.residueCount << " residues in " << initialReplica.moleculeCount << " molecules:\n";
-
-    for (int i=0; i < initialReplica.moleculeCount; i++)
-    {
-        printf("%2d: %3d %12.3f A^3 %s\n",i , initialReplica.molecules[i].residueCount, initialReplica.molecules[i].volume,initialReplica.molecules[i].filename);
-    }
-    initialReplica.countNonCrowdingResidues();
-    printf("counted : %3d complex residues\n",initialReplica.nonCrowderResidues);
-
-#if INCLUDE_TIMERS
-    initialReplica.initTimers();
-#endif
-
-    float p = initialReplica.E();
-    float pnc = initialReplica.E(&initialReplica.molecules[0],&initialReplica.molecules[1]);
-    initialReplica.potential = p;
-    cout << initialReplica.countpairs() << " residue interaction pairs." << endl;
-    printf("CPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
-
-
-#if USING_CUDA
-    // set box dimensions
-    CUDA_setBoxDimension(parameters.bound);
-
-
-#if CUDA_STREAMS
-    cudaStreamCreate(&initialReplica.cudaStream);
-#endif
-
-    initialReplica.ReplicaDataToDevice();
-
-    cudaMalloc((void**)&initialReplica.device_LJPotentials, LJArraySize);
-    copyLJPotentialDataToDevice(initialReplica.device_LJPotentials, &aminoAcidData);
-
-
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    bindLJTexture(initialReplica.device_LJPotentials);
-#endif
-
-    double GPUE = initialReplica.EonDevice();
-    double GPUE_NC = initialReplica.EonDeviceNC();
-    initialReplica.potential = GPUE;
-
-    printf("GPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
-    printf("Absolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
-    printf("Relative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
-
-#if CUDA_STREAMS
-    cudaStreamSynchronize(initialReplica.cudaStream);
-    cudaStreamDestroy(initialReplica.cudaStream);
-#endif
-
-    if (abs(p-GPUE)/abs(p)>0.01)
-    {
-        cout << "!\n! WARNING: Inconsistency between GPU and CPU result, check simulation \n!" << endl;
-    }
-    initialReplica.FreeDevice();
-    cutilCheckMsg("Error freeing device");
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    unbindLJTexture();
-    cutilCheckMsg("Error freeing texture");
-#endif
-
-    cudaFree(initialReplica.device_LJPotentials);
-
-#endif
-
-    if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
-    {
-#if REPULSIVE_CROWDING
-        cout << "-!- Crowding modelled using: u(r) = (6/r)^(12)." << endl;
-#else
-        cout << "-!- Crowding is modelled using the full potential calculations." << endl;
-#endif
-    }
-
     cout << "Last CUDA error: " << cudaGetErrorString(cudaGetLastError()) << endl;
     cout.flush();
 }
@@ -212,14 +203,15 @@ void Simulation::run()
 
     // we can't use pthreads and CUDA at the moment, but we are going to use streams
 
+
+
+
     // create a lookup map for replica temperatures to allow for sampling temperatures and in place exchanges
     // samples are by temperature not replica index, hence temperatures get shuffled about in replica[],
     // so use replicaTemperaturesmap[] to track where a specific temperature is
 
-    typedef map<float, int> KRmap;
-    KRmap replicaTemperatureMap;
-    typedef map<int,float> RKmap;
-    RKmap temperatureMap;
+    map<float, int> replicaTemperatureMap;
+    map<int, float> temperatureMap;
 
     // build a map of lookups for temperature lookups while sampling
     for (size_t i=0; i<parameters.replicas; i++)
@@ -233,7 +225,7 @@ void Simulation::run()
     fprintf(fractionBoundFile,"Iteration:  ");
     fprintf(acceptanceRatioFile,"Iteration:  ");
 
-    for(KRmap::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
+    for(map<float, int>::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
     {
         float temperature = iterator->first;
         fprintf(fractionBoundFile,  "%0.1fKi %0.1fKc ",temperature,temperature);
@@ -260,7 +252,7 @@ void Simulation::run()
         data[i].replicaCount = parameters.replicas;
         data[i].index = i;
         data[i].threads = parameters.threads;
-        data[i].streams = parameters.streams;///parameters.threads; //determines the number of streams available
+        data[i].streams = parameters.streams;
         data[i].MCsteps = parameters.MCsteps;
         data[i].REsteps = parameters.REsteps;
         data[i].sampleFrequency = parameters.sampleFrequency;
@@ -284,7 +276,6 @@ void Simulation::run()
 
         //start the MC loops
         pthread_create(&thread[i], &attr, MCthreadableFunction, (void*)&data[i]);
-        //MCthreadableFunction(&data[i]);
     }
 
     while (++steps < parameters.REsteps)  // until enough steps taken
@@ -307,7 +298,7 @@ void Simulation::run()
             fprintf(fractionBoundFile,"%9d: ",parameters.MCsteps/parameters.REsteps*steps);
             fprintf(acceptanceRatioFile,"%9d: ",parameters.MCsteps/parameters.REsteps*steps);
 
-            for(RKmap::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
+            for(map<int, float>::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
             {
                 // TODO: move this into a method on replica
                 int index = replicaTemperatureMap[iterator->second];
@@ -415,7 +406,7 @@ void Simulation::run()
     fprintf(acceptanceRatioFile,"%9d: ",parameters.MCsteps);
 
     //final fraction bound
-    for(RKmap::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
+    for(map<int, float>::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
     {
         int index = replicaTemperatureMap[iterator->second];
 

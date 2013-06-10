@@ -43,8 +43,6 @@ int main(int argc, char **argv)
     Simulation simulation;
     simulation.init(argc, argv, pid);
 
-    // Run a basic test of the potential calculation
-    simulation.calibrate();
     // TODO: only if verbose output
     simulation.printArgs();
 

@@ -91,7 +91,6 @@ public:
 
 
     void init(int argc, char **argv, int pid);
-    void calibrate();
 
     void printHelp();
     void getArgs(int argc, char **argv);
