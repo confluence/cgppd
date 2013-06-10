@@ -2,7 +2,8 @@
 NOW
 --------------------------------------------------------------------------------
 
-* move various weird parameter-overriding things to the same place
+* move more init stuff out of run
+* clean up the messages a bit
 
 * put checkpointing back in
     * save individual pdb files
