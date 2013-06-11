@@ -6,39 +6,17 @@ using namespace std;
 #include <cutil.h>
 #endif
 
-Replica::Replica() : RNGs_initialised(false)
-{
-    temperature = 300.0f;
-    label = -1;
-    potential = 0.0f;
-    newPotential = 0.0f;
-    moleculeCount = 0;
-    moleculeArraySize = 0;
-    residueCount = 0;
-    max_residue_count = 0;
+Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP), acceptanceRatio(0.0f), accumulativeAcceptanceRatio(0.0f), fractionBound(0.0f), accumulativeFractionBound(0.0f),
 #if FLEXIBLE_LINKS
-    max_segment_count = 0;
+    max_segment_count(0),
 #endif
-    nonCrowderCount = 0;
-    accept = 0;
-    acceptA = 0;
-    reject = 0;
-    totalAcceptReject = 0;
-    totalAccept = 0;
-    boundSamples = 0;
-    samplesSinceLastExchange = 0;
-    totalBoundSamples = 0;
-    totalSamples = 0;
-    paircount = 0;
-    nonCrowderResidues = 0;
-    translateStep = INITIAL_TRANSLATIONAL_STEP;
-    rotateStep = INITIAL_ROTATIONAL_STEP;
 #if USING_CUDA
-    replicaIsOnDevice = false;
+    replicaIsOnDevice(false),
 #endif
 #if INCLUDE_TIMERS
-    timersInit = false;
+    timersInit(false)
 #endif
+{
 }
 
 
@@ -1068,7 +1046,7 @@ void Replica::cudaRollbackMutation()
 // this code is a bit special...
 void Replica::sample(FILE * boundConformations, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex)
 {
-    float nonCrowderPotential(0.0f);
+    nonCrowderPotential = 0.0f;
     samplesSinceLastExchange++;
 
     // in the case of all molecules being of interest then just use the potential
@@ -1111,6 +1089,35 @@ void Replica::sample(FILE * boundConformations, int current_step, float boundEne
         fprintf(boundConformations, "%d; %0.5f (%0.5f); %0.1f\n%s\n", current_step, nonCrowderPotential, potential, temperature, savename);
         pthread_mutex_unlock(writeFileMutex);
     }
+}
+
+void Replica::fraction_bound(FILE * fractionBoundFile)
+{
+    totalBoundSamples += boundSamples;
+    totalSamples += samplesSinceLastExchange;
+
+    fractionBound = float(boundSamples) / max(1.0f, float(samplesSinceLastExchange));
+    accumulativeFractionBound = float(totalBoundSamples)/max(1.0f,float(totalSamples));
+
+    fprintf(fractionBoundFile,"| %6.4f %6.4f ", fractionBound, accumulativeFractionBound);
+
+    boundSamples = 0;
+    samplesSinceLastExchange = 0;
+}
+
+void Replica::acceptance_ratio(FILE * acceptanceRatioFile)
+{
+    totalAccept += acceptA + accept;
+    totalAcceptReject += acceptA + accept + reject;
+
+    acceptanceRatio = float(acceptA + accept) / float(acceptA + accept + reject);
+    accumulativeAcceptanceRatio = float(totalAccept) / float(totalAcceptReject);
+
+    fprintf(acceptanceRatioFile,"| %6.4f %6.4f ", acceptanceRatio, accumulativeAcceptanceRatio);
+
+    acceptA = 0;
+    accept = 0;
+    reject = 0;
 }
 
 bool Replica::savePDB(const char *filename, bool skip_crowders)
