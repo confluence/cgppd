@@ -281,7 +281,7 @@ void Simulation::run()
         CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
 #endif
 
-        pthread_cond_wait(&waitingReplicaExchangeCond,&waitingCounterMutex);
+        pthread_cond_wait(&waitingReplicaExchangeCond, &waitingCounterMutex);
 
 #if INCLUDE_TIMERS
         CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
@@ -292,32 +292,18 @@ void Simulation::run()
         {
             // do fraction bound and acceptance ratio
 
-            fprintf(fractionBoundFile,"%9d: ",parameters.MCsteps/parameters.REsteps*steps);
-            fprintf(acceptanceRatioFile,"%9d: ",parameters.MCsteps/parameters.REsteps*steps);
+            fprintf(fractionBoundFile, "%9d: ", parameters.MCsteps / parameters.REsteps * steps);
+            fprintf(acceptanceRatioFile, "%9d: ", parameters.MCsteps / parameters.REsteps * steps);
 
             for(map<int, float>::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
             {
-                // TODO: move this into a method on replica
                 int index = replicaTemperatureMap[iterator->second];
 
-
                 // fraction bound
-                float fractionBound = float(replica[index].boundSamples)/max(1.0f,float(replica[index].samplesSinceLastExchange));
-                replica[index].totalBoundSamples += replica[index].boundSamples;
-                replica[index].totalSamples += replica[index].samplesSinceLastExchange;
-                replica[index].boundSamples = 0;
-                replica[index].samplesSinceLastExchange = 0;
-                float accumulativeFractionBound = float(replica[index].totalBoundSamples)/max(1.0f,float(replica[index].totalSamples));
-                fprintf(fractionBoundFile,"| %6.4f %6.4f ",fractionBound,accumulativeFractionBound);
+                replica[index].fraction_bound(fractionBoundFile);
 
                 // acceptance rate
-                float acceptanceRatio =  float(replica[index].acceptA + replica[index].accept)/float(replica[index].acceptA + replica[index].accept + replica[index].reject);
-                replica[index].totalAccept += replica[index].acceptA+replica[index].accept ;
-                replica[index].totalAcceptReject += replica[index].acceptA+replica[index].accept+replica[index].reject ;
-                fprintf(acceptanceRatioFile,"| %6.4f %6.4f ",acceptanceRatio , float(replica[index].totalAccept)/float(replica[index].totalAcceptReject));
-                replica[index].acceptA=0 ;
-                replica[index].accept=0 ;
-                replica[index].reject=0 ;
+                replica[index].acceptance_ratio(acceptanceRatioFile);
             }
 
             fprintf(fractionBoundFile,"\n");
@@ -376,16 +362,12 @@ void Simulation::run()
 
     }
 
-    //printf ("Replica Exchange step %d skipped as it has no effect\n",steps);
-
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
 #endif
 
-
     pthread_cond_broadcast(&waitingThreadCond);
     pthread_mutex_unlock(&waitingCounterMutex);  // release the mutex so MC threads can continue.
-
 
     printf ("--- Replica Exchanges Complete.---\n");
     printf ("--- Waiting for threads to exit. ---\n");
@@ -399,8 +381,8 @@ void Simulation::run()
 #endif
 
     printf ("--- All threads complete.---\n");
-    fprintf(fractionBoundFile,"%9d: ",parameters.MCsteps);
-    fprintf(acceptanceRatioFile,"%9d: ",parameters.MCsteps);
+    fprintf(fractionBoundFile,"%9d: ", parameters.MCsteps);
+    fprintf(acceptanceRatioFile,"%9d: ", parameters.MCsteps);
 
     //final fraction bound
     for(map<int, float>::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
@@ -408,20 +390,14 @@ void Simulation::run()
         int index = replicaTemperatureMap[iterator->second];
 
         // fraction bound
-        float fractionBound = float(replica[index].boundSamples)/float(replica[index].samplesSinceLastExchange);
-        replica[index].totalBoundSamples += replica[index].boundSamples;
-        replica[index].totalSamples += replica[index].samplesSinceLastExchange;
-        replica[index].boundSamples = 0;
-        replica[index].samplesSinceLastExchange = 0;
-        float accumulativeFractionBound = float(replica[index].totalBoundSamples)/float(replica[index].totalSamples);
-        fprintf(fractionBoundFile,"| %6.4f %6.4f  ",fractionBound,accumulativeFractionBound);
+        replica[index].fraction_bound(fractionBoundFile);
 
         // acceptance rate
-        float acceptanceRatio =  float(replica[index].acceptA)/float(replica[index].acceptA + replica[index].accept + replica[index].reject);
-        fprintf(acceptanceRatioFile,"| %6.4f %6.4f ",acceptanceRatio , float(replica[index].totalAccept)/float(replica[index].totalAcceptReject));
-
+        // TODO:this inexplicably used acceptA/acceptA+accept+reject and old totalAccept/totalAcceptReject. Assuming that was wrong.
+        replica[index].acceptance_ratio(acceptanceRatioFile);
 
     }
+
     fprintf(fractionBoundFile,"\n");
     fflush(fractionBoundFile);
     fprintf(acceptanceRatioFile,"\n");

@@ -106,14 +106,21 @@ public:
     int reject;
     int totalAcceptReject;
     int totalAccept;
+    float acceptanceRatio;
+    float accumulativeAcceptanceRatio;
 
     int boundSamples;
     int samplesSinceLastExchange;
-
     int totalBoundSamples;
     int totalSamples;
+    float fractionBound;
+    float accumulativeFractionBound;
+
+    float nonCrowderPotential;
 
     void sample(FILE * boundConformations, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex);
+    void fraction_bound(FILE * fractionBoundFile);
+    void acceptance_ratio(FILE * acceptanceRatioFile);
 
     int countpairs();
     int paircount;

@@ -2,9 +2,10 @@
 NOW
 --------------------------------------------------------------------------------
 
-VERY NEXT THING: Replica method for calculating fraction bound and acceptance ratio
+VERY NEXT THING: clean up replica exchange loop
 
-* move more init stuff out of run
+* finish cleaning run
+* clean threadable function
 * clean up the messages a bit
 
 * put checkpointing back in
