@@ -246,11 +246,25 @@ void Simulation::run()
     // we can't use pthreads and CUDA at the moment, but we are going to use streams
 
     writeFileIndex();
-    // TODO: fix this to do a file at a time; pass in string variables
-    initSamplingFiles();
 
-    fprintf(fractionBoundFile,"Iteration:  ");
-    fprintf(acceptanceRatioFile,"Iteration:  ");
+    initSamplingFile("fractionBound", &fractionBoundFile);
+    initSamplingFile("boundconformations", &boundConformationsFile);
+    initSamplingFile("acceptance_ratios", &acceptanceRatioFile);
+    initSamplingFile("exchange_freq", &exchangeFrequencyFile);
+
+    fprintf(fractionBoundFile, "# Fraction Bound\n#Iteration InstantaneousAve CumulativeAve\n");
+    // TODO: see what we're actually printing now
+    fprintf(boundConformationsFile, "# iteration; complex free energy (replica free energy); temperature;\n# molecule: pdb file; 1 line per other molecule in the bound state\n");
+    fprintf(acceptanceRatioFile, "# Iteration AcceptanceRatio\n");
+    fprintf(exchangeFrequencyFile, "# Iteration continous_ratio, inst_ratio\n");
+
+    fflush(fractionBoundFile);
+    fflush(boundConformationsFile);
+    fflush(acceptanceRatioFile);
+    fflush(exchangeFrequencyFile);
+
+    fprintf(fractionBoundFile, "Iteration:  ");
+    fprintf(acceptanceRatioFile, "Iteration:  ");
 
     for(map<float, int>::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
     {
@@ -419,7 +433,11 @@ void Simulation::run()
 #endif
 
     pthread_mutex_lock(&writeFileMutex);
-    closeSamplingFiles();
+//     closeSamplingFiles();
+    closeSamplingFile("fractionBound", &fractionBoundFile);
+    closeSamplingFile("boundconformations", &boundConformationsFile);
+    closeSamplingFile("acceptance_ratios", &acceptanceRatioFile);
+    closeSamplingFile("exchange_freq", &exchangeFrequencyFile);
     pthread_mutex_unlock(&writeFileMutex);
 
     LOG(ALWAYS, "Simulation done\n");
@@ -685,71 +703,30 @@ void *MCthreadableFunction(void *arg)
 }
 // END OF *MCthreadableFunction
 
-// TODO: can we eliminate the copypasta? Loop?
-void Simulation::initSamplingFiles()
+void Simulation::initSamplingFile(const char * name, FILE ** file_addr)
 {
     char filename[256];
+    FILE * file;
 
-    sprintf(filename,"output/%s_%d_fractionBound",parameters.prefix,parameters.pid);
-    fractionBoundFile = fopen (filename,"at"); // attempt append a file of the same name
-    if (!fractionBoundFile) fractionBoundFile = fopen(filename, "wt"); // create if that failed, and open and append failed (eg: file permissions r--)
-    if (!fractionBoundFile)
+    sprintf(filename, "output/%s_%d_%s", parameters.prefix, parameters.pid, name);
+    file = fopen (filename,"a+"); // attempt append a file of the same name
+    if (!file)
     {
-        printf("Cannot open/create file: %s to record fraction bound.\n",filename);
+        file = fopen(filename, "wt"); // create if that failed, and open and append failed (eg: file permissions r--)
+    }
+    if (!file)
+    {
+        printf("Cannot open/create file: %s.\n", filename);
         return;
     }
-    fprintf(fractionBoundFile,"# Fraction Bound\n#Iteration InstantaniousAve CumulativeAve\n");
 
-    sprintf(filename,"output/%s_%d_boundconformations",parameters.prefix,parameters.pid);
-    boundConformationsFile = fopen (filename,"a+");
-    if (!boundConformationsFile) boundConformationsFile = fopen(filename, "wt");
-    if (!boundConformationsFile)
-    {
-        printf("Cannot open/create file: %s to record bound conformations.\n",filename);
-        return;
-    }
-    fprintf(boundConformationsFile,"# iteration; complex free energy (replica free energy); temperature;\n# molecule: rotation(w,x,y,z) position(x,y,z) 1 line per other molecule in the bound state\n");
-
-    sprintf(filename,"output/%s_%d_acceptance_ratios",parameters.prefix,parameters.pid);
-    acceptanceRatioFile = fopen (filename,"a+");
-    if (!acceptanceRatioFile) acceptanceRatioFile = fopen(filename, "wt");
-    if (!acceptanceRatioFile)
-    {
-        printf("Cannot open/create file: %s to record acceptance ratio.\n",filename);
-        return;
-    }
-    fprintf(acceptanceRatioFile,"# Iteration AcceptanceRatio\n");
-
-    sprintf(filename,"output/%s_%d_exchange_freq",parameters.prefix,parameters.pid);
-    exchangeFrequencyFile = fopen (filename,"a+");
-    if (!exchangeFrequencyFile) exchangeFrequencyFile = fopen(filename, "wt");
-    if (!exchangeFrequencyFile)
-    {
-        printf("Cannot open/create file: %s to record exchanges.\n",filename);
-        return;
-    }
-    fprintf(exchangeFrequencyFile,"# Iteration continous_ratio, inst_ratio\n");
-
-    fflush(acceptanceRatioFile);
-    fflush(fractionBoundFile);
-    fflush(boundConformationsFile);
-    fflush(exchangeFrequencyFile);
-
-    return;
+    *file_addr = file;
 }
 
-void Simulation::closeSamplingFiles()
+void Simulation::closeSamplingFile(const char * name, FILE ** file_addr)
 {
-    fclose(fractionBoundFile);
-    fclose(boundConformationsFile);
-    fclose(acceptanceRatioFile);
-    fclose(exchangeFrequencyFile);
-
-    LOG(ALWAYS, ">>> Sampling files closed.\n");
-    LOG(ALWAYS, "    - output/%s_%d_fractionBound\n", parameters.prefix, parameters.pid);
-    LOG(ALWAYS, "    - output/%s_%d_boundconformations\n", parameters.prefix, parameters.pid);
-    LOG(ALWAYS, "    - output/%s_%d_acceptance_ratios\n", parameters.prefix, parameters.pid);
-    LOG(ALWAYS, "    - output/%s_%d_exchange_freq\n", parameters.prefix, parameters.pid);
+    fclose(*file_addr);
+    LOG(ALWAYS, ">>> Closing sampling file: output/%s_%d_%s\n", parameters.prefix, parameters.pid, name);
 }
 
 void Simulation::printHelp()
