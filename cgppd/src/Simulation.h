@@ -104,8 +104,8 @@ public:
 
     void run();
 
-    void initSamplingFiles();
-    void closeSamplingFiles();
+    void initSamplingFile(const char * name, FILE ** file_addr);
+    void closeSamplingFile(const char * name, FILE ** file_addr);
 };
 
 void *MCthreadableFunction(void *arg);
