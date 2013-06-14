@@ -189,6 +189,36 @@ void Simulation::init(int argc, char **argv, int pid)
     data = new SimulationData[parameters.threads];
     thread_created = true;
 
+    // Set up parameters to pass to threads
+    for (int i = 0; i < parameters.threads; i++)
+    {
+        data[i].replica = replica;
+        data[i].replicaCount = parameters.replicas;
+        data[i].index = i;
+        data[i].threads = parameters.threads;
+        data[i].streams = parameters.streams;
+        data[i].MCsteps = parameters.MCsteps;
+        data[i].REsteps = parameters.REsteps;
+        data[i].sampleFrequency = parameters.sampleFrequency;
+        data[i].sampleStartsAfter = parameters.sampleStartsAfter;
+        data[i].bound = parameters.bound;
+        data[i].streams = parameters.streams;
+        data[i].waitingThreadCount = &waitingThreads;
+        data[i].fractionBound = fractionBoundFile;
+        data[i].boundConformations = boundConformationsFile;
+
+        data[i].waitingCounterMutex = &waitingCounterMutex;
+        data[i].writeFileMutex = &writeFileMutex;
+        data[i].waitingThreadCond = &waitingThreadCond;
+        data[i].waitingReplicaExchangeCond = &waitingReplicaExchangeCond;
+
+        // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
+        // % #gpus so they share if threads > gpus
+        // will perform best if threads:gpus = 1:1
+        data[i].GPUID = i % parameters.gpus;
+        cout << "Assign thread " << i << " to GPU " << data[i].GPUID << endl;
+    }
+
     // File stuff
 
     int make_dirs = system("mkdir -p output output_pdb checkpoints");
@@ -245,32 +275,6 @@ void Simulation::run()
     //spawn N threads to do the Monte-Carlo mutations
     for (int i = 0; i < parameters.threads; i++)
     {
-        data[i].replica = replica;
-        data[i].replicaCount = parameters.replicas;
-        data[i].index = i;
-        data[i].threads = parameters.threads;
-        data[i].streams = parameters.streams;
-        data[i].MCsteps = parameters.MCsteps;
-        data[i].REsteps = parameters.REsteps;
-        data[i].sampleFrequency = parameters.sampleFrequency;
-        data[i].sampleStartsAfter = parameters.sampleStartsAfter;
-        data[i].bound = parameters.bound;
-        data[i].streams = parameters.streams;
-        data[i].waitingThreadCount = &waitingThreads;
-        data[i].fractionBound = fractionBoundFile;
-        data[i].boundConformations = boundConformationsFile;
-
-        data[i].waitingCounterMutex = &waitingCounterMutex;
-        data[i].writeFileMutex = &writeFileMutex;
-        data[i].waitingThreadCond = &waitingThreadCond;
-        data[i].waitingReplicaExchangeCond = &waitingReplicaExchangeCond;
-
-        // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
-        // % #gpus so they share if threads > gpus
-        // will perform best if threads:gpus = 1:1
-        data[i].GPUID = i % parameters.gpus;
-        cout << "Assign thread " << i << " to GPU " << data[i].GPUID << endl;
-
         //start the MC loops
         pthread_create(&thread[i], &attr, MCthreadableFunction, (void*)&data[i]);
     }

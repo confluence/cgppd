@@ -14,6 +14,8 @@ VERY NEXT THING: clean up replica exchange loop
     * when resuming, make sure the iteration count is increased and e.g. sampling starts immediately if it needs to
     * save/load:
         * parameters.currentStep
+        * per-replica cumulative data
+        * is this getting too elaborate?
 
 * start writing up
     * skeleton
