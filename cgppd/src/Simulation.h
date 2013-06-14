@@ -106,6 +106,8 @@ public:
 
     void initSamplingFile(const char * name, FILE ** file_addr);
     void closeSamplingFile(const char * name, FILE ** file_addr);
+    void initSamplingFiles();
+    void closeSamplingFiles();
 };
 
 void *MCthreadableFunction(void *arg);

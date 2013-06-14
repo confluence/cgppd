@@ -229,10 +229,9 @@ void Simulation::init(int argc, char **argv, int pid)
 
 void Simulation::run()
 {
-    LOG(ALWAYS, "Beginning simulation\n");
+    // we can't use pthreads and CUDA at the moment, but we are going to use streams
 
-    // need at most REPLICA_COUNT threads
-    cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
+    LOG(ALWAYS, "Beginning simulation\n");
 
     // TODO: add stuff for resuming here
 
@@ -243,38 +242,9 @@ void Simulation::run()
         return;
     }
 
-    // we can't use pthreads and CUDA at the moment, but we are going to use streams
-
+    cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
     writeFileIndex();
-
-    initSamplingFile("fractionBound", &fractionBoundFile);
-    initSamplingFile("boundconformations", &boundConformationsFile);
-    initSamplingFile("acceptance_ratios", &acceptanceRatioFile);
-    initSamplingFile("exchange_freq", &exchangeFrequencyFile);
-
-    fprintf(fractionBoundFile, "# Fraction Bound\n#Iteration InstantaneousAve CumulativeAve\n");
-    // TODO: see what we're actually printing now
-    fprintf(boundConformationsFile, "# iteration; complex free energy (replica free energy); temperature;\n# molecule: pdb file; 1 line per other molecule in the bound state\n");
-    fprintf(acceptanceRatioFile, "# Iteration AcceptanceRatio\n");
-    fprintf(exchangeFrequencyFile, "# Iteration continous_ratio, inst_ratio\n");
-
-    fflush(fractionBoundFile);
-    fflush(boundConformationsFile);
-    fflush(acceptanceRatioFile);
-    fflush(exchangeFrequencyFile);
-
-    fprintf(fractionBoundFile, "Iteration:  ");
-    fprintf(acceptanceRatioFile, "Iteration:  ");
-
-    for(map<float, int>::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
-    {
-        float temperature = iterator->first;
-        fprintf(fractionBoundFile,  "%0.1fKi %0.1fKc ",temperature, temperature);
-        fprintf(acceptanceRatioFile,"%0.1fKi %0.1fKc ",temperature, temperature);
-    }
-
-    fprintf(fractionBoundFile," \n");
-    fprintf(acceptanceRatioFile,"\n");
+    initSamplingFiles();
 
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
@@ -433,11 +403,7 @@ void Simulation::run()
 #endif
 
     pthread_mutex_lock(&writeFileMutex);
-//     closeSamplingFiles();
-    closeSamplingFile("fractionBound", &fractionBoundFile);
-    closeSamplingFile("boundconformations", &boundConformationsFile);
-    closeSamplingFile("acceptance_ratios", &acceptanceRatioFile);
-    closeSamplingFile("exchange_freq", &exchangeFrequencyFile);
+    closeSamplingFiles();
     pthread_mutex_unlock(&writeFileMutex);
 
     LOG(ALWAYS, "Simulation done\n");
@@ -727,6 +693,46 @@ void Simulation::closeSamplingFile(const char * name, FILE ** file_addr)
 {
     fclose(*file_addr);
     LOG(ALWAYS, ">>> Closing sampling file: output/%s_%d_%s\n", parameters.prefix, parameters.pid, name);
+}
+
+void Simulation::initSamplingFiles()
+{
+    initSamplingFile("fractionBound", &fractionBoundFile);
+    initSamplingFile("boundconformations", &boundConformationsFile);
+    initSamplingFile("acceptance_ratios", &acceptanceRatioFile);
+    initSamplingFile("exchange_freq", &exchangeFrequencyFile);
+
+    fprintf(fractionBoundFile, "# Fraction Bound\n#Iteration InstantaneousAve CumulativeAve\n");
+    // TODO: see what we're actually printing now
+    fprintf(boundConformationsFile, "# iteration; complex free energy (replica free energy); temperature;\n# molecule: pdb file; 1 line per other molecule in the bound state\n");
+    fprintf(acceptanceRatioFile, "# Iteration AcceptanceRatio\n");
+    fprintf(exchangeFrequencyFile, "# Iteration continous_ratio, inst_ratio\n");
+
+    fflush(fractionBoundFile);
+    fflush(boundConformationsFile);
+    fflush(acceptanceRatioFile);
+    fflush(exchangeFrequencyFile);
+
+    fprintf(fractionBoundFile, "Iteration:  ");
+    fprintf(acceptanceRatioFile, "Iteration:  ");
+
+    for(map<float, int>::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
+    {
+        float temperature = iterator->first;
+        fprintf(fractionBoundFile,  "%0.1fKi %0.1fKc ",temperature, temperature);
+        fprintf(acceptanceRatioFile,"%0.1fKi %0.1fKc ",temperature, temperature);
+    }
+
+    fprintf(fractionBoundFile," \n");
+    fprintf(acceptanceRatioFile,"\n");
+}
+
+void Simulation::closeSamplingFiles()
+{
+    closeSamplingFile("fractionBound", &fractionBoundFile);
+    closeSamplingFile("boundconformations", &boundConformationsFile);
+    closeSamplingFile("acceptance_ratios", &acceptanceRatioFile);
+    closeSamplingFile("exchange_freq", &exchangeFrequencyFile);
 }
 
 void Simulation::printHelp()
