@@ -2,7 +2,7 @@
 NOW
 --------------------------------------------------------------------------------
 
-VERY NEXT THING: what is going on with the 300K replica? The temperatures move around, so it needs to change. But the thing which prints stuff at the end of run seems to think you can just look up the position of the 300K replica by temperatre, which means that it must exist, so the elaborate procedure for finding the latest procedure is unnecessary.
+VERY NEXT THING: assuming that there is always a 300k replica after all; check this. I think frac is now being saved on the replica.
 
 * finish cleaning run
 * clean threadable function
