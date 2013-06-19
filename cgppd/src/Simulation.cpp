@@ -161,11 +161,6 @@ void Simulation::init(int argc, char **argv, int pid)
     {
         replica[i].init_child_replica(initialReplica, int(i), geometricTemperature, geometricRotation, geometricTranslate, parameters);
         printf ("Replica %d %.3f %.3f %.3f\n", int(i), replica[i].temperature, replica[i].translateStep, replica[i].rotateStep);
-
-        // note which replica is the 300K replica for sampling
-        // if there is no replica at 300K then choose the closest one.
-        if ( abs(replica[i].temperature - 300.0f) < abs(_300kReplica->temperature - 300.0f))
-            _300kReplica = &replica[i];
     }
 
     // Temperature map stuff
@@ -175,13 +170,17 @@ void Simulation::init(int argc, char **argv, int pid)
     // so use replicaTemperaturesmap[] to track where a specific temperature is
 
     // build a map of lookups for temperature lookups while sampling
-    for (size_t i=0; i<parameters.replicas; i++)
+    for (size_t i = 0; i < parameters.replicas; i++)
     {
         // lookup of where replica with temperature x is
         position_of_temperature[replica[i].temperature] = i;
         // lookup of which replica has temperature x
         temperature[i] = replica[i].temperature;
     }
+
+    // note which replica is the 300K replica
+    // TODO: verify that there really is always a 300k replica
+    _300kReplica = &replica[position_of_temperature[300.0f]];
 
     // Thread stuff
 
@@ -314,11 +313,12 @@ void Simulation::run()
 
                 position_of_temperature[replica[i].temperature] = i;
                 position_of_temperature[replica[j].temperature] = j;
-                // also update the location of the 300k replica
-//                 if ()
-//                 {
-//                 _300kReplica = &replica[position_of_temperature[300.0f]];
-//                 }
+
+                // update pointer to 300k replica if it has moved
+                if  (replica[i].temperature == 300.0f || replica[j].temperature == 300.0f)
+                {
+                    _300kReplica = &replica[position_of_temperature[300.0f]];
+                }
 
                 exchanges++; // sampling
             }
@@ -331,13 +331,15 @@ void Simulation::run()
         waitingThreads = 0;
         pthread_cond_broadcast(&waitingThreadCond);
 
+
+
 #if GLVIS
         GLreplica = _300kReplica;
         GlutDisplay();
 #endif
 
-        int tempI = position_of_temperature[300.0f];
-        float frac = float(replica[tempI].totalBoundSamples)/max(1.0f,float(replica[tempI].totalSamples));
+        // TODO: this is already saved on the replica?
+        float frac = float(_300kReplica->totalBoundSamples)/max(1.0f,float(_300kReplica->totalSamples));
         LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, frac);
 
         totalExchanges += exchanges;
