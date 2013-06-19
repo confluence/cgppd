@@ -81,8 +81,8 @@ public:
 
     gsl_rng  * REMCRng;         // random numbers for the REMC method to swap labels
 
-    map<float, int> replicaTemperatureMap;
-    map<int, float> temperatureMap;
+    map<float, int> position_of_temperature;
+    map<int, float> temperature;
 
 #if INCLUDE_TIMERS
     uint RELoopTimer;

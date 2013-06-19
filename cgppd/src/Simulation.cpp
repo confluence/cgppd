@@ -178,9 +178,9 @@ void Simulation::init(int argc, char **argv, int pid)
     for (size_t i=0; i<parameters.replicas; i++)
     {
         // lookup of where replica with temperature x is
-        replicaTemperatureMap[replica[i].temperature] = i;
+        position_of_temperature[replica[i].temperature] = i;
         // lookup of which replica has temperature x
-        temperatureMap[i] = replica[i].temperature;
+        temperature[i] = replica[i].temperature;
     }
 
     // Thread stuff
@@ -283,9 +283,9 @@ void Simulation::run()
             fprintf(fractionBoundFile, "%9d: ", parameters.MCsteps / parameters.REsteps * steps);
             fprintf(acceptanceRatioFile, "%9d: ", parameters.MCsteps / parameters.REsteps * steps);
 
-            for(map<int, float>::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
+            for(map<int, float>::const_iterator iterator = temperature.begin(); iterator != temperature.end(); ++iterator)
             {
-                int index = replicaTemperatureMap[iterator->second];
+                int index = position_of_temperature[iterator->second];
                 replica[index].fraction_bound(fractionBoundFile);
                 replica[index].acceptance_ratio(acceptanceRatioFile);
             }
@@ -296,30 +296,36 @@ void Simulation::run()
             fflush(acceptanceRatioFile);
         }
 
-        for (int i = offset; i < parameters.replicas - 1; i += 2) // loop through the replicas in pairs
+        for (int ti = offset; ti < parameters.replicas - 1; ti += 2)
         {
-            int j = i + 1; // replica to swap with current replica
+            int tj = ti + 1;
 
-            // i and j represent temperatures, hence we need to map temperature to position
-            // z = temperatureMap[x] -> temperature of position x
-            // replicaTemperatureMap[z] -> where the replica with temperature z actually is
+            // ti and tj are labels of replicas which correspond to particular temperatures; ti and tj are actual indices within the replica array
+            // when we exchange replicas we swap temperatures and labels, keeping almost everything else in place
 
-            int t_i = replicaTemperatureMap[temperatureMap[i]];
-            int t_j = replicaTemperatureMap[temperatureMap[j]];
+            int i = position_of_temperature[temperature[ti]];
+            int j = position_of_temperature[temperature[tj]];
 
-            double delta = (1.0/replica[t_i].temperature - 1.0/replica[t_j].temperature)*(replica[t_i].potential - replica[t_j].potential)*(4184.0f/Rgas);
+            double delta = (1.0/replica[i].temperature - 1.0/replica[j].temperature) * (replica[i].potential - replica[j].potential) * (4184.0f/Rgas);
+
             if (gsl_rng_uniform(REMCRng) < min(1.0, exp(delta)))
             {
-                replica[t_i].exchangeReplicas(replica[t_j]);
+                replica[i].exchangeReplicas(replica[j]);
 
-                replicaTemperatureMap[replica[t_i].temperature] = t_i;
-                replicaTemperatureMap[replica[t_j].temperature] = t_j;
+                position_of_temperature[replica[i].temperature] = i;
+                position_of_temperature[replica[j].temperature] = j;
+                // also update the location of the 300k replica
+//                 if ()
+//                 {
+//                 _300kReplica = &replica[position_of_temperature[300.0f]];
+//                 }
 
                 exchanges++; // sampling
             }
 
             tests++;// tests performed samplng
         }
+
         offset = 1 - offset; // switch the swap neighbours in the replica exchange
 
         waitingThreads = 0;
@@ -330,7 +336,7 @@ void Simulation::run()
         GlutDisplay();
 #endif
 
-        int tempI = replicaTemperatureMap[300.0f];
+        int tempI = position_of_temperature[300.0f];
         float frac = float(replica[tempI].totalBoundSamples)/max(1.0f,float(replica[tempI].totalSamples));
         LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, frac);
 
@@ -366,9 +372,9 @@ void Simulation::run()
     fprintf(acceptanceRatioFile,"%9d: ", parameters.MCsteps);
 
     // final fraction bound and acceptance ratio
-    for(map<int, float>::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
+    for(map<int, float>::const_iterator iterator = temperature.begin(); iterator != temperature.end(); ++iterator)
     {
-        int index = replicaTemperatureMap[iterator->second];
+        int index = position_of_temperature[iterator->second];
         replica[index].fraction_bound(fractionBoundFile);
         replica[index].acceptance_ratio(acceptanceRatioFile);
     }
@@ -703,7 +709,7 @@ void Simulation::initSamplingFiles()
     fprintf(fractionBoundFile, "Iteration:  ");
     fprintf(acceptanceRatioFile, "Iteration:  ");
 
-    for(map<float, int>::const_iterator iterator = replicaTemperatureMap.begin(); iterator != replicaTemperatureMap.end(); ++iterator)
+    for(map<float, int>::const_iterator iterator = position_of_temperature.begin(); iterator != position_of_temperature.end(); ++iterator)
     {
         float temperature = iterator->first;
         fprintf(fractionBoundFile,  "%0.1fKi %0.1fKc ",temperature, temperature);
