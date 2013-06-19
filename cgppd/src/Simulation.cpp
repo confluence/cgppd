@@ -286,11 +286,7 @@ void Simulation::run()
             for(map<int, float>::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
             {
                 int index = replicaTemperatureMap[iterator->second];
-
-                // fraction bound
                 replica[index].fraction_bound(fractionBoundFile);
-
-                // acceptance rate
                 replica[index].acceptance_ratio(acceptanceRatioFile);
             }
 
@@ -300,22 +296,19 @@ void Simulation::run()
             fflush(acceptanceRatioFile);
         }
 
-        // TODO: I'm pretty sure this can be a less horrible for loop
-        int i = offset;  // replica exchange offset
-        while (i < parameters.replicas-1) // loop through the replicas in pairs
+        for (int i = offset; i < parameters.replicas - 1; i += 2) // loop through the replicas in pairs
         {
-            int j = i+1; // replica to swap with current replica
+            int j = i + 1; // replica to swap with current replica
 
             // i and j represent temperatures, hence we need to map temperature to position
-            // z = temperatureMap[x] -> temperature of position i
+            // z = temperatureMap[x] -> temperature of position x
             // replicaTemperatureMap[z] -> where the replica with temperature z actually is
 
             int t_i = replicaTemperatureMap[temperatureMap[i]];
             int t_j = replicaTemperatureMap[temperatureMap[j]];
 
-
             double delta = (1.0/replica[t_i].temperature - 1.0/replica[t_j].temperature)*(replica[t_i].potential - replica[t_j].potential)*(4184.0f/Rgas);
-            if (gsl_rng_uniform(REMCRng) < min(1.0,exp(delta)))
+            if (gsl_rng_uniform(REMCRng) < min(1.0, exp(delta)))
             {
                 replica[t_i].exchangeReplicas(replica[t_j]);
 
@@ -324,10 +317,10 @@ void Simulation::run()
 
                 exchanges++; // sampling
             }
-            i += 2; // compare the next two neighbours
+
             tests++;// tests performed samplng
         }
-        offset = 1-offset; // switch the swap neighbours in the replica exchange
+        offset = 1 - offset; // switch the swap neighbours in the replica exchange
 
         waitingThreads = 0;
         pthread_cond_broadcast(&waitingThreadCond);
@@ -372,18 +365,12 @@ void Simulation::run()
     fprintf(fractionBoundFile,"%9d: ", parameters.MCsteps);
     fprintf(acceptanceRatioFile,"%9d: ", parameters.MCsteps);
 
-    //final fraction bound
+    // final fraction bound and acceptance ratio
     for(map<int, float>::const_iterator iterator = temperatureMap.begin(); iterator != temperatureMap.end(); ++iterator)
     {
         int index = replicaTemperatureMap[iterator->second];
-
-        // fraction bound
         replica[index].fraction_bound(fractionBoundFile);
-
-        // acceptance rate
-        // TODO:this inexplicably used acceptA/acceptA+accept+reject and old totalAccept/totalAcceptReject. Assuming that was wrong.
         replica[index].acceptance_ratio(acceptanceRatioFile);
-
     }
 
     fprintf(fractionBoundFile,"\n");
