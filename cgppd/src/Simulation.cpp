@@ -314,12 +314,6 @@ void Simulation::run()
                 position_of_temperature[replica[i].temperature] = i;
                 position_of_temperature[replica[j].temperature] = j;
 
-                // update pointer to 300k replica if it has moved
-                if  (replica[i].temperature == 300.0f || replica[j].temperature == 300.0f)
-                {
-                    _300kReplica = &replica[position_of_temperature[300.0f]];
-                }
-
                 exchanges++; // sampling
             }
 
@@ -332,15 +326,15 @@ void Simulation::run()
         pthread_cond_broadcast(&waitingThreadCond);
 
 
+        // update pointer to 300k replica
+        _300kReplica = &replica[position_of_temperature[300.0f]];
 
 #if GLVIS
         GLreplica = _300kReplica;
         GlutDisplay();
 #endif
 
-        // TODO: this is already saved on the replica?
-        float frac = float(_300kReplica->totalBoundSamples)/max(1.0f,float(_300kReplica->totalSamples));
-        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, frac);
+        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, _300kReplica->accumulativeFractionBound);
 
         totalExchanges += exchanges;
         totalTests += tests;
