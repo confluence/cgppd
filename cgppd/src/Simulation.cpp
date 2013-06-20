@@ -1,6 +1,6 @@
 #include "Simulation.h"
 
-Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), offset(0), steps(0), thread_created(false)
+Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), exchangeFraction(0), accumulativeExchangeFraction(0), offset(0), steps(0), thread_created(false)
 {
     REMCRng = gsl_rng_alloc(gsl_rng_mt19937);
     _300kReplica = &replica[0];
@@ -336,13 +336,7 @@ void Simulation::run()
 
         LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, _300kReplica->accumulativeFractionBound);
 
-        totalExchanges += exchanges;
-        totalTests += tests;
-
-        fprintf(exchangeFrequencyFile,"%10d %6.4f %6.4f\n",steps, float(totalExchanges)/float(totalTests), float(exchanges)/float(tests));
-        tests = 0;
-        exchanges = 0;
-
+        exchange_frequency();
     }
 
 #if INCLUDE_TIMERS
@@ -408,6 +402,20 @@ void Simulation::run()
     return;
 }
 // END OF run
+
+void Simulation::exchange_frequency()
+{
+    totalExchanges += exchanges;
+    totalTests += tests;
+
+    exchangeFraction = float(exchanges)/float(tests);
+    accumulativeExchangeFraction = float(totalExchanges)/float(totalTests);
+
+    fprintf(exchangeFrequencyFile, "%10d %6.4f %6.4f\n", steps, accumulativeExchangeFraction, exchangeFraction);
+
+    tests = 0;
+    exchanges = 0;
+}
 
 void *MCthreadableFunction(void *arg)
 {

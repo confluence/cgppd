@@ -108,6 +108,10 @@ public:
     void closeSamplingFile(const char * name, FILE ** file_addr);
     void initSamplingFiles();
     void closeSamplingFiles();
+
+    float exchangeFraction;
+    float accumulativeExchangeFraction;
+    void exchange_frequency();
 };
 
 void *MCthreadableFunction(void *arg);
