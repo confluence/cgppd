@@ -14,8 +14,8 @@ VERY NEXT THING: assuming that there is always a 300k replica after all; check t
     * when resuming, make sure the iteration count is increased and e.g. sampling starts immediately if it needs to
     * save/load:
         * parameters.currentStep
-        * per-replica cumulative data
-        * is this getting too elaborate?
+        * per-replica cumulative data (same stuff that is swapped during replica exchange)
+        * per-simulation cumulative data (total tests and exchanges)
 
 * start writing up
     * skeleton
