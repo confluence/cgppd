@@ -2,11 +2,20 @@
 NOW
 --------------------------------------------------------------------------------
 
-VERY NEXT THING: assuming that there is always a 300k replica after all; check this. I think frac is now being saved on the replica.
+VERY NEXT THING:
 
-* finish cleaning run
 * clean threadable function
+    * number of replicas per thread: surely this can be precalculated and checked in run?
+    * fix verbose logging (need to define mutex)
+    * cuda init and teardown should go in functions and be used from here and init
+    * same for cuda streams
+    * avoid using tx+threadIndex*tReplicas a million times -- instead, work out start and endpoint once and iterate from one to the other.
+    * same goes for threadIndex*tReplicas+index+rps
+    * consolidate the huge, nasty mess of preprocessor alternatives into something readable. Extract insides into functions?
+
 * clean up the messages a bit
+
+* assuming that there is always a 300k replica after all; check the maths
 
 * put checkpointing back in
     * save individual pdb files
