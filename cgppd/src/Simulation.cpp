@@ -424,29 +424,35 @@ void *MCthreadableFunction(void *arg)
     long threadIndex = data->index;
     Replica *replica = data->replica;
 
-    printf ("--- Monte-Carlo thread %d running. ---.\n",int(threadIndex+1));
+    printf ("--- Monte-Carlo thread %d running. ---.\n", int(threadIndex + 1));
 
+// TODO: why do we do this?
 #if GLVIS
     GLreplica = &replica[0];
 #endif
+    // TODO: we know the number of threads and replicas in run. Surely we can calculate all this stuff *once* before launching the threads?
     // determine the number of replicas the thread will run
-    int tReplicas = int(ceil(float(data->replicaCount)/float(data->threads)));
+    int tReplicas = int(ceil(float(data->replicaCount) / float(data->threads)));
     //to make sure we have all replicas execute, check that tReplicas*(i+1) < REPLICA_COUNT
     int replicasInThisThread = tReplicas;
-    if  (tReplicas*(threadIndex+1)>data->replicaCount)
-        replicasInThisThread = tReplicas - (tReplicas*data->threads)%data->replicaCount;
 
-    if (replicasInThisThread-1+threadIndex*tReplicas > data->replicaCount)
+    if  (tReplicas * (threadIndex + 1) > data->replicaCount)
+    {
+        replicasInThisThread = tReplicas - (tReplicas * data->threads) % data->replicaCount;
+    }
+
+    if (replicasInThisThread - 1 + threadIndex * tReplicas > data->replicaCount)
     {
         cout << "TOO MANY THREADS. Either increase the number of replicas or decrease the thread count. " << endl;
         exit(0);
     }
 
+// TODO: it's a good thing this isn't on, because this mutex is not defined.
 #ifdef VERY_VERBOSE
     pthread_mutex_lock( &replicaMutex );
-    for (int tx=0; tx<replicasInThisThread; tx++)
+    for (int tx = 0; tx < replicasInThisThread; tx++)
     {
-        cout << "+ Thread " << threadIndex << " running replica " << tx+threadIndex*tReplicas << endl;
+        cout << "+ Thread " << threadIndex << " running replica " << tx + threadIndex * tReplicas << endl;
     }
     pthread_mutex_unlock( &replicaMutex );
 #endif
@@ -519,7 +525,6 @@ void *MCthreadableFunction(void *arg)
     // run the MC loop
 #if !CUDA_MC && !CUDA_STREAMS   // if no MC on device
     int mcstep = 0;
-    int samples = 0;
     while (mcstep < data->MCsteps)
     {
         //cout << "Starting mc loop at " << mcstep << " steps" << endl;
