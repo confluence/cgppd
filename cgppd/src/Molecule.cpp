@@ -565,10 +565,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         exit(0);
     }
 
-#ifdef VERY_VERBOSE
-    //cout << "\tParsing: " << pdbfilename << "\n";
-#endif
-
     // for eachline in the file
     char line[512] = {' '};
     bool reached_end_marker = false;

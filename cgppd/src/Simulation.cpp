@@ -12,6 +12,9 @@ Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExch
     pthread_cond_init (&waitingReplicaExchangeCond, NULL);
     pthread_mutex_init(&waitingCounterMutex, NULL);
     pthread_mutex_init(&writeFileMutex, NULL);
+#ifdef VERBOSE_THREAD_LOGGING
+    pthread_mutex_init(&logMutex, NULL);
+#endif
 
     // TODO: move these to an init method on aminoAcidData
     LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
@@ -42,6 +45,9 @@ Simulation::~Simulation()
     pthread_attr_destroy(&attr);
     pthread_mutex_destroy(&waitingCounterMutex);
     pthread_mutex_destroy(&writeFileMutex);
+#ifdef VERBOSE_THREAD_LOGGING
+    pthread_mutex_destroy(&logMutex);
+#endif
     pthread_cond_destroy(&waitingThreadCond);
     pthread_cond_destroy(&waitingReplicaExchangeCond);
     if (thread_created)
@@ -208,6 +214,9 @@ void Simulation::init(int argc, char **argv, int pid)
 
         data[i].waitingCounterMutex = &waitingCounterMutex;
         data[i].writeFileMutex = &writeFileMutex;
+#ifdef VERBOSE_THREAD_LOGGING
+        data[i].logMutex = &logMutex;
+#endif
         data[i].waitingThreadCond = &waitingThreadCond;
         data[i].waitingReplicaExchangeCond = &waitingReplicaExchangeCond;
 
@@ -447,14 +456,13 @@ void *MCthreadableFunction(void *arg)
         exit(0);
     }
 
-// TODO: it's a good thing this isn't on, because this mutex is not defined.
-#ifdef VERY_VERBOSE
-    pthread_mutex_lock( &replicaMutex );
+#ifdef VERBOSE_THREAD_LOGGING
+    pthread_mutex_lock( data->logMutex );
     for (int tx = 0; tx < replicasInThisThread; tx++)
     {
         cout << "+ Thread " << threadIndex << " running replica " << tx + threadIndex * tReplicas << endl;
     }
-    pthread_mutex_unlock( &replicaMutex );
+    pthread_mutex_unlock( data->logMutex );
 #endif
 
 #if USING_CUDA

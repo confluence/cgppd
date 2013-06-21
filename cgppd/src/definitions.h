@@ -44,6 +44,7 @@
     #define PADDER_AATYPE 		20.0f
 
     // code things
+//     #define VERBOSE_THREAD_LOGGING 1
 
     #define ERROR   true
     #define ALWAYS   true

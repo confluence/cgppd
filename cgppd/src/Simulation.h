@@ -76,6 +76,9 @@ public:
     pthread_attr_t attr;
     pthread_mutex_t waitingCounterMutex;
     pthread_mutex_t writeFileMutex;
+#ifdef VERBOSE_THREAD_LOGGING
+    pthread_mutex_t logMutex;
+#endif
     pthread_cond_t waitingThreadCond;
     pthread_cond_t waitingReplicaExchangeCond;
 
