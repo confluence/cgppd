@@ -6,9 +6,7 @@ VERY NEXT THING:
 
 * clean threadable function
     * number of replicas per thread: surely this can be precalculated and checked in run?
-    * fix verbose logging (need to define mutex)
-    * cuda init and teardown should go in functions and be used from here and init
-    * same for cuda streams
+    * Maybe add cuda setup and teardown methods to replica? Alternatively, pass replica(s) to simulation's setup and teardown
     * avoid using tx+threadIndex*tReplicas a million times -- instead, work out start and endpoint once and iterate from one to the other.
     * same goes for threadIndex*tReplicas+index+rps
     * consolidate the huge, nasty mess of preprocessor alternatives into something readable. Extract insides into functions?

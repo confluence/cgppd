@@ -82,7 +82,9 @@ void Simulation::init(int argc, char **argv, int pid)
 #if USING_CUDA
         // set box size
     if (parameters.auto_blockdim)
+    {
         (initialReplica.residueCount < 1024) ? parameters.cuda_blockSize = 32 : parameters.cuda_blockSize = 64;
+    }
 
     initialReplica.setBlockSize(parameters.cuda_blockSize);
 #endif
@@ -426,6 +428,61 @@ void Simulation::exchange_frequency()
     exchanges = 0;
 }
 
+void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials, AminoAcids * amino_acid_data)
+{
+    // initialise cuda for use in this thread
+    cuInit(0);
+    cutilCheckMsg("Failed to initialise CUDA runtime.");
+
+    cudaSetDevice(device_id);
+    cutilCheckMsg("Failed to pick device for the CUDA runtime.");
+
+    CUDA_setBoxDimension(box_dimension);
+    cutilCheckMsg("Failed to copy box dimensions to GPU.");
+
+    // copy the LJpotentials to gpu memory in this thread context so it can access it
+    cudaMalloc((void**)&device_LJ_potentials, LJArraySize);
+    cutilCheckMsg("Failed to allocate contact potential memory on the GPU.");
+
+    copyLJPotentialDataToDevice(device_LJ_potentials, amino_acid_data);
+    cutilCheckMsg("Failed to copy contact potentials to device.");
+
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    bindLJTexture(device_LJ_potentials);
+#endif
+}
+
+void teardown_CUDA(float * device_LJ_potentials)
+{
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    unbindLJTexture();
+#endif
+
+    cudaFree(device_LJ_potentials);
+}
+
+#if CUDA_STREAMS
+void setup_CUDA_streams(cudaStream_t * streams, int * streams_per_thread, int num_streams, int num_threads, int num_replicas_in_thread)
+{
+    // the stream/replica ration must be a whole number otherwise there will be lots of waste, ie dormant streams etc
+    int replicas_per_stream = int(ceil(float(num_replicas_in_thread)/float(num_streams / num_threads)));
+    *streams_per_thread  = replicasInThisThread/replicas_per_stream;
+
+    for (int i = 0; i < *streams_per_thread; i++)
+    {
+        cudaStreamCreate(&streams[i]); // TODO: is this right?
+    }
+}
+
+void teardown_CUDA_streams(cudaStream_t * streams, int streams_per_thread)
+{
+    for (int i = 0; i < streams_per_thread; i++)
+    {
+        cudaStreamDestroy(streams[i]);
+    }
+}
+#endif
+
 void *MCthreadableFunction(void *arg)
 {
 
@@ -466,46 +523,18 @@ void *MCthreadableFunction(void *arg)
 #endif
 
 #if USING_CUDA
-
-    //initialise cuda for use in this thread
-    cuInit(0);
-    cutilCheckMsg("Failed to initialise CUDA runtime.");
-
-    cudaSetDevice(data->GPUID);
-    cutilCheckMsg("Failed to pick device for the CUDA runtime.");
-
-    // copy the LJpotentials to gpu memory in this thread context so it can access it
-    float *deviceLJpTmp;
-    cudaMalloc((void**)&deviceLJpTmp,sizeof(float)*AA_COUNT*AA_COUNT);
-    cutilCheckMsg("Failed to allocate contact potential memory on the GPU");
-
-    CUDA_setBoxDimension(replica->boundingValue);
-    cutilCheckMsg("Failed to copy box dimensions to GPU");
-
-    copyLJPotentialDataToDevice(deviceLJpTmp, &replica[threadIndex*tReplicas].aminoAcids);
-    cutilCheckMsg("Failed to code contact potentials to device.");
-
+    float * deviceLJpTmp;
+    setup_CUDA(data->GPUID, replica->boundingValue, deviceLJpTmp, &replica[threadIndex * tReplicas].aminoAcids);
 
     // create streams for each subsequent MCSearch
     // ensure the replica can find the lookup table
     // initialise data on the device and copy the initial batch
 
 #if CUDA_STREAMS
-
     cudaStream_t streams[16];   // reserve 16 stream slots but create only as many as needed
-    // the stream/replica ration must be a whole number otherwise there will be lots of waste, ie dormant streams etc
-    int streamsAvailablePerThread = data->streams/data->threads;
-    int replicasPerStream = int(ceil(float(replicasInThisThread)/float(streamsAvailablePerThread)));
-    int streamsPerThread  = replicasInThisThread/replicasPerStream;
+    int streamsPerThread(0);
 
-    for (int is=0; is<streamsPerThread; is++)
-    {
-        cudaStreamCreate(&streams[is]);
-    }
-#endif
-
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    bindLJTexture(deviceLJpTmp);
+    setup_CUDA_streams(streams, &streamsPerThread);
 #endif
 
     for (int tx=0; tx<replicasInThisThread; tx++)
@@ -513,20 +542,13 @@ void *MCthreadableFunction(void *arg)
         replica[tx+threadIndex*tReplicas].device_LJPotentials = deviceLJpTmp;
         replica[tx+threadIndex*tReplicas].ReplicaDataToDevice();
 
-
         //printf("Initial potential value for replica %d (compute thread %d): %20.10f\n",int(tx+threadIndex*tReplicas) ,int(threadIndex), replica[tx+threadIndex*tReplicas].EonDevice());
 #if CUDA_STREAMS
-        // TODO: does this access the same replica?! I assume so.
         data->replica[tx+threadIndex*tReplicas].cudaStream = streams[tx%streamsPerThread];  // use rotation to assign replicas to streams
         replica[tx+threadIndex*tReplicas].ReserveSumSpace();                                // reserve a space for the potential summation to be stored
-//         replica[tx+threadIndex*tReplicas].savedMolecule.reserveResidueSpace(replica[tx+threadIndex*tReplicas].maxMoleculeSize); // TODO: moved this to one of the init functions
 #endif
-
     }
-
-
-
-#endif
+#endif // USING_CUDA
 
     int mcstepsPerRE = data->MCsteps/data->REsteps; // number of MC steps to do at a time
 
@@ -654,26 +676,11 @@ void *MCthreadableFunction(void *arg)
     }
 
 #if CUDA_STREAMS
-    for (int i=0; i<streamsPerThread; i++)
-    {
-        cudaStreamDestroy(streams[i]);
-    }
+    teardown_CUDA_streams(streams, streamsPerThread);
 #endif
 
-    // free the memory used by the LJ table
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    unbindLJTexture();
+    teardown_CUDA(deviceLJpTmp);
 #endif
-    cudaFree(deviceLJpTmp);
-#endif //using cuda
-    /*pthread_mutex_lock(&waitingCounterMutex);                     // lock the counter
-    data->waitingThreadCount[0] = data->waitingThreadCount[0]+1;        // wait one last time for all threads to complete before joining them.
-    if (data->waitingThreadCount[0]==data->threads)
-    {
-        pthread_cond_signal(data->waitingReplicaExchangeCond);
-    }
-    pthread_mutex_unlock(&waitingCounterMutex);             //unlock the counter
-    */
     printf (" >>> Monte-Carlo thread %d exited.\n",int(threadIndex));
     return 0;
 }
