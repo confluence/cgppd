@@ -6,7 +6,7 @@ VERY NEXT THING:
 
 * clean threadable function
     * number of replicas per thread: surely this can be precalculated and checked in run?
-    * Maybe add cuda setup and teardown methods to replica? Alternatively, pass replica(s) to simulation's setup and teardown
+    * Maybe add cuda setup and teardown methods to replica? Alternatively, pass replica(s) to simulation's setup and teardown. Actually, do both.
     * avoid using tx+threadIndex*tReplicas a million times -- instead, work out start and endpoint once and iterate from one to the other.
     * same goes for threadIndex*tReplicas+index+rps
     * consolidate the huge, nasty mess of preprocessor alternatives into something readable. Extract insides into functions?
@@ -33,10 +33,6 @@ VERY NEXT THING:
 * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 * single rng for all replicas
     * CAUTION: this may be a problem because of threading (safety and/or performance). Look into it in greater detail.
-* clean up CUDA a bit more (setting up and tearing down)
-* clean up the file stuff
-
-* figure out how run / the threadable function actually work
 
 * extend unit test to a reasonably complete normal simulation (with reading of parameters, etc.)
 * mock rng (?) for a predictable set of steps?
