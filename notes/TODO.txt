@@ -14,6 +14,8 @@ VERY NEXT THING:
     * consolidate the huge, nasty mess of preprocessor alternatives into something readable. Extract insides into functions?
 
 * clean up the messages a bit
+    * consistent format
+    * use the logging macros
 
 * assuming that there is always a 300k replica after all; check the maths
 
