@@ -129,7 +129,7 @@ void Molecule::init_saved_molecule(int max_residue_count, int max_segment_count)
 {
     Residues = new Residue[max_residue_count];
     Links = new Link[max_residue_count - 1];
-    Segments = new Segment[max_segment_count];
+    Segments = new Segment[max_segment_count]; // TODO: make this a vector; then we don't have to know the size
 }
 #else // if not FLEXIBLE_LINKS
 void Molecule::init_saved_molecule(int max_residue_count)
