@@ -138,6 +138,13 @@ public:
 
     float *device_LJPotentials;
 
+    void setup_CUDA(float * device_LJ_potentials);
+    void teardown_CUDA();
+#if CUDA_STREAMS
+    void setup_CUDA_streams(cudaStream_t * streams, int stream_index);
+    void teardown_CUDA_streams();
+#endif
+
     int *device_residueCount;
     int *device_moleculeCount;
     int *device_moleculeStartPositions;		// position offset where each molecule starts in the above arrays

@@ -539,13 +539,15 @@ void *MCthreadableFunction(void *arg)
 
     for (int tx=0; tx<replicasInThisThread; tx++)
     {
-        replica[tx+threadIndex*tReplicas].device_LJPotentials = deviceLJpTmp;
-        replica[tx+threadIndex*tReplicas].ReplicaDataToDevice();
+        replica[tx+threadIndex*tReplicas].setup_CUDA(deviceLJpTmp);
+//         replica[tx+threadIndex*tReplicas].device_LJPotentials = deviceLJpTmp;
+//         replica[tx+threadIndex*tReplicas].ReplicaDataToDevice();
 
         //printf("Initial potential value for replica %d (compute thread %d): %20.10f\n",int(tx+threadIndex*tReplicas) ,int(threadIndex), replica[tx+threadIndex*tReplicas].EonDevice());
 #if CUDA_STREAMS
-        data->replica[tx+threadIndex*tReplicas].cudaStream = streams[tx%streamsPerThread];  // use rotation to assign replicas to streams
-        replica[tx+threadIndex*tReplicas].ReserveSumSpace();                                // reserve a space for the potential summation to be stored
+//         data->replica[tx+threadIndex*tReplicas].cudaStream = streams[tx%streamsPerThread];  // use rotation to assign replicas to streams
+//         replica[tx+threadIndex*tReplicas].ReserveSumSpace();                                // reserve a space for the potential summation to be stored
+        replica[tx+threadIndex*tReplicas].setup_CUDA_streams(streams, tx % streamsPerThread);
 #endif
     }
 #endif // USING_CUDA
@@ -669,10 +671,12 @@ void *MCthreadableFunction(void *arg)
     for (int tx=0; tx<replicasInThisThread; tx++)
     {
 #if CUDA_STREAMS
-        replica[tx+threadIndex*tReplicas].FreeSumSpace();
+//         replica[tx+threadIndex*tReplicas].FreeSumSpace();
+        replica[tx+threadIndex*tReplicas].teardown_CUDA_streams();
 //         delete [] replica[tx+threadIndex*tReplicas].savedMolecule.Residues;
 #endif
-        replica[tx+threadIndex*tReplicas].FreeDevice();
+//         replica[tx+threadIndex*tReplicas].FreeDevice();
+        replica[tx+threadIndex*tReplicas].teardown_CUDA();
     }
 
 #if CUDA_STREAMS
