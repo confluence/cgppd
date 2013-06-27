@@ -83,25 +83,25 @@ void Replica::init_child_replica(const Replica& ir, const int index, const doubl
 }
 
 #if USING_CUDA
-void setup_CUDA(float * device_LJ_potentials)
+void Replica::setup_CUDA(float * device_LJ_potentials)
 {
         device_LJPotentials = device_LJ_potentials;
         ReplicaDataToDevice();
 }
 
-void teardown_CUDA()
+void Replica::teardown_CUDA()
 {
     FreeDevice();
 }
 
 #if CUDA_STREAMS
-void setup_CUDA_streams(cudaStream_t * streams, int stream_index)
+void Replica::setup_CUDA_streams(cudaStream_t * streams, int stream_index)
 {
     cudaStream = streams[stream_index];  // use rotation to assign replicas to streams
     ReserveSumSpace();                   // reserve a space for the potential summation to be stored
 }
 
-void teardown_CUDA_streams()
+void Replica::teardown_CUDA_streams()
 {
     FreeSumSpace();
 }
