@@ -18,6 +18,8 @@
         int GPUID;
         int threads;
         int streams;
+        int replicas_in_this_thread;
+        int max_replicas_per_thread;
         int MCsteps;
         int REsteps;
         int sampleFrequency;
@@ -60,6 +62,7 @@
 #endif
         int threads;
         int streams;
+        int max_replicas_per_thread;
         int gpus;
         int MCsteps;
         int REsteps;
@@ -90,7 +93,7 @@
             gpus(1), threads(THREAD_COUNT), streams(STREAM_COUNT), MCsteps(MC_STEPS), REsteps(REMC_STEPS),
             sampleFrequency(SAMPLE_FREQ), sampleStartsAfter(STEPS_BEFORE_SAMPLE), inputFile(false),
             replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP),
-            pid(0), resume(false), checkpointFrequency(CHECKPOINTFREQUENCY)
+            pid(0), resume(false), checkpointFrequency(CHECKPOINTFREQUENCY), max_replicas_per_thread(0)
         {
             memset(prefix, 0, 256);
             memset(file, 0, 256);

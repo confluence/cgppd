@@ -17,33 +17,35 @@ VERY NEXT THING:
 
 * assuming that there is always a 300k replica after all; check the maths
 
-* put checkpointing back in
-    * save individual pdb files
-    * save checkpointing file with list of pdb files to load and iteration count
-    * when resuming, make sure the iteration count is increased and e.g. sampling starts immediately if it needs to
-    * save/load:
-        * parameters.currentStep
-        * per-replica cumulative data (same stuff that is swapped during replica exchange)
-        * per-simulation cumulative data (total tests and exchanges)
-
 * start writing up
     * skeleton
     * design / implementation of changes chapter
 
-* make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
-* single rng for all replicas
-    * CAUTION: this may be a problem because of threading (safety and/or performance). Look into it in greater detail.
+TEST
 
-* extend unit test to a reasonably complete normal simulation (with reading of parameters, etc.)
-* mock rng (?) for a predictable set of steps?
+* better unit tests of important simulation and replica functions
+
+MAKEFILE
+
+* Print out whether compiled with flexible linkers
 
 --------------------------------------------------------------------------------
-THEN
+SOON
 --------------------------------------------------------------------------------
 
-* postprocess: write it completely separately in Python
+TEST
+
+* stuff that's disabled, e.g. Kahan sums
+
+POSTPROCESS
+
+* write it completely separately in Python
+
+OPTIONS
 
 * make flex and crankshaft moves optional
+
+REFACTOR
 
 * Linkers, etc. don't actually *need* to be arrays. Just keep them as vectors.
 * is it really necessary to use custom vector3f and vector3d types?
@@ -58,21 +60,18 @@ THEN
 * AMINO ACIDS
     * clean up read from file
 
-MAKEFILE
-* Use config for compilation options?
-* Print out whether compiled with flexible linkers
-
 --------------------------------------------------------------------------------
-SOON
+LATER / MAYBE
 --------------------------------------------------------------------------------
 
-WRITE
-* Thesis skeleton
-* Background chapter
-    * Visualisation: graphs of LJ and DH potential vs residue distance (? -- for different types)
-* Implementation
+TWISTER
+
+* make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
+* single rng for all replicas
+    * CAUTION: this may be a problem because of threading (safety and/or performance). Look into it in greater detail.
 
 ADD
+
 * Extra MC moves (just domain rotation?) on GPU?
 * Make angle terms, crankshaft moves optional; test efficiency / accuracy of including them
 * Make flexing optional; doesn't really work in cases with flexible loops coming out of domains.
@@ -81,28 +80,20 @@ ADD
     * Write another version of the CPU bond calculation, which throws out the caching and calculates everything
 * What happens if molecule consists of multiple chains?
 
-TEST
-Potential:
-* test data
-* !!! check performance of CPU NC E with doubles / floats
-* unit test for kahan sums, repulsive crowding
+CHECKPOINTING
 
-TEST
-* write an end-to-end test for optimisation comparisons
-    * is component-wise addition of vectors important?
-    * is caching of internal potential subtotals important?
+* put checkpointing back in
+    * save individual pdb files
+    * save checkpointing file with list of pdb files to load and iteration count
+    * when resuming, make sure the iteration count is increased and e.g. sampling starts immediately if it needs to
+    * save/load:
+        * parameters.currentStep
+        * per-replica cumulative data (same stuff that is swapped during replica exchange)
+        * per-simulation cumulative data (total tests and exchanges)
 
---------------------------------------------------------------------------------
-LATER
---------------------------------------------------------------------------------
+OPTIMISE / TEST
 
-* Nice examples to go in paper
-
---------------------------------------------------------------------------------
-EVENTUALLY
---------------------------------------------------------------------------------
-
-OPTIMISE
+* is caching of internal potential subtotals important?
 
 * is it *actually* worth summing vector components separately?
 
@@ -116,4 +107,5 @@ OPTIMISE
     * Friedrichs, et al.have a kernel for bonded forces
 
 ADD
+
 * Multiple GPUs?  Does that work?

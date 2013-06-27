@@ -227,6 +227,16 @@ void Simulation::init(int argc, char **argv, int pid)
         // will perform best if threads:gpus = 1:1
         data[i].GPUID = i % parameters.gpus;
         cout << "Assign thread " << i << " to GPU " << data[i].GPUID << endl;
+
+        data[i].max_replicas_per_thread = parameters.max_replicas_per_thread;
+
+        // we have already checked that the replicas can be distributed like this
+        data[i].replicas_in_this_thread = parameters.max_replicas_per_thread;
+        if (i == parameters.threads - 2) // last thread
+        {
+            data[i].replicas_in_this_thread -= parameters.replicas - parameters.max_replicas_per_thread * parameters.threads;
+        }
+
     }
 
     // File stuff
@@ -489,6 +499,9 @@ void *MCthreadableFunction(void *arg)
     SimulationData *data = (SimulationData *) arg;
     long threadIndex = data->index;
     Replica *replica = data->replica;
+    // TODO: this is a temporary patch; we need to clean up the indices
+    int tReplicas = data->max_replicas_per_thread;
+    int replicasInThisThread = data->replicas_in_this_thread;
 
     printf ("--- Monte-Carlo thread %d running. ---.\n", int(threadIndex + 1));
 
@@ -496,22 +509,6 @@ void *MCthreadableFunction(void *arg)
 #if GLVIS
     GLreplica = &replica[0];
 #endif
-    // TODO: we know the number of threads and replicas in run. Surely we can calculate all this stuff *once* before launching the threads?
-    // determine the number of replicas the thread will run
-    int tReplicas = int(ceil(float(data->replicaCount) / float(data->threads)));
-    //to make sure we have all replicas execute, check that tReplicas*(i+1) < REPLICA_COUNT
-    int replicasInThisThread = tReplicas;
-
-    if  (tReplicas * (threadIndex + 1) > data->replicaCount)
-    {
-        replicasInThisThread = tReplicas - (tReplicas * data->threads) % data->replicaCount;
-    }
-
-    if (replicasInThisThread - 1 + threadIndex * tReplicas > data->replicaCount)
-    {
-        cout << "TOO MANY THREADS. Either increase the number of replicas or decrease the thread count. " << endl;
-        exit(0);
-    }
 
 #ifdef VERBOSE_THREAD_LOGGING
     pthread_mutex_lock( data->logMutex );
@@ -1058,13 +1055,13 @@ void Simulation::check_and_modify_parameters()
 {
     if (parameters.bound <= 0)
     {
-        cout << "! Bounding value too small, setting equal to " << BOUNDING_VALUE << endl;
+        cout << "! Bounding value too small; setting equal to " << BOUNDING_VALUE << endl;
         parameters.bound = BOUNDING_VALUE;
     }
 
     if (parameters.temperatureMax < parameters.temperatureMin)
     {
-        cout << "! Maximum temperature < minimum temperature, swapping " << parameters.temperatureMax << " <-> " << parameters.temperatureMin << endl;
+        cout << "! Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " <-> " << parameters.temperatureMin << endl;
         float tmp = parameters.temperatureMax;
         parameters.temperatureMax = parameters.temperatureMin;
         parameters.temperatureMin = tmp;
@@ -1073,7 +1070,16 @@ void Simulation::check_and_modify_parameters()
     if (parameters.threads > parameters.replicas)
     {
         parameters.threads = parameters.replicas;
-        cout << "! Too many threads, setting equal to " << parameters.threads << endl;
+        cout << "! Threads > replicas; setting threads equal to " << parameters.threads << endl;
+    }
+
+    parameters.max_replicas_per_thread = int(ceil(float(parameters.replicas) / float(parameters.threads)));
+    int spaces = parameters.replicas - parameters.max_replicas_per_thread * parameters.threads;
+    int unused_threads = spaces / parameters.max_replicas_per_thread; // integer division
+    if (unused_threads)
+    {
+        cout << "! After assignment of " << parameters.replicas << " replicas to " << parameters.threads << " threads with " << parameters.max_replicas_per_thread << " replicas per thread, " << unused_threads << " threads are left unused. You must either increase the number of replicas or decrease the number of threads. Exiting.";
+        exit(0);
     }
 
 #if USING_CUDA
@@ -1082,19 +1088,22 @@ void Simulation::check_and_modify_parameters()
     if (parameters.gpus > availableGpus)
     {
         parameters.gpus = availableGpus;
-        cout << "! Too many GPUs, setting equal to " << parameters.gpus << endl;
+        cout << "! Too many GPUs; setting equal to " << parameters.gpus << endl;
     }
 #endif
 
     if (parameters.threads > parameters.streams)
     {
         parameters.streams = parameters.threads;
-        if (parameters.streams > 16*parameters.gpus)
+        if (parameters.streams > 16 * parameters.gpus)
         {
-            parameters.streams = 16*parameters.gpus;
+            parameters.streams = 16 * parameters.gpus;
+
             if (parameters.streams > parameters.replicas)
+            {
                 parameters.streams = parameters.replicas;
-            cout << "! Too many streams, setting equal to " << parameters.streams << endl;
+            }
+            cout << "! Too many streams; setting equal to " << parameters.streams << endl;
         }
     }
 
