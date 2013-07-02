@@ -535,7 +535,6 @@ void *MCthreadableFunction(void *arg)
 #if CUDA_STREAMS
     cudaStream_t streams[16];   // reserve 16 stream slots but create only as many as needed
     int streamsPerThread(0);
-
     setup_CUDA_streams(streams, &streamsPerThread);
 #endif
 
@@ -555,18 +554,17 @@ void *MCthreadableFunction(void *arg)
     {
         //cout << "Starting mc loop at " << mcstep << " steps" << endl;
         // do all MC steps before RE
-        for (int tx=0; tx<replicasInThisThread; tx++)
+        for (int tx = 0; tx < replicasInThisThread; tx++)
         {
             // to sample at the correct rate split this into another set of loops
-            for (int s=0; s<data->MC_steps_per_RE/data->sampleFrequency; s++)
+            for (int s = 0; s < data->MC_steps_per_RE / data->sampleFrequency; s++)
             {
-                replica[tx+replica_offset].MCSearch(data->sampleFrequency);
+                replica[tx + replica_offset].MCSearch(data->sampleFrequency);
 
-                if (mcstep + s*data->sampleFrequency >= data->sampleStartsAfter)
+                if (mcstep + s * data->sampleFrequency >= data->sampleStartsAfter)
                 {
-                    // cout << "Sampling at step:" << mcstep+(s+1)*data->sampleFrequency << endl;
                     // if E < -1.1844 kcal/mol then its bound
-                    replica[tx+replica_offset].sample(data->boundConformations,mcstep+s*data->sampleFrequency,BOUND_ENERGY_VALUE,data->writeFileMutex);
+                    replica[tx + replica_offset].sample(data->boundConformations, mcstep + s*data->sampleFrequency, BOUND_ENERGY_VALUE, data->writeFileMutex);
                 }
             }
         }
