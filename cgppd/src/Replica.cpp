@@ -61,17 +61,18 @@ void Replica::init_first_replica(const vector<moldata> mdata, AminoAcids amino_a
 void Replica::init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters)
 {
     // TODO: incorporate copy method into this one and try to clean it up
+    // TODO: if it's not used anywhere else, remove setting of index and temperature -- it only confuses things
     copy(ir);
-#if INCLUDE_TIMERS
-    initTimers();
-#endif
 
-    this->label = index;
-    this->temperature = parameters.temperatureMin * pow(geometricTemperature, index);
+    label = index;
+    temperature = parameters.temperatureMin * pow(geometricTemperature, index);
     rotateStep = MIN_ROTATION * pow(geometricRotation, index);
     translateStep = MIN_TRANSLATION * pow(geometricTranslate, index);
     threadCount = parameters.threads;
 
+#if INCLUDE_TIMERS
+    initTimers();
+#endif
     // TODO: only one range for entire simulation (but is the library threadsafe?)
     initRNGs();
 #if FLEXIBLE_LINKS
