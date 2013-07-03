@@ -43,9 +43,6 @@ int main(int argc, char **argv)
     Simulation simulation;
     simulation.init(argc, argv, pid);
 
-    // TODO: only if verbose output
-    simulation.printArgs();
-
 // TODO: this is pretty gross; hide it in a function.
 #if GLVIS
     if (simulation.parameters.viewConditions)

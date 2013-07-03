@@ -68,7 +68,7 @@ void Simulation::init(int argc, char **argv, int pid)
 
     parameters.pid = pid;
 
-    getArgs(argc, argv);
+    getFileArg(argc, argv);
     loadArgsFromFile();
     getArgs(argc, argv); // second pass to override any variables if doing performance tests
 
@@ -248,6 +248,9 @@ void Simulation::init(int argc, char **argv, int pid)
 
     cout << "Last CUDA error: " << cudaGetErrorString(cudaGetLastError()) << endl;
     cout.flush();
+
+    // TODO: only if verbose output
+    printArgs();
 }
 
 void Simulation::run()
@@ -768,21 +771,49 @@ void Simulation::printHelp()
     exit(0);
 }
 
-void Simulation::getArgs(int argc, char **argv)
+void Simulation::getFileArg(int argc, char **argv)
 {
-
-    if (argc <= 1)
+    const struct option long_options[] =
     {
-        cout << "No arguments provided." << endl;
-        printHelp();
+        {"file", required_argument, 0, 'f'},
+        {0, 0, 0, 0},
+    };
+
+    int opt_index = 0;
+
+    while (1)
+    {
+        int opt = getopt_long(argc, argv, "hf:vqt:s:g:m:e:r:o:b:x:n:d:", long_options, &opt_index);
+
+        if (opt == -1)
+            break;
+
+        switch(opt)
+        {
+            case 'f':
+                strcpy(parameters.file, optarg);
+                parameters.inputFile = true;
+                break;
+            default:
+                // Ignore all other options in this pass
+                break;
+        }
     }
 
-    sprintf(parameters.logfile,"output/%d_logfile",parameters.pid);
+    if (!parameters.inputFile)
+    {
+        cout << "No configuration file provided." << endl;
+        printHelp();
+    }
+}
+
+void Simulation::getArgs(int argc, char **argv)
+{
+    sprintf(parameters.logfile, "output/%d_logfile", parameters.pid);
 
     const struct option long_options[] =
     {
         {"help", no_argument, 0, 'h'},
-        {"file", required_argument, 0, 'f'},
         {"view", no_argument, 0, 'v'},
         {"nosim", no_argument, 0, 'q'},
 
@@ -820,8 +851,7 @@ void Simulation::getArgs(int argc, char **argv)
                 printHelp();
                 break;
             case 'f':
-                strcpy(parameters.file, optarg);
-                parameters.inputFile = true;
+                // we can ignore the file parameter on the second pass
                 break;
             case 'v':
 #if GLVIS
@@ -878,13 +908,6 @@ void Simulation::getArgs(int argc, char **argv)
                 break;
         }
     }
-
-// TODO: put this back when we have checkpointing again
-//         else if (strcmp(argv[i],"-z")==0 || strcmp(argv[i],"--resume")==0)
-//         {
-//             cout << "!!! Checkpointing is not enabled in this build, cannot resume" << endl;
-//             i++;
-//         }
 }
 
 void Simulation::loadArgsFromFile()
@@ -904,12 +927,6 @@ void Simulation::loadArgsFromFile()
      * p 1 8 9 r 1 9 2 0.5 pdb data/conf1/x.pdb
      *
      */
-
-    if (!parameters.inputFile)
-    {// deprecated function
-        cout << "No configuration file provided." << endl;
-        printHelp();
-    }
 
     ifstream input(parameters.file);
 
@@ -1117,27 +1134,29 @@ void Simulation::writeFileIndex()
 
 void Simulation::printArgs()
 {
-    cout << "Argument data from file:" << endl;
+    cout << "Parameters:" << endl;
     cout << "-------------------------------------" << endl;
-    cout << "threads " << parameters.threads << endl;
-    cout << "streams " << parameters.streams << endl;
-    cout << "GPUs " << parameters.gpus << endl;
-    cout << "mc steps " << parameters.MCsteps << endl;
-    cout << "re steps " << parameters.REsteps << endl;
-    cout << "replicas " << parameters.replicas << endl;
-    cout << "sampling frequency (mc steps) " << parameters.sampleFrequency << endl;
-    cout << "sampling starts after (mc steps) " << parameters.sampleStartsAfter << endl;
-    cout << "bounding box size " << parameters.bound << endl;
-    cout << "non-crowder molecules " << parameters.nonCrowders << endl;
-    cout << "maximum temperature " << parameters.temperatureMax << endl;
-    cout << "minimum temperature " << parameters.temperatureMin << endl;
+    cout << "\tThreads: " << parameters.threads << endl;
+    cout << "\tStreams: " << parameters.streams << endl;
+    cout << "\tGPUs: " << parameters.gpus << endl;
+    cout << "\tReplicas: " << parameters.replicas << endl;
 
-    cout << "Loaded: "<< endl;
+    cout << "\tMC steps: " << parameters.MCsteps << endl;
+    cout << "\tRE steps: " << parameters.REsteps << endl;
+    cout << "\tSampling frequency (MC steps): " << parameters.sampleFrequency << endl;
+    cout << "\tSampling starts after (MC steps): " << parameters.sampleStartsAfter << endl;
+
+    cout << "\tBounding box size: " << parameters.bound << endl;
+    cout << "\tNon-crowder molecules: " << parameters.nonCrowders << endl;
+    cout << "\tMaximum temperature: " << parameters.temperatureMax << endl;
+    cout << "\tMinimum temperature: " << parameters.temperatureMin << endl;
+
+    cout << "Molecules loaded:"<< endl;
     cout << "-------------------------------------------------------------"<< endl;
 
 
     for (int i = 0; i < parameters.mdata.size(); i++) {
-        printf("%2d %s%s centered @ (%0.3f,%0.3f,%0.3f)\n", i, parameters.mdata[i].pdbfilename, (parameters.mdata[i].crowder ? " crowder" : ""), parameters.mdata[i].px, parameters.mdata[i].py, parameters.mdata[i].pz);
+        printf("%2d %s%s centered @ (%0.3f, %0.3f, %0.3f)\n", i, parameters.mdata[i].pdbfilename, (parameters.mdata[i].crowder ? " crowder" : ""), parameters.mdata[i].px, parameters.mdata[i].py, parameters.mdata[i].pz);
     }
 
     cout << "-------------------------------------------------------------"<< endl;

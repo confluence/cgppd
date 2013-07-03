@@ -4,14 +4,9 @@ NOW
 
 VERY NEXT THING:
 
-* clean threadable function
-    * avoid using tx+threadIndex*tReplicas a million times -- instead, work out start and endpoint once and iterate from one to the other.
-    * same goes for threadIndex*tReplicas+index+rps
-    * consolidate the huge, nasty mess of preprocessor alternatives into something readable. Extract insides into functions?
-
-* clean up the messages a bit
-    * consistent format
-    * use the logging macros
+* clean up args / printing of args
+    * keep track of source of parameter? Map of address to string?
+    * add more params; also secondary values which are calculated from other params
 
 * assuming that there is always a 300k replica after all; check the maths
 
