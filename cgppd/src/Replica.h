@@ -35,7 +35,7 @@ public:
     Replica();
     ~Replica();
 
-    void init_first_replica(const vector<moldata> mdata, AminoAcids amino_acid_data, const float bounding_value, const int initial_molecule_array_size);
+    void init_first_replica(const argdata parameters, AminoAcids amino_acid_data, const int initial_molecule_array_size);
     void init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters);
 
     void reserveContiguousMoleculeArray(int size);
@@ -122,11 +122,8 @@ public:
     void fraction_bound(FILE * fractionBoundFile);
     void acceptance_ratio(FILE * acceptanceRatioFile);
 
-    int countpairs();
     int paircount;
-
     int nonCrowderResidues; // the number of non crowder residues for fast bound configurations test
-    void countNonCrowdingResidues();
 
 #if USING_CUDA
 

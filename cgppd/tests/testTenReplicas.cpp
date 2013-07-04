@@ -108,7 +108,6 @@ void TestTenReplicas::testSanity()
 #if INCLUDE_TIMERS
         replicas[i].initTimers();
 #endif
-        replicas[i].countNonCrowdingResidues();
 
 #if USING_CUDA
         replicas[i].device_LJPotentials = ljp_t;

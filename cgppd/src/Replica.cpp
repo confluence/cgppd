@@ -20,33 +20,34 @@ Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), tempera
 }
 
 
-void Replica::init_first_replica(const vector<moldata> mdata, AminoAcids amino_acid_data, const float bounding_value, const int initial_molecule_array_size) // constructor for initial replica; not final parameter list
+void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid_data, const int initial_molecule_array_size) // constructor for initial replica
 {
     aminoAcids = amino_acid_data;
-    boundingValue = bounding_value;
+    boundingValue = parameters.bound;
     reserveContiguousMoleculeArray(initial_molecule_array_size);
 
-    for (size_t s = 0; s < mdata.size(); s++)
+    for (size_t s = 0; s < parameters.mdata.size(); s++)
     {
-        int mi = loadMolecule(mdata[s].pdbfilename);
+        moldata mol = parameters.mdata[s];
+        int mi = loadMolecule(mol.pdbfilename);
 
-        if (mdata[s].translate)
+        if (mol.translate)
         {
-            molecules[mi].translate(Vector3f(mdata[s].px, mdata[s].py, mdata[s].pz));
+            molecules[mi].translate(Vector3f(mol.px, mol.py, mol.pz));
         }
         else
         {
-            molecules[mi].setPosition(Vector3f(mdata[s].px, mdata[s].py, mdata[s].pz));
+            molecules[mi].setPosition(Vector3f(mol.px, mol.py, mol.pz));
         }
 
-        if (mdata[s].ra >= 0.000)
+        if (mol.ra >= 0.000)
         {
-            Vector3double v = Vector3double(mdata[s].rx,mdata[s].ry,mdata[s].rz);
+            Vector3double v = Vector3double(mol.rx,mol.ry,mol.rz);
             v.normalizeInPlace();
-            molecules[mi].rotate(v,mdata[s].ra);
+            molecules[mi].rotate(v,mol.ra);
         }
 
-        if (mdata[s].crowder)
+        if (mol.crowder)
         {
             molecules[mi].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
         }
@@ -56,6 +57,40 @@ void Replica::init_first_replica(const vector<moldata> mdata, AminoAcids amino_a
             nonCrowderResidues += molecules[mi].residueCount;
         }
     }
+
+    // TODO: this needs to be updated for flexible linkers.
+    for (size_t mI = 0; mI < moleculeCount; mI++)
+    {
+        for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
+        {
+            for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
+            {
+                for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
+                {
+                    paircount++;
+                }
+            }
+        }
+    }
+
+#if USING_CUDA
+    if (parameters.auto_blockdim)
+    {
+        (residueCount < 1024) ? setBlockSize(32) : setBlockSize(64);
+        LOG(ALWAYS, "Automatically calculated block dimension: %d\n", blockSize);
+    }
+    else
+    {
+        setBlockSize(parameters.cuda_blockSize);
+    }
+#endif
+
+    LOG(ALWAYS, "\tLoaded: %d residues in %d molecules:\n", residueCount, moleculeCount);
+    for (int i = 0; i < moleculeCount; i++)
+    {
+         LOG(ALWAYS, "\t\t%d: %d residues; volume: %.3f A^3; file: %s\n", i, molecules[i].residueCount, molecules[i].volume, molecules[i].filename);
+    }
+    LOG(ALWAYS, "\tCounted : %d complex residues and %d residue interaction pairs.\n", nonCrowderResidues, paircount);
 }
 
 void Replica::init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters)
@@ -161,18 +196,6 @@ Replica::~Replica()
     {
         delete [] contiguousResidues;
     }
-}
-
-// TODO: ugly, and only used once ever.
-int Replica::countpairs()
-{
-    paircount = 0;
-    for (size_t mI=0; mI<moleculeCount; mI++)
-        for (size_t mJ=mI+1; mJ<moleculeCount; mJ++)
-            for (size_t mi=0; mi<molecules[mI].residueCount; mi++)
-                for (size_t mj=0; mj<molecules[mJ].residueCount; mj++)
-                    paircount++;
-    return paircount;
 }
 
 void Replica::exchangeReplicas(Replica &r)
@@ -518,18 +541,6 @@ void Replica::printTimers()
     cout << "Timers disabled: set INCLUDE_TIMERS 1 and USING_CUDA 1 in definitions.h" << endl;
 
 #endif
-}
-
-void Replica::countNonCrowdingResidues()
-{
-    nonCrowderResidues = 0;
-    for (int m=0; m<moleculeCount; m++)
-    {
-        if (molecules[m].moleculeRoleIdentifier >= 0)
-        {
-            nonCrowderResidues += molecules[m].residueCount;
-        }
-    }
 }
 
 #if USING_CUDA
