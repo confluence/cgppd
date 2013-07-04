@@ -18,6 +18,9 @@ int main(int argc, char **argv)
 #if COMPENSATE_KERNEL_SUM
     cout << "  Kahan summation in kernels" << endl;
 #endif
+#if FLEXIBLE_LINKS
+    cout << "  Flexible linkers" << endl;
+#endif
 
 #if USING_CUDA
 #if LOGLEVEL >= 0

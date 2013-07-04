@@ -75,28 +75,26 @@ void Simulation::init(int argc, char **argv, int pid)
     // sanity check and calculation of some secondary parameters
     check_and_modify_parameters();
 
+    // TODO: only if verbose output
+    printArgs();
+
+    cout << "Initialising simulation..." << endl;
+
     // Create the initial replica, and compare CPU and GPU potential
 
     // TODO: remove magic number; make initial array size a constant
-    initialReplica.init_first_replica(parameters.mdata, aminoAcidData, parameters.bound, 30);
-    cout << "Loaded: " << initialReplica.residueCount << " residues in " << initialReplica.moleculeCount << " molecules:\n";
+    initialReplica.init_first_replica(parameters, aminoAcidData, 30);
 
-#if USING_CUDA
-        // set box size
-    if (parameters.auto_blockdim)
-    {
-        (initialReplica.residueCount < 1024) ? parameters.cuda_blockSize = 32 : parameters.cuda_blockSize = 64;
-    }
-
-    initialReplica.setBlockSize(parameters.cuda_blockSize);
-#endif
-
-    for (int i=0; i < initialReplica.moleculeCount; i++)
-    {
-        printf("%2d: %3d %12.3f A^3 %s\n",i , initialReplica.molecules[i].residueCount, initialReplica.molecules[i].volume,initialReplica.molecules[i].filename);
-    }
-    initialReplica.countNonCrowdingResidues();
-    printf("counted : %3d complex residues\n",initialReplica.nonCrowderResidues);
+// #if USING_CUDA
+//     // set box size
+//     if (parameters.auto_blockdim)
+//     {
+//         (initialReplica.residueCount < 1024) ? parameters.cuda_blockSize = 32 : parameters.cuda_blockSize = 64;
+//         LOG(ALWAYS, "Automatically calculated block dimension: %d", parameters.cuda_blockSize);
+//     }
+//
+//     initialReplica.setBlockSize(parameters.cuda_blockSize);
+// #endif
 
 #if INCLUDE_TIMERS
     initialReplica.initTimers();
@@ -107,7 +105,6 @@ void Simulation::init(int argc, char **argv, int pid)
     // TODO: important: for reasons which are temporarily unclear to me, we need to set this initial potential and copy it to the child replicas, otherwise the GL display doesn't move. o_O
     initialReplica.potential = p;
 
-    cout << initialReplica.countpairs() << " residue interaction pairs." << endl;
     printf("CPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
 
 #if USING_CUDA
@@ -242,22 +239,14 @@ void Simulation::init(int argc, char **argv, int pid)
 
     }
 
-    // File stuff
-
-    int make_dirs = system("mkdir -p output output_pdb checkpoints");
-
-    cout << "Last CUDA error: " << cudaGetErrorString(cudaGetLastError()) << endl;
     cout.flush();
-
-    // TODO: only if verbose output
-    printArgs();
 }
 
 void Simulation::run()
 {
     // we can't use pthreads and CUDA at the moment, but we are going to use streams
 
-    LOG(ALWAYS, "Beginning simulation\n");
+    LOG(ALWAYS, "Beginning simulation...\n");
 
     // TODO: add stuff for resuming here
 
@@ -269,6 +258,8 @@ void Simulation::run()
     }
 
     cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
+
+    int make_dirs = system("mkdir -p output output_pdb checkpoints");
     writeFileIndex();
     initSamplingFiles();
 
@@ -776,6 +767,7 @@ void Simulation::getFileArg(int argc, char **argv)
     const struct option long_options[] =
     {
         {"file", required_argument, 0, 'f'},
+        {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0},
     };
 
@@ -790,6 +782,9 @@ void Simulation::getFileArg(int argc, char **argv)
 
         switch(opt)
         {
+            case 'h':
+                printHelp();
+                break;
             case 'f':
                 strcpy(parameters.file, optarg);
                 parameters.inputFile = true;
@@ -805,6 +800,8 @@ void Simulation::getFileArg(int argc, char **argv)
         cout << "No configuration file provided." << endl;
         printHelp();
     }
+
+    cout << "Will read configuration from file: " << parameters.file << endl;
 }
 
 void Simulation::getArgs(int argc, char **argv)
@@ -838,6 +835,9 @@ void Simulation::getArgs(int argc, char **argv)
     // Important! This is a getopt variable which we need to reset if we want to do a second pass over the same options. Which we do.
     optind = 1;
 
+
+    cout << "Parsing commandline parameters..." << endl;
+
     while (1)
     {
         int opt = getopt_long(argc, argv, "hf:vqt:s:g:m:e:r:o:b:x:n:d:", long_options, &opt_index);
@@ -856,54 +856,66 @@ void Simulation::getArgs(int argc, char **argv)
             case 'v':
 #if GLVIS
                 parameters.viewConditions = true;
+                cout << "\tWill show OpenGL preview." << endl;
 #else
-                cout << "This build does not support OpenGL." << endl;
+                cout << "\tThis build does not support OpenGL." << endl;
 #endif
                 break;
             case 'q':
                 parameters.skipsimulation = true;
+                cout << "\tWill skip simulation." << endl;
                 break;
             case 't':
                 parameters.threads = atoi(optarg);
+                cout << "\tParameter threads = " << parameters.threads << endl;
                 break;
             case 's':
                 parameters.streams = atoi(optarg);
+                cout << "\tParameter streams = " << parameters.streams << endl;
                 break;
             case 'g':
                 parameters.gpus = atoi(optarg);
+                cout << "\tParameter gpus = " << parameters.gpus << endl;
                 break;
             case 'm':
                 parameters.MCsteps = atoi(optarg);
+                cout << "\tParameter MCsteps = " << parameters.MCsteps << endl;
                 break;
             case 'e':
                 parameters.REsteps = atoi(optarg);
+                cout << "\tParameter REsteps = " << parameters.REsteps << endl;
                 break;
             case 'r':
                 parameters.replicas = atoi(optarg);
+                cout << "\tParameter replicas = " << parameters.replicas << endl;
                 break;
             case 'o':
                 strcpy(parameters.logfile, optarg);
+                cout << "\tParameter logfile = " << parameters.logfile << endl;
                 break;
             case 'b':
                 parameters.bound = atof(optarg);
+                cout << "\tParameter bound = " << parameters.bound << endl;
                 break;
             case 'x':
                 parameters.temperatureMax = atof(optarg);
+                cout << "\tParameter temperatureMax = " << parameters.temperatureMax << endl;
                 break;
             case 'n':
                 parameters.temperatureMin = atof(optarg);
+                cout << "\tParameter temperatureMin = " << parameters.temperatureMin << endl;
                 break;
             case 'd':
 #if USING_CUDA
                 parameters.cuda_blockSize = atoi(optarg);
                 parameters.auto_blockdim = false;
-                cout << "Block size changed to: " << parameters.cuda_blockSize << endl;
+                cout << "\tParameter blockdim = " << parameters.cuda_blockSize << endl;
 #else
-                cout << "This build does not support CUDA." << endl;
+                cout << "\tThis build does not support CUDA." << endl;
 #endif
                 break;
             default:
-                cout << "Unknown option." << endl;
+                cout << "\tUnknown parameter: " << opt << endl;
                 printHelp();
                 break;
         }
@@ -936,6 +948,8 @@ void Simulation::loadArgsFromFile()
         exit(0);
     }
 
+    cout << "Parsing config file " << parameters.file << "..." << endl;
+
     char line[512] = {0};
 
 #define PARAMETER_SECTION 0
@@ -964,21 +978,21 @@ void Simulation::loadArgsFromFile()
             moldata m;
             int result = 0;
 
-            if (line[0]=='t')
+            if (line[0] == 't')
             {
                 result = sscanf(line, "t(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
                 m.translate = true;
             }
 
-            if (line[0]=='p')
+            if (line[0] == 'p')
             {
                 result = sscanf(line, "p(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
                 m.translate = false;
             }
 
-            if (result<8)
+            if (result < 8)
             {
-                cout << "Unable to parse molecule: " << line << endl;
+                cout << "\tUnable to parse molecule: " << line << endl;
             }
 
             else
@@ -991,12 +1005,15 @@ void Simulation::loadArgsFromFile()
                 }
 
                 parameters.mdata.push_back(m);
+                cout << "\tAdded molecule from file " << m.pdbfilename << endl;
             }
         }
         else if (section == PARAMETER_SECTION)
         {
             char * key = strtok(line," ");
             char * value = strtok(NULL," ");
+
+            cout << "\tParameter " << key << " = " << value << endl;
 
             if (strcmp(key, "gpus") == 0)
             {
@@ -1053,7 +1070,7 @@ void Simulation::loadArgsFromFile()
 #endif
             }
             else {
-                cout << "Unknown parameter: "<< key << endl;
+                cout << "\tUnknown parameter: "<< key << endl;
             }
         }
     }
@@ -1062,6 +1079,8 @@ void Simulation::loadArgsFromFile()
 
 void Simulation::check_and_modify_parameters()
 {
+    cout << "Checking parameters for sanity..." << endl;
+
     if (parameters.bound <= 0)
     {
         cout << "! Bounding value too small; setting equal to " << BOUNDING_VALUE << endl;
@@ -1134,7 +1153,7 @@ void Simulation::writeFileIndex()
 
 void Simulation::printArgs()
 {
-    cout << "Parameters:" << endl;
+    cout << "FINAL PARAMETERS:" << endl;
     cout << "-------------------------------------" << endl;
     cout << "\tThreads: " << parameters.threads << endl;
     cout << "\tStreams: " << parameters.streams << endl;
@@ -1151,12 +1170,12 @@ void Simulation::printArgs()
     cout << "\tMaximum temperature: " << parameters.temperatureMax << endl;
     cout << "\tMinimum temperature: " << parameters.temperatureMin << endl;
 
-    cout << "Molecules loaded:"<< endl;
+    cout << "MOLECULES LOADED:"<< endl;
     cout << "-------------------------------------------------------------"<< endl;
 
 
     for (int i = 0; i < parameters.mdata.size(); i++) {
-        printf("%2d %s%s centered @ (%0.3f, %0.3f, %0.3f)\n", i, parameters.mdata[i].pdbfilename, (parameters.mdata[i].crowder ? " crowder" : ""), parameters.mdata[i].px, parameters.mdata[i].py, parameters.mdata[i].pz);
+        printf("\t%2d %s%s centered @ (%0.3f, %0.3f, %0.3f)\n", i, parameters.mdata[i].pdbfilename, (parameters.mdata[i].crowder ? " crowder" : ""), parameters.mdata[i].px, parameters.mdata[i].py, parameters.mdata[i].pz);
     }
 
     cout << "-------------------------------------------------------------"<< endl;

@@ -4,11 +4,10 @@ NOW
 
 VERY NEXT THING:
 
-* clean up args / printing of args
-    * keep track of source of parameter? Map of address to string?
-    * add more params; also secondary values which are calculated from other params
+* finish cleaning up init and messages
 
 * assuming that there is always a 300k replica after all; check the maths
+* paircount needs to be updated for flexible linkers
 
 * start writing up
     * skeleton
@@ -17,6 +16,7 @@ VERY NEXT THING:
 TEST
 
 * better unit tests of important simulation and replica functions
+* use and test init function for replica
 
 MAKEFILE
 
