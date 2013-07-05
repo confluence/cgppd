@@ -2,44 +2,38 @@
 
 int main(int argc, char **argv)
 {
-    cout.precision(8);
+    LOG(ALWAYS, "CGPPD version %s\n", HGVERSION);
+    LOG(ALWAYS, "Compiled with:\n");
 
-    cout << "Version: " << HGVERSION << endl;
-    cout << "Compiled with:" << endl;
 #ifdef GLVIS
-    cout << "  OpenGL support" << endl;
-#endif
-#if USING_CUDA
-    cout << "  CUDA support" << endl;
-#endif
-#if CUDA_STREAMS
-    cout << "  Asynchronous GPU calls (CUDA capability 1.1+ required)" << endl;
-#endif
-#if COMPENSATE_KERNEL_SUM
-    cout << "  Kahan summation in kernels" << endl;
-#endif
-#if FLEXIBLE_LINKS
-    cout << "  Flexible linkers" << endl;
+    LOG(ALWAYS, "\tOpenGL support\n");
 #endif
 
 #if USING_CUDA
-#if LOGLEVEL >= 0
-    cout << "CUDA parameters and options for this run:\n" ;
-    cout << "-----------------------------------------\n" ;
-    cout << "Tile Size " << TILE_DIM << endl;
-    cout << "LJ lookup memory type: ";
+    LOG(ALWAYS, "\tCUDA support\n");
+#if CUDA_STREAMS
+    LOG(ALWAYS, "\t\tAsynchronous GPU calls (CUDA capability 1.1+ required)\n");
+#endif // CUDA_STREAMS
+    LOG(ALWAYS, "\t\tTile Size: %d\n", TILE_DIM);
+    LOG(ALWAYS, "\t\tLJ lookup memory type: ");
 #if LJ_LOOKUP_METHOD == SHARED_MEM
-    cout << "Shared" << endl;
+    LOG(ALWAYS, "Shared\n");
 #elif LJ_LOOKUP_METHOD == CONST_MEM
-    cout << "Constant" << endl;
+    LOG(ALWAYS, "Constant\n");
 #elif LJ_LOOKUP_METHOD == GLOBAL_MEM
-    cout << "Global" << endl;
+    LOG(ALWAYS, "Global\n");
 #elif LJ_LOOKUP_METHOD == TEXTURE_MEM
-    cout << "Texture" << endl;
+    LOG(ALWAYS, "Texture\n");
 #endif // LJ_LOOKUP_METHOD
-    cout << "-----------------------------------------\n" ;
-#endif // LOGLEVEL
 #endif // USING_CUDA
+
+#if COMPENSATE_KERNEL_SUM
+    LOG(ALWAYS, "\tKahan summation in kernels\n");
+#endif
+
+#if FLEXIBLE_LINKS
+    LOG(ALWAYS, "\tFlexible linkers\n");
+#endif
 
     int pid = int( getpid() );
 
@@ -71,11 +65,11 @@ int main(int argc, char **argv)
     {
         // TODO: this is overwritten inside run. Why do we set it back here?
         GLreplica = &simulation.initialReplica;
-        cout << "Entering free gl viewing mode." << endl;
+        LOG(ALWAYS, "Entering free gl viewing mode.\n");
         glutMainLoop();
     }
 #endif
 
-    cout << "Finished." << endl;
+    LOG(ALWAYS, "Finished.\n");
     return 0;
 }
