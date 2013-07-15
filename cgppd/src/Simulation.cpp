@@ -435,6 +435,7 @@ void Simulation::exchange_frequency()
     exchanges = 0;
 }
 
+#if USING_CUDA
 void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials, AminoAcids * amino_acid_data)
 {
     // initialise cuda for use in this thread
@@ -488,7 +489,8 @@ void teardown_CUDA_streams(cudaStream_t * streams, int streams_per_thread)
         cudaStreamDestroy(streams[i]);
     }
 }
-#endif
+#endif // CUDA_STREAMS
+#endif // USING_CUDA
 
 void *MCthreadableFunction(void *arg)
 {
