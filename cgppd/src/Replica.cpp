@@ -6,7 +6,7 @@ using namespace std;
 #include <cutil.h>
 #endif
 
-Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP), acceptanceRatio(0.0f), accumulativeAcceptanceRatio(0.0f), fractionBound(0.0f), accumulativeFractionBound(0.0f),
+Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP),
 #if FLEXIBLE_LINKS
     max_segment_count(0),
 #endif
@@ -14,11 +14,11 @@ Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), tempera
     replicaIsOnDevice(false),
 #endif
 #if INCLUDE_TIMERS
-    timersInit(false)
+    timersInit(false),
 #endif
+    acceptanceRatio(0.0f), accumulativeAcceptanceRatio(0.0f), fractionBound(0.0f), accumulativeFractionBound(0.0f)
 {
 }
-
 
 void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid_data, const int initial_molecule_array_size) // constructor for initial replica
 {
