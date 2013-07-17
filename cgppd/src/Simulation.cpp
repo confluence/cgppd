@@ -484,35 +484,29 @@ void teardown_CUDA_streams(cudaStream_t * streams, int streams_per_thread)
 
 void *MCthreadableFunction(void *arg)
 {
-
     SimulationData *data = (SimulationData *) arg;
-    long threadIndex = data->index;
-    Replica *replica = data->replica;
-    // TODO: this is a temporary patch; we need to clean up the indices
-    int tReplicas = data->max_replicas_per_thread;
-    int replicasInThisThread = data->replicas_in_this_thread;
 
-    int replica_offset = threadIndex*tReplicas;
+    int replica_offset = data->index * data->max_replicas_per_thread;
 
-    printf ("--- Monte-Carlo thread %d running. ---.\n", int(threadIndex + 1));
+    printf ("--- Monte-Carlo thread %d running. ---.\n", int(data->index + 1));
 
 // TODO: why do we do this?
 #if GLVIS
-    GLreplica = &replica[0];
+    GLreplica = &data->replica[0];
 #endif
 
 #ifdef VERBOSE_THREAD_LOGGING
     pthread_mutex_lock( data->logMutex );
-    for (int tx = 0; tx < replicasInThisThread; tx++)
+    for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
-        cout << "+ Thread " << threadIndex << " running replica " << tx + threadIndex * tReplicas << endl;
+        cout << "+ Thread " << data->index << " running replica " << tx + data->index * data->max_replicas_per_thread << endl;
     }
     pthread_mutex_unlock( data->logMutex );
 #endif
 
 #if USING_CUDA
     float * deviceLJpTmp;
-    setup_CUDA(data->GPUID, replica->boundingValue, deviceLJpTmp, &replica[threadIndex * tReplicas].aminoAcids);
+    setup_CUDA(data->GPUID, data->bound, deviceLJpTmp, &data->replica[replica_offset].aminoAcids);
 
     // create streams for each subsequent MCSearch
     // ensure the replica can find the lookup table
@@ -520,16 +514,14 @@ void *MCthreadableFunction(void *arg)
 
 #if CUDA_STREAMS
     cudaStream_t streams[16];   // reserve 16 stream slots but create only as many as needed
-    int streamsPerThread = data->streams_per_thread; // TODO: remove
-
-    setup_CUDA_streams(streams, streamsPerThread);
+    setup_CUDA_streams(streams, data->streams_per_thread);
 #endif
 
-    for (int tx = 0; tx < replicasInThisThread; tx++)
+    for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
-        replica[tx + replica_offset].setup_CUDA(deviceLJpTmp);
+        data->replica[tx + replica_offset].setup_CUDA(deviceLJpTmp);
 #if CUDA_STREAMS
-        replica[tx + replica_offset].setup_CUDA_streams(streams, tx % streamsPerThread);
+        data->replica[tx + replica_offset].setup_CUDA_streams(streams, tx % data->streams_per_thread);
 #endif
     }
 #endif // USING_CUDA
@@ -541,43 +533,43 @@ void *MCthreadableFunction(void *arg)
     {
         //cout << "Starting mc loop at " << mcstep << " steps" << endl;
         // do all MC steps before RE
-        for (int tx = 0; tx < replicasInThisThread; tx++)
+        for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
         {
             // to sample at the correct rate split this into another set of loops
             for (int s = 0; s < data->MC_steps_per_RE / data->sampleFrequency; s++)
             {
-                replica[tx + replica_offset].MCSearch(data->sampleFrequency);
+                data->replica[tx + replica_offset].MCSearch(data->sampleFrequency);
 
                 if (mcstep + s * data->sampleFrequency >= data->sampleStartsAfter)
                 {
                     // if E < -1.1844 kcal/mol then its bound
-                    replica[tx + replica_offset].sample(data->boundConformations, mcstep + s*data->sampleFrequency, BOUND_ENERGY_VALUE, data->writeFileMutex);
+                    data->replica[tx + replica_offset].sample(data->boundConformations, mcstep + s*data->sampleFrequency, BOUND_ENERGY_VALUE, data->writeFileMutex);
                 }
             }
         }
         mcstep += data->MC_steps_per_RE;
-        //cout << "thread " << threadIndex << " waits for mutex " << endl;
+        //cout << "thread " << data->index << " waits for mutex " << endl;
 
         // do replica exchange
         pthread_mutex_lock(data->waitingCounterMutex);                 // lock the counter
-        //cout << "thread " << threadIndex << " gets mutex " << endl;
+        //cout << "thread " << data->index << " gets mutex " << endl;
 
         data->waitingThreadCount[0] = data->waitingThreadCount[0] + 1;
         if (data->waitingThreadCount[0] == data->threads)                 // if all threads in waiting state
         {
             pthread_cond_signal(data->waitingReplicaExchangeCond);
-            //cout << "thread " << threadIndex << " signals parent" << endl;
+            //cout << "thread " << data->index << " signals parent" << endl;
         }
         if (mcstep < data->MCsteps)                       // wait if another MC loop must be done
         {
-            //cout << "thread " << threadIndex << " waits after " << mcstep << endl;
+            //cout << "thread " << data->index << " waits after " << mcstep << endl;
 
             pthread_cond_wait(data->waitingThreadCond, data->waitingCounterMutex); // wait for replica exchange to finish.
             // NB! unlock the mutex locked upon the condition above
             // being met because this will unblock all threads such
             // that they will continue concurrently, if not unlocked
             // other threads will run sequentially
-            //cout << "thread " << threadIndex << " releases mutex after wait" << endl;
+            //cout << "thread " << data->index << " releases mutex after wait" << endl;
 
             //  pthread_mutex_unlock(data->waitingCounterMutex);
         }
@@ -597,18 +589,18 @@ void *MCthreadableFunction(void *arg)
         // to sample at the correct rate split this into another set of loops
         for (int mcx = 0; mcx < data->MC_steps_per_RE; mcx++) // at each mc step
         {
-            for (int index = 0; index < replicasInThisThread; index += replicasPerStream)
+            for (int index = 0; index < data->replicas_in_this_thread; index += replicasPerStream)
             {
                 for (int rps = 0; rps < replicasPerStream; rps++)
                 {
                     // batch replicas such that no stream is shared per batch
-                    replica[replica_offset + index + rps].MCSearchMutate();
-                    replica[replica_offset + index + rps].MCSearchEvaluate();
+                    data->replica[replica_offset + index + rps].MCSearchMutate();
+                    data->replica[replica_offset + index + rps].MCSearchEvaluate();
 
                 }
                 for (int rps = 0; rps < replicasPerStream; rps++)
                 {
-                    replica[replica_offset + index + rps].MCSearchAcceptReject();
+                    data->replica[replica_offset + index + rps].MCSearchAcceptReject();
                 }
 
                 for (int rps = 0; rps < replicasPerStream; rps++)
@@ -616,10 +608,10 @@ void *MCthreadableFunction(void *arg)
                     //sampleAsync
                     if (mcstep % data->sampleFrequency == 0 && mcstep >= data->sampleStartsAfter) // when enough steps are taken && sampleFrequency steps have passed
                     {
-                        replica[replica_offset + index + rps].sample(data->boundConformations, mcstep + mcx * data->sampleFrequency, BOUND_ENERGY_VALUE, data->writeFileMutex);
+                        data->replica[replica_offset + index + rps].sample(data->boundConformations, mcstep + mcx * data->sampleFrequency, BOUND_ENERGY_VALUE, data->writeFileMutex);
 
-                        //if (abs(replica[replica_offset+index+rps].temperature-300.0f)<1.0f)
-                        //  cout << "Sampled: t=" << replica[replica_offset+index+rps].temperature << " mcstep=" << mcstep << endl;
+                        //if (abs(data->replica[replica_offset+index+rps].temperature-300.0f)<1.0f)
+                        //  cout << "Sampled: t=" << data->replica[replica_offset+index+rps].temperature << " mcstep=" << mcstep << endl;
                     }
 
                 }
@@ -647,21 +639,21 @@ void *MCthreadableFunction(void *arg)
 
 #if USING_CUDA
     // sync all streams and free gpu memory
-    for (int tx = 0; tx < replicasInThisThread; tx++)
+    for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
 #if CUDA_STREAMS
-        replica[tx + replica_offset].teardown_CUDA_streams();
+        data->replica[tx + replica_offset].teardown_CUDA_streams();
 #endif
-        replica[tx + replica_offset].teardown_CUDA();
+        data->replica[tx + replica_offset].teardown_CUDA();
     }
 
 #if CUDA_STREAMS
-    teardown_CUDA_streams(streams, streamsPerThread);
+    teardown_CUDA_streams(streams, data->streams_per_thread);
 #endif
 
     teardown_CUDA(deviceLJpTmp);
 #endif
-    printf (" >>> Monte-Carlo thread %d exited.\n",int(threadIndex));
+    printf (" >>> Monte-Carlo thread %d exited.\n",int(data->index));
     return 0;
 }
 // END OF *MCthreadableFunction
