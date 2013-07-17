@@ -122,7 +122,7 @@ public:
 void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials, AminoAcids * amino_acid_data);
 void teardown_CUDA(float * device_LJ_potentials);
 #if CUDA_STREAMS
-void setup_CUDA_streams(cudaStream_t * streams, int * streams_per_thread, int num_streams, int num_threads, int num_replicas_in_thread);
+void setup_CUDA_streams(cudaStream_t * streams, int streams_per_thread);
 void teardown_CUDA_streams(cudaStream_t * streams, int streams_per_thread);
 #endif // CUDA_STREAMS
 #endif // USING_CUDA

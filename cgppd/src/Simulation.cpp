@@ -85,17 +85,6 @@ void Simulation::init(int argc, char **argv, int pid)
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters, aminoAcidData, 30);
 
-// #if USING_CUDA
-//     // set box size
-//     if (parameters.auto_blockdim)
-//     {
-//         (initialReplica.residueCount < 1024) ? parameters.cuda_blockSize = 32 : parameters.cuda_blockSize = 64;
-//         LOG(ALWAYS, "Automatically calculated block dimension: %d", parameters.cuda_blockSize);
-//     }
-//
-//     initialReplica.setBlockSize(parameters.cuda_blockSize);
-// #endif
-
 #if INCLUDE_TIMERS
     initialReplica.initTimers();
 #endif
@@ -237,6 +226,11 @@ void Simulation::init(int argc, char **argv, int pid)
             data[i].replicas_in_this_thread -= parameters.replicas - parameters.max_replicas_per_thread * parameters.threads;
         }
 
+#if CUDA_STREAMS
+        // the stream/replica ration must be a whole number otherwise there will be lots of waste, ie dormant streams etc
+        int replicas_per_stream = int(ceil(float(parameters.max_replicas_per_thread)/float(parameters.streams / parameters.threads)));
+        data[i]streams_per_thread  = data[i].replicas_in_this_thread/replicas_per_stream;
+#endif
     }
 
     cout.flush();
@@ -470,13 +464,9 @@ void teardown_CUDA(float * device_LJ_potentials)
 }
 
 #if CUDA_STREAMS
-void setup_CUDA_streams(cudaStream_t * streams, int * streams_per_thread, int num_streams, int num_threads, int num_replicas_in_thread)
+void setup_CUDA_streams(cudaStream_t * streams, int streams_per_thread)
 {
-    // the stream/replica ration must be a whole number otherwise there will be lots of waste, ie dormant streams etc
-    int replicas_per_stream = int(ceil(float(num_replicas_in_thread)/float(num_streams / num_threads)));
-    *streams_per_thread  = replicasInThisThread/replicas_per_stream;
-
-    for (int i = 0; i < *streams_per_thread; i++)
+    for (int i = 0; i < streams_per_thread; i++)
     {
         cudaStreamCreate(&streams[i]); // TODO: is this right?
     }
@@ -530,8 +520,9 @@ void *MCthreadableFunction(void *arg)
 
 #if CUDA_STREAMS
     cudaStream_t streams[16];   // reserve 16 stream slots but create only as many as needed
-    int streamsPerThread(0);
-    setup_CUDA_streams(streams, &streamsPerThread);
+    int streamsPerThread = data->streams_per_thread; // TODO: remove
+
+    setup_CUDA_streams(streams, streamsPerThread);
 #endif
 
     for (int tx = 0; tx < replicasInThisThread; tx++)
