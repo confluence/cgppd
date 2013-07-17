@@ -20,6 +20,7 @@
         int streams;
         int replicas_in_this_thread;
         int max_replicas_per_thread;
+        int streams_per_thread;
         int MCsteps;
         int REsteps; // TODO: will this ever be used in the threadable function if we precalculate mcstepsPerRE?
         int MC_steps_per_RE;

@@ -9,6 +9,11 @@ VERY NEXT THING:
 * assuming that there is always a 300k replica after all; check the maths
 * paircount needs to be updated for flexible linkers
 
+* tests
+    * plan tests for major simulation functions
+    * fix crappy old tests
+    * test that potential the same for rigid protein with and without linkers enabled
+
 * start writing up
     * skeleton
     * design / implementation of changes chapter
@@ -18,9 +23,6 @@ TEST
 * better unit tests of important simulation and replica functions
 * use and test init function for replica
 
-MAKEFILE
-
-* Print out whether compiled with flexible linkers
 
 --------------------------------------------------------------------------------
 SOON
