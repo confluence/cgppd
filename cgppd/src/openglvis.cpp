@@ -595,3 +595,23 @@ void GLUTcreateMenu()
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 // gl stuff ends
+
+void init_glvis(Replica (*replicas)[REPLICA_COUNT], Replica* gl_replica, int argc, char **argv, int num_replicas, int bound)
+{
+    replica = replicas;
+    gl_replicaCount = num_replicas;
+    gl_boundingValue = bound;
+    GLreplica = gl_replica;
+
+    glutInit(&argc, argv);
+    camera.setPosition(Vector3f(-15,15,15), Vector3f(1,-1,-1), Vector3f(0,1,0));
+    char windowName[64] = {"Coarse-Grained Protein-Protein Docker (cgppd)"};
+    GlutInit(WIDTH, HEIGHT, windowName);
+}
+
+void enter_viewing_mode(Replica* gl_replica)
+{
+    GLreplica = gl_replica;
+    LOG(ALWAYS, "Entering free gl viewing mode.\n");
+    glutMainLoop();
+}

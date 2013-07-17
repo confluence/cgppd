@@ -40,18 +40,10 @@ int main(int argc, char **argv)
     Simulation simulation;
     simulation.init(argc, argv, pid);
 
-// TODO: this is pretty gross; hide it in a function.
 #if GLVIS
     if (simulation.parameters.viewConditions)
     {
-        replica = &simulation.replica;
-        glutInit(&argc, argv);
-        camera.setPosition(Vector3f(-15,15,15),Vector3f(1,-1,-1),Vector3f(0,1,0));
-        char windowName[64] = {"Coarse-Grained Protein-Protein Docker (cgppd)"};
-        GlutInit(WIDTH,HEIGHT,windowName);
-        gl_replicaCount = simulation.parameters.replicas;
-        gl_boundingValue = int(simulation.parameters.bound);
-        GLreplica = &simulation.initialReplica;
+        init_glvis(&simulation.replica, &simulation.initialReplica, argc, argv, simulation.parameters.replicas, int(simulation.parameters.bound));
     }
 #endif
 
@@ -63,10 +55,7 @@ int main(int argc, char **argv)
 #if GLVIS
     if (simulation.parameters.viewConditions)
     {
-        // TODO: this is overwritten inside run. Why do we set it back here?
-        GLreplica = &simulation.initialReplica;
-        LOG(ALWAYS, "Entering free gl viewing mode.\n");
-        glutMainLoop();
+        enter_viewing_mode(&simulation.initialReplica);
     }
 #endif
 

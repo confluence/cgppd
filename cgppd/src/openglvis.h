@@ -62,4 +62,7 @@ void GLUTcreateMenu();
 void GLUTmenu(int);
 void GLUTdrawaxes();
 
+void init_glvis(Replica (*replicas)[REPLICA_COUNT], Replica* gl_replica, int argc, char **argv, int num_replicas, int bound);
+void enter_viewing_mode(Replica* gl_replica);
+
 #endif
