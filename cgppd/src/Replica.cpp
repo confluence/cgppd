@@ -77,7 +77,7 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     if (parameters.auto_blockdim)
     {
         (residueCount < 1024) ? setBlockSize(32) : setBlockSize(64);
-        LOG(ALWAYS, "Automatically calculated block dimension: %d\n", blockSize);
+        LOG(ALWAYS, "\tAutomatically calculated block dimension: %d\n", blockSize);
     }
     else
     {
@@ -88,7 +88,7 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     LOG(ALWAYS, "\tLoaded: %d residues in %d molecules:\n", residueCount, moleculeCount);
     for (int i = 0; i < moleculeCount; i++)
     {
-         LOG(ALWAYS, "\t\t%d: %d residues; volume: %.3f A^3; file: %s\n", i, molecules[i].residueCount, molecules[i].volume, molecules[i].filename);
+        molecules[i].log_info(i);
     }
     LOG(ALWAYS, "\tCounted : %d complex residues and %d residue interaction pairs.\n", nonCrowderResidues, paircount);
 }
