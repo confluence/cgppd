@@ -27,12 +27,6 @@ Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExch
     printPotentials(&aminoAcidData);
 #endif
 
-#if USING_CUDA
-    cout << "Initialising CUDA. "<< endl ;
-    cuInit(0);
-    cudaInfo();
-#endif // USING_CUDA
-
 #if INCLUDE_TIMERS
     cutCreateTimer(&RELoopTimer);
     cutCreateTimer(&MCLoopTimer);
@@ -78,46 +72,41 @@ void Simulation::init(int argc, char **argv, int pid)
     // TODO: only if verbose output
     printArgs();
 
-    cout << "Initialising simulation..." << endl;
+    cout << "\nINITIALISING FIRST REPLICA:" << endl;
 
     // Create the initial replica, and compare CPU and GPU potential
 
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters, aminoAcidData, 30);
 
+    cout << "\nPOTENTIAL TEST:" << endl;
 #if INCLUDE_TIMERS
     initialReplica.initTimers();
 #endif
 
     float p = initialReplica.E();
-    float pnc = initialReplica.E(&initialReplica.molecules[0],&initialReplica.molecules[1]);
+    float pnc = initialReplica.E(&initialReplica.molecules[0], &initialReplica.molecules[1]);
     // TODO: important: for reasons which are temporarily unclear to me, we need to set this initial potential and copy it to the child replicas, otherwise the GL display doesn't move. o_O
     initialReplica.potential = p;
 
-    printf("CPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
+    printf("\tCPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
 
 #if USING_CUDA
-    CUDA_setBoxDimension(parameters.bound);
+    setup_CUDA(0, parameters.bound, initialReplica.device_LJPotentials, &aminoAcidData);
 
 #if CUDA_STREAMS
     cudaStreamCreate(&initialReplica.cudaStream);
 #endif
 
     initialReplica.ReplicaDataToDevice();
-    cudaMalloc((void**)&initialReplica.device_LJPotentials, LJArraySize);
-    copyLJPotentialDataToDevice(initialReplica.device_LJPotentials, &aminoAcidData);
-
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    bindLJTexture(initialReplica.device_LJPotentials);
-#endif
 
     double GPUE = initialReplica.EonDevice();
     double GPUE_NC = initialReplica.EonDeviceNC();
     initialReplica.potential = GPUE;
 
-    printf("GPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
-    printf("Absolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
-    printf("Relative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
+    printf("\tGPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
+    printf("\tAbsolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
+    printf("\tRelative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
 
 #if CUDA_STREAMS
     cudaStreamSynchronize(initialReplica.cudaStream);
@@ -149,6 +138,8 @@ void Simulation::init(int argc, char **argv, int pid)
 
     // now set up all the replicas
 
+    cout << "\nINITIALISING CHILD REPLICAS:" << endl;
+
     geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
     geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
     geometricRotation = pow(double(MAX_ROTATION/MIN_ROTATION),double(1.0/double(parameters.replicas-1)));
@@ -156,7 +147,7 @@ void Simulation::init(int argc, char **argv, int pid)
     for (size_t i = 0; i < parameters.replicas; i++)
     {
         replica[i].init_child_replica(initialReplica, int(i), geometricTemperature, geometricRotation, geometricTranslate, parameters);
-        printf ("Replica %d %.3f %.3f %.3f\n", int(i), replica[i].temperature, replica[i].translateStep, replica[i].rotateStep);
+        printf ("\tReplica %d; temperature: %.3f; translate step: %.3f; rotate step: %.3f\n", int(i), replica[i].temperature, replica[i].translateStep, replica[i].rotateStep);
     }
 
     // Temperature map stuff
@@ -215,7 +206,7 @@ void Simulation::init(int argc, char **argv, int pid)
         // % #gpus so they share if threads > gpus
         // will perform best if threads:gpus = 1:1
         data[i].GPUID = i % parameters.gpus;
-        cout << "Assign thread " << i << " to GPU " << data[i].GPUID << endl;
+        cout << "\tAssigning thread " << i << " to GPU " << data[i].GPUID << endl;
 
         data[i].max_replicas_per_thread = parameters.max_replicas_per_thread;
 
@@ -240,7 +231,7 @@ void Simulation::run()
 {
     // we can't use pthreads and CUDA at the moment, but we are going to use streams
 
-    LOG(ALWAYS, "Beginning simulation...\n");
+    LOG(ALWAYS, "\nBEGINNING SIMULATION:\n");
 
     // TODO: add stuff for resuming here
 
@@ -251,7 +242,7 @@ void Simulation::run()
         return;
     }
 
-    cout << "Output files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
+    cout << "\tOutput files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
 
     int make_dirs = system("mkdir -p output output_pdb checkpoints");
     writeFileIndex();
@@ -261,7 +252,7 @@ void Simulation::run()
     CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
 #endif
 
-    printf ("--- Starting simulation ---.\n");
+    printf ("--- Launching threads ---.\n");
 
     pthread_mutex_lock(&waitingCounterMutex);
 
@@ -1138,8 +1129,7 @@ void Simulation::writeFileIndex()
 
 void Simulation::printArgs()
 {
-    cout << "FINAL PARAMETERS:" << endl;
-    cout << "-------------------------------------" << endl;
+    cout << "\nFINAL PARAMETERS:" << endl;
     cout << "\tThreads: " << parameters.threads << endl;
     cout << "\tStreams: " << parameters.streams << endl;
     cout << "\tGPUs: " << parameters.gpus << endl;
@@ -1155,13 +1145,4 @@ void Simulation::printArgs()
     cout << "\tMaximum temperature: " << parameters.temperatureMax << endl;
     cout << "\tMinimum temperature: " << parameters.temperatureMin << endl;
 
-    cout << "MOLECULES LOADED:"<< endl;
-    cout << "-------------------------------------------------------------"<< endl;
-
-
-    for (int i = 0; i < parameters.mdata.size(); i++) {
-        printf("\t%2d %s%s centered @ (%0.3f, %0.3f, %0.3f)\n", i, parameters.mdata[i].pdbfilename, (parameters.mdata[i].crowder ? " crowder" : ""), parameters.mdata[i].px, parameters.mdata[i].py, parameters.mdata[i].pz);
-    }
-
-    cout << "-------------------------------------------------------------"<< endl;
 }
