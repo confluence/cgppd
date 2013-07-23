@@ -47,6 +47,7 @@ void TestSimulation::testGetArgs()
     }
     int argc(LEN_TEST_ARGV);
 
+    s.getFileArg(argc, argv);
     s.getArgs(argc, argv);
 
     CPPUNIT_ASSERT_EQUAL(true, s.parameters.viewConditions);

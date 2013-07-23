@@ -7,7 +7,7 @@
 #include <cutil_inline.h>
 #endif
 
-#include <Replica.h>
+#include <Simulation.h>
 
 class TestReplica : public CppUnit::TestFixture
 {
@@ -36,17 +36,7 @@ void TestReplica::setUp()
     testboxdim = 118.4f;
 
 #if USING_CUDA
-    cuInit(0);
-    cutilCheckMsg("Failed to initialise CUDA runtime.");
-    cudaMalloc((void**)&ljp_t,LJArraySize);
-    cutilCheckMsg("Failed to allocate contact potential memory on the GPU");
-    CUDA_setBoxDimension(testboxdim);
-    cutilCheckMsg("Failed to copy box dimensions to GPU");
-    copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
-    cutilCheckMsg("Failed to code contact potentials to device.");
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    bindLJTexture(ljp_t);
-#endif
+    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData);
 #endif
 
     replica.aminoAcids = aminoAcidData;

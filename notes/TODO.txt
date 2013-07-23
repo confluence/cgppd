@@ -4,13 +4,13 @@ NOW
 
 VERY NEXT THING:
 
+* tests
+    * fix crappy old tests
+    * plan tests for major simulation functions
+    * test that potential the same for rigid protein with and without linkers enabled
+
 * assuming that there is always a 300k replica after all; check the maths
 * paircount needs to be updated for flexible linkers
-
-* tests
-    * plan tests for major simulation functions
-    * fix crappy old tests
-    * test that potential the same for rigid protein with and without linkers enabled
 
 * start writing up
     * skeleton
