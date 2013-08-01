@@ -38,9 +38,7 @@ void TestMolecule::setUp()
 {
     testboxdim = 118.4f;
 
-    // TODO: init for this as well?
-    aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
-    aminoAcidData.loadLJPotentialData(LJPDSOURCE);
+    aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
 
     ubiquitin.init("tests/1UBQ.pdb", aminoAcidData, 0, testboxdim);
     angiotensin.init("tests/angiotensin.pdb", aminoAcidData, 0, testboxdim);

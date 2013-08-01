@@ -7,7 +7,7 @@ class AminoAcids
 {
 public:  // we want public data, saves function call overhead.
     AminoAcids();
-    AminoAcids(char* inputDataFileAminoAcids, char* inputDataFileLJPotentials);
+    void init(const char* inputDataFileAminoAcids, const char* inputDataFileLJPotentials);
     ~AminoAcids();
     AminoAcid data[20];
     float LJpotentials[20][20];

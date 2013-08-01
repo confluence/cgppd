@@ -31,8 +31,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TestReplica);
 
 void TestReplica::setUp()
 {
-    aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
-    aminoAcidData.loadLJPotentialData(LJPDSOURCE);
+    aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
     testboxdim = 118.4f;
 
 #if USING_CUDA
