@@ -16,7 +16,7 @@ AminoAcids::~AminoAcids()
 {
 }
 
-AminoAcids::AminoAcids(char* inputDataFileAminoAcids, char* inputDataFileLJPotentials)
+void AminoAcids::init(const char* inputDataFileAminoAcids, const char* inputDataFileLJPotentials)
 {
     clean = loadAminoAcidData(inputDataFileAminoAcids) && loadLJPotentialData(inputDataFileLJPotentials);
 }

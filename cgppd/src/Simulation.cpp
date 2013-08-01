@@ -16,12 +16,8 @@ Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExch
     pthread_mutex_init(&logMutex, NULL);
 #endif
 
-    // TODO: move these to an init method on aminoAcidData
-    LOG(ALWAYS, "Loading amino acid data: %s\n", AMINOACIDDATASOURCE);
-    aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
-
-    LOG(ALWAYS, "Loading pair lookup table: %s\n", LJPDSOURCE);
-    aminoAcidData.loadLJPotentialData(LJPDSOURCE);
+    LOG(ALWAYS, "Loading amino acid data %s and pair lookup table %s\n", AMINOACIDDATASOURCE, LJPDSOURCE);
+    aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
 
 #ifdef displayLJpotentials
     printPotentials(&aminoAcidData);

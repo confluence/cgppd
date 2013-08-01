@@ -36,8 +36,7 @@ void TestTenReplicas::setUp()
     cuInit(0);
 #endif
 
-    aminoAcidData.loadAminoAcidData(AMINOACIDDATASOURCE);
-    aminoAcidData.loadLJPotentialData(LJPDSOURCE);
+    aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
     testboxdim = 118.4f;
     test_molecule_file = new char[60];
 
