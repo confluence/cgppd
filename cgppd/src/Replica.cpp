@@ -1082,7 +1082,7 @@ void Replica::cudaRollbackMutation()
 #endif  // CUDA
 
 // this code is a bit special...
-void Replica::sample(FILE * boundConformations, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex)
+void Replica::sample(SimulationData * data, int current_step, float boundEnergyThreshHold)
 {
     nonCrowderPotential = 0.0f;
     samplesSinceLastExchange++;
@@ -1119,13 +1119,12 @@ void Replica::sample(FILE * boundConformations, int current_step, float boundEne
 
         char savename[256];
         memset(savename,0,256);
-        // TODO: add file prefix to these
-        sprintf(savename, "output_pdb/sample_%d_%0.1fK_%5.2f.pdb", current_step, temperature, nonCrowderPotential);
+        sprintf(savename, "output/%s/pdb/sample_%d_%0.1fK_%5.2f.pdb", data->prefix, current_step, temperature, nonCrowderPotential);
         saveAsSinglePDB(savename);
 
-        pthread_mutex_lock(writeFileMutex);
-        fprintf(boundConformations, "%d; %0.5f (%0.5f); %0.1f\n%s\n", current_step, nonCrowderPotential, potential, temperature, savename);
-        pthread_mutex_unlock(writeFileMutex);
+        pthread_mutex_lock(data->writeFileMutex);
+        fprintf(data->boundConformations, "%d; %0.5f (%0.5f); %0.1f\n%s\n", current_step, nonCrowderPotential, potential, temperature, savename);
+        pthread_mutex_unlock(data->writeFileMutex);
     }
 }
 
