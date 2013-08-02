@@ -238,9 +238,10 @@ void Simulation::run()
         return;
     }
 
-    cout << "\tOutput files will be prefixed by " << parameters.prefix << "_" << parameters.pid << endl;
+    cout << "\tOutput files will be written to output/" << parameters.prefix << endl;
 
-    int make_dirs = system("mkdir -p output output_pdb checkpoints");
+    char mkdir_command[256];
+    int make_dirs = system("mkdir -p output");
     writeFileIndex();
     initSamplingFiles();
 
@@ -650,7 +651,7 @@ void Simulation::initSamplingFile(const char * name, FILE ** file_addr)
     char filename[256];
     FILE * file;
 
-    sprintf(filename, "output/%s_%d_%s", parameters.prefix, parameters.pid, name);
+    sprintf(filename, "output/%s_%s", parameters.prefix, name);
     file = fopen (filename,"a+"); // attempt append a file of the same name
     if (!file)
     {
@@ -668,7 +669,7 @@ void Simulation::initSamplingFile(const char * name, FILE ** file_addr)
 void Simulation::closeSamplingFile(const char * name, FILE ** file_addr)
 {
     fclose(*file_addr);
-    LOG(ALWAYS, ">>> Closing sampling file: output/%s_%d_%s\n", parameters.prefix, parameters.pid, name);
+    LOG(ALWAYS, ">>> Closing sampling file: output/%s_%s\n", parameters.prefix, name);
 }
 
 void Simulation::initSamplingFiles()
@@ -778,7 +779,7 @@ void Simulation::getFileArg(int argc, char **argv)
 
 void Simulation::getArgs(int argc, char **argv)
 {
-    sprintf(parameters.logfile, "output/%d_logfile", parameters.pid);
+    sprintf(parameters.logfile, "output/%s_logfile", parameters.prefix);
 
     const struct option long_options[] =
     {
@@ -1033,13 +1034,7 @@ void Simulation::loadArgsFromFile()
             }
             else if (strcmp(key, "prefix") == 0)
             {
-                strcpy(parameters.prefix, "");
-                strcpy(parameters.prefix, value);
-#if REPULSIVE_CROWDING
-                strcat(parameters.prefix, "_repulsive");
-#else
-                strcat(parameters.prefix, "_full");
-#endif
+                sprintf(parameters.prefix, "%s_%s_%d", value, CROWDING_NAME_SUFFIX, parameters.pid);
             }
             else {
                 cout << "\tUnknown parameter: "<< key << endl;
@@ -1112,7 +1107,7 @@ void Simulation::check_and_modify_parameters()
 void Simulation::writeFileIndex()
 {
     char fileindex[256];
-    sprintf(fileindex,"output/%s_%d_fileindex", parameters.prefix, parameters.pid);
+    sprintf(fileindex,"output/%s_fileindex", parameters.prefix);
     FILE * fileindexf = fopen (fileindex,"w");
     fprintf(fileindexf,"index molecule_file_path crowder(Y/N)\n");
 
