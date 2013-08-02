@@ -120,7 +120,7 @@ void Simulation::init(int argc, char **argv, int pid)
     cutilCheckMsg("Error freeing texture");
 #endif
 
-    cudaFree(initialReplica.device_LJPotentials);
+    cudaFree(initialReplica.device_LJPotentials); // TODO: valgrind complains that this is uninitialised; fix it
 #endif
 
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
@@ -171,6 +171,19 @@ void Simulation::init(int argc, char **argv, int pid)
     data = new SimulationData[parameters.threads];
     thread_created = true;
 
+    // File stuff
+    cout << "\tOutput files will be written to output/" << parameters.prefix << endl;
+
+    // We need to create these directories in order to open files for writing
+    // We need the files now so we can store them in the simulation data
+    // TODO: maybe move all this stuff to run
+    char mkdir_command[256];
+    memset(mkdir_command, 0, 256);
+    sprintf(mkdir_command, "mkdir -p output/%s/pdb",  parameters.prefix);
+    int make_dirs = system(mkdir_command);
+
+    initSamplingFiles();
+
     // Set up parameters to pass to threads
     for (int i = 0; i < parameters.threads; i++)
     {
@@ -187,6 +200,8 @@ void Simulation::init(int argc, char **argv, int pid)
         data[i].bound = parameters.bound;
         data[i].streams = parameters.streams;
         data[i].waitingThreadCount = &waitingThreads;
+        memset(data[i].prefix, 0, 256);
+        strcpy(data[i].prefix, parameters.prefix);
         data[i].fractionBound = fractionBoundFile;
         data[i].boundConformations = boundConformationsFile;
 
@@ -238,12 +253,8 @@ void Simulation::run()
         return;
     }
 
-    cout << "\tOutput files will be written to output/" << parameters.prefix << endl;
-
-    char mkdir_command[256];
-    int make_dirs = system("mkdir -p output");
     writeFileIndex();
-    initSamplingFiles();
+    writeSamplingFileHeaders();
 
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
@@ -531,7 +542,7 @@ void *MCthreadableFunction(void *arg)
                 if (mcstep + s * data->sampleFrequency >= data->sampleStartsAfter)
                 {
                     // if E < -1.1844 kcal/mol then its bound
-                    data->replica[tx + replica_offset].sample(data->boundConformations, mcstep + s*data->sampleFrequency, BOUND_ENERGY_VALUE, data->writeFileMutex);
+                    data->replica[tx + replica_offset].sample(data, mcstep + s*data->sampleFrequency, BOUND_ENERGY_VALUE);
                 }
             }
         }
@@ -596,7 +607,7 @@ void *MCthreadableFunction(void *arg)
                     //sampleAsync
                     if (mcstep % data->sampleFrequency == 0 && mcstep >= data->sampleStartsAfter) // when enough steps are taken && sampleFrequency steps have passed
                     {
-                        data->replica[replica_offset + index + rps].sample(data->boundConformations, mcstep + mcx * data->sampleFrequency, BOUND_ENERGY_VALUE, data->writeFileMutex);
+                        data->replica[replica_offset + index + rps].sample(data, mcstep + mcx * data->sampleFrequency, BOUND_ENERGY_VALUE);
 
                         //if (abs(data->replica[replica_offset+index+rps].temperature-300.0f)<1.0f)
                         //  cout << "Sampled: t=" << data->replica[replica_offset+index+rps].temperature << " mcstep=" << mcstep << endl;
@@ -651,7 +662,7 @@ void Simulation::initSamplingFile(const char * name, FILE ** file_addr)
     char filename[256];
     FILE * file;
 
-    sprintf(filename, "output/%s_%s", parameters.prefix, name);
+    sprintf(filename, "output/%s/%s", parameters.prefix, name);
     file = fopen (filename,"a+"); // attempt append a file of the same name
     if (!file)
     {
@@ -669,7 +680,7 @@ void Simulation::initSamplingFile(const char * name, FILE ** file_addr)
 void Simulation::closeSamplingFile(const char * name, FILE ** file_addr)
 {
     fclose(*file_addr);
-    LOG(ALWAYS, ">>> Closing sampling file: output/%s_%s\n", parameters.prefix, name);
+    LOG(ALWAYS, ">>> Closing sampling file: output/%s/%s\n", parameters.prefix, name);
 }
 
 void Simulation::initSamplingFiles()
@@ -678,7 +689,10 @@ void Simulation::initSamplingFiles()
     initSamplingFile("boundconformations", &boundConformationsFile);
     initSamplingFile("acceptance_ratios", &acceptanceRatioFile);
     initSamplingFile("exchange_freq", &exchangeFrequencyFile);
+}
 
+void Simulation::writeSamplingFileHeaders()
+{
     fprintf(fractionBoundFile, "# Fraction Bound\n#Iteration InstantaneousAve CumulativeAve\n");
     // TODO: see what we're actually printing now
     fprintf(boundConformationsFile, "# iteration; complex free energy (replica free energy); temperature;\n# molecule: pdb file; 1 line per other molecule in the bound state\n");
@@ -779,7 +793,7 @@ void Simulation::getFileArg(int argc, char **argv)
 
 void Simulation::getArgs(int argc, char **argv)
 {
-    sprintf(parameters.logfile, "output/%s_logfile", parameters.prefix);
+    sprintf(parameters.logfile, "output/%s/logfile", parameters.prefix);
 
     const struct option long_options[] =
     {
@@ -1107,7 +1121,7 @@ void Simulation::check_and_modify_parameters()
 void Simulation::writeFileIndex()
 {
     char fileindex[256];
-    sprintf(fileindex,"output/%s_fileindex", parameters.prefix);
+    sprintf(fileindex,"output/%s/fileindex", parameters.prefix);
     FILE * fileindexf = fopen (fileindex,"w");
     fprintf(fileindexf,"index molecule_file_path crowder(Y/N)\n");
 

@@ -111,6 +111,7 @@ public:
     void initSamplingFile(const char * name, FILE ** file_addr);
     void closeSamplingFile(const char * name, FILE ** file_addr);
     void initSamplingFiles();
+    void writeSamplingFileHeaders();
     void closeSamplingFiles();
 
     float exchangeFraction;

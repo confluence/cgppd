@@ -118,7 +118,7 @@ public:
 
     float nonCrowderPotential;
 
-    void sample(FILE * boundConformations, int current_step, float boundEnergyThreshHold, pthread_mutex_t *writeFileMutex);
+    void sample(SimulationData * data, int current_step, float boundEnergyThreshHold);
     void fraction_bound(FILE * fractionBoundFile);
     void acceptance_ratio(FILE * acceptanceRatioFile);
 

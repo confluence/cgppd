@@ -29,6 +29,7 @@
         int checkpointFrequency;
         float bound;
         int * waitingThreadCount;
+        char prefix[256];
         FILE * fractionBound;
         FILE * boundConformations;
         pthread_mutex_t * waitingCounterMutex;
