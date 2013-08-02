@@ -4,10 +4,17 @@ NOW
 
 VERY NEXT THING:
 
+* clean up output files -- subdirectory for each simulation; another inside it for pdb files; save the prefix somewhere
+
+* validation
+    * Python script for parsing PDB files and extracting statistical information
+        * http://www.csb.pitt.edu/prody/index.html ?
+    * manual test to check potential calculations for a small protein
+        * reproduce a couple of MC steps to make sure nothing gets screwed up
+    * test that potential is the same for rigid protein with and without linkers enabled
+
 * tests
     * fix crappy old tests
-    * plan tests for major simulation functions
-    * test that potential the same for rigid protein with and without linkers enabled
 
 * assuming that there is always a 300k replica after all; check the maths
 * paircount needs to be updated for flexible linkers
