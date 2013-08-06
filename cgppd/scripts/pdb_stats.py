@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys
 import glob
 import re
 import math
 from collections import namedtuple
+import matplotlib.pyplot as plt
 
 Vector = namedtuple('Vector', 'x y z')
 
@@ -95,3 +97,8 @@ if __name__ == "__main__":
             distances[protein.chain].append(distance)
 
 
+    plt.hist(distances["A"], bins=30)
+    plt.title("Distribution of ubiquitin end-to-end length in UIM/Ub complex")
+    plt.xlabel(u"Length (Å)")
+    plt.ylabel("Frequency")
+    plt.show()
