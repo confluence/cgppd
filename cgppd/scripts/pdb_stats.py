@@ -7,7 +7,9 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 
+FILENAME = re.compile('output/.*/pdb/sample_(.*)_(.*)K_.*.pdb')
 ATOM = re.compile('ATOM *\d+ *CA ([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
+POTENTIAL = re.compile('REMARK potential: (.*)')
 
 class Residue(object):
     def __init__(self, amino_acid, index, x, y, z):
@@ -42,22 +44,27 @@ class Protein(object):
 
 
 class Conformation(object):
-    def __init__(self):
+    def __init__(self, sample, temperature, potential=None):
         self.proteins = {}
+        self.sample = sample
+        self.temperature = temperature
+        self.potential = potential
 
     def add_protein(self, protein):
         self.proteins[protein.chain] = protein
 
     def __str__(self):
-        return "\n\n".join(str(p) for p in self.proteins.values())
+        return "Sample %d at %gK with potential %g\n%s" % (self.sample, self.temperature, self.potential, "\n".join(str(p) for p in self.proteins.values()))
 
 
 class Simulation(object):
-    def __init__(self, conformations=None):
-        self.conformations = conformations if conformations else []
+    def __init__(self, name, chains, conformations):
+        self.name = name
+        self.conformations = conformations
+        self.chains = chains
 
     @classmethod
-    def from_glob(cls, *globs):
+    def from_glob(cls, name, *globs, **chains):
         filenames = []
         conformations = []
 
@@ -70,7 +77,9 @@ class Simulation(object):
 
         for filename in filenames:
             with open(filename) as pdbfile:
-                conformation = Conformation()
+                sample, temperature = FILENAME.match(filename).groups()
+                conformation = Conformation(int(sample), float(temperature))
+
                 protein = None
 
                 for line in pdbfile:
@@ -84,35 +93,36 @@ class Simulation(object):
                         conformation.add_protein(protein)
                         protein = None
 
+                    elif line.startswith("REMARK potential"):
+                        conformation.potential = float(POTENTIAL.match(line).group(1))
+
             conformations.append(conformation)
 
-        return cls(conformations)
+        return cls(name, chains, conformations)
 
-    def plot_length(self, chain, bins, **kwargs):
+    def plot_length(self, chain, bins, save=False):
         if not all(chain in c.proteins for c in self.conformations):
             return "Chain '%s' does not appear in all conformations." % chain
 
         lengths = [c.proteins[chain].length for c in self.conformations]
+        x_axis = u"Length (Å)"
+        y_axis = "Frequency (count)"
+        title = "Distribution of %s end-to-end length" % self.chains[chain]
 
         plt.hist(lengths, bins=bins)
-        for k, v in kwargs.iteritems():
-            getattr(plt, k)(v)
+        plt.title(title)
+        plt.xlabel(x_axis)
+        plt.ylabel(y_axis)
 
-        plt.show()
+        if save:
+            # TODO: printable name
+            savefile = "%s_%s_length.png" % (self.name.replace('/',''), self.chains[chain])
+            plt.savefig(savefile)
+        else:
+            plt.show()
 
     def __str__(self):
         return "\n\n\n".join(str(c) for c in self.simulations[simulation_name])
-
-
-class SimulationBrowser(object):
-    def __init__(self):
-        self.simulations = {}
-
-    def add_simulation(self, name, simulation):
-        self.simulations[name] = simulation
-
-    def list_simulations(self):
-        print "\n".join(self.simulations.keys())
 
 
 if __name__ == "__main__":
@@ -121,14 +131,13 @@ if __name__ == "__main__":
         print "No filenames given."
         sys.exit(0)
 
-    sb = SimulationBrowser()
-    sb.add_simulation("test", Simulation.from_glob(*sys.argv[1:]))
+    # TODO: add simulation description to config file and write it to PDB file
+    # TODO: write chain names into PDB files
+    s = Simulation.from_glob("UIM/Ub", *sys.argv[1:], **{"A":"ubiquitin", "B":"UIM"})
+
+    print s.conformations[0]
 
     ## End-to-end distance
 
-    sb.simulations["test"].plot_length("A", bins=30,
-        title="Distribution of ubiquitin end-to-end length in UIM/Ub complex",
-        xlabel=u"Length (Å)",
-        ylabel="Frequency (count)"
-    )
+    s.plot_length("A", bins=30)
 
