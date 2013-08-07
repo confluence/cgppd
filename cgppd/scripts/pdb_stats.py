@@ -23,79 +23,112 @@ class Protein(object):
     def __init__(self, chain):
         self.residues = []
         self.chain = chain
+        self._length = None
 
     def append_residue(self, residue):
         self.residues.append(residue)
 
+    @property
+    def length(self):
+        if not self._length:
+            start = self.residues[0].position
+            end = self.residues[-1].position
+            self._length = np.linalg.norm(end - start)
+
+        return self._length
+
     def __str__(self):
-        return "%s:\n%s" % (self.chain, "\n".join([str(r) for r in self.residues]))
+        return "%s:\n%s" % (self.chain, "\n".join(str(r) for r in self.residues))
 
 
 class Conformation(object):
     def __init__(self):
-        self.proteins = []
+        self.proteins = {}
 
-    def append_protein(self, protein):
-        self.proteins.append(protein)
+    def add_protein(self, protein):
+        self.proteins[protein.chain] = protein
 
     def __str__(self):
-        return "\n\n".join([str(p) for p in self.proteins])
+        return "\n\n".join(str(p) for p in self.proteins.values())
+
+
+class Simulation(object):
+    def __init__(self, conformations=None):
+        self.conformations = conformations if conformations else []
+
+    @classmethod
+    def from_glob(cls, *globs):
+        filenames = []
+        conformations = []
+
+        for g in globs:
+            filenames.extend(glob.glob(g))
+
+        if not filenames:
+            print "No files found."
+            return
+
+        for filename in filenames:
+            with open(filename) as pdbfile:
+                conformation = Conformation()
+                protein = None
+
+                for line in pdbfile:
+                    if line.startswith("ATOM"):
+                        amino_acid, chain, index, x, y, z = ATOM.match(line).groups()
+                        if not protein:
+                            protein = Protein(chain)
+                        protein.append_residue(Residue(amino_acid, int(index), float(x), float(y), float(z)))
+
+                    elif line.startswith("TER"):
+                        conformation.add_protein(protein)
+                        protein = None
+
+            conformations.append(conformation)
+
+        return cls(conformations)
+
+    def plot_length(self, chain, bins, **kwargs):
+        if not all(chain in c.proteins for c in self.conformations):
+            return "Chain '%s' does not appear in all conformations." % chain
+
+        lengths = [c.proteins[chain].length for c in self.conformations]
+
+        plt.hist(lengths, bins=bins)
+        for k, v in kwargs.iteritems():
+            getattr(plt, k)(v)
+
+        plt.show()
+
+    def __str__(self):
+        return "\n\n\n".join(str(c) for c in self.simulations[simulation_name])
+
+
+class SimulationBrowser(object):
+    def __init__(self):
+        self.simulations = {}
+
+    def add_simulation(self, name, simulation):
+        self.simulations[name] = simulation
+
+    def list_simulations(self):
+        print "\n".join(self.simulations.keys())
+
 
 if __name__ == "__main__":
-    # TODO: proper argparse
+    # TODO: argparse; get list of commands.
     if len(sys.argv) < 2:
         print "No filenames given."
         sys.exit(0)
 
-    filenames = []
+    sb = SimulationBrowser()
+    sb.add_simulation("test", Simulation.from_glob(*sys.argv[1:]))
 
-    for arg in sys.argv[1:]:
-        filenames.extend(glob.glob(arg))
+    ## End-to-end distance
 
-    if not filenames:
-        print "No files found."
-        sys.exit(0)
+    sb.simulations["test"].plot_length("A", bins=30,
+        title="Distribution of ubiquitin end-to-end length in UIM/Ub complex",
+        xlabel=u"Length (Å)",
+        ylabel="Frequency (count)"
+    )
 
-    conformations = []
-
-    for filename in filenames:
-        with open(filename) as pdbfile:
-            conformation = Conformation()
-            protein = None
-
-            for line in pdbfile:
-                if line.startswith("ATOM"):
-                    amino_acid, chain, index, x, y, z = ATOM.match(line).groups()
-                    if not protein:
-                        protein = Protein(chain)
-                    protein.append_residue(Residue(amino_acid, int(index), float(x), float(y), float(z)))
-
-                elif line.startswith("TER"):
-                    conformation.append_protein(protein)
-                    protein = None
-
-        conformations.append(conformation)
-
-    #print "\n\n\n".join([str(c) for c in conformations])
-
-    # End-to-end distance
-
-    distances = {}
-
-    for conformation in conformations:
-        for protein in conformation.proteins:
-            start = protein.residues[0].position
-            end = protein.residues[-1].position
-            distance = np.linalg.norm(end - start)
-
-            if protein.chain not in distances:
-                distances[protein.chain] = []
-
-            distances[protein.chain].append(distance)
-
-
-    plt.hist(distances["A"], bins=30)
-    plt.title("Distribution of ubiquitin end-to-end length in UIM/Ub complex")
-    plt.xlabel(u"Length (Å)")
-    plt.ylabel("Frequency")
-    plt.show()
