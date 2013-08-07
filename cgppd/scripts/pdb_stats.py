@@ -4,11 +4,8 @@
 import sys
 import glob
 import re
-import math
-from collections import namedtuple
+import numpy as np
 import matplotlib.pyplot as plt
-
-Vector = namedtuple('Vector', 'x y z')
 
 ATOM = re.compile('ATOM *\d+ *CA ([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
 
@@ -16,10 +13,10 @@ class Residue(object):
     def __init__(self, amino_acid, index, x, y, z):
         self.amino_acid = amino_acid
         self.index = index
-        self.position = Vector(x, y, z)
+        self.position = np.array((x, y, z))
 
     def __str__(self):
-        return "\t%d: %s (%g, %g, %g)" % (self.index, self.amino_acid, self.position.x, self.position.y, self.position.z)
+        return "\t%d: %s %s" % (self.index, self.amino_acid, self.position)
 
 
 class Protein(object):
@@ -32,6 +29,7 @@ class Protein(object):
 
     def __str__(self):
         return "%s:\n%s" % (self.chain, "\n".join([str(r) for r in self.residues]))
+
 
 class Conformation(object):
     def __init__(self):
@@ -88,8 +86,7 @@ if __name__ == "__main__":
         for protein in conformation.proteins:
             start = protein.residues[0].position
             end = protein.residues[-1].position
-            # numpy arrays can probably do this lots faster
-            distance = math.sqrt((end.x - start.x)**2 + (end.y - start.y)**2 + (end.z - start.z)**2)
+            distance = np.linalg.norm(end - start)
 
             if protein.chain not in distances:
                 distances[protein.chain] = []
