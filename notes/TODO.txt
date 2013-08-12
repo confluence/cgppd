@@ -4,14 +4,13 @@ NOW
 
 VERY NEXT THING:
 
-* clean up output files -- subdirectory for each simulation; another inside it for pdb files; save the prefix somewhere
-
 * validation
-    * Python script for parsing PDB files and extracting statistical information
-        * http://www.csb.pitt.edu/prody/index.html ?
-    * manual test to check potential calculations for a small protein
-        * reproduce a couple of MC steps to make sure nothing gets screwed up
+    * reference conformations -- fix whatever is wrong with the test -- probably a screwup with setting block dimension or something similar.
+    * rename the test, since it is actually useful
     * test that potential is the same for rigid protein with and without linkers enabled
+
+
+* radius of gyration
 
 * tests
     * fix crappy old tests
