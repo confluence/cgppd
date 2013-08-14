@@ -16,13 +16,6 @@ Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExch
     pthread_mutex_init(&logMutex, NULL);
 #endif
 
-    LOG(ALWAYS, "Loading amino acid data %s and pair lookup table %s\n", AMINOACIDDATASOURCE, LJPDSOURCE);
-    aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
-
-#ifdef displayLJpotentials
-    printPotentials(&aminoAcidData);
-#endif
-
 #if INCLUDE_TIMERS
     cutCreateTimer(&RELoopTimer);
     cutCreateTimer(&MCLoopTimer);
@@ -65,17 +58,23 @@ void Simulation::init(int argc, char **argv, int pid)
     // sanity check and calculation of some secondary parameters
     check_and_modify_parameters();
 
-    // TODO: only if verbose output
     printArgs();
 
-    cout << "\nINITIALISING FIRST REPLICA:" << endl;
+    LOG(parameters.verbosity, "Loading amino acid data %s and pair lookup table %s\n", AMINOACIDDATASOURCE, LJPDSOURCE);
+    aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
+
+#ifdef displayLJpotentials
+    printPotentials(&aminoAcidData);
+#endif
+
+    LOG(parameters.verbosity, "Initialising first replica...\n");
 
     // Create the initial replica, and compare CPU and GPU potential
 
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters, aminoAcidData, 30);
 
-    cout << "\nPOTENTIAL TEST:" << endl;
+    LOG(parameters.verbosity, "Performing potential test...\n");
 #if INCLUDE_TIMERS
     initialReplica.initTimers();
 #endif
@@ -85,7 +84,7 @@ void Simulation::init(int argc, char **argv, int pid)
     // TODO: important: for reasons which are temporarily unclear to me, we need to set this initial potential and copy it to the child replicas, otherwise the GL display doesn't move. o_O
     initialReplica.potential = p;
 
-    printf("\tCPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
+    LOG(parameters.verbosity > 1, "\tCPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
 
 #if USING_CUDA
     setup_CUDA(0, parameters.bound, initialReplica.device_LJPotentials, &aminoAcidData);
@@ -100,18 +99,18 @@ void Simulation::init(int argc, char **argv, int pid)
     double GPUE_NC = initialReplica.EonDeviceNC();
     initialReplica.potential = GPUE;
 
-    printf("\tGPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
-    printf("\tAbsolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
-    printf("\tRelative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
+    LOG(parameters.verbosity > 1, "\tGPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
+    LOG(parameters.verbosity > 1, "\tAbsolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
+    LOG(parameters.verbosity > 1, "\tRelative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
 
 #if CUDA_STREAMS
     cudaStreamSynchronize(initialReplica.cudaStream);
     cudaStreamDestroy(initialReplica.cudaStream);
 #endif
 
-    if (abs(p-GPUE)/abs(p)>0.01)
+    if (abs(p - GPUE) / abs(p) > 0.01)
     {
-        cout << "!\n! WARNING: Inconsistency between GPU and CPU result, check simulation \n!" << endl;
+        LOG(WARN,"\tWARNING: Inconsistency between GPU and CPU result. Check simulation!\n");
     }
     initialReplica.FreeDevice();
     cutilCheckMsg("Error freeing device");
@@ -126,15 +125,28 @@ void Simulation::init(int argc, char **argv, int pid)
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
     {
 #if REPULSIVE_CROWDING
-        cout << "-!- Crowding modelled using: u(r) = (6/r)^(12)." << endl;
+        LOG(parameters.verbosity, "\tCrowding modelled using: u(r) = (6/r)^(12).\n");
 #else
-        cout << "-!- Crowding is modelled using the full potential calculations." << endl;
+        LOG(parameters.verbosity, "\tCrowding is modelled using the full potential calculations.\n");
 #endif
     }
 
+    // File stuff
+    LOG(parameters.verbosity, "Output files will be written to output/%s.\n", parameters.prefix);
+
+    // We need to create these directories in order to open files for writing
+    // We need the files now so we can store them in the simulation data
+    // TODO: maybe move all this stuff to run
+    char mkdir_command[256];
+    memset(mkdir_command, 0, 256);
+    sprintf(mkdir_command, "mkdir -p output/%s/pdb",  parameters.prefix);
+    int make_dirs = system(mkdir_command);
+
+    initSamplingFiles();
+
     // now set up all the replicas
 
-    cout << "\nINITIALISING CHILD REPLICAS:" << endl;
+    LOG(parameters.verbosity, "Initialising child replicas...\n");
 
     geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
     geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
@@ -143,7 +155,7 @@ void Simulation::init(int argc, char **argv, int pid)
     for (size_t i = 0; i < parameters.replicas; i++)
     {
         replica[i].init_child_replica(initialReplica, int(i), geometricTemperature, geometricRotation, geometricTranslate, parameters);
-        printf ("\tReplica %d; temperature: %.3f; translate step: %.3f; rotate step: %.3f\n", int(i), replica[i].temperature, replica[i].translateStep, replica[i].rotateStep);
+        LOG(parameters.verbosity > 1, "\tReplica %d; temperature: %.3f; translate step: %.3f; rotate step: %.3f\n", int(i), replica[i].temperature, replica[i].translateStep, replica[i].rotateStep);
     }
 
     // Temperature map stuff
@@ -170,19 +182,6 @@ void Simulation::init(int argc, char **argv, int pid)
     thread = new pthread_t[parameters.threads];
     data = new SimulationData[parameters.threads];
     thread_created = true;
-
-    // File stuff
-    cout << "\tOutput files will be written to output/" << parameters.prefix << endl;
-
-    // We need to create these directories in order to open files for writing
-    // We need the files now so we can store them in the simulation data
-    // TODO: maybe move all this stuff to run
-    char mkdir_command[256];
-    memset(mkdir_command, 0, 256);
-    sprintf(mkdir_command, "mkdir -p output/%s/pdb",  parameters.prefix);
-    int make_dirs = system(mkdir_command);
-
-    initSamplingFiles();
 
     // Set up parameters to pass to threads
     for (int i = 0; i < parameters.threads; i++)
@@ -217,7 +216,7 @@ void Simulation::init(int argc, char **argv, int pid)
         // % #gpus so they share if threads > gpus
         // will perform best if threads:gpus = 1:1
         data[i].GPUID = i % parameters.gpus;
-        cout << "\tAssigning thread " << i << " to GPU " << data[i].GPUID << endl;
+        LOG(parameters.verbosity > 1, "\tAssigning thread %d to GPU %d.\n", i, data[i].GPUID);
 
         data[i].max_replicas_per_thread = parameters.max_replicas_per_thread;
 
@@ -242,14 +241,13 @@ void Simulation::run()
 {
     // we can't use pthreads and CUDA at the moment, but we are going to use streams
 
-    LOG(ALWAYS, "\nBEGINNING SIMULATION:\n");
+    LOG(parameters.verbosity, "Beginning simulation...\n");
 
     // TODO: add stuff for resuming here
 
     if (initialReplica.moleculeCount == 0)  // make sure something is loaded
     {
-        cout << "-!- No molecules loaded. -!-" << endl;
-        cout << "-!- Aborting run. -!- " << endl;
+        LOG(ERROR, "No molecules loaded. Aborting run.\n");
         return;
     }
 
@@ -728,10 +726,10 @@ void Simulation::closeSamplingFiles()
 
 void Simulation::printHelp()
 {
-    cout << "Usage: cgppd -f <filename> [-c] [-h] [-v] [-q] [-t x] [-s x] [-g x] [-m x ] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
+    cout << "Usage: cgppd -f <filename> [-c] [-h] [-p] [-q] [-t x] [-s x] [-g x] [-m x ] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
     cout << "\t-h|--help: show this dialog" << endl;
     cout << "\t-f|--file <file>: Input config file" << endl;
-    cout << "\t-v|--view:        use the open GL preview of this configuration, performs no simulation" << endl;
+    cout << "\t-p|--preview:        use the open GL preview of this configuration, performs no simulation" << endl;
     cout << "\t-q|--nosim:       Do everything except the simulation (for use with -v)" << endl;
     cout << "The following values override those in the config file" << endl;
     cout << "\t-t|--threads x:  The number of CPU/pthreads to use" << endl;
@@ -745,6 +743,7 @@ void Simulation::printHelp()
     cout << "\t-x|--tmax x:    The temperature of the highest replica" << endl;
     cout << "\t-n|--tmin x:    The temperature of the lowest replica" << endl;
     cout << "\t-d|--blockdim x: Number of threads per CUDA block" << endl;
+    cout << "\t-v|-vv: Increase verbosity" << endl;
 
     exit(0);
 }
@@ -762,7 +761,7 @@ void Simulation::getFileArg(int argc, char **argv)
 
     while (1)
     {
-        int opt = getopt_long(argc, argv, "hf:vqt:s:g:m:e:r:o:b:x:n:d:", long_options, &opt_index);
+        int opt = getopt_long(argc, argv, "hf:pqt:s:g:m:e:r:o:b:x:n:d:v012", long_options, &opt_index);
 
         if (opt == -1)
             break;
@@ -776,6 +775,9 @@ void Simulation::getFileArg(int argc, char **argv)
                 strcpy(parameters.file, optarg);
                 parameters.inputFile = true;
                 break;
+            case 'v':
+                parameters.verbosity++;
+                break;
             default:
                 // Ignore all other options in this pass
                 break;
@@ -784,11 +786,11 @@ void Simulation::getFileArg(int argc, char **argv)
 
     if (!parameters.inputFile)
     {
-        cout << "No configuration file provided." << endl;
+        LOG(ERROR, "No configuration file provided.\n");
         printHelp();
     }
 
-    cout << "Will read configuration from file: " << parameters.file << endl;
+    LOG(parameters.verbosity > 1, "Will read configuration from file: %s\n", parameters.file);
 }
 
 void Simulation::getArgs(int argc, char **argv)
@@ -798,7 +800,7 @@ void Simulation::getArgs(int argc, char **argv)
     const struct option long_options[] =
     {
         {"help", no_argument, 0, 'h'},
-        {"view", no_argument, 0, 'v'},
+        {"preview", no_argument, 0, 'p'},
         {"nosim", no_argument, 0, 'q'},
 
         {"threads", required_argument, 0, 't'},
@@ -823,11 +825,11 @@ void Simulation::getArgs(int argc, char **argv)
     optind = 1;
 
 
-    cout << "Parsing commandline parameters..." << endl;
+    LOG(parameters.verbosity, "Parsing commandline parameters...\n");
 
     while (1)
     {
-        int opt = getopt_long(argc, argv, "hf:vqt:s:g:m:e:r:o:b:x:n:d:", long_options, &opt_index);
+        int opt = getopt_long(argc, argv, "hf:pqt:s:g:m:e:r:o:b:x:n:d:v012", long_options, &opt_index);
 
         if (opt == -1)
             break;
@@ -841,68 +843,71 @@ void Simulation::getArgs(int argc, char **argv)
                 // we can ignore the file parameter on the second pass
                 break;
             case 'v':
+                // we can ignore the file parameter on the second pass
+                break;
+            case 'p':
 #if GLVIS
                 parameters.viewConditions = true;
-                cout << "\tWill show OpenGL preview." << endl;
+                LOG(parameters.verbosity > 1, "\tWill show OpenGL preview.\n");
 #else
-                cout << "\tThis build does not support OpenGL." << endl;
+                LOG(WARN, "\tThis build does not support OpenGL.");
 #endif
                 break;
             case 'q':
                 parameters.skipsimulation = true;
-                cout << "\tWill skip simulation." << endl;
+                LOG(parameters.verbosity > 1, "\tWill skip simulation.\n");
                 break;
             case 't':
                 parameters.threads = atoi(optarg);
-                cout << "\tParameter threads = " << parameters.threads << endl;
+                LOG(parameters.verbosity > 1, "\tParameter threads = %d\n", parameters.threads);
                 break;
             case 's':
                 parameters.streams = atoi(optarg);
-                cout << "\tParameter streams = " << parameters.streams << endl;
+                LOG(parameters.verbosity > 1, "\tParameter streams = %d\n", parameters.streams);
                 break;
             case 'g':
                 parameters.gpus = atoi(optarg);
-                cout << "\tParameter gpus = " << parameters.gpus << endl;
+                LOG(parameters.verbosity > 1, "\tParameter gpus = %d\n", parameters.gpus);
                 break;
             case 'm':
                 parameters.MCsteps = atoi(optarg);
-                cout << "\tParameter MCsteps = " << parameters.MCsteps << endl;
+                LOG(parameters.verbosity > 1, "\tParameter MCsteps = %d\n", parameters.MCsteps);
                 break;
             case 'e':
                 parameters.REsteps = atoi(optarg);
-                cout << "\tParameter REsteps = " << parameters.REsteps << endl;
+                LOG(parameters.verbosity > 1, "\tParameter REsteps = %d\n", parameters.REsteps);
                 break;
             case 'r':
                 parameters.replicas = atoi(optarg);
-                cout << "\tParameter replicas = " << parameters.replicas << endl;
+                LOG(parameters.verbosity > 1, "\tParameter replicas = %d\n", parameters.replicas);
                 break;
             case 'o':
                 strcpy(parameters.logfile, optarg);
-                cout << "\tParameter logfile = " << parameters.logfile << endl;
+                LOG(parameters.verbosity > 1, "\tParameter logfile = %s\n", parameters.logfile);
                 break;
             case 'b':
                 parameters.bound = atof(optarg);
-                cout << "\tParameter bound = " << parameters.bound << endl;
+                LOG(parameters.verbosity > 1, "\tParameter bound = %f\n", parameters.bound);
                 break;
             case 'x':
                 parameters.temperatureMax = atof(optarg);
-                cout << "\tParameter temperatureMax = " << parameters.temperatureMax << endl;
+                LOG(parameters.verbosity > 1, "\tParameter temperatureMax = %f\n", parameters.temperatureMax);
                 break;
             case 'n':
                 parameters.temperatureMin = atof(optarg);
-                cout << "\tParameter temperatureMin = " << parameters.temperatureMin << endl;
+                LOG(parameters.verbosity > 1, "\tParameter temperatureMin = %f\n", parameters.temperatureMin);
                 break;
             case 'd':
 #if USING_CUDA
                 parameters.cuda_blockSize = atoi(optarg);
                 parameters.auto_blockdim = false;
-                cout << "\tParameter blockdim = " << parameters.cuda_blockSize << endl;
+                LOG(parameters.verbosity > 1, "\tParameter blockdim = %d\n", parameters.cuda_blockSize);
 #else
-                cout << "\tThis build does not support CUDA." << endl;
+                LOG(WARN, "\tThis build does not support CUDA.\n");
 #endif
                 break;
             default:
-                cout << "\tUnknown parameter: " << opt << endl;
+                LOG(WARN, "\tUnknown parameter: %c\n", opt);
                 printHelp();
                 break;
         }
@@ -931,11 +936,11 @@ void Simulation::loadArgsFromFile()
 
     if (!input.good())
     {
-        cout << "Failed to open file: " << parameters.file << endl;
+        LOG(ERROR, "Failed to open file: %s\n", parameters.file);
         exit(0);
     }
 
-    cout << "Parsing config file " << parameters.file << "..." << endl;
+    LOG(parameters.verbosity, "Parsing config file %s...\n", parameters.file);
 
     char line[512] = {0};
 
@@ -979,7 +984,7 @@ void Simulation::loadArgsFromFile()
 
             if (result < 8)
             {
-                cout << "\tUnable to parse molecule: " << line << endl;
+                LOG(WARN, "\tUnable to parse molecule: %s\n", line);
             }
 
             else
@@ -992,7 +997,7 @@ void Simulation::loadArgsFromFile()
                 }
 
                 parameters.mdata.push_back(m);
-                cout << "\tAdded molecule from file " << m.pdbfilename << endl;
+                LOG(parameters.verbosity > 1, "\tAdded molecule from file %s.\n", m.pdbfilename);
             }
         }
         else if (section == PARAMETER_SECTION)
@@ -1000,7 +1005,7 @@ void Simulation::loadArgsFromFile()
             char * key = strtok(line," ");
             char * value = strtok(NULL," ");
 
-            cout << "\tParameter " << key << " = " << value << endl;
+            LOG(parameters.verbosity > 1, "\tParameter %s = %s\n", key, value);
 
             if (strcmp(key, "gpus") == 0)
             {
@@ -1051,7 +1056,7 @@ void Simulation::loadArgsFromFile()
                 sprintf(parameters.prefix, "%s_%s_%d", value, CROWDING_NAME_SUFFIX, parameters.pid);
             }
             else {
-                cout << "\tUnknown parameter: "<< key << endl;
+                LOG(WARN, "\tUnknown parameter: %s\n", key);
             }
         }
     }
@@ -1060,17 +1065,17 @@ void Simulation::loadArgsFromFile()
 
 void Simulation::check_and_modify_parameters()
 {
-    cout << "Checking parameters for sanity..." << endl;
+    LOG(parameters.verbosity, "Checking parameters for sanity...\n");
 
     if (parameters.bound <= 0)
     {
-        cout << "! Bounding value too small; setting equal to " << BOUNDING_VALUE << endl;
+        LOG(WARN, "\tWARNING: Bounding value too small; setting equal to %f.\n", BOUNDING_VALUE);
         parameters.bound = BOUNDING_VALUE;
     }
 
     if (parameters.temperatureMax < parameters.temperatureMin)
     {
-        cout << "! Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " <-> " << parameters.temperatureMin << endl;
+        LOG(WARN, "\tWARNING: Maximum temperature < minimum temperature; swapping %f and %f.\n", parameters.temperatureMax, parameters.temperatureMin);
         float tmp = parameters.temperatureMax;
         parameters.temperatureMax = parameters.temperatureMin;
         parameters.temperatureMin = tmp;
@@ -1079,7 +1084,7 @@ void Simulation::check_and_modify_parameters()
     if (parameters.threads > parameters.replicas)
     {
         parameters.threads = parameters.replicas;
-        cout << "! Threads > replicas; setting threads equal to " << parameters.threads << endl;
+        LOG(WARN, "\tWARNING: Threads > replicas; setting threads equal to %d.\n", parameters.threads);
     }
 
     parameters.max_replicas_per_thread = int(ceil(float(parameters.replicas) / float(parameters.threads)));
@@ -1087,7 +1092,7 @@ void Simulation::check_and_modify_parameters()
     int unused_threads = spaces / parameters.max_replicas_per_thread; // integer division
     if (unused_threads)
     {
-        cout << "! After assignment of " << parameters.replicas << " replicas to " << parameters.threads << " threads with " << parameters.max_replicas_per_thread << " replicas per thread, " << unused_threads << " threads are left unused. You must either increase the number of replicas or decrease the number of threads. Exiting.";
+        LOG(ERROR, "\tERROR: After assignment of %d replicas to %d threads with %d replicas per thread, %d threads are left unused. You must either increase the number of replicas or decrease the number of threads. Exiting.\n", parameters.replicas, parameters.threads, parameters.max_replicas_per_thread, unused_threads);
         exit(0);
     }
 
@@ -1097,7 +1102,7 @@ void Simulation::check_and_modify_parameters()
     if (parameters.gpus > availableGpus)
     {
         parameters.gpus = availableGpus;
-        cout << "! Too many GPUs; setting equal to " << parameters.gpus << endl;
+        LOG(WARN, "\tWARNING: Too many GPUs; setting equal to %d.\n", parameters.gpus);
     }
 #endif
 
@@ -1112,7 +1117,7 @@ void Simulation::check_and_modify_parameters()
             {
                 parameters.streams = parameters.replicas;
             }
-            cout << "! Too many streams; setting equal to " << parameters.streams << endl;
+            LOG(WARN, "\tWARNING: Too many streams; setting equal to %d.\n", parameters.streams);
         }
     }
 
@@ -1134,20 +1139,20 @@ void Simulation::writeFileIndex()
 
 void Simulation::printArgs()
 {
-    cout << "\nFINAL PARAMETERS:" << endl;
-    cout << "\tThreads: " << parameters.threads << endl;
-    cout << "\tStreams: " << parameters.streams << endl;
-    cout << "\tGPUs: " << parameters.gpus << endl;
-    cout << "\tReplicas: " << parameters.replicas << endl;
+    LOG(parameters.verbosity > 1, "Final parameters:\n");
+    LOG(parameters.verbosity > 1, "\tThreads: %d\n", parameters.threads);
+    LOG(parameters.verbosity > 1, "\tStreams: %d\n", parameters.streams);
+    LOG(parameters.verbosity > 1, "\tGPUs: %d\n", parameters.gpus);
+    LOG(parameters.verbosity > 1, "\tReplicas: %d\n", parameters.replicas);
 
-    cout << "\tMC steps: " << parameters.MCsteps << endl;
-    cout << "\tRE steps: " << parameters.REsteps << endl;
-    cout << "\tSampling frequency (MC steps): " << parameters.sampleFrequency << endl;
-    cout << "\tSampling starts after (MC steps): " << parameters.sampleStartsAfter << endl;
+    LOG(parameters.verbosity > 1, "\tMC steps: %d\n", parameters.MCsteps);
+    LOG(parameters.verbosity > 1, "\tRE steps: %d\n", parameters.REsteps);
+    LOG(parameters.verbosity > 1, "\tSampling frequency (MC steps): %d\n", parameters.sampleFrequency);
+    LOG(parameters.verbosity > 1, "\tSampling starts after (MC steps): %d\n", parameters.sampleStartsAfter);
 
-    cout << "\tBounding box size: " << parameters.bound << endl;
-    cout << "\tNon-crowder molecules: " << parameters.nonCrowders << endl;
-    cout << "\tMaximum temperature: " << parameters.temperatureMax << endl;
-    cout << "\tMinimum temperature: " << parameters.temperatureMin << endl;
+    LOG(parameters.verbosity > 1, "\tBounding box size: %f\n", parameters.bound);
+    LOG(parameters.verbosity > 1, "\tNon-crowder molecules: %d\n", parameters.nonCrowders);
+    LOG(parameters.verbosity > 1, "\tMaximum temperature: %f\n", parameters.temperatureMax);
+    LOG(parameters.verbosity > 1, "\tMinimum temperature: %f\n", parameters.temperatureMin);
 
 }

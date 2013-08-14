@@ -6,8 +6,6 @@
 #ifndef OPENGL_H
 #define OPENGL_H
 
-// #include <GL/glut.h>
-// #include <GL/gl.h>
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -16,7 +14,6 @@
 #include <ctime>
 #include <linux/kernel.h>
 #include "Replica.h"
-//#include <linux/time.h>
 
 extern Replica * GLreplica;
 extern Replica (*replica)[REPLICA_COUNT];

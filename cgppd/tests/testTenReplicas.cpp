@@ -38,12 +38,11 @@ void TestTenReplicas::setUp()
 
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
     testboxdim = 118.4f;
-    test_molecule_file = new char[60];
 
 #if USING_CUDA
-    cudaMalloc((void**)&ljp_t,LJArraySize);
+    cudaMalloc((void**)&ljp_t, LJArraySize);
     cutilCheckMsg("Failed to cudaMalloc");
-    copyLJPotentialDataToDevice(ljp_t,&aminoAcidData);
+    copyLJPotentialDataToDevice(ljp_t, &aminoAcidData);
 
     // set box dimensions
     CUDA_setBoxDimension(testboxdim);
@@ -70,53 +69,52 @@ void TestTenReplicas::testSanity()
     {
         float cpu;
         float gpu;
-        float gpu_nc;
     };
 
     static const ExpectedResult expected_results[10] = {
-        { -0.293705,  -0.293705,  -0.293705},
-        { -1.056291,  -1.056291,  -1.056291},
-        {-10.277430, -10.277432, -10.277432},
-        { -7.577059,  -7.577060,  -7.577060},
-        {  0.000106,   0.000106,   0.000106},
-        { -5.559506,  -5.559508,  -5.559508},
-        { -5.441210,  -5.441211,  -5.441211},
-        {-10.657519, -10.657518, -10.657518},
-        { -9.891660,  -9.891659,  -9.891659},
-        { -8.511853,  -8.511855,  -8.511855}
+        { -0.293705,  -0.293705},
+        { -1.056291,  -1.056291},
+        {-10.277430, -10.277432},
+        { -7.577059,  -7.577060},
+        {  0.000106,   0.000106},
+        { -5.559506,  -5.559508},
+        { -5.441210,  -5.441211},
+        {-10.657519, -10.657518},
+        { -9.891660,  -9.891659},
+        { -8.511853,  -8.511855}
     };
 
-//     static const float expected_averages [6] = {0.029f, 0.0f, 0.271f, 0.95f, 0.0f, 0.09f};
-    // mysteriously slower in oneiric
-    static const float expected_averages [6] = {0.029f, 0.0f, 0.271f, 0.95f, 0.0f, 0.11f};
-    static int exceeded_averages [6] = {0, 0, 0, 0, 0, 0};
-// TODO use the new constructor
     for (int i = 0; i < 10; i++)
     {
-        replicas[i].aminoAcids = aminoAcidData;
+        argdata parameters;
+        parameters.bound = testboxdim;
+        parameters.auto_blockdim = false;
+
+        moldata m1;
+        m1.translate = true;
+        sprintf(m1.pdbfilename, "data/conf%d/1a.pdb", i+1);
+
+        moldata m2;
+        m2.translate = true;
+        sprintf(m2.pdbfilename, "data/conf%d/1b.pdb", i+1);
+
+        parameters.mdata.push_back(m1);
+        parameters.mdata.push_back(m2);
+
+        replicas[i].init_first_replica(parameters, aminoAcidData, 2);
         replicas[i].label = i+1;
-        replicas[i].boundingValue = testboxdim;
-
-        replicas[i].reserveContiguousMoleculeArray(2);
-
-        sprintf(test_molecule_file,"data/conf%d/1a.pdb",i+1);
-        replicas[i].loadMolecule(test_molecule_file);
-        sprintf(test_molecule_file,"data/conf%d/1b.pdb",i+1);
-        replicas[i].loadMolecule(test_molecule_file);
 
 #if INCLUDE_TIMERS
         replicas[i].initTimers();
 #endif
 
 #if USING_CUDA
-        replicas[i].device_LJPotentials = ljp_t;
-        replicas[i].setBlockSize(TILE_DIM);
-        replicas[i].ReplicaDataToDevice();
+        replicas[i].setup_CUDA(ljp_t);
 #endif
 
         float e = 0.000001;
         double cpu = replicas[i].E();
-        double cpu_nc = replicas[i].E(&replicas[i].molecules[0],&replicas[i].molecules[1]);
+        double cpu_nc = replicas[i].E(&replicas[i].molecules[0], &replicas[i].molecules[1]);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu, e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc, e);
 
@@ -124,33 +122,10 @@ void TestTenReplicas::testSanity()
         double gpu = replicas[i].EonDevice();
         double gpu_nc = replicas[i].EonDeviceNC();
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu, e);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu_nc, gpu_nc, e);
-
-        float averages[6];
-
-        averages[0] = cutGetAverageTimerValue(replicas[i].replicaToGPUTimer);
-        averages[1] = cutGetAverageTimerValue(replicas[i].replicaUpdateGPUTimer);
-        averages[2] = cutGetAverageTimerValue(replicas[i].replicaECUDATimer);
-        averages[3] = cutGetAverageTimerValue(replicas[i].replicaEHostTimer);
-        averages[4] = cutGetAverageTimerValue(replicas[i].replicaMoleculeUpdateTimer);
-        averages[5] = cutGetAverageTimerValue(replicas[i].initGPUMemoryTimer);
-
-        for (int j = 0; j < 6; j++)
-        {
-            if (averages[j] > expected_averages[j] + 0.01)
-            {
-                cout << j << ": " << averages[j] << ">" << expected_averages[j] << endl;
-                exceeded_averages[j]++;
-            }
-        }
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu_nc, e);
 
         replicas[i].FreeDevice();
 #endif
     }
 
-    for (int j = 0; j < 6; j++)
-    {
-        // ignore one or two outliers
-        CPPUNIT_ASSERT(exceeded_averages[j] <= 2);
-    }
 }
