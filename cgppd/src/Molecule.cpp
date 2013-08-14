@@ -102,9 +102,9 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 #endif // FLEXIBLE_LINKS
 }
 
-void Molecule::log_info(int index)
+void Molecule::log_info(int index, int verbosity)
 {
-    LOG(ALWAYS, "\t\t%d %s; %d residues; centre: (%0.3f, %0.3f, %0.3f); volume: %.3f A^3\n", index, filename, residueCount, center.x, center.y, center.z, volume);
+    LOG(verbosity > 1, "\t\t%d %s; %d residues; centre: (%0.3f, %0.3f, %0.3f); volume: %.3f A^3\n", index, filename, residueCount, center.x, center.y, center.z, volume);
 }
 
 void Molecule::MC_backup_restore(const Molecule* m)

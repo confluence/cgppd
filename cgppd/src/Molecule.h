@@ -31,7 +31,7 @@ public:
     void init(const char* pdbfilename, AminoAcids &a, int index, const float bounding_value);
     bool initFromPDB(const char* pdbfilename);
     void copy(const Molecule& m, Residue * contiguous_residue_offset);
-    void log_info(int index);
+    void log_info(int index, int verbosity);
 
     void MC_backup_restore(const Molecule* m);
 

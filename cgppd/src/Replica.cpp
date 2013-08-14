@@ -33,14 +33,16 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
 
         if (mol.translate)
         {
-            molecules[mi].translate(Vector3f(mol.px, mol.py, mol.pz));
+            if (mol.px || mol.py || mol.pz) {
+                molecules[mi].translate(Vector3f(mol.px, mol.py, mol.pz));
+            }
         }
         else
         {
             molecules[mi].setPosition(Vector3f(mol.px, mol.py, mol.pz));
         }
 
-        if (mol.ra >= 0.000)
+        if (mol.ra)
         {
             Vector3double v = Vector3double(mol.rx,mol.ry,mol.rz);
             v.normalizeInPlace();
@@ -77,7 +79,7 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     if (parameters.auto_blockdim)
     {
         (residueCount < 1024) ? setBlockSize(32) : setBlockSize(64);
-        LOG(ALWAYS, "\tAutomatically calculated block dimension: %d\n", blockSize);
+        LOG(parameters.verbosity > 1, "\tAutomatically calculated block dimension: %d\n", blockSize);
     }
     else
     {
@@ -85,12 +87,12 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     }
 #endif
 
-    LOG(ALWAYS, "\tLoaded: %d residues in %d molecules:\n", residueCount, moleculeCount);
+    LOG(parameters.verbosity > 1, "\tLoaded: %d residues in %d molecules:\n", residueCount, moleculeCount);
     for (int i = 0; i < moleculeCount; i++)
     {
-        molecules[i].log_info(i);
+        molecules[i].log_info(i, parameters.verbosity);
     }
-    LOG(ALWAYS, "\tCounted : %d complex residues and %d residue interaction pairs.\n", nonCrowderResidues, paircount);
+    LOG(parameters.verbosity > 1, "\tCounted : %d complex residues and %d residue interaction pairs.\n", nonCrowderResidues, paircount);
 }
 
 void Replica::init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters)
@@ -970,7 +972,6 @@ double Replica::EonDeviceNC()
 {
     double result(0.0);
     int NCdataSetSize(ceil(float(nonCrowderResidues)/float(blockSize))*blockSize);
-    //cout << "using " << NCdataSetSize <<  " as non NC size" << endl;
 
     CUDA_EonDeviceNC(device_float4_residuePositions, device_float4_residueMeta, device_residueCount, device_moleculeStartPositions, device_moleculeCount, device_LJPotentials, &result,blockSize,NCdataSetSize,sharedMemSize);
 

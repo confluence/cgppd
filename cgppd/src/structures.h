@@ -53,6 +53,11 @@
         float rz;
         float ra;
         bool crowder;
+
+        moldata(): px(0), py(0), pz(0), translate(false), rx(0), ry(0), rz(0), ra(0), crowder(false)
+        {
+            memset(pdbfilename, 0, 256);
+        }
     };
 
     struct argdata
@@ -87,6 +92,7 @@
 //         char checkpointfilename[256];
         bool resume;
         std::vector<moldata> mdata;
+        int verbosity;
 
         argdata() :
             nonCrowders(0), viewConditions(false), skipsimulation(false),
@@ -96,7 +102,8 @@
             gpus(1), threads(THREAD_COUNT), streams(STREAM_COUNT), MCsteps(MC_STEPS), REsteps(REMC_STEPS),
             sampleFrequency(SAMPLE_FREQ), sampleStartsAfter(STEPS_BEFORE_SAMPLE), inputFile(false),
             replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP),
-            pid(0), resume(false), checkpointFrequency(CHECKPOINTFREQUENCY), max_replicas_per_thread(0)
+            pid(0), resume(false), checkpointFrequency(CHECKPOINTFREQUENCY), max_replicas_per_thread(0),
+            verbosity(0)
         {
             memset(prefix, 0, 256);
             memset(file, 0, 256);

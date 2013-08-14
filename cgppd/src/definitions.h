@@ -51,8 +51,10 @@
     // code things
 //     #define VERBOSE_THREAD_LOGGING 1
 
-    #define ERROR   true
     #define ALWAYS   true
+
+    #define ERROR   true
+    #define WARN   true
     #define INFO    true
     #define DEBUG   true
 

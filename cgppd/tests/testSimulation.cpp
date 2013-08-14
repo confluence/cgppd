@@ -40,7 +40,7 @@ void TestSimulation::testGetArgs()
 {
 #define LEN_TEST_ARGV 27
     Simulation s;
-    const char * c_argv[LEN_TEST_ARGV] = {"my_programname", "-f", "my_filename", "-v", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-o", "my_suffix", "-b", "23", "-n", "23", "-x", "23", "-d", "23"};
+    const char * c_argv[LEN_TEST_ARGV] = {"my_programname", "-f", "my_filename", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-o", "my_suffix", "-b", "23", "-n", "23", "-x", "23", "-d", "23"};
     char * argv[LEN_TEST_ARGV];
     for(int i = 0; i < LEN_TEST_ARGV; i++) {
         argv[i] = strdup(c_argv[i]);
@@ -76,6 +76,8 @@ void TestSimulation::testGetArgs()
     CPPUNIT_ASSERT(strcmp(s.parameters.prefix, "") == 0);
     CPPUNIT_ASSERT(strcmp(s.parameters.file, "my_filename") == 0);
     CPPUNIT_ASSERT(strcmp(s.parameters.logfile, "my_suffix") == 0);
+
+    CPPUNIT_ASSERT_EQUAL(0, s.parameters.verbosity);
 }
 
 void TestSimulation::testLoadArgsFromFile()
