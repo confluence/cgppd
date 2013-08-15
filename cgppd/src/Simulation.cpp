@@ -79,8 +79,8 @@ void Simulation::init(int argc, char **argv, int pid)
     initialReplica.initTimers();
 #endif
 
-    float p = initialReplica.E();
-    float pnc = initialReplica.E(&initialReplica.molecules[0], &initialReplica.molecules[1]);
+    float p = initialReplica.E().total();
+    float pnc = initialReplica.E(&initialReplica.molecules[0], &initialReplica.molecules[1]).total();
     // TODO: important: for reasons which are temporarily unclear to me, we need to set this initial potential and copy it to the child replicas, otherwise the GL display doesn't move. o_O
     initialReplica.potential = p;
 

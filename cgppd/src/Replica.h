@@ -48,8 +48,8 @@ public:
 
     void exchangeReplicas(Replica &r);
 
-    double E();
-    double E(Molecule *a,Molecule *b);   // use for fraction bound calcs
+    Potential E();
+    Potential E(Molecule *a,Molecule *b);   // use for fraction bound calcs
 
     // the search method that mutates the replicas molecules.
     void MCSearch(int steps);//, Replica * replaceReplica);
@@ -63,7 +63,7 @@ public:
 
 #if FLEXIBLE_LINKS
     TorsionalLookupMatrix torsions;
-    double internal_molecule_E();
+    Potential internal_molecule_E();
 #endif
 
     Residue * contiguousResidues;

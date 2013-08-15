@@ -88,7 +88,9 @@ void TestTenReplicas::testSanity()
     {
         argdata parameters;
         parameters.bound = testboxdim;
+#if USING_CUDA
         parameters.auto_blockdim = false;
+#endif
 
         moldata m1;
         m1.translate = true;
@@ -113,8 +115,8 @@ void TestTenReplicas::testSanity()
 #endif
 
         float e = 0.000001;
-        double cpu = replicas[i].E();
-        double cpu_nc = replicas[i].E(&replicas[i].molecules[0], &replicas[i].molecules[1]);
+        double cpu = replicas[i].E().total();
+        double cpu_nc = replicas[i].E(&replicas[i].molecules[0], &replicas[i].molecules[1]).total();
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu, e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc, e);
 
