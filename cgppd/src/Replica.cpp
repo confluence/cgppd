@@ -353,12 +353,12 @@ void Replica::MCSearch(int steps)
         newPotential = EonDevice();  // sequential cuda call
         //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
 #if PERFORM_GPU_AND_CPU_E
-        float cpu_e(E());
+        float cpu_e(E().total());
         float err = abs(cpu_e - newPotential) / abs(cpu_e);
         printf("%24.20f %24.20f %24.20f\n", cpu_e, float(newPotential), err);
 #endif
 #else // only CPU calls
-        newPotential = E();
+        newPotential = E().total();
 #endif
         float delta = newPotential - potential;
 
@@ -395,7 +395,7 @@ inline float crowderPairPotential(const float r)
     return powf(6.0f/r,12.0f);
 }
 
-double Replica::E()
+Potential Replica::E()
 {
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStartTimer(replicaEHostTimer));
@@ -471,15 +471,14 @@ double Replica::E()
     }
 
     potential.print_log(INFO_POTENTIAL, "\nTotal potential");
-    double total(potential.total());
 
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
 #endif
-    return total;
+    return potential;
 }
 
-double Replica::E(Molecule *a,Molecule *b)
+Potential Replica::E(Molecule *a,Molecule *b)
 {
     Potential potential;
 
@@ -499,12 +498,12 @@ double Replica::E(Molecule *a,Molecule *b)
     potential.increment(a->E());
     potential.increment(b->E());
 #endif
-    return potential.total();
+    return potential;
 }
 
 
 #if FLEXIBLE_LINKS
-double Replica::internal_molecule_E() {
+Potential Replica::internal_molecule_E() {
     Potential potential;
 
     for (size_t mI = 0; mI < moleculeCount; mI++)
@@ -518,7 +517,7 @@ double Replica::internal_molecule_E() {
         }
 #endif
     }
-    return potential.total();
+    return potential;
 }
 #endif
 
@@ -641,13 +640,13 @@ void Replica::MCSearchAcceptReject()
     //cudaStreamSynchronize(cudaStream);  // sync, newPotential needs to have been returned
     newPotential = SumGridResults();
 #if FLEXIBLE_LINKS
-    newPotential += internal_molecule_E();
+    newPotential += internal_molecule_E().total();
 #endif
 
     //cout << "new energy replica[" << temperature << "] = " << newPotential << endl;
 
 #if PERFORM_GPU_AND_CPU_E
-    float cpu_e(E());
+    float cpu_e(E().total());
     float err = abs(cpu_e-newPotential)/abs(cpu_e);
     printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 #endif
@@ -963,7 +962,7 @@ double Replica::EonDevice()
 #endif
     //TODO add new timer for this
 #if FLEXIBLE_LINKS
-    result += internal_molecule_E();
+    result += internal_molecule_E().total();
 #endif
     return result;
 }
@@ -977,7 +976,7 @@ double Replica::EonDeviceNC()
 
     //TODO add new timer for this
 #if FLEXIBLE_LINKS
-    result += internal_molecule_E();
+    result += internal_molecule_E().total();
 #endif
 
     return result;
@@ -1100,7 +1099,7 @@ void Replica::sample(SimulationData * data, int current_step, float boundEnergyT
         {
             for (int j = i + 1; j < nonCrowderCount; j++)
             {
-                nonCrowderPotential += E(&molecules[i], &molecules[j]); // CPU failsafe
+                nonCrowderPotential += E(&molecules[i], &molecules[j]).total(); // CPU failsafe
             }
         }
 #endif

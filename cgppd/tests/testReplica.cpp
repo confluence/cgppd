@@ -75,7 +75,7 @@ void TestReplica::testMC()
     child_replica.device_LJPotentials = ljp_t;
     child_replica.ReplicaDataToDevice();
 #endif
-    child_replica.potential = child_replica.E();
+    child_replica.potential = child_replica.E().total();
     child_replica.MCSearch(20);
 #if USING_CUDA
     child_replica.FreeDevice();
