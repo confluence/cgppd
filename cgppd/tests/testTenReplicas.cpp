@@ -115,10 +115,11 @@ void TestTenReplicas::testSanity()
 #endif
 
         float e = 0.000001;
-        double cpu = replicas[i].E().total();
-        double cpu_nc = replicas[i].E(&replicas[i].molecules[0], &replicas[i].molecules[1]).total();
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu, e);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc, e);
+        Potential cpu = replicas[i].E();
+        Potential cpu_nc = replicas[i].E(&replicas[i].molecules[0], &replicas[i].molecules[1]);
+        printf("TOTAL: %.3f\tLJ: %.3f\tDH: %.3f\n", cpu.total(), cpu.total_LJ(), cpu.total_DH());
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu.total(), e);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc.total(), e);
 
 #if USING_CUDA
         double gpu = replicas[i].EonDevice();
