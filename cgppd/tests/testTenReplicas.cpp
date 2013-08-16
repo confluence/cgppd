@@ -84,6 +84,8 @@ void TestTenReplicas::testSanity()
         { -8.511853,  -8.511855}
     };
 
+    printf("\tTOTAL\tLJ\tDH\n");
+
     for (int i = 0; i < 10; i++)
     {
         argdata parameters;
@@ -117,7 +119,14 @@ void TestTenReplicas::testSanity()
         float e = 0.000001;
         Potential cpu = replicas[i].E();
         Potential cpu_nc = replicas[i].E(&replicas[i].molecules[0], &replicas[i].molecules[1]);
-        printf("TOTAL: %.3f\tLJ: %.3f\tDH: %.3f\n", cpu.total(), cpu.total_LJ(), cpu.total_DH());
+        if (i == 4)
+        {
+            printf("%2d %10.3e %10.3e %10.3e\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
+        }
+        else
+        {
+            printf("%2d %10.3f %10.3f %10.3f\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
+        }
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu.total(), e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc.total(), e);
 
