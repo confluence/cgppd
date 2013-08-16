@@ -5,8 +5,8 @@ NOW
 VERY NEXT THING:
 
 * validation
+    * send email about errors :/
     * rename the reference conformations test, since it is actually useful
-    * get it to print out values for CPU & GPU potential and separate LJ/DH.
     * test that potential is the same for rigid protein with and without linkers enabled
 
 

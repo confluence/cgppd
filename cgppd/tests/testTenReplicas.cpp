@@ -71,6 +71,13 @@ void TestTenReplicas::testSanity()
         float gpu;
     };
 
+    struct Subtotals
+    {
+        float total;
+        float LJ;
+        float DH;
+    };
+
     static const ExpectedResult expected_results[10] = {
         { -0.293705,  -0.293705},
         { -1.056291,  -1.056291},
@@ -83,6 +90,27 @@ void TestTenReplicas::testSanity()
         { -9.891660,  -9.891659},
         { -8.511853,  -8.511855}
     };
+
+    static const Subtotals CHARMM_results[10] = {
+        { -0.294,  -0.081,  -0.213},
+        { -1.056,  -1.322,  0.266},
+        { -10.277,  -9.095,  -1.182},
+        { -7.580,  -5.903,  -1.678},
+        {-0.000079, -0.000021, -0.000058},
+        { -5.562,  -4.810,  -0.752},
+        { -5.480,  -4.213,  -1.267},
+        { -10.712,  -9.266,  -1.446},
+        { -9.900,  -7.951,  -1.949},
+        { -8.528,  -7.459,  -1.069}
+    };
+
+    float mean_relative_error_total(0);
+    float mean_relative_error_LJ(0);
+    float mean_relative_error_DH(0);
+
+    float max_relative_error_total(0);
+    float max_relative_error_LJ(0);
+    float max_relative_error_DH(0);
 
     printf("\tTOTAL\tLJ\tDH\n");
 
@@ -127,8 +155,26 @@ void TestTenReplicas::testSanity()
         {
             printf("%2d %10.3f %10.3f %10.3f\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
         }
+
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu.total(), e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc.total(), e);
+
+        if (i != 4)
+        {
+            float relative_error_total = abs(CHARMM_results[i].total - cpu.total())/abs(CHARMM_results[i].total);
+            float relative_error_LJ = abs(CHARMM_results[i].LJ - cpu.total_LJ())/abs(CHARMM_results[i].LJ);
+            float relative_error_DH = abs(CHARMM_results[i].DH - cpu.total_DH())/abs(CHARMM_results[i].DH);
+
+            printf("ERRORS: %f %f %f\n", relative_error_total, relative_error_LJ, relative_error_DH);
+
+            mean_relative_error_total += relative_error_total/9;
+            mean_relative_error_LJ += relative_error_LJ / 9;
+            mean_relative_error_DH += relative_error_DH / 9;
+
+            max_relative_error_total = max(max_relative_error_total, relative_error_total);
+            max_relative_error_LJ = max(max_relative_error_LJ, relative_error_LJ);
+            max_relative_error_DH = max(max_relative_error_DH, relative_error_DH);
+        }
 
 #if USING_CUDA
         double gpu = replicas[i].EonDevice();
@@ -139,5 +185,10 @@ void TestTenReplicas::testSanity()
         replicas[i].FreeDevice();
 #endif
     }
+
+    printf("\tMean relative error\tMax relative error\n");
+    printf("Tot\t%f\t%f\n", mean_relative_error_total, max_relative_error_total);
+    printf("LJ\t%f\t%f\n", mean_relative_error_LJ, max_relative_error_LJ);
+    printf("DH\t%f\t%f\n", mean_relative_error_DH, max_relative_error_DH);
 
 }
