@@ -4,8 +4,10 @@
 import sys
 import glob
 import argparse
+import time
 
 import re
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,34 +17,10 @@ POTENTIAL = re.compile('REMARK potential: (.*)')
 
 
 class Residue(object):
-    MASS = {
-        "ALA ": 71.0779,
-        "ARG ": 156.1857,
-        "ASN ": 114.1026,
-        "ASP ": 115.0874,
-        "CYS ": 103.1429,
-        "GLU ": 129.114,
-        "GLN ": 128.1292,
-        "GLY ": 57.0513,
-        "HIS ": 137.1393,
-        "ILE ": 113.1576,
-        "LEU ": 113.1576,
-        "LYS ": 128.1723,
-        "MET ": 131.1961,
-        "PHE ": 147.1739,
-        "PRO ": 97.1152,
-        "SER ": 87.0773,
-        "THR ": 101.1039,
-        "TRP ": 186.2099,
-        "TYR ": 163.1733,
-        "VAL ": 99.1311,
-    }
-
     def __init__(self, amino_acid, index, x, y, z):
         self.amino_acid = amino_acid
         self.index = index
         self.position = np.array((x, y, z))
-        self.mass = self.MASS[self.amino_acid]
 
     def __str__(self):
         return "\t%d: %s %s" % (self.index, self.amino_acid, self.position)
@@ -54,8 +32,6 @@ class Protein(object):
         self.chain = chain
         self._length = None
         self._radius = None
-        self._mass = None
-        self._centre_mass = None
 
     def append_residue(self, residue):
         self.residues.append(residue)
@@ -72,11 +48,11 @@ class Protein(object):
     @property
     def radius(self):
         if not self._radius:
-           # TODO
-           # mass
-           # centre of mass
-           # radius
-           # use numpy
+            mass = len(self.residues)
+            centre_of_mass = np.array([r.position for r in self.residues]).mean(axis=0)
+            # Avoid having to square unnecessary square roots by calculating squared distances with a dot product
+            diff_vectors = [(r.position - centre_of_mass) for r in self.residues]
+            self._radius = math.sqrt(sum(np.dot(v.T, v) for v in diff_vectors) / mass)
 
         return self._radius
 
@@ -103,7 +79,6 @@ class Simulation(object):
         self.name = name
         self.conformations = conformations
         self.chains = chains
-        self.chains_reversed = {v:k for k,v in self.chains.iteritems()}
 
     @classmethod
     def from_glob(cls, name, *globs, **chains):
@@ -142,30 +117,50 @@ class Simulation(object):
 
         return cls(name, chains, conformations)
 
+    def _filename(self, chain, description):
+        return "%s_%s_%s_%d.png" % (self.name.replace('/',''), self.chains[chain], description, time.time())
+
+
     def plot_length(self, chain, bins, no_display=False, save=False):
         if not all(chain in c.proteins for c in self.conformations):
             return "Chain '%s' does not appear in all conformations." % chain
 
-        lengths = [c.proteins[chain].length for c in self.conformations]
-        x_axis = u"Length (Å)"
-        y_axis = "Frequency (count)"
-        title = "Distribution of %s end-to-end length" % self.chains[chain]
-
-        plt.hist(lengths, bins=bins)
-        plt.title(title)
-        plt.xlabel(x_axis)
-        plt.ylabel(y_axis)
+        plt.hist([c.proteins[chain].length for c in self.conformations], bins=bins)
+        plt.title("Distribution of %s end-to-end length" % self.chains[chain])
+        plt.xlabel(u"Length (Å)")
+        plt.ylabel("Frequency (count)")
 
         if not no_display:
             plt.show()
 
         if save:
             # TODO: printable name
-            savefile = "%s_%s_length.png" % (self.name.replace('/',''), self.chains[chain])
-            plt.savefig(savefile)
+            plt.savefig(self._filename(chain, "length"))
+
+        plt.close()
+
+
+    def plot_radius(self, chain, bins, no_display=False, save=False):
+        if not all(chain in c.proteins for c in self.conformations):
+            return "Chain '%s' does not appear in all conformations." % chain
+
+        plt.hist([c.proteins[chain].radius for c in self.conformations], bins=bins)
+        plt.title("Distribution of %s radius of gyration" % self.chains[chain])
+        plt.xlabel(u"Radius (Å)")
+        plt.ylabel("Frequency (count)")
+
+        if not no_display:
+            plt.show()
+
+        if save:
+            # TODO: printable name
+            plt.savefig(self._filename(chain, "radius"))
+
+        plt.close()
 
     def __str__(self):
         return "\n\n\n".join(str(c) for c in self.simulations[simulation_name])
+
 
 AVAILABLE_PLOTS = tuple(n[5:] for n in Simulation.__dict__ if n.startswith("plot_"))
 
