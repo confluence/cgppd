@@ -4,13 +4,11 @@ NOW
 
 VERY NEXT THING:
 
+* figure out what to do to test the linkers
+
 * validation
-    * send email about errors :/
     * rename the reference conformations test, since it is actually useful
     * test that potential is the same for rigid protein with and without linkers enabled
-
-
-* radius of gyration
 
 * tests
     * fix crappy old tests
