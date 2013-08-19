@@ -74,6 +74,31 @@ class Conformation(object):
         return "Sample %d at %gK with potential %g\n%s" % (self.sample, self.temperature, self.potential, "\n".join(str(p) for p in self.proteins.values()))
 
 
+def plot_histogram(func):
+    def _plot_method(self, chain, bins, no_display=False, save=False):
+        if not all(chain in c.proteins for c in self.conformations):
+            raise ValueError("Chain '%s' does not appear in all conformations.", chain)
+
+        values, title, xlabel, ylabel = func(self, chain)
+        description = func.__name__[5:]
+
+        plt.hist(values, bins=bins)
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+
+        if not no_display:
+            plt.show()
+
+        if save:
+            # TODO: printable name
+            plt.savefig("%s_%s_%s_%d.png" % (self.name.replace('/',''), self.chains[chain], description, time.time()))
+
+        plt.close()
+
+    return _plot_method
+
+
 class Simulation(object):
     def __init__(self, name, chains, conformations):
         self.name = name
@@ -117,46 +142,24 @@ class Simulation(object):
 
         return cls(name, chains, conformations)
 
-    def _filename(self, chain, description):
-        return "%s_%s_%s_%d.png" % (self.name.replace('/',''), self.chains[chain], description, time.time())
+    @plot_histogram
+    def plot_length(self, chain):
+        values = [c.proteins[chain].length for c in self.conformations]
+        title = "Distribution of %s end-to-end length" % self.chains[chain]
+        xlabel = u"Length (Å)"
+        ylabel = "Frequency (count)"
+
+        return values, title, xlabel, ylabel
 
 
-    def plot_length(self, chain, bins, no_display=False, save=False):
-        if not all(chain in c.proteins for c in self.conformations):
-            return "Chain '%s' does not appear in all conformations." % chain
+    @plot_histogram
+    def plot_radius(self, chain):
+        values = [c.proteins[chain].radius for c in self.conformations]
+        title = "Distribution of %s radius of gyration" % self.chains[chain]
+        xlabel = u"Radius (Å)"
+        ylabel = "Frequency (count)"
 
-        plt.hist([c.proteins[chain].length for c in self.conformations], bins=bins)
-        plt.title("Distribution of %s end-to-end length" % self.chains[chain])
-        plt.xlabel(u"Length (Å)")
-        plt.ylabel("Frequency (count)")
-
-        if not no_display:
-            plt.show()
-
-        if save:
-            # TODO: printable name
-            plt.savefig(self._filename(chain, "length"))
-
-        plt.close()
-
-
-    def plot_radius(self, chain, bins, no_display=False, save=False):
-        if not all(chain in c.proteins for c in self.conformations):
-            return "Chain '%s' does not appear in all conformations." % chain
-
-        plt.hist([c.proteins[chain].radius for c in self.conformations], bins=bins)
-        plt.title("Distribution of %s radius of gyration" % self.chains[chain])
-        plt.xlabel(u"Radius (Å)")
-        plt.ylabel("Frequency (count)")
-
-        if not no_display:
-            plt.show()
-
-        if save:
-            # TODO: printable name
-            plt.savefig(self._filename(chain, "radius"))
-
-        plt.close()
+        return values, title, xlabel, ylabel
 
     def __str__(self):
         return "\n\n\n".join(str(c) for c in self.simulations[simulation_name])
