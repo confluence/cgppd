@@ -855,53 +855,53 @@ void Simulation::getArgs(int argc, char **argv)
                 break;
             case 'q':
                 parameters.skipsimulation = true;
-                LOG(parameters.verbosity > 1, "\tWill skip simulation.\n");
+                LOG(parameters.verbosity, "\tWill skip simulation.\n");
                 break;
             case 't':
                 parameters.threads = atoi(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter threads = %d\n", parameters.threads);
+                LOG(parameters.verbosity, "\tParameter threads = %d\n", parameters.threads);
                 break;
             case 's':
                 parameters.streams = atoi(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter streams = %d\n", parameters.streams);
+                LOG(parameters.verbosity, "\tParameter streams = %d\n", parameters.streams);
                 break;
             case 'g':
                 parameters.gpus = atoi(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter gpus = %d\n", parameters.gpus);
+                LOG(parameters.verbosity, "\tParameter gpus = %d\n", parameters.gpus);
                 break;
             case 'm':
                 parameters.MCsteps = atoi(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter MCsteps = %d\n", parameters.MCsteps);
+                LOG(parameters.verbosity, "\tParameter MCsteps = %d\n", parameters.MCsteps);
                 break;
             case 'e':
                 parameters.REsteps = atoi(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter REsteps = %d\n", parameters.REsteps);
+                LOG(parameters.verbosity, "\tParameter REsteps = %d\n", parameters.REsteps);
                 break;
             case 'r':
                 parameters.replicas = atoi(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter replicas = %d\n", parameters.replicas);
+                LOG(parameters.verbosity, "\tParameter replicas = %d\n", parameters.replicas);
                 break;
             case 'o':
                 strcpy(parameters.logfile, optarg);
-                LOG(parameters.verbosity > 1, "\tParameter logfile = %s\n", parameters.logfile);
+                LOG(parameters.verbosity, "\tParameter logfile = %s\n", parameters.logfile);
                 break;
             case 'b':
                 parameters.bound = atof(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter bound = %f\n", parameters.bound);
+                LOG(parameters.verbosity, "\tParameter bound = %f\n", parameters.bound);
                 break;
             case 'x':
                 parameters.temperatureMax = atof(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter temperatureMax = %f\n", parameters.temperatureMax);
+                LOG(parameters.verbosity, "\tParameter temperatureMax = %f\n", parameters.temperatureMax);
                 break;
             case 'n':
                 parameters.temperatureMin = atof(optarg);
-                LOG(parameters.verbosity > 1, "\tParameter temperatureMin = %f\n", parameters.temperatureMin);
+                LOG(parameters.verbosity, "\tParameter temperatureMin = %f\n", parameters.temperatureMin);
                 break;
             case 'd':
 #if USING_CUDA
                 parameters.cuda_blockSize = atoi(optarg);
                 parameters.auto_blockdim = false;
-                LOG(parameters.verbosity > 1, "\tParameter blockdim = %d\n", parameters.cuda_blockSize);
+                LOG(parameters.verbosity, "\tParameter blockdim = %d\n", parameters.cuda_blockSize);
 #else
                 LOG(WARN, "\tThis build does not support CUDA.\n");
 #endif

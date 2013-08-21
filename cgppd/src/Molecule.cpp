@@ -602,6 +602,8 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 sscanf(line + 46, "%f", &z);
                 sscanf(line + 54, "%f", &occupancy);
 
+                LOG(DEBUG_PARSING, "residue: %s; chain: %c; sequence no.: %d; position: (%f, %f, %f); occupancy: %f\n", resName, chainID, resSeq, x, y, z, occupancy);
+
                 Residue R;
 
                 R.aminoAcidIndex = AminoAcidsData.getAminoAcidIndex(resName);

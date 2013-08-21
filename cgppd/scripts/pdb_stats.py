@@ -79,8 +79,10 @@ def plot_histogram(func):
         if not all(chain in c.proteins for c in self.conformations):
             raise ValueError("Chain '%s' does not appear in all conformations.", chain)
 
-        values, title, xlabel, ylabel = func(self, chain)
+        values, full_description, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
+
+        title = "Distribution of %s %s" % (self.chains[chain], full_description)
 
         plt.hist(values, bins=bins)
         plt.title(title)
@@ -145,21 +147,21 @@ class Simulation(object):
     @plot_histogram
     def plot_length(self, chain):
         values = [c.proteins[chain].length for c in self.conformations]
-        title = "Distribution of %s end-to-end length" % self.chains[chain]
+        full_description = "end-to-end length"
         xlabel = u"Length (Å)"
         ylabel = "Frequency (count)"
 
-        return values, title, xlabel, ylabel
+        return values, full_description, xlabel, ylabel
 
 
     @plot_histogram
     def plot_radius(self, chain):
         values = [c.proteins[chain].radius for c in self.conformations]
-        title = "Distribution of %s radius of gyration" % self.chains[chain]
+        full_description = "radius of gyration"
         xlabel = u"Radius (Å)"
         ylabel = "Frequency (count)"
 
-        return values, title, xlabel, ylabel
+        return values, full_description, xlabel, ylabel
 
     def __str__(self):
         return "\n\n\n".join(str(c) for c in self.simulations[simulation_name])
@@ -188,7 +190,8 @@ if __name__ == "__main__":
 
     # TODO: add simulation description to config file and write it to PDB file (TITLE)
     # TODO: write chain names into PDB files (COMPND)
-    s = Simulation.from_glob("UIM/Ub", *args.files, **{"A":"ubiquitin", "B":"UIM"})
+    #s = Simulation.from_glob("UIM/Ub", *args.files, **{"A":"ubiquitin", "B":"UIM"})
+    s = Simulation.from_glob("Polyalanine", *args.files, **{"A":"ala9"})
 
     for plot in args.plots:
         plot_method = getattr(s, "plot_%s" % plot, None)
