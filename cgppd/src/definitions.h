@@ -58,6 +58,7 @@
     #define INFO    true
     #define DEBUG   true
 
+    #define DEBUG_PARSING true
     #define DEBUG_MC false
     #define DEBUG_BOUNDARY false
     #define INFO_POTENTIAL false
