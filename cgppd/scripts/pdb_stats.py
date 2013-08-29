@@ -170,7 +170,6 @@ class Simulation(object):
 AVAILABLE_PLOTS = tuple(n[5:] for n in Simulation.__dict__ if n.startswith("plot_"))
 
 if __name__ == "__main__":
-    # TODO: reuse same classes to check potential
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
     parser.add_argument("files", help="Files to process", nargs="+")
     parser.add_argument("-c", "--chain", action="append", dest="chains", default=[], help="Select a protein by chain label")
