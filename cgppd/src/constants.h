@@ -55,4 +55,18 @@
     #define invDebye    1e9f            // inverse debye length water = 1/(10 angtrom)
     #define kappa       invDebye
 
+    // these are used for linker validation
+    #define LJ_OFF false
+    #define LJ_REPULSIVE true
+
+    #if LJ_REPULSIVE
+        #undef e0
+        #define e0  0.0001f // kT
+    #endif
+
+    #if LJ_OFF
+        #undef lambda
+        #define lambda 0.0f // not efficient, but takes care of both GPU and CPU calculation
+    #endif
+
 #endif
