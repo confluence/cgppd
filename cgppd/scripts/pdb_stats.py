@@ -75,7 +75,7 @@ class Conformation(object):
 
 
 def plot_histogram(func):
-    def _plot_method(self, chain, bins, no_display=False, save=False):
+    def _plot_method(self, chain, **kwargs):
         if not all(chain in c.proteins for c in self.conformations):
             raise ValueError("Chain '%s' does not appear in all conformations.", chain)
 
@@ -84,17 +84,45 @@ def plot_histogram(func):
 
         title = "Distribution of %s %s" % (self.chains[chain], full_description)
 
-        plt.hist(values, bins=bins)
+        plt.hist(values, bins=kwargs['bins'])
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-        if not no_display:
+        if not kwargs['no_display']:
             plt.show()
 
-        if save:
+        if kwargs['save']:
             # TODO: printable name
-            plt.savefig("%s_%s_%s_%d.png" % (self.name.replace('/',''), self.chains[chain], description, time.time()))
+            plt.savefig("hist_%s_%s_%s_%d.png" % (self.name.replace('/',''), self.chains[chain], description, time.time()))
+
+        plt.close()
+
+    return _plot_method
+
+
+def plot_vs_N(func):
+    def _plot_method(self, chain, **kwargs):
+        if not all(chain in c.proteins for s in self.simulations for c in s.conformations):
+            raise ValueError("Chain '%s' does not appear in all conformations.", chain)
+
+        values, full_description, xlabel, ylabel = func(self, chain)
+        description = func.__name__[5:]
+
+        title = " Root-mean-square %s %s" % (self.chains[chain], full_description)
+
+        plt.plot(values)
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.set_xscale('log', basex=2)
+
+        if not kwargs['no_display']:
+            plt.show()
+
+        if kwargs['save']:
+            # TODO: printable name
+            plt.savefig("rms_%s_%s_%s_%d.png" % (self.name.replace('/',''), self.chains[chain], description, time.time()))
 
         plt.close()
 
@@ -106,18 +134,17 @@ class Simulation(object):
         self.name = name
         self.conformations = conformations
         self.chains = chains
+        self._rms_radius = {}
+        self._rms_length = {}
 
     @classmethod
-    def from_glob(cls, name, *globs, **chains):
-        filenames = []
+    def from_glob(cls, glb):
         conformations = []
-
-        for g in globs:
-            filenames.extend(glob.glob(g))
+        filenames = glob.glob(glb)
 
         if not filenames:
-            print "No files found."
-            return
+            print "No files matching %s." % glb
+            return None
 
         for filename in filenames:
             with open(filename) as pdbfile:
@@ -141,6 +168,10 @@ class Simulation(object):
                         conformation.potential = float(POTENTIAL.match(line).group(1))
 
             conformations.append(conformation)
+
+        # TODO: get chains and name from PDB
+        name = "ALAsomething"
+        chains = {"A": "ALAsomething"}
 
         return cls(name, chains, conformations)
 
@@ -166,8 +197,70 @@ class Simulation(object):
     def __str__(self):
         return "\n\n\n".join(str(c) for c in self.simulations[simulation_name])
 
+    @property
+    def rms_radius(self):
+        if not self._rms_radius:
+            for chain in self.chains:
+                values = np.array([c.proteins[chain].radius for c in self.conformations])
+                self._rms_radius[chain] = np.sqrt(np.mean(values**2))
 
-AVAILABLE_PLOTS = tuple(n[5:] for n in Simulation.__dict__ if n.startswith("plot_"))
+        return self._rms_radius
+
+    @property
+    def rms_length(self):
+        if not self._rms_length:
+            for chain in self.chains:
+                values = np.array([c.proteins[chain].length for c in self.conformations])
+                self._rms_length[chain] = np.sqrt(np.mean(values**2))
+
+        return self._rms_length
+
+
+class SimulationSet(object):
+    def __init__(self, name, simulations):
+        self.simulations = simulations
+
+    @classmethod
+    def from_glob(cls, name, *globs):
+        simulations = []
+
+        for g in globs:
+            s = Simulation.from_glob(g)
+            if s:
+                simulations.append(s)
+
+        if not simulations:
+            print "No simulations found."
+            return None
+
+        return cls(name, simulations)
+
+    def plot_hist_radius(self, chain, **kwargs):
+        for s in self.simulations:
+            s.plot_radius(chain, **kwargs)
+
+    def plot_hist_length(self, chain, **kwargs):
+        for s in self.simulations:
+            s.plot_length(chain, **kwargs)
+
+    @plot_vs_N
+    def plot_radius(self, chain):
+        values = [s.rms_radius[chain] for s in self.simulations]
+        full_description = "radius of gyration"
+        xlabel = u"Average radius (Å)"
+        ylabel = "Number of residues (count)"
+
+        return values, full_description, xlabel, ylabel
+
+    @plot_vs_N
+    def plot_length(self, chain):
+        values = [s.rms_length[chain] for s in self.simulations]
+        full_description = "end-to-end length"
+        xlabel = u"Average length (Å)"
+        ylabel = "Number of residues (count)"
+
+
+AVAILABLE_PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("plot_"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
@@ -190,13 +283,14 @@ if __name__ == "__main__":
     # TODO: add simulation description to config file and write it to PDB file (TITLE)
     # TODO: write chain names into PDB files (COMPND)
     #s = Simulation.from_glob("UIM/Ub", *args.files, **{"A":"ubiquitin", "B":"UIM"})
-    s = Simulation.from_glob("Polyalanine", *args.files, **{"A":"ala9"})
+    s = SimulationSet.from_glob("Polyalanine", *args.files)
 
-    for plot in args.plots:
-        plot_method = getattr(s, "plot_%s" % plot, None)
-        if not plot_method:
-            print "Unsupported plot type: %s" % plot
+    if s:
+        for plot in args.plots:
+            plot_method = getattr(s, "plot_%s" % plot, None)
+            if not plot_method:
+                print "Unsupported plot type: %s" % plot
 
-        for chain in args.chains:
-            plot_method(chain, args.bins, args.no_display, args.save)
+            for chain in args.chains:
+                plot_method(chain, bins=args.bins, no_display=args.no_display, save=args.save)
 

@@ -48,4 +48,6 @@ if __name__ == "__main__":
             pdbfilename = "%s.pdb" % filename
 
             subprocess.call([ribosome, ribfilename, pdbfilename, res_zmat])
+            # Set the occupancy to 1 to mark entire chain as flexible
+            subprocess.call(['sed', '-ri', r"'s/(^ATOM.*)/\1 1.00/'", pdbfilename])
 

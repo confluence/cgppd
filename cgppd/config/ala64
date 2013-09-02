@@ -9,7 +9,7 @@ sampleafter 1000000
 boundary  160.7
 temperaturemax 420
 temperaturemin 240
-prefix ala9
+prefix ala64
 
 files
 
