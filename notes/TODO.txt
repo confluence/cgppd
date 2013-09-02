@@ -8,6 +8,7 @@ VERY NEXT THING:
     * polyalanine with increasing polymer length
     * plot (mean?) length and radius vs N
         * with LJ turned off and with LJ epsilon set to ~0.0001 kT
+        * argh, how to turn off CUDA LJ?
     * adjust plotting script
 
 * validation
