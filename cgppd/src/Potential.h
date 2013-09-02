@@ -10,7 +10,6 @@
 
 /* Potential component calculations */
 double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData);
-double calculate_LJ(const int i, const int j, Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData);
 double calculate_DH(Residue &ri, Residue &rj, const double r);
 double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_value);
 double calculate_angle(Residue &rh, Residue &ri, Residue &rj);
