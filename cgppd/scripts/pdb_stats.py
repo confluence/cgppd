@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import glob
 import argparse
 import time
 
@@ -11,7 +10,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-FILENAME = re.compile('output/.*/pdb/sample_(.*)_(.*)K_.*.pdb')
+FILENAME = re.compile('output/(.*)/pdb/sample_(.*)_(.*)K_.*.pdb')
 ATOM = re.compile('ATOM *\d+ *CA ([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
 POTENTIAL = re.compile('REMARK potential: (.*)')
 
@@ -109,20 +108,21 @@ def plot_vs_N(func):
         values, full_description, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
 
-        title = " Root-mean-square %s %s" % (self.chains[chain], full_description)
+        title = " Root-mean-square %s %s" % (self.simulations[0].chains[chain], full_description)
 
         plt.plot(values)
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.set_xscale('log', basex=2)
+        # TODO: how to get this to work
+        #plt.set_xscale('log', basex=2)
 
         if not kwargs['no_display']:
             plt.show()
 
         if kwargs['save']:
             # TODO: printable name
-            plt.savefig("rms_%s_%s_%s_%d.png" % (self.name.replace('/',''), self.chains[chain], description, time.time()))
+            plt.savefig("rms_%s_%s_%s_%d.png" % (self.name.replace('/',''), self.simulations[0].chains[chain], description, time.time()))
 
         plt.close()
 
@@ -138,17 +138,12 @@ class Simulation(object):
         self._rms_length = {}
 
     @classmethod
-    def from_glob(cls, glb):
+    def from_filelist(cls, filenames):
         conformations = []
-        filenames = glob.glob(glb)
-
-        if not filenames:
-            print "No files matching %s." % glb
-            return None
 
         for filename in filenames:
             with open(filename) as pdbfile:
-                sample, temperature = FILENAME.match(filename).groups()
+                name, sample, temperature = FILENAME.match(filename).groups()
                 conformation = Conformation(int(sample), float(temperature))
 
                 protein = None
@@ -170,8 +165,7 @@ class Simulation(object):
             conformations.append(conformation)
 
         # TODO: get chains and name from PDB
-        name = "ALAsomething"
-        chains = {"A": "ALAsomething"}
+        chains = {"A": name}
 
         return cls(name, chains, conformations)
 
@@ -221,17 +215,22 @@ class SimulationSet(object):
         self.simulations = simulations
 
     @classmethod
-    def from_glob(cls, name, *globs):
+    def from_filelist(cls, name, *filenames):
         simulations = []
 
-        for g in globs:
-            s = Simulation.from_glob(g)
-            if s:
-                simulations.append(s)
+        clusters = {}
 
-        if not simulations:
-            print "No simulations found."
-            return None
+        for filename in filenames:
+            name, _, _ = FILENAME.match(filename).groups()
+
+            if name not in clusters:
+                clusters[name] = []
+
+            clusters[name].append(filename)
+
+        for cluster in clusters.itervalues():
+            s = Simulation.from_filelist(cluster)
+            simulations.append(s)
 
         return cls(name, simulations)
 
@@ -254,10 +253,13 @@ class SimulationSet(object):
 
     @plot_vs_N
     def plot_length(self, chain):
+        print "rms length dict from first simulation: %r" % self.simulations[0].rms_length
         values = [s.rms_length[chain] for s in self.simulations]
         full_description = "end-to-end length"
         xlabel = u"Average length (Å)"
         ylabel = "Number of residues (count)"
+
+        return values, full_description, xlabel, ylabel
 
 
 AVAILABLE_PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("plot_"))
@@ -283,7 +285,8 @@ if __name__ == "__main__":
     # TODO: add simulation description to config file and write it to PDB file (TITLE)
     # TODO: write chain names into PDB files (COMPND)
     #s = Simulation.from_glob("UIM/Ub", *args.files, **{"A":"ubiquitin", "B":"UIM"})
-    s = SimulationSet.from_glob("Polyalanine", *args.files)
+
+    s = SimulationSet.from_filelist("Polyalanine", *args.files)
 
     if s:
         for plot in args.plots:
