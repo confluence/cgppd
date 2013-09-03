@@ -340,7 +340,11 @@ void Simulation::run()
 
 #if GLVIS
         GLreplica = _300kReplica;
-        GlutDisplay();
+
+        if (parameters.viewConditions)
+        {
+            GlutDisplay();
+        }
 #endif
 
         LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, _300kReplica->accumulativeFractionBound);
