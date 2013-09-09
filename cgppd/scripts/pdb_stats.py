@@ -4,16 +4,24 @@
 import sys
 import argparse
 import time
+import glob
+import os
 
 import re
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+import logging
+
 FILENAME = re.compile('output/(.*)/pdb/sample_(.*)_(.*)K_.*.pdb')
 ATOM = re.compile('ATOM *\d+ *CA ([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
 POTENTIAL = re.compile('REMARK potential: (.*)')
 
+RMS_LENGTH_RADIUS = re.compile('name ([^\n]+)\nlength ([A-Z]+ \d+\.\d+)\nradius ([A-Z]+ \d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
+FLOAT_PER_CHAIN = re.compile('([A-Z]*) (\d+\.\d+)')
+SAMPLE = re.compile('(\d+) at (\d+\.\d+)K with potential (-?\d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
+CHAIN = re.compile('chain (.*) length (\d+\.\d+) radius (\d+\.\d+)')
 
 class Residue(object):
     def __init__(self, amino_acid, index, x, y, z):
@@ -26,11 +34,11 @@ class Residue(object):
 
 
 class Protein(object):
-    def __init__(self, chain):
+    def __init__(self, chain, length=None, radius=None):
         self.residues = []
         self.chain = chain
-        self._length = None
-        self._radius = None
+        self._length = length
+        self._radius = radius
 
     def append_residue(self, residue):
         self.residues.append(residue)
@@ -56,12 +64,12 @@ class Protein(object):
         return self._radius
 
     def __str__(self):
-        return "%s:\n%s" % (self.chain, "\n".join(str(r) for r in self.residues))
+        return "chain %s length %f radius %f\n" % (self.chain, self.length, self.radius)
 
 
 class Conformation(object):
-    def __init__(self, sample, temperature, potential=None):
-        self.proteins = {}
+    def __init__(self, sample, temperature, potential=None, proteins=None):
+        self.proteins = proteins or {}
         self.sample = sample
         self.temperature = temperature
         self.potential = potential
@@ -70,13 +78,13 @@ class Conformation(object):
         self.proteins[protein.chain] = protein
 
     def __str__(self):
-        return "Sample %d at %gK with potential %g\n%s" % (self.sample, self.temperature, self.potential, "\n".join(str(p) for p in self.proteins.values()))
+        return "sample %d at %fK with potential %f\n%s" % (self.sample, self.temperature, self.potential, "\n".join(str(p) for p in self.proteins.values()))
 
 
 def plot_histogram(func):
     def _plot_method(self, chain, **kwargs):
         if not all(chain in c.proteins for c in self.conformations):
-            raise ValueError("Chain '%s' does not appear in all conformations.", chain)
+            raise ValueError("Chain '%s' does not appear in all conformations." % chain)
 
         values, full_description, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
@@ -103,14 +111,16 @@ def plot_histogram(func):
 def plot_vs_N(func):
     def _plot_method(self, chain, **kwargs):
         if not all(chain in c.proteins for s in self.simulations for c in s.conformations):
-            raise ValueError("Chain '%s' does not appear in all conformations.", chain)
+            raise ValueError("Chain '%s' does not appear in all conformations." % chain)
 
         values, full_description, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
 
         title = " Root-mean-square %s %s" % (self.simulations[0].chains[chain], full_description)
 
-        plt.plot(values)
+        logging.info("Plotting values: %r" % values)
+
+        plt.plot([i + 2 for i in range(len(values))], values, 'bo')
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
@@ -130,12 +140,12 @@ def plot_vs_N(func):
 
 
 class Simulation(object):
-    def __init__(self, name, chains, conformations):
+    def __init__(self, name, chains, conformations, length=None, radius=None):
         self.name = name
         self.conformations = conformations
         self.chains = chains
-        self._rms_radius = {}
-        self._rms_length = {}
+        self._rms_length = length or {}
+        self._rms_radius = radius or {}
 
     @classmethod
     def from_filelist(cls, filenames):
@@ -143,6 +153,7 @@ class Simulation(object):
 
         for filename in filenames:
             with open(filename) as pdbfile:
+                logging.debug("Parsing file '%s'..." % filename)
                 name, sample, temperature = FILENAME.match(filename).groups()
                 conformation = Conformation(int(sample), float(temperature))
 
@@ -169,6 +180,46 @@ class Simulation(object):
 
         return cls(name, chains, conformations)
 
+    @classmethod
+    def from_summary(cls, filename):
+        with open(filename) as summaryfile:
+            summary = summaryfile.read()
+
+            name, length, radius, summary = RMS_LENGTH_RADIUS.search(summary).groups()
+
+            length_dict = dict((k, float(v)) for (k, v) in FLOAT_PER_CHAIN.findall(length))
+            radius_dict = dict((k, float(v)) for (k, v) in FLOAT_PER_CHAIN.findall(radius))
+
+            conformations = []
+
+            for s in re.split("sample", summary):
+                if not s:
+                    continue
+
+                sample, temperature, potential, chains = SAMPLE.search(s).groups()
+                proteins = {}
+
+                for c in chains.split("\n"):
+                    if not c:
+                        continue
+                    chain, length, radius = CHAIN.match(c).groups()
+                    proteins[chain] = Protein(chain, float(length), float(radius))
+
+                conformations.append(Conformation(int(sample), float(temperature), float(potential), proteins))
+
+            # TODO: get chains and name from PDB
+            chains = {"A": name}
+
+            return cls(name, chains, conformations, length_dict, radius_dict)
+
+
+    def write_summary(self, filename):
+        with open(filename, 'w') as summaryfile:
+            summaryfile.write(str(self))
+
+            for c in self.conformations:
+                summaryfile.write(str(c))
+
     @plot_histogram
     def plot_length(self, chain):
         values = [c.proteins[chain].length for c in self.conformations]
@@ -189,7 +240,9 @@ class Simulation(object):
         return values, full_description, xlabel, ylabel
 
     def __str__(self):
-        return "\n\n\n".join(str(c) for c in self.simulations[simulation_name])
+        length = " ".join("%s %f" % (k, v) for (k, v) in self.rms_length.iteritems())
+        radius = " ".join("%s %f" % (k, v) for (k, v) in self.rms_radius.iteritems())
+        return "name %s\nlength %s\nradius %s\n" % (self.name, length, radius)
 
     @property
     def rms_radius(self):
@@ -215,21 +268,22 @@ class SimulationSet(object):
         self.simulations = simulations
 
     @classmethod
-    def from_filelist(cls, name, *filenames):
+    def from_dirlist(cls, name, *dirs):
         simulations = []
 
-        clusters = {}
+        for d in dirs:
+            logging.info("Processing directory '%s'..." % d)
 
-        for filename in filenames:
-            name, _, _ = FILENAME.match(filename).groups()
+            summaryfilename = "%s/summary" % d
 
-            if name not in clusters:
-                clusters[name] = []
+            if os.path.isfile(summaryfilename):
+                s = Simulation.from_summary(summaryfilename)
 
-            clusters[name].append(filename)
+            else:
+                files = glob.glob("%s/pdb/*" % d)
+                s = Simulation.from_filelist(files)
+                s.write_summary(summaryfilename)
 
-        for cluster in clusters.itervalues():
-            s = Simulation.from_filelist(cluster)
             simulations.append(s)
 
         return cls(name, simulations)
@@ -253,7 +307,6 @@ class SimulationSet(object):
 
     @plot_vs_N
     def plot_length(self, chain):
-        print "rms length dict from first simulation: %r" % self.simulations[0].rms_length
         values = [s.rms_length[chain] for s in self.simulations]
         full_description = "end-to-end length"
         xlabel = u"Average length (Å)"
@@ -266,7 +319,7 @@ AVAILABLE_PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("p
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
-    parser.add_argument("files", help="Files to process", nargs="+")
+    parser.add_argument("dirs", help="Directories to process", nargs="+")
     parser.add_argument("-c", "--chain", action="append", dest="chains", default=[], help="Select a protein by chain label")
 
     parser.add_argument("-p", "--plot", action="append", dest="plots", default=[], help="Requested plots (available: %s)" % ", ".join(AVAILABLE_PLOTS))
@@ -274,8 +327,11 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--save", help="Save plots", action="store_true")
     parser.add_argument("-n", "--no-display", help="Don't display plots", action="store_true")
 
-    #parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
+    parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.INFO)
 
     if not args.plots:
         # TODO: proper basic logging
@@ -286,7 +342,7 @@ if __name__ == "__main__":
     # TODO: write chain names into PDB files (COMPND)
     #s = Simulation.from_glob("UIM/Ub", *args.files, **{"A":"ubiquitin", "B":"UIM"})
 
-    s = SimulationSet.from_filelist("Polyalanine", *args.files)
+    s = SimulationSet.from_dirlist("Polyalanine", *args.dirs)
 
     if s:
         for plot in args.plots:
