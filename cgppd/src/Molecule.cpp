@@ -673,7 +673,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         Residues[r].relativePosition.z = Residues[r].position.z - center.z;
     }
 
-    calculateSASA();
     calculateVolume();
 
 #if FLEXIBLE_LINKS
@@ -764,22 +763,25 @@ void Molecule::saveAsPDB(const char* filename)
         fclose(output);
 }
 
-float Molecule::calculateSASA()
-{
-    // todo, not required for now
-    return 1.0f;
-}
-
-float Molecule::calculateVolume()
+void Molecule::calculateVolume()
 {
     // simple volume, todo: surface enclosed calc which is nontrivial
     volume = 0.0f;
+
     for (size_t i=0; i<residueCount; i++)
     {
         float r(AminoAcidsData.get(Residues[i].aminoAcidIndex).vanderWaalRadius);
         volume += 4.0/3.0*r*r*r*M_PIl ;  // 4/3 * pi * r^3
     }
-    return volume;
+}
+
+
+void Molecule::calculate_length()
+{
+}
+
+void Molecule::calculate_radius()
+{
 }
 
 uint Molecule::random_residue_index(gsl_rng * rng)
