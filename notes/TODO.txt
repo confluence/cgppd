@@ -7,24 +7,28 @@ VERY NEXT THING:
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
 
+* WTF, splitting?
+* is this a wrapping thing?
+* print debugging info for the molecule getting wrapped and for partial rotation moves being accepted.
+
+* calculate length and radius in cgppd; write it out in debugging
+
    N LJ REP LJ OFF
 ---------------------------------
-   4      X
-   8      X
-  16      X
-  32
-  64
- 128
- 256
- 512
-1024
+   4    X
+   8    -
+  16    X
+  32    X
+  64    X
+ 128    X
+ 256    X
+ 512    -
+1024    -
 2048
 4096
 
 
 
-    * plot (mean?) length and radius vs N
-    * adjust plotting script
 
 * validation
     * rename the reference conformations test, since it is actually useful

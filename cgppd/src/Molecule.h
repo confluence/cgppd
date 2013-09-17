@@ -82,8 +82,9 @@ public:
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier); // this setter is actually useful
 
-    float calculateVolume();
-    float calculateSASA();
+    void calculateVolume();
+    void calculate_length();
+    void calculate_radius();
 
     AminoAcids AminoAcidsData;
 
