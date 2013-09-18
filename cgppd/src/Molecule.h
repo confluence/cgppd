@@ -115,6 +115,9 @@ public:
     float volume;
     float moleculeRoleIdentifier;
 
+    float length;
+    float radius;
+
     char *filename;
     bool hasFilename;
     Vector3f xAxis;
