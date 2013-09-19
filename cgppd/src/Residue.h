@@ -30,7 +30,8 @@ public:
     int moleculeID;
     //AminoAcid aa;
 
-    double distance(const Residue& r, const float bounding_value);
+    double distance(const Vector3f p, const float bounding_value=0.0f);
+    double distance(const Residue& r, const float bounding_value=0.0f);
 
     void set_rotation(Quaternion q, Vector3f origin);
     void set_rotation_about_center(Quaternion q, Vector3f center);

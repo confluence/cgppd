@@ -84,7 +84,6 @@ public:
 
     void calculateVolume();
     void calculate_length();
-    void calculate_radius();
 
     AminoAcids AminoAcidsData;
 
@@ -116,7 +115,6 @@ public:
     float moleculeRoleIdentifier;
 
     float length;
-    float radius;
 
     char *filename;
     bool hasFilename;
