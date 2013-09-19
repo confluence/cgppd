@@ -3,25 +3,29 @@
 using namespace std;
 
 // TODO: we probably need a default constructor for dynamic arrays. :/
-Molecule::Molecule()
-{
-    residueCount = 0;
-    contiguous = false;
-    bounding_value = 0;
-    moleculeRoleIdentifier = 0.0f;
-    index = -2;
-    rotation = Quaternion(1.0f,0,0,0);
-    volume = 0.0f;
-    hasFilename = false;
+Molecule::Molecule() : residueCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)), volume(0.0f),
 #if FLEXIBLE_LINKS
-    linkCount = 0;
-    segmentCount = 0;
-    linkerCount = 0;
-    LJ = 0.0f;
-    DH = 0.0f;
-    update_LJ_and_DH = true;
-    local_move_successful = false;
+linkCount(0), segmentCount(0), linkerCount(0), LJ(0), DH(0), update_LJ_and_DH(true), local_move_successful(false),
 #endif // FLEXIBLE_LINKS
+hasFilename(false)
+{
+//     residueCount = 0;
+//     contiguous = false;
+//     bounding_value = 0;
+//     moleculeRoleIdentifier = 0.0f;
+//     index = -2;
+//     rotation = Quaternion(1.0f,0,0,0);
+//     volume = 0.0f;
+//     hasFilename = false;
+// #if FLEXIBLE_LINKS
+//     linkCount = 0;
+//     segmentCount = 0;
+//     linkerCount = 0;
+//     LJ = 0.0f;
+//     DH = 0.0f;
+//     update_LJ_and_DH = true;
+//     local_move_successful = false;
+// #endif // FLEXIBLE_LINKS
 }
 
 Molecule::~Molecule()
@@ -64,6 +68,8 @@ void Molecule::init(const char* pdbfilename, AminoAcids &a, int index, const flo
     initFromPDB(pdbfilename);
     this->index = index;
     this->bounding_value = bounding_value;
+
+    calculate_length();
 }
 
 void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
@@ -77,6 +83,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     AminoAcidsData = m.AminoAcidsData;
     center = m.center;
     rotation = m.rotation;
+    length = m.length;
     moleculeRoleIdentifier = m.moleculeRoleIdentifier;
     volume = m.volume;
     index = m.index;
@@ -114,6 +121,7 @@ void Molecule::MC_backup_restore(const Molecule* m)
 
     center = m->center;
     rotation = m->rotation;
+    length = m->length;
 
 #if FLEXIBLE_LINKS
     // we need to save / restore all the cached potentials
@@ -494,6 +502,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
     if (local_move_successful)
     {
         recalculate_relative_positions();
+        calculate_length();
     }
 }
 #endif // FLEXIBLE_LINKS
@@ -778,10 +787,8 @@ void Molecule::calculateVolume()
 
 void Molecule::calculate_length()
 {
-}
-
-void Molecule::calculate_radius()
-{
+    // Absolute distance, ignoring periodic boundary
+    length = (float) Residues[0].distance(Residues[residueCount - 1]);
 }
 
 uint Molecule::random_residue_index(gsl_rng * rng)

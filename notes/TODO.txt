@@ -8,10 +8,10 @@ VERY NEXT THING:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
 
 * WTF, splitting?
-* is this a wrapping thing?
-* print debugging info for the molecule getting wrapped and for partial rotation moves being accepted.
+* there is no wrapping except for the centre of the molecule, you idiot. This must be a partial rotation bug.
 
 * calculate length and radius in cgppd; write it out in debugging
+* also dump pdb files?
 
    N LJ REP LJ OFF
 ---------------------------------
@@ -28,7 +28,7 @@ VERY NEXT THING:
 4096
 
 
-
+* remove printing of old cruft about translation/rotation
 
 * validation
     * rename the reference conformations test, since it is actually useful

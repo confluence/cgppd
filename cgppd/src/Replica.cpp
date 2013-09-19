@@ -387,6 +387,8 @@ void Replica::MCSearch(int steps)
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
         }
+
+        LOG(DEBUG_LENGTH, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
     }
 }
 
