@@ -53,7 +53,8 @@ public:
 
     Vector3f normalised_random_vector_f(gsl_rng * rng);
     Vector3double normalised_random_vector_d(gsl_rng * rng);
-    Vector3f apply_boundary_conditions(Vector3f old_center, Vector3f new_center);
+    bool test_boundary_conditions();
+    void wrap_if_necessary();
 
     void rotate(gsl_rng * rng, const double rotate_step);
     void translate(gsl_rng * rng, const double translate_step);
@@ -108,8 +109,13 @@ public:
     bool update_LJ_and_DH; // LJ and DH values need to be updated
 #endif
     size_t chainCount;
-    Quaternion rotation;
+    Quaternion rotation; // TODO get rid of this
+
     Vector3f center;
+    Vector3f new_center;
+    Vector3f new_center_wrapped;
+    Vector3f center_wrap_delta;
+
     int index;
     float volume;
     float moleculeRoleIdentifier;

@@ -9,23 +9,6 @@ linkCount(0), segmentCount(0), linkerCount(0), LJ(0), DH(0), update_LJ_and_DH(tr
 #endif // FLEXIBLE_LINKS
 hasFilename(false)
 {
-//     residueCount = 0;
-//     contiguous = false;
-//     bounding_value = 0;
-//     moleculeRoleIdentifier = 0.0f;
-//     index = -2;
-//     rotation = Quaternion(1.0f,0,0,0);
-//     volume = 0.0f;
-//     hasFilename = false;
-// #if FLEXIBLE_LINKS
-//     linkCount = 0;
-//     segmentCount = 0;
-//     linkerCount = 0;
-//     LJ = 0.0f;
-//     DH = 0.0f;
-//     update_LJ_and_DH = true;
-//     local_move_successful = false;
-// #endif // FLEXIBLE_LINKS
 }
 
 Molecule::~Molecule()
@@ -198,11 +181,13 @@ void Molecule::recalculate_relative_positions()
 
 Vector3f Molecule::recalculate_center()
 {
-    Vector3f accumulator(0,0,0);
+    Vector3f accumulator(0, 0, 0);
+
     for (size_t i=0; i<residueCount; i++)
     {
         accumulator += Residues[i].position;
     }
+
     return accumulator / residueCount;
 }
 
@@ -229,7 +214,7 @@ void Molecule::rotate(const Vector3double Raxis, const double angle)
 void Molecule::setRotation(Quaternion q)
 {
     q.normalize();
-    rotation = q * rotation;
+    rotation = q * rotation; // TODO: get rid of this
     for (size_t i=0; i<residueCount; i++)
     {
 //         Residues[i].relativePosition = q.rotateVector(Residues[i].relativePosition);
@@ -253,24 +238,44 @@ Vector3double Molecule::normalised_random_vector_d(gsl_rng * rng)
     return x;
 }
 
-Vector3f Molecule::apply_boundary_conditions(Vector3f old_center, Vector3f new_center)
+bool Molecule::test_boundary_conditions()
 {
 #if BOUNDING_METHOD == BOUNDING_SPHERE
     if (new_center.sumSquares() < bounding_value * bounding_value)
     {
-        return new_center;
+        // Don't do anything to the new centre; just say that it's OK
+        new_center_wrapped = new_center;
+        return true;
     }
     else
     {
         LOG(DEBUG_BOUNDARY, "Move rejected because it would move molecule beyond boundary sphere.");
-        return old_center;
+        return false;
     }
 #elif BOUNDING_METHOD == PERIODIC_BOUNDARY
-    new_center.x = fmod(new_center.x, bounding_value);
-    new_center.y = fmod(new_center.y, bounding_value);
-    new_center.z = fmod(new_center.z, bounding_value);
-    return new_center;
+    new_center_wrapped.x = fmod(new_center.x, bounding_value);
+    new_center_wrapped.y = fmod(new_center.y, bounding_value);
+    new_center_wrapped.z = fmod(new_center.z, bounding_value);
+
+    center_wrap_delta = new_center_wrapped - new_center;
+
+    return true;
 #endif // BOUNDING_METHOD
+}
+
+void Molecule::wrap_if_necessary()
+{
+    if (center_wrap_delta.magnitude())
+    {
+        // If the molecule has wrapped, we have to move everything
+        LOG(DEBUG_LOCAL, "Molecule has wrapped around the periodic boundary.\t");
+        setPosition(new_center_wrapped);
+    }
+    else
+    {
+        // otherwise just update the center
+        center = new_center_wrapped;
+    }
 }
 
 void Molecule::rotate(gsl_rng * rng, const double rotate_step)
@@ -282,10 +287,11 @@ void Molecule::rotate(gsl_rng * rng, const double rotate_step)
 void Molecule::translate(gsl_rng * rng, const double translate_step)
 {
     Vector3f v = translate_step * normalised_random_vector_f(rng);
-    Vector3f new_center = apply_boundary_conditions(center, center + v);
-    if (new_center != center)
+    new_center = center + v;
+
+    if (test_boundary_conditions())
     {
-        setPosition(new_center);
+        setPosition(new_center_wrapped);
     }
 }
 
@@ -343,29 +349,19 @@ void Molecule::mark_cached_potentials_for_update(const int ri, const bool cranks
 
 void Molecule::translate(Vector3f v, const int ri)
 {
-//     LOG(DEBUG_LOCAL, "\nOld v: (%f, %f, %f)\t", v.x, v.y, v.z);
-    // Complete thumb-suck
-    // I'm not convinced that this is the right thing to do
-//     v = v / 1e15;
-//     LOG(DEBUG_LOCAL, "New v: (%f, %f, %f)\n", v.x, v.y, v.z);
+    new_center = recalculate_center(v);
 
     // apply boundary conditions, possibly rejecting the move
-    Vector3f new_center = apply_boundary_conditions(center, recalculate_center(v));
-
-    if (new_center != center)
+    if (test_boundary_conditions())
     {
+        wrap_if_necessary();
+
         // translate one residue
         LOG(DEBUG_LOCAL, "Residue: %d Old: (%f, %f, %f)\t", ri, Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
-        Residues[ri].position.x += v.x;
-        Residues[ri].position.y += v.y;
-        Residues[ri].position.z += v.z;
+        Residues[ri].position += v;
         LOG(DEBUG_LOCAL, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
-        // recalculate centre
-        center = new_center;
-
         mark_cached_potentials_for_update(ri, false);
-
         local_move_successful = true;
     }
 }
@@ -393,21 +389,19 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     relative_position = q.rotateVector(relative_position);
     Residues[ri].new_position = relative_position + Residues[ri - 1].position;
 
-    // apply boundary conditions, possibly rejecting the move
-    Vector3f new_center = apply_boundary_conditions(center, recalculate_center(Residues[ri].new_position - Residues[ri].position));
+    new_center = recalculate_center(Residues[ri].new_position - Residues[ri].position);
 
-    if (new_center != center)
+    // apply boundary conditions, possibly rejecting the move
+    if (test_boundary_conditions())
     {
+        wrap_if_necessary();
+
         // apply the move
         LOG(DEBUG_LOCAL, "Residue: %d Old: (%f, %f, %f)\t", ri, Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
-        Residues[ri].position = Residues[ri].new_position;
+        Residues[ri].position = Residues[ri].new_position + center_wrap_delta;
         LOG(DEBUG_LOCAL, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
-        // recalculate centre
-        center = new_center;
-
         mark_cached_potentials_for_update(ri, true);
-
         local_move_successful = true;
     }
 }
@@ -438,17 +432,17 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     }
 
     // apply boundary conditions, possibly rejecting the move
-    Vector3f new_center = apply_boundary_conditions(center, recalculate_center(accumulated_difference));
+    new_center = recalculate_center(accumulated_difference);
 
-    if (new_center != center)
+    if (test_boundary_conditions())
     {
+
+        wrap_if_necessary();
+
         // apply the move
         for (int i = start; i < end; i++) {
-            Residues[i].position = Residues[i].new_position;
+            Residues[i].position = Residues[i].new_position + center_wrap_delta;
         }
-
-        // apply new center
-        center = new_center;
 
         mark_cached_potentials_for_update(ri, false);
         recalculate_relative_positions();

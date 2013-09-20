@@ -66,6 +66,7 @@
     #define DEBUG_POTENTIAL true
     #define SUSPICIOUS_POTENTIAL_THRESHOLD 100
     #define DEBUG_LOCAL true
+    #define DEBUG_FLEX true
     #define DEBUG_LJ false
     #define DEBUG_CUDA false
 

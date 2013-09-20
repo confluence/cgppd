@@ -7,11 +7,9 @@ VERY NEXT THING:
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
 
-* WTF, splitting?
-* there is no wrapping except for the centre of the molecule, you idiot. This must be a partial rotation bug.
+* splitting should be fixed now; check simulation.
+* the code is as horrible as it was before; fix this properly.
 
-* calculate length and radius in cgppd; write it out in debugging
-* also dump pdb files?
 
    N LJ REP LJ OFF
 ---------------------------------
