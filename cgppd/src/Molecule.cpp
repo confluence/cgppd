@@ -343,11 +343,11 @@ void Molecule::mark_cached_potentials_for_update(const int ri, const bool cranks
 
 void Molecule::translate(Vector3f v, const int ri)
 {
-//     LOG(DEBUG_LOCAL_TRANSLATE, "\nOld v: (%f, %f, %f)\t", v.x, v.y, v.z);
+//     LOG(DEBUG_LOCAL, "\nOld v: (%f, %f, %f)\t", v.x, v.y, v.z);
     // Complete thumb-suck
     // I'm not convinced that this is the right thing to do
 //     v = v / 1e15;
-//     LOG(DEBUG_LOCAL_TRANSLATE, "New v: (%f, %f, %f)\n", v.x, v.y, v.z);
+//     LOG(DEBUG_LOCAL, "New v: (%f, %f, %f)\n", v.x, v.y, v.z);
 
     // apply boundary conditions, possibly rejecting the move
     Vector3f new_center = apply_boundary_conditions(center, recalculate_center(v));
@@ -355,11 +355,11 @@ void Molecule::translate(Vector3f v, const int ri)
     if (new_center != center)
     {
         // translate one residue
-        LOG(DEBUG_LOCAL_TRANSLATE, "\nResidue: %d Old: (%f, %f, %f)\t", ri, Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
+        LOG(DEBUG_LOCAL, "Residue: %d Old: (%f, %f, %f)\t", ri, Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
         Residues[ri].position.x += v.x;
         Residues[ri].position.y += v.y;
         Residues[ri].position.z += v.z;
-        LOG(DEBUG_LOCAL_TRANSLATE, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
+        LOG(DEBUG_LOCAL, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
         // recalculate centre
         center = new_center;
@@ -399,7 +399,9 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     if (new_center != center)
     {
         // apply the move
+        LOG(DEBUG_LOCAL, "Residue: %d Old: (%f, %f, %f)\t", ri, Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
         Residues[ri].position = Residues[ri].new_position;
+        LOG(DEBUG_LOCAL, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
         // recalculate centre
         center = new_center;
@@ -450,6 +452,7 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
 
         mark_cached_potentials_for_update(ri, false);
         recalculate_relative_positions();
+        calculate_length();
     }
 }
 
@@ -477,7 +480,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
         {
             case MC_LOCAL_TRANSLATE:
             {
-                LOG(DEBUG_MC, "T");
+                LOG(DEBUG_MC, "\tT\t");
                 uint ri = random_residue_index(rng, li);
                 Vector3f v = translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
@@ -485,7 +488,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             }
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
-                LOG(DEBUG_MC, "C");
+                LOG(DEBUG_MC, "\tC\t");
                 uint ri = random_residue_index_middle(rng, li);
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 crankshaft(rotate_step, flip, ri);
@@ -495,8 +498,6 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 break;
         }
     }
-
-    LOG(DEBUG_MC, "\t");
 
     // recalculate positions of residues relative to centre
     if (local_move_successful)
@@ -530,26 +531,26 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
     {
         case MC_ROTATE:
         {
-            LOG(DEBUG_MC, "Rotate   \t\t");
+            LOG(DEBUG_MC, "Rotate\n");
             rotate(rng, rotate_step);
             break;
         }
         case MC_TRANSLATE:
         {
-            LOG(DEBUG_MC, "Translate\t\t");
+            LOG(DEBUG_MC, "Translate\n");
             translate(rng, translate_step);
             break;
         }
 #if FLEXIBLE_LINKS
         case MC_ROTATE_DOMAIN:
         {
-            LOG(DEBUG_MC, "Flex     \t\t");
+            LOG(DEBUG_MC, "Flex\n");
             rotate_domain(rng, rotate_step);
             break;
         }
         case MC_LOCAL:
         {
-            LOG(DEBUG_MC, "Local    \t");
+            LOG(DEBUG_MC, "Local\n");
             make_local_moves(rng, rotate_step, translate_step);
             break;
         }

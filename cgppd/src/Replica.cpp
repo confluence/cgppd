@@ -391,6 +391,7 @@ void Replica::MCSearch(int steps)
         last_potential_obj.print_log(DEBUG_POTENTIAL && (abs(delta) > SUSPICIOUS_POTENTIAL_THRESHOLD), "Large delta detected! Last CPU E component");
 
         LOG(DEBUG_LENGTH, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
+        LOG(DEBUG_MC, "\n");
     }
 }
 
