@@ -9,6 +9,7 @@ VERY NEXT THING:
 
 * splitting should be fixed now; check simulation.
 * the code is as horrible as it was before; fix this properly.
+* move boundary type check into individual mutation methods; it will actually be less fugly that way.
 
 
    N LJ REP LJ OFF
