@@ -388,6 +388,8 @@ void Replica::MCSearch(int steps)
 #endif
         }
 
+        last_potential_obj.print_log(DEBUG_POTENTIAL && (abs(delta) > SUSPICIOUS_POTENTIAL_THRESHOLD), "Large delta detected! Last CPU E component");
+
         LOG(DEBUG_LENGTH, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
     }
 }
@@ -472,15 +474,14 @@ Potential Replica::E()
 #endif
     }
 
-    potential.print_log(INFO_POTENTIAL, "\nTotal potential");
-
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
 #endif
+    last_potential_obj = potential;
     return potential;
 }
 
-Potential Replica::E(Molecule *a,Molecule *b)
+Potential Replica::E(Molecule *a, Molecule *b)
 {
     Potential potential;
 
@@ -519,6 +520,8 @@ Potential Replica::internal_molecule_E() {
         }
 #endif
     }
+
+    last_potential_obj = potential;
     return potential;
 }
 #endif
@@ -672,6 +675,8 @@ void Replica::MCSearchAcceptReject()
         LOG(DEBUG_MC, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
+
+    last_potential_obj.print_log(DEBUG_POTENTIAL && (abs(delta) > SUSPICIOUS_POTENTIAL_THRESHOLD), "Large delta detected! Last CPU E component");
 }
 #endif  // streams
 
