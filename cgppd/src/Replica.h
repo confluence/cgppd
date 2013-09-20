@@ -78,11 +78,9 @@ public:
     float temperature;
     short label;
     double potential;
-// #if CUDA_E && !CUDA_STREAMS // TODO: really?
     double newPotential;
-// #else
-//     float newPotential;
-// #endif
+
+    Potential last_potential_obj;
 
     float translateStep;
     double rotateStep;

@@ -4,24 +4,39 @@ using namespace std;
 
 double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData)
 {
+    /* This calculation is described in kim2008, in equations 2, 3, 5 and 6
+     *
+     * Eij is the LJ interaction strength between residues i and j.
+     * Sigmaij is the average atomic radius of residues i and j.
+     */
+
+    // Eij = lambda(eij - e0)
     double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
-    // sigmaij is the average atomic radius determined by the van der waal radius in kim2008
+
+    // sigmaij = (sigmai + sigmaj) / 2
     double sigmaij(0.5f * (ri.vanderWaalRadius + rj.vanderWaalRadius));
-    //float r0 = powf(2.0f,(1.0f/6.0f));
-    //float sigT = sigmaij / r ;
-    double LJtmp(powf(sigmaij / r, 6.0f)); //sigT*sigT*sigT*sigT*sigT*sigT;
+    double LJtmp(powf(sigmaij / r, 6.0f)); // (sigmaij/r)^6
+
+    // if attractive interactions (Eij < 0), or repulsive interactions (Eij > 0) and r >= r0ij:
+    // uij(r) = -4Eij( (sigmaij/r)^12 - (sigmaij/r)^6 )
     double LJ(-4.0f * Eij * LJtmp * (LJtmp - 1.0f));
 
-    if (Eij > 0.0f && r < sigmaij * r0_constant)  // attractive pairs
+    // if repulsive interactions (Eij > 0) and r < r0ij:
+    // uij(r) = 4Eij( (sigmaij/r)^12 - (sigmaij/r)^6 ) + 2Eij
+    if (Eij > 0.0f && r < sigmaij * r0_constant)
     {
         LJ = -LJ + 2.0f * Eij;
     }
+
+    // NOTE: in kim2008, uij(r) for attractive interactions is written as 4|Eij|( (sigmaij/r)^12 - (sigmaij/r)^6 )
+    // Because Eij is negative, 4|Eij| = -4Eij
 
     return LJ;
 }
 
 double calculate_DH(Residue &ri, Residue &rj, const double r)
 {
+    // kim2008, equation 4
     double DH (ri.electrostaticCharge * rj.electrostaticCharge * expf(-r / Xi) / r);
     return DH;
 }
@@ -228,25 +243,24 @@ double Potential::total_DH()
 #if FLEXIBLE_LINKS
 double Potential::total_bond()
 {
-    LOG(DEBUG_LOCAL_TRANSLATE, "\nbond: %f K_spring: %d KBTConversionFactor: %f total bond: %f\n", bond, K_spring, KBTConversionFactor, bond * 0.5 * K_spring * KBTConversionFactor);
-    return bond * 0.5 * K_spring * KBTConversionFactor;
+    return bond * 0.5 * K_spring;
 }
 
 double Potential::total_angle()
 {
-    return log(angle) * -GammaAngleReciprocal * KBTConversionFactor;
+    return log(angle) * -GammaAngleReciprocal;
 }
 
 double Potential::total_torsion()
 {
-    return torsion * KBTConversionFactor;
+    return torsion;
 }
 #endif // FLEXIBLE_LINKS
 
 double Potential::total()
 {
 #if FLEXIBLE_LINKS
-    return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion) * KBTConversionFactor;
+    return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR) * KBTConversionFactor + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion;
 #else // if not FLEXIBLE_LINKS
     return (LJ * LJ_CONVERSION_FACTOR + DH * DH_constant_component) * KBTConversionFactor;
 #endif // FLEXIBLE_LINKS
