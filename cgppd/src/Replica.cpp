@@ -334,11 +334,11 @@ void Replica::freeRNGs()
 #endif
 }
 
-void Replica::MCSearch(int steps)
+void Replica::MCSearch(int steps, int mcstep)
 {
-    for (int step=0; step<steps; step++)
+    for (int step = 0; step < steps; step++)
     {
-        LOG(DEBUG_MC, "Step %3d:\t", step);
+        LOG(DEBUG_MC, "Step %d:\t", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         // save the current state so we can roll back if it was not a good mutation.
 //         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
@@ -392,6 +392,12 @@ void Replica::MCSearch(int steps)
 
         LOG(DEBUG_LENGTH, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
         LOG(DEBUG_MC, "\n");
+#if DEBUG_MC_PDB
+        char savename[256];
+        memset(savename,0,256);
+        sprintf(savename, "debug_mc_pdb/%d_%d.pdb", mcstep, step);
+        saveAsSinglePDB(savename);
+#endif
     }
 }
 
@@ -1165,27 +1171,6 @@ void Replica::acceptance_ratio(FILE * acceptanceRatioFile)
     reject = 0;
 }
 
-bool Replica::savePDB(const char *filename, bool skip_crowders)
-{
-    char filenameExt[256];
-    char tmp[64];
-    for (size_t i = 0; i < moleculeCount; i++)
-    {
-        // TODO: make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
-        if (skip_crowders && i >= nonCrowderCount)
-        {
-            break;
-        }
-
-        strcpy (filenameExt,filename);
-        sprintf (tmp,"%02d",int(i));
-        strcat (filenameExt,tmp);
-        strcat (filenameExt,".pdb");
-        molecules[i].saveAsPDB(filenameExt);
-    }
-    return true;
-}
-
 void Replica::saveAsSinglePDB(const char *filename, bool skip_crowders)
 {
     FILE * output;
@@ -1214,11 +1199,14 @@ void Replica::saveAsSinglePDB(const char *filename, bool skip_crowders)
 
         for (i = 0; i < molecules[m].residueCount; i++)
         {
+            Residue r = molecules[m].Residues[i];
             itemcount++;
-            fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n",itemcount,"CA",' ',aminoAcids.get(molecules[m].Residues[i].aminoAcidIndex).getSNAME(),chainId,molecules[m].Residues[i].resSeq,' ',molecules[m].Residues[i].position.x,molecules[m].Residues[i].position.y,molecules[m].Residues[i].position.z,1.0f,1.0f);
-            lastSeqNo = molecules[m].Residues[i].resSeq;
+
+            fprintf(output,"ATOM  %5d CA   %3s %C%4d    %8.3f%8.3f%8.3f%6.2f%6.2f\n", itemcount, aminoAcids.get(r.aminoAcidIndex).getSNAME(), chainId, r.resSeq, r.position.x, r.position.y, r.position.z, 1.0f, 1.0f);
+
+            lastSeqNo = r.resSeq;
         }
-        fprintf(output,"TER   %5d      %3s %C%4d \n",itemcount,aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(),chainId,lastSeqNo);
+        fprintf(output,"TER   %5d      %3s %C%4d \n", itemcount, aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(), chainId, lastSeqNo);
         chainId++;
         fflush(output);
     }

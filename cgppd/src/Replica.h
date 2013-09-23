@@ -52,11 +52,10 @@ public:
     Potential E(Molecule *a,Molecule *b);   // use for fraction bound calcs
 
     // the search method that mutates the replicas molecules.
-    void MCSearch(int steps);//, Replica * replaceReplica);
+    void MCSearch(int steps, int mcstep);
 
     int loadMolecule(const char *pdbfilename);
 
-    bool savePDB(const char *filename, bool skip_crowders=true);
     void saveAsSinglePDB(const char *filename, bool skip_crowders=true);
 
     AminoAcids aminoAcids;

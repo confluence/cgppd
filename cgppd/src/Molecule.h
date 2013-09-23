@@ -40,8 +40,6 @@ public:
 #else
     void init_saved_molecule(int max_residue_count);
 #endif
-    char * amino_acid_name(const int ri);
-    void saveAsPDB(const char *filename);
     void recalculate_relative_positions();
     Vector3f recalculate_center(); // TODO: actually use this
     void setPosition(Vector3f v);

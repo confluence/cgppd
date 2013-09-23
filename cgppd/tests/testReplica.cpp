@@ -76,7 +76,7 @@ void TestReplica::testMC()
     child_replica.ReplicaDataToDevice();
 #endif
     child_replica.potential = child_replica.E().total();
-    child_replica.MCSearch(20);
+    child_replica.MCSearch(20, 0);
 #if USING_CUDA
     child_replica.FreeDevice();
 #endif
