@@ -392,12 +392,6 @@ void Replica::MCSearch(int steps, int mcstep)
 
         LOG(DEBUG_LENGTH, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
         LOG(DEBUG_MC, "\n");
-#if DEBUG_MC_PDB
-        char savename[256];
-        memset(savename,0,256);
-        sprintf(savename, "debug_mc_pdb/%d_%d.pdb", mcstep, step);
-        saveAsSinglePDB(savename);
-#endif
     }
 }
 
