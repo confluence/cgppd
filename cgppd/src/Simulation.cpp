@@ -71,9 +71,6 @@ void Simulation::init(int argc, char **argv, int pid)
 
     // Create the initial replica, and compare CPU and GPU potential
 
-#if DEBUG_MC_PDB
-    int make_debug_dir = system("mkdir -p debug_mc_pdb");
-#endif
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters, aminoAcidData, 30);
 
