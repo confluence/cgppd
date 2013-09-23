@@ -71,6 +71,9 @@ void Simulation::init(int argc, char **argv, int pid)
 
     // Create the initial replica, and compare CPU and GPU potential
 
+#if DEBUG_MC_PDB
+    int make_debug_dir = system("mkdir -p debug_mc_pdb");
+#endif
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters, aminoAcidData, 30);
 
@@ -539,7 +542,7 @@ void *MCthreadableFunction(void *arg)
             // to sample at the correct rate split this into another set of loops
             for (int s = 0; s < data->MC_steps_per_RE / data->sampleFrequency; s++)
             {
-                data->replica[tx + replica_offset].MCSearch(data->sampleFrequency);
+                data->replica[tx + replica_offset].MCSearch(data->sampleFrequency, mcstep);
 
                 if (mcstep + s * data->sampleFrequency >= data->sampleStartsAfter)
                 {

@@ -579,7 +579,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     bool reached_end_marker = false;
     while (!reached_end_marker && !input.eof())
     {
-        input.getline(line,512);
+        input.getline(line, 512);
 
         if (strncmp(line, "ATOM", 4) == 0)
         {
@@ -739,34 +739,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     return true;
 }
 
-char * Molecule::amino_acid_name(const int ri)
-{
-    return AminoAcidsData.get(Residues[ri].aminoAcidIndex).getSNAME();
-}
-
-void Molecule::saveAsPDB(const char* filename)
-{
-        FILE * output;
-        output = fopen (filename,"w");
-
-        fprintf(output,"REMARK %s \n",filename);
-        fprintf(output,"REMARK Translation relative to input Q(w,x,y,z): %f %f %f %f\n",rotation.w,rotation.x,rotation.y,rotation.z);
-        fprintf(output,"REMARK Rotation relative to input +P(x,y,z): %f %f %f\n",center.x,center.y,center.z);
-
-#define iRes Residues[i]
-#define ipos Residues[i].position
-        for (size_t i = 0; i < residueCount; i++)
-        {
-            // TODO: flexible links
-            fprintf(output,"ATOM  %5d %4s%C%3s %C%4d%C  %8.3f%8.3f%8.3f%6.2f%6.2f\n", int(i), "CA", ' ', amino_acid_name(i), iRes.chainId, iRes.resSeq, ' ', ipos.x, ipos.y, ipos.z, 1.0f,1.0f);
-        }
-
-        fprintf(output,"END \n");
-
-        fflush(output);
-        fclose(output);
-}
-
 void Molecule::calculateVolume()
 {
     // simple volume, todo: surface enclosed calc which is nontrivial
@@ -778,7 +750,6 @@ void Molecule::calculateVolume()
         volume += 4.0/3.0*r*r*r*M_PIl ;  // 4/3 * pi * r^3
     }
 }
-
 
 void Molecule::calculate_length()
 {
