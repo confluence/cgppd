@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import logging
 
 FILENAME = re.compile('output/(.*)/pdb/sample_(.*)_(.*)K_.*.pdb')
-ATOM = re.compile('ATOM *\d+ *CA ([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
+ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
 POTENTIAL = re.compile('REMARK potential: (.*)')
 
 RMS_LENGTH_RADIUS = re.compile('name ([^\n]+)\nlength ([A-Z]+ \d+\.\d+)\nradius ([A-Z]+ \d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
@@ -268,23 +268,29 @@ class SimulationSet(object):
         self.simulations = simulations
 
     @classmethod
-    def from_dirlist(cls, name, *dirs):
+    def from_dirlist(cls, name, *dirs, **kwargs):
+        root_dir = kwargs.get("root_dir", ".")
         simulations = []
 
         for d in dirs:
             logging.info("Processing directory '%s'..." % d)
 
-            summaryfilename = "%s/summary" % d
+            summaryfilename = "%s/%s/summary" % (root_dir, d)
+            sim_dir = "%s/%s/pdb" % (root_dir, d)
 
             if os.path.isfile(summaryfilename):
                 s = Simulation.from_summary(summaryfilename)
+                simulations.append(s)
 
-            else:
-                files = glob.glob("%s/pdb/*" % d)
+            elif os.path.exists(sim_dir):
+                files = glob.glob("%s/*" % sim_dir)
                 s = Simulation.from_filelist(files)
                 s.write_summary(summaryfilename)
+                simulations.append(s)
 
-            simulations.append(s)
+            if not simulations:
+                logging.error("No simulations found. Exiting.")
+                sys.exit(1)
 
         return cls(name, simulations)
 
@@ -320,6 +326,8 @@ AVAILABLE_PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("p
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
     parser.add_argument("dirs", help="Directories to process", nargs="+")
+
+    parser.add_argument("-r", "--root-dir", default=".", help="Root output directory")
     parser.add_argument("-c", "--chain", action="append", dest="chains", default=[], help="Select a protein by chain label")
 
     parser.add_argument("-p", "--plot", action="append", dest="plots", default=[], help="Requested plots (available: %s)" % ", ".join(AVAILABLE_PLOTS))
@@ -334,15 +342,14 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.INFO)
 
     if not args.plots:
-        # TODO: proper basic logging
-        print "No plots requested. Exiting."
-        sys.exit(0)
+        logging.error("No plots requested. Exiting.")
+        sys.exit(1)
 
     # TODO: add simulation description to config file and write it to PDB file (TITLE)
     # TODO: write chain names into PDB files (COMPND)
     #s = Simulation.from_glob("UIM/Ub", *args.files, **{"A":"ubiquitin", "B":"UIM"})
 
-    s = SimulationSet.from_dirlist("Polyalanine", *args.dirs)
+    s = SimulationSet.from_dirlist("Polyalanine", *args.dirs, root_dir=args.root_dir)
 
     if s:
         for plot in args.plots:

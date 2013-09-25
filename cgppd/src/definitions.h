@@ -59,14 +59,14 @@
     #define DEBUG   true
 
     #define DEBUG_PARSING false
-    #define DEBUG_MC false
+    #define DEBUG_MC true
     #define DEBUG_LENGTH false
     #define DEBUG_BOUNDARY false
     #define INFO_POTENTIAL false
     #define DEBUG_POTENTIAL false
     #define SUSPICIOUS_POTENTIAL_THRESHOLD 100
-    #define DEBUG_LOCAL false
-    #define DEBUG_FLEX false
+    #define DEBUG_LOCAL true
+    #define DEBUG_FLEX true
     #define DEBUG_LJ false
     #define DEBUG_CUDA false
 

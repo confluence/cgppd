@@ -338,14 +338,12 @@ void Replica::MCSearch(int steps, int mcstep)
 {
     for (int step = 0; step < steps; step++)
     {
-        LOG(DEBUG_MC, "Step %d:\t", step);
         uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         // save the current state so we can roll back if it was not a good mutation.
-//         savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
-        LOG(DEBUG_MC, "Replica %d:\tMolecule %d:\t", label, moleculeNo);
-
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
+
+        LOG(DEBUG_MC, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 
 #if CUDA_E
         // copy host data to device. so we can do the calculations on it.
@@ -628,12 +626,12 @@ float Replica::SumGridResults()
 void Replica::MCSearchMutate()
 {
     uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
-    lastMutationIndex = moleculeNo;
     // save the current state so we can roll back if it was not a good mutation.
-//     savedMolecule.saveBeforeStateChange(&molecules[moleculeNo]);
     savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
-    LOG(DEBUG_MC, "Replica %d\tMolecule %d:\t", label, lastMutationIndex);
     molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
+    LOG(DEBUG_MC, "Replica %d\tMolecule %d:\t%s\t", label, moleculeNo, molecules[moleculeNo].last_MC_move);
+
+    lastMutationIndex = moleculeNo;
 }
 
 void Replica::MCSearchEvaluate()
