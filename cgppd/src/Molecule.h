@@ -107,7 +107,7 @@ public:
     bool update_LJ_and_DH; // LJ and DH values need to be updated
 #endif
     size_t chainCount;
-    Quaternion rotation; // TODO get rid of this
+    Quaternion rotation; // TODO remove
 
     Vector3f center;
     Vector3f new_center;
@@ -120,12 +120,10 @@ public:
 
     float length;
 
-    char *filename;
-    bool hasFilename;
-    Vector3f xAxis;
-    Vector3f yAxis;
-    Vector3f zAxis;
-    Vector3f translation;
+    char filename[256];
+    char last_MC_move[256];
+
+    Vector3f translation; // TODO remove
 };
 
 #endif /*MOLECULE_H_*/

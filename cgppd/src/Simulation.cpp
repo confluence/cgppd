@@ -730,7 +730,7 @@ void Simulation::closeSamplingFiles()
 
 void Simulation::printHelp()
 {
-    cout << "Usage: cgppd -f <filename> [-c] [-h] [-p] [-q] [-t x] [-s x] [-g x] [-m x ] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
+    cout << "Usage: cgppd -f <filename> [-c] [-h] [-p] [-q] [-t x] [-s x] [-g x] [-m x ] [-a x] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
     cout << "\t-h|--help: show this dialog" << endl;
     cout << "\t-f|--file <file>: Input config file" << endl;
     cout << "\t-p|--preview:        use the open GL preview of this configuration, performs no simulation" << endl;
@@ -739,8 +739,9 @@ void Simulation::printHelp()
     cout << "\t-t|--threads x:  The number of CPU/pthreads to use" << endl;
     cout << "\t-s|--streams x:  The number of CUDA Streams" << endl;
     cout << "\t-g|--gpus x:     The number of GPUS to use" << endl;
-    cout << "\t-m|--mcsteps x:  How many MC Steps to perform per replica " << endl;
-    cout << "\t-e|--resteps x:  How many replica exhanges to perform" << endl;
+    cout << "\t-m|--mcsteps x:  How many MC steps to perform per replica " << endl;
+    cout << "\t-a|--sampleafter x:  How many MC steps to perform before beginning sampling" << endl;
+    cout << "\t-e|--resteps x:  How many replica exchanges to perform" << endl;
     cout << "\t-r|--replicas x: How many replicas" << endl;
     cout << "\t-o|--output x:   The output prefix for files created by the simulation" << endl;
     cout << "\t-b|--boundary x:  The bounding box edge length" << endl;
@@ -765,7 +766,7 @@ void Simulation::getFileArg(int argc, char **argv)
 
     while (1)
     {
-        int opt = getopt_long(argc, argv, "hf:pqt:s:g:m:e:r:o:b:x:n:d:v012", long_options, &opt_index);
+        int opt = getopt_long(argc, argv, "hf:pqt:s:g:m:a:e:r:o:b:x:n:d:v012", long_options, &opt_index);
 
         if (opt == -1)
             break;
@@ -811,6 +812,7 @@ void Simulation::getArgs(int argc, char **argv)
         {"streams", required_argument, 0, 's'},
         {"gpus", required_argument, 0, 'g'},
         {"mcsteps", required_argument, 0, 'm'},
+        {"sampleafter", required_argument, 0, 'a'},
         {"resteps", required_argument, 0, 'e'},
         {"replicas", required_argument, 0, 'r'},
 
@@ -833,7 +835,7 @@ void Simulation::getArgs(int argc, char **argv)
 
     while (1)
     {
-        int opt = getopt_long(argc, argv, "hf:pqt:s:g:m:e:r:o:b:x:n:d:v012", long_options, &opt_index);
+        int opt = getopt_long(argc, argv, "hf:pqt:s:g:m:a:e:r:o:b:x:n:d:v012", long_options, &opt_index);
 
         if (opt == -1)
             break;
@@ -876,6 +878,10 @@ void Simulation::getArgs(int argc, char **argv)
             case 'm':
                 parameters.MCsteps = atoi(optarg);
                 LOG(parameters.verbosity, "\tParameter MCsteps = %d\n", parameters.MCsteps);
+                break;
+            case 'a':
+                parameters.sampleStartsAfter = atoi(optarg);
+                LOG(parameters.verbosity, "\tParameter sampleStartsAfter = %d\n", parameters.sampleStartsAfter);
                 break;
             case 'e':
                 parameters.REsteps = atoi(optarg);

@@ -3,21 +3,18 @@
 using namespace std;
 
 // TODO: we probably need a default constructor for dynamic arrays. :/
-Molecule::Molecule() : residueCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)), volume(0.0f),
+Molecule::Molecule() : residueCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)),
 #if FLEXIBLE_LINKS
 linkCount(0), segmentCount(0), linkerCount(0), LJ(0), DH(0), update_LJ_and_DH(true), local_move_successful(false),
 #endif // FLEXIBLE_LINKS
-hasFilename(false)
+volume(0.0f)
 {
+    memset(filename, 0, 256);
+    memset(last_MC_move, 0, 256);
 }
 
 Molecule::~Molecule()
 {
-    if (hasFilename)
-    {
-        delete [] filename;
-    }
-
 #if FLEXIBLE_LINKS
     if (linkerCount > 0)
     {
@@ -474,7 +471,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
         {
             case MC_LOCAL_TRANSLATE:
             {
-                LOG(DEBUG_MC, "\tT\t");
+                strcat(last_MC_move, "T");
                 uint ri = random_residue_index(rng, li);
                 Vector3f v = translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
@@ -482,7 +479,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             }
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
-                LOG(DEBUG_MC, "\tC\t");
+                strcat(last_MC_move, "C");
                 uint ri = random_residue_index_middle(rng, li);
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 crankshaft(rotate_step, flip, ri);
@@ -521,30 +518,32 @@ uint Molecule::get_MC_mutation_type(gsl_rng * rng)
 void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
     uint mutationType = get_MC_mutation_type(rng);
+    memset(last_MC_move, 0, 256);
+
     switch (mutationType)
     {
         case MC_ROTATE:
         {
-            LOG(DEBUG_MC, "Rotate\n");
+            strcat(last_MC_move, "Rotate");
             rotate(rng, rotate_step);
             break;
         }
         case MC_TRANSLATE:
         {
-            LOG(DEBUG_MC, "Translate\n");
+            strcat(last_MC_move, "Translate");
             translate(rng, translate_step);
             break;
         }
 #if FLEXIBLE_LINKS
         case MC_ROTATE_DOMAIN:
         {
-            LOG(DEBUG_MC, "Flex\n");
+            strcat(last_MC_move, "Flex");
             rotate_domain(rng, rotate_step);
             break;
         }
         case MC_LOCAL:
         {
-            LOG(DEBUG_MC, "Local\n");
+            strcat(last_MC_move, "Local ");
             make_local_moves(rng, rotate_step, translate_step);
             break;
         }
@@ -562,8 +561,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 #endif // FLEXIBLE_LINKS
 
     chainCount = 1; // there must be at least one
-    hasFilename = true;
-    filename = new char[256]; // TODO is it really necessary for this to be allocated dynamically?!
     strcpy(filename, pdbfilename);
     // TODO: we only store this for printing.  Put it at the end?
 

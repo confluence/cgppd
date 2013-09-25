@@ -7,27 +7,26 @@ VERY NEXT THING:
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
 
-* splitting should be fixed now; check simulation.
-* the code is as horrible as it was before; fix this properly.
-* move boundary type check into individual mutation methods; it will actually be less fugly that way.
+* now debug the rejection of local moves! Switch to one local move per MC, and log what happens, including potential breakdown.
 
-* fix chain processing
+* Write unit tests for all the mutations. Seriously, we need those.
+
 
    N LJ REP LJ OFF
 ---------------------------------
-   4    X
-   8    -
-  16    X
-  32    X
-  64    X
- 128    X
- 256    X
- 512    -
-1024    -
+   4
+   8
+  16
+  32
+  64
+ 128
+ 256
+ 512
+1024
 2048
 4096
 
-
+* fix chain processing
 * remove printing of old cruft about translation/rotation
 
 * validation
