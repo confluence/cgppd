@@ -6,7 +6,7 @@ resteps 2000
 replicas 20
 samplefrequency 1000
 sampleafter 1000000
-boundary  160.7
+boundary 1000.0
 temperaturemax 420
 temperaturemin 240
 prefix ala2048
