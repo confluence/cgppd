@@ -7,8 +7,8 @@ replicas 20
 samplefrequency 1000
 sampleafter 1000000
 boundary 1000.0
-temperaturemax 420
-temperaturemin 240
+temperaturemax 500
+temperaturemin 500
 prefix ala4
 
 files
