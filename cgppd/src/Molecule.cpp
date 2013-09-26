@@ -473,7 +473,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             {
                 strcat(last_MC_move, "T");
                 uint ri = random_residue_index(rng, li);
-                Vector3f v = translate_step * normalised_random_vector_f(rng);
+                Vector3f v = LOCAL_TRANSLATE_STEP_SCALING_FACTOR * translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
                 break;
             }
