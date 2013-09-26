@@ -119,6 +119,8 @@
 
         #define NUM_LOCAL_MOVES 1
         #define LOCAL_TRANSLATE_BIAS 0.5
+
+        #define LOCAL_TRANSLATE_STEP_SCALING_FACTOR 0.1f
     #endif
 
     #if USING_CUDA
