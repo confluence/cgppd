@@ -386,7 +386,7 @@ void Replica::MCSearch(int steps, int mcstep)
 #endif
         }
 
-        last_potential_obj.print_log(DEBUG_POTENTIAL && (abs(delta) > SUSPICIOUS_POTENTIAL_THRESHOLD), "Large delta detected! Last CPU E component");
+        last_potential_obj.print_log(DEBUG_POTENTIAL && strncmp(molecules[moleculeNo].last_MC_move, "Local", 5) == 0, "CPU E component for last local move");
 
         LOG(DEBUG_LENGTH, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
         LOG(DEBUG_MC, "\n");
@@ -675,7 +675,7 @@ void Replica::MCSearchAcceptReject()
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
 
-    last_potential_obj.print_log(DEBUG_POTENTIAL && (abs(delta) > SUSPICIOUS_POTENTIAL_THRESHOLD), "Large delta detected! Last CPU E component");
+    last_potential_obj.print_log(DEBUG_POTENTIAL && strncmp(molecules[lastMutationIndex].last_MC_move, "Local", 5) == 0, "CPU E component for last local move");
 }
 #endif  // streams
 

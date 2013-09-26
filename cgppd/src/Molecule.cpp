@@ -462,7 +462,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
 
     local_move_successful = false;
     uint li = random_linker_index(rng);
-    for (size_t i = 0; i <= NUM_LOCAL_MOVES; i++) {
+    for (size_t i = 0; i < NUM_LOCAL_MOVES; i++) {
         //TODO: if linker too short for crankshaft, only return translate?
         //TODO: if crankshaft disabled, only return translate
         uint move = gsl_ran_bernoulli(rng, LOCAL_TRANSLATE_BIAS);

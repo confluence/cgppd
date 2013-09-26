@@ -63,8 +63,7 @@
     #define DEBUG_LENGTH false
     #define DEBUG_BOUNDARY false
     #define INFO_POTENTIAL false
-    #define DEBUG_POTENTIAL false
-    #define SUSPICIOUS_POTENTIAL_THRESHOLD 100
+    #define DEBUG_POTENTIAL true
     #define DEBUG_LOCAL true
     #define DEBUG_FLEX true
     #define DEBUG_LJ false
@@ -118,7 +117,7 @@
         #define WEIGHT_MC_ROTATE_DOMAIN 1.0f
         #define WEIGHT_MC_LOCAL 1.0f
 
-        #define NUM_LOCAL_MOVES 3
+        #define NUM_LOCAL_MOVES 1
         #define LOCAL_TRANSLATE_BIAS 0.5
     #endif
 
