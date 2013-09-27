@@ -8,40 +8,51 @@ class TestMolecule : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(TestMolecule);
     CPPUNIT_TEST(testPDBSequence);
     CPPUNIT_TEST(testPDBCentre);
+    CPPUNIT_TEST(testRotate);
+    CPPUNIT_TEST(testTranslate);
+    CPPUNIT_TEST(testPotential);
 #if FLEXIBLE_LINKS
     CPPUNIT_TEST(testSegments);
     CPPUNIT_TEST(testGeometry);
+    CPPUNIT_TEST(testFlex);
+    CPPUNIT_TEST(testLocalTranslate);
+    CPPUNIT_TEST(testCrankshaft);
 #endif // FLEXIBLE_LINKS
-    CPPUNIT_TEST(testStartingPotential);
     CPPUNIT_TEST_SUITE_END();
 
 private:
     Molecule ubiquitin;
     Molecule angiotensin;
+    Molecule polyalanine8;
     AminoAcids aminoAcidData;
-    float testboxdim;
 
 public:
     void setUp();
     void testPDBSequence();
     void testPDBCentre();
+    void testRotate();
+    void testTranslate();
+    void testPotential();
 #if FLEXIBLE_LINKS
     void testSegments();
     void testGeometry();
+    void testFlex();
+    void testLocalTranslate();
+    void testCrankshaft();
 #endif // FLEXIBLE_LINKS
-    void testStartingPotential();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestMolecule);
 
 void TestMolecule::setUp()
 {
-    testboxdim = 118.4f;
-
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
 
-    ubiquitin.init("tests/1UBQ.pdb", aminoAcidData, 0, testboxdim);
-    angiotensin.init("tests/angiotensin.pdb", aminoAcidData, 0, testboxdim);
+    ubiquitin.init("tests/1UBQ.pdb", aminoAcidData, 0, 1000.0f);
+    angiotensin.init("tests/angiotensin.pdb", aminoAcidData, 0, 1000.0f);
+
+    // small bounding value, so we can test wrapping over the boundary
+    polyalanine8.init("tests/ala8.pdb", aminoAcidData, 0, 15.0f);
 }
 
 void TestMolecule::testPDBSequence()
@@ -79,11 +90,32 @@ void TestMolecule::testPDBSequence()
 
 void TestMolecule::testPDBCentre()
 {
-    static const float expected_centre[3] = {30.442894736842103, 29.00898684210527, 15.5163947368421};
+    static const float expected_ubiquitin_centre[3] = {30.442894736842103, 29.00898684210527, 15.5163947368421};
 
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[0], ubiquitin.center.x, 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[1], ubiquitin.center.y, 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_centre[2], ubiquitin.center.z, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_ubiquitin_centre[0], ubiquitin.center.x, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_ubiquitin_centre[1], ubiquitin.center.y, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_ubiquitin_centre[2], ubiquitin.center.z, 0.00001);
+
+    static const float expected_polyalanine_centre[3] = {10.754625, 6.959999999999999, 0.91625};
+
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_polyalanine_centre[0], polyalanine8.center.x, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_polyalanine_centre[1], polyalanine8.center.y, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_polyalanine_centre[2], polyalanine8.center.z, 0.00001);
+}
+
+void TestMolecule::testRotate()
+{
+    // TODO
+}
+
+void TestMolecule::testTranslate()
+{
+    // TODO
+}
+
+void TestMolecule::testPotential()
+{
+    // TODO
 }
 
 #if FLEXIBLE_LINKS
@@ -151,8 +183,21 @@ void TestMolecule::testGeometry()
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, angiotensin.Links[i].pseudo_torsion, 0.00001);
     }
 }
+
+void TestMolecule::testFlex()
+{
+    // TODO
+}
+
+void TestMolecule::testLocalTranslate()
+{
+    // TODO
+}
+
+void TestMolecule::testCrankshaft()
+{
+    // TODO
+}
+
 #endif // FLEXIBLE_LINKS
 
-void TestMolecule::testStartingPotential()
-{
-}

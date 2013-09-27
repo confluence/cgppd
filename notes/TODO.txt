@@ -7,11 +7,6 @@ VERY NEXT THING:
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
 
-* now debug the rejection of local moves! Switch to one local move per MC, and log what happens, including potential breakdown.
-
-* Write unit tests for all the mutations. Seriously, we need those.
-
-
    N LJ REP LJ OFF
 ---------------------------------
    4
@@ -24,7 +19,19 @@ VERY NEXT THING:
  512
 1024
 2048
-4096
+
+* Write unit tests for all the mutations. Seriously, we need those.
+
+* Refactor all the wrapping stuff, because it's terrible
+    * Split two boundary types
+        * at the start, calculate new center and reject the move if boundary is spherical and center is too large
+        * then do everything
+        * at the *end*, if the boundary is periodic, calculate the wrapped center and wrap the molecule if necessary
+            * but this can still result in residues being moved twice in e.g. flex move
+            * does that really matter?
+* Make an effort always to update the relative position and then the absolute position -- eliminate recalculate_relative_positions
+
+* check if compensated summation explains the discrepancy between the reference conformation values in the thesis and the implementation.
 
 * fix chain processing
 * remove printing of old cruft about translation/rotation

@@ -60,7 +60,7 @@
 
     #define DEBUG_PARSING false
     #define DEBUG_MC true
-    #define DEBUG_LENGTH false
+    #define DEBUG_LENGTH true
     #define DEBUG_BOUNDARY false
     #define INFO_POTENTIAL false
     #define DEBUG_POTENTIAL true
@@ -106,7 +106,7 @@
     #define MC_ROTATE 1
 
     #if FLEXIBLE_LINKS
-        #define MC_ROTATE_DOMAIN 2
+        #define MC_FLEX 2
         #define MC_LOCAL 3
 
         #define MC_LOCAL_TRANSLATE 0
@@ -114,7 +114,7 @@
 
         #define WEIGHT_MC_TRANSLATE 1.0f
         #define WEIGHT_MC_ROTATE 1.0f
-        #define WEIGHT_MC_ROTATE_DOMAIN 1.0f
+        #define WEIGHT_MC_FLEX 1.0f
         #define WEIGHT_MC_LOCAL 1.0f
 
         #define NUM_LOCAL_MOVES 1

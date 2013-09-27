@@ -309,7 +309,7 @@ void Replica::initRNGs()
     MC_move_weights = new double[4];
     MC_move_weights[0] =  WEIGHT_MC_TRANSLATE;
     MC_move_weights[1] = WEIGHT_MC_ROTATE;
-    MC_move_weights[2] = WEIGHT_MC_ROTATE_DOMAIN;
+    MC_move_weights[2] = WEIGHT_MC_FLEX;
     MC_move_weights[3] = WEIGHT_MC_LOCAL;
 
     MC_discrete_table = gsl_ran_discrete_preproc(4, MC_move_weights);
