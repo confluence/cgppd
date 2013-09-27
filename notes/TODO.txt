@@ -29,7 +29,8 @@ VERY NEXT THING:
         * at the *end*, if the boundary is periodic, calculate the wrapped center and wrap the molecule if necessary
             * but this can still result in residues being moved twice in e.g. flex move
             * does that really matter?
-* Make an effort always to update the relative position and then the absolute position -- eliminate recalculate_relative_positions
+            * Make an effort always to update the relative position and then the absolute position -- eliminate recalculate_relative_positions
+            * If we do that, moving twice for wrapping won't be a problem -- just calculate the absolute position once after wrapping!
 
 * check if compensated summation explains the discrepancy between the reference conformation values in the thesis and the implementation.
 
