@@ -67,9 +67,9 @@ public:
 
     void translate(Vector3f v, const int ri);
     void crankshaft(double angle, const bool flip_angle, const int ri);
-    void rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before);
+    void flex(const Vector3double raxis, const double angle, const int ri, const bool before);
 
-    void rotate_domain(gsl_rng * rng, const double rotate_step);
+    void flex(gsl_rng * rng, const double rotate_step);
     void make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step);
     bool local_move_successful;
 

@@ -154,22 +154,17 @@ void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
 
 void Molecule::translate(const Vector3f v)
 {
-    //center = center+v;
-    center.x += v.x;
-    center.y += v.y;
-    center.z += v.z;
+    new_center = center + v;
 
-    for (size_t i=0; i<residueCount; i++)
+    if (test_boundary_conditions())
     {
-        //Residues[i].position = Residues[i].position + v;
-        Residues[i].position.x += v.x;
-        Residues[i].position.y += v.y;
-        Residues[i].position.z += v.z;
+        setPosition(new_center_wrapped);
     }
 }
 
 void Molecule::recalculate_relative_positions()
 {
+    // TODO: ugh, no, don't do this.
     for (size_t i=0; i<residueCount; i++)
     {
         Residues[i].relativePosition = Residues[i].position - center;
@@ -178,6 +173,7 @@ void Molecule::recalculate_relative_positions()
 
 Vector3f Molecule::recalculate_center()
 {
+    // TODO: this does not appear to be used. Why?
     Vector3f accumulator(0, 0, 0);
 
     for (size_t i=0; i<residueCount; i++)
@@ -191,6 +187,7 @@ Vector3f Molecule::recalculate_center()
 void Molecule::setPosition(Vector3f v)
 {
     center = v;
+
     for (size_t i=0; i<residueCount; i++)
     {
         // more efficient to do it this way than with the overloaded +
@@ -214,10 +211,6 @@ void Molecule::setRotation(Quaternion q)
     rotation = q * rotation; // TODO: get rid of this
     for (size_t i=0; i<residueCount; i++)
     {
-//         Residues[i].relativePosition = q.rotateVector(Residues[i].relativePosition);
-//         Residues[i].position.x = Residues[i].relativePosition.x + center.x;
-//         Residues[i].position.y = Residues[i].relativePosition.y + center.y;
-//         Residues[i].position.z = Residues[i].relativePosition.z + center.z;
         Residues[i].set_rotation_about_center(q, center);
     }
 }
@@ -284,12 +277,7 @@ void Molecule::rotate(gsl_rng * rng, const double rotate_step)
 void Molecule::translate(gsl_rng * rng, const double translate_step)
 {
     Vector3f v = translate_step * normalised_random_vector_f(rng);
-    new_center = center + v;
-
-    if (test_boundary_conditions())
-    {
-        setPosition(new_center_wrapped);
-    }
+    translate(v);
 }
 
 #if FLEXIBLE_LINKS
@@ -403,7 +391,7 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     }
 }
 
-void Molecule::rotate_domain(const Vector3double raxis, const double angle, const int ri, const bool before)
+void Molecule::flex(const Vector3double raxis, const double angle, const int ri, const bool before)
 {
     // calculate quaternion from angle and axis
     Quaternion q(angle, raxis);
@@ -447,14 +435,14 @@ void Molecule::rotate_domain(const Vector3double raxis, const double angle, cons
     }
 }
 
-void Molecule::rotate_domain(gsl_rng * rng, const double rotate_step)
+void Molecule::flex(gsl_rng * rng, const double rotate_step)
 {
     Vector3double raxis = normalised_random_vector_d(rng);
     uint li = random_linker_index(rng);
     uint ri = random_residue_index(rng, li);
     bool before = (bool) gsl_ran_bernoulli(rng, 0.5);
 
-    rotate_domain(raxis, rotate_step, ri, before);
+    flex(raxis, rotate_step, ri, before);
 }
 
 void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step)
@@ -535,10 +523,10 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
             break;
         }
 #if FLEXIBLE_LINKS
-        case MC_ROTATE_DOMAIN:
+        case MC_FLEX:
         {
             strcat(last_MC_move, "Flex");
-            rotate_domain(rng, rotate_step);
+            flex(rng, rotate_step);
             break;
         }
         case MC_LOCAL:
@@ -653,6 +641,8 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     residueCount = vResidues.size();
     Residues = new Residue[residueCount];
 
+    // TODO: use recalculate_center here, and also don't do this inside this function because it should go in init.
+
     // set the residues and accumulate the positions to determine the center of the molecule
     for(size_t r = 0; r < residueCount; r++)
     {
@@ -676,6 +666,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 
     calculateVolume();
 
+    // TODO: eliminate all the arrays; we can just keep using vectors.
 #if FLEXIBLE_LINKS
     linkCount = vLinks.size() - 1;
     Links = new Link[linkCount];
