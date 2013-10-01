@@ -34,6 +34,17 @@ private:
     Molecule polyalanine8;
     AminoAcids aminoAcidData;
 
+    Vector3f ala_start_positions[8] = {
+        {, , },
+        {, , },
+        {, , },
+        {, , },
+        {, , },
+        {, , },
+        {, , },
+        {, , }
+    };
+
 public:
     void setUp();
     void testPDBSequence();

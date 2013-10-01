@@ -265,6 +265,7 @@ class Simulation(object):
 
 class SimulationSet(object):
     def __init__(self, name, simulations):
+        self.name = name
         self.simulations = simulations
 
     @classmethod
@@ -343,6 +344,10 @@ if __name__ == "__main__":
 
     if not args.plots:
         logging.error("No plots requested. Exiting.")
+        sys.exit(1)
+
+    if not args.chains:
+        logging.error("You must select at least one chain. Exiting.")
         sys.exit(1)
 
     # TODO: add simulation description to config file and write it to PDB file (TITLE)
