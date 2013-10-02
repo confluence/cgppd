@@ -120,12 +120,12 @@ def plot_vs_N(func):
 
         logging.info("Plotting values: %r" % values)
 
-        plt.plot([i + 2 for i in range(len(values))], values, 'bo')
+        plt.plot([2**i for i in range(2, len(values) + 2)], values, 'bo')
+        plt.plot([2**i for i in range(2, len(values) + 2)], [2**i**(2/3.0) for i in range(2, len(values) + 2)], 'ro', color='lightgrey')
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        # TODO: how to get this to work
-        #plt.set_xscale('log', basex=2)
+        plt.xscale('log', basex=2)
 
         if not kwargs['no_display']:
             plt.show()
@@ -148,7 +148,7 @@ class Simulation(object):
         self._rms_radius = radius or {}
 
     @classmethod
-    def from_filelist(cls, filenames):
+    def from_filelist(cls, filenames, **kwargs):
         conformations = []
 
         for filename in filenames:
@@ -162,6 +162,7 @@ class Simulation(object):
                 for line in pdbfile:
                     if line.startswith("ATOM"):
                         amino_acid, chain, index, x, y, z = ATOM.match(line).groups()
+
                         if not protein:
                             protein = Protein(chain)
                         protein.append_residue(Residue(amino_acid, int(index), float(x), float(y), float(z)))
@@ -176,12 +177,14 @@ class Simulation(object):
             conformations.append(conformation)
 
         # TODO: get chains and name from PDB
-        chains = {"A": name}
+        chains = dict(l.split(":") for l in kwargs["labels"])
+        if not chains and conformations:
+            chains = dict((c, c) for c in conformations[0].proteins)
 
         return cls(name, chains, conformations)
 
     @classmethod
-    def from_summary(cls, filename):
+    def from_summary(cls, filename, **kwargs):
         with open(filename) as summaryfile:
             summary = summaryfile.read()
 
@@ -208,7 +211,9 @@ class Simulation(object):
                 conformations.append(Conformation(int(sample), float(temperature), float(potential), proteins))
 
             # TODO: get chains and name from PDB
-            chains = {"A": name}
+            chains = dict(l.split(":") for l in kwargs["labels"])
+            if not chains and conformations:
+                chains = dict((c, c) for c in conformations[0].proteins)
 
             return cls(name, chains, conformations, length_dict, radius_dict)
 
@@ -269,7 +274,7 @@ class SimulationSet(object):
         self.simulations = simulations
 
     @classmethod
-    def from_dirlist(cls, name, *dirs, **kwargs):
+    def from_dirlist(cls, *dirs, **kwargs):
         root_dir = kwargs.get("root_dir", ".")
         simulations = []
 
@@ -280,12 +285,12 @@ class SimulationSet(object):
             sim_dir = "%s/%s/pdb" % (root_dir, d)
 
             if os.path.isfile(summaryfilename):
-                s = Simulation.from_summary(summaryfilename)
+                s = Simulation.from_summary(summaryfilename, **kwargs)
                 simulations.append(s)
 
             elif os.path.exists(sim_dir):
                 files = glob.glob("%s/*" % sim_dir)
-                s = Simulation.from_filelist(files)
+                s = Simulation.from_filelist(files, **kwargs)
                 s.write_summary(summaryfilename)
                 simulations.append(s)
 
@@ -293,7 +298,7 @@ class SimulationSet(object):
                 logging.error("No simulations found. Exiting.")
                 sys.exit(1)
 
-        return cls(name, simulations)
+        return cls(kwargs["title"], simulations)
 
     def plot_hist_radius(self, chain, **kwargs):
         for s in self.simulations:
@@ -307,8 +312,8 @@ class SimulationSet(object):
     def plot_radius(self, chain):
         values = [s.rms_radius[chain] for s in self.simulations]
         full_description = "radius of gyration"
-        xlabel = u"Average radius (Å)"
-        ylabel = "Number of residues (count)"
+        xlabel = "Number of residues (count)"
+        ylabel = u"Average radius (Å)"
 
         return values, full_description, xlabel, ylabel
 
@@ -316,8 +321,8 @@ class SimulationSet(object):
     def plot_length(self, chain):
         values = [s.rms_length[chain] for s in self.simulations]
         full_description = "end-to-end length"
-        xlabel = u"Average length (Å)"
-        ylabel = "Number of residues (count)"
+        xlabel = "Number of residues (count)"
+        ylabel = u"Average length (Å)"
 
         return values, full_description, xlabel, ylabel
 
@@ -337,6 +342,10 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--no-display", help="Don't display plots", action="store_true")
 
     parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
+    
+    parser.add_argument("-t", "--title", default="Untitled", help="Simulation title")
+    parser.add_argument("-l", "--label", action="append", dest="labels", default=[], help="Chain label")
+
     args = parser.parse_args()
 
     if args.verbose:
@@ -354,7 +363,7 @@ if __name__ == "__main__":
     # TODO: write chain names into PDB files (COMPND)
     #s = Simulation.from_glob("UIM/Ub", *args.files, **{"A":"ubiquitin", "B":"UIM"})
 
-    s = SimulationSet.from_dirlist("Polyalanine", *args.dirs, root_dir=args.root_dir)
+    s = SimulationSet.from_dirlist(*args.dirs, root_dir=args.root_dir, title=args.title, labels=args.labels)
 
     if s:
         for plot in args.plots:
