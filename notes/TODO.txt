@@ -4,6 +4,14 @@ NOW
 
 VERY NEXT THING:
 
+* alter GPU code with option to calculate internal E
+    * prepare a unit test which tests that cpu E = gpu E
+    * in Replica: if CUDA & flexible links, pass molecule id + residue id to CUDA as 4th position parameter instead of molecule id
+    * in Molecule: if flexible links & cuda, don't do the LJ and DH on the CPU in the molecule
+        * maybe refactor so that this is incorporated in replica cpu E
+        * currently omitting rigid domains; can't do that on the GPU, so change it
+        * what about rigid molecules and the current reference results? We can just special case the method to use if flexible linkers are defined but the molecules are all rigid so that the potential is not affected. Normal conditionals instead of macros.
+
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
 
