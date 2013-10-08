@@ -28,7 +28,9 @@ public:
     void tearDown();
 };
 
+#if !LJ_REPULSIVE && !LJ_OFF // ignore this whole test unless we're using the normal LJ constants
 CPPUNIT_TEST_SUITE_REGISTRATION(TestTenReplicas);
+#endif // !LJ_REPULSIVE && !LJ_OFF
 
 void TestTenReplicas::setUp()
 {
