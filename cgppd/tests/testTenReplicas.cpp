@@ -73,13 +73,6 @@ void TestTenReplicas::testSanity()
         float gpu;
     };
 
-    struct Subtotals
-    {
-        float total;
-        float LJ;
-        float DH;
-    };
-
     static const ExpectedResult expected_results[10] = {
         { -0.293705,  -0.293705},
         { -1.056291,  -1.056291},
@@ -91,6 +84,14 @@ void TestTenReplicas::testSanity()
         {-10.657519, -10.657518},
         { -9.891660,  -9.891659},
         { -8.511853,  -8.511855}
+    };
+
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+    struct Subtotals
+    {
+        float total;
+        float LJ;
+        float DH;
     };
 
     static const Subtotals CHARMM_results[10] = {
@@ -113,8 +114,8 @@ void TestTenReplicas::testSanity()
     float max_relative_error_total(0);
     float max_relative_error_LJ(0);
     float max_relative_error_DH(0);
-
     printf("\tTOTAL\tLJ\tDH\n");
+#endif
 
     for (int i = 0; i < 10; i++)
     {
@@ -149,6 +150,8 @@ void TestTenReplicas::testSanity()
         float e = 0.000001;
         Potential cpu = replicas[i].E();
         Potential cpu_nc = replicas[i].E(&replicas[i].molecules[0], &replicas[i].molecules[1]);
+
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
         if (i == 4)
         {
             printf("%2d %10.3e %10.3e %10.3e\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
@@ -157,10 +160,12 @@ void TestTenReplicas::testSanity()
         {
             printf("%2d %10.3f %10.3f %10.3f\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
         }
+#endif
 
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu.total(), e);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc.total(), e);
 
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
         if (i != 4)
         {
             float relative_error_total = abs(CHARMM_results[i].total - cpu.total())/abs(CHARMM_results[i].total);
@@ -177,6 +182,7 @@ void TestTenReplicas::testSanity()
             max_relative_error_LJ = max(max_relative_error_LJ, relative_error_LJ);
             max_relative_error_DH = max(max_relative_error_DH, relative_error_DH);
         }
+#endif
 
 #if USING_CUDA
         double gpu = replicas[i].EonDevice();
@@ -188,9 +194,10 @@ void TestTenReplicas::testSanity()
 #endif
     }
 
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
     printf("\tMean relative error\tMax relative error\n");
     printf("Tot\t%f\t%f\n", mean_relative_error_total, max_relative_error_total);
     printf("LJ\t%f\t%f\n", mean_relative_error_LJ, max_relative_error_LJ);
     printf("DH\t%f\t%f\n", mean_relative_error_DH, max_relative_error_DH);
-
+#endif
 }

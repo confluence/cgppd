@@ -12,8 +12,11 @@ VERY NEXT THING:
         * currently omitting rigid domains; can't do that on the GPU, so change it
         * what about rigid molecules and the current reference results? We can just special case the method to use if flexible linkers are defined but the molecules are all rigid so that the potential is not affected. Normal conditionals instead of macros.
 
+
+
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
+
 
    N LJ REP LJ OFF
 ---------------------------------
