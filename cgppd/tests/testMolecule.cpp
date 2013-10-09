@@ -1,14 +1,32 @@
+#include <string>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/SourceLine.h>
+#include <cppunit/TestAssert.h>
 #include <ctype.h>
 #include <Molecule.h>
 
-bool ASSERT_VECTOR3F_EQUALS(Vector3f expected, Vector3f actual)
+
+void check_vector3f_equal(Vector3f expected, Vector3f actual, CppUnit::SourceLine sourceLine)
 {
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.x, actual.x, 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.y, actual.y, 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.z, actual.z, 0.00001);
+    float eps(0.00001);
+    if (fabs(expected.x - actual.x) < eps && fabs(expected.y - actual.y) < eps && fabs(expected.z - actual.z) < eps)
+    {
+        return;
+    }
+
+    char expected_char[256];
+    sprintf(expected_char, "vector3f(%f, %f, %f)", expected.x, expected.y, expected.z);
+    string expected_str(expected_char);
+
+    char actual_char[256];
+    sprintf(actual_char, "vector3f(%f, %f, %f)", actual.x, actual.y, actual.z);
+    string actual_str(actual_char);
+
+    ::CppUnit::Asserter::failNotEqual(expected_str, actual_str, sourceLine);
 }
+
+#define ASSERT_VECTOR3F_EQUALS(expected, actual) check_vector3f_equal(expected, actual, CPPUNIT_SOURCELINE())
 
 class TestMolecule : public CppUnit::TestFixture
 {
@@ -33,17 +51,6 @@ private:
     Molecule angiotensin;
     Molecule polyalanine8;
     AminoAcids aminoAcidData;
-
-    Vector3f ala_start_positions[8] = {
-        {, , },
-        {, , },
-        {, , },
-        {, , },
-        {, , },
-        {, , },
-        {, , },
-        {, , }
-    };
 
 public:
     void setUp();
@@ -115,25 +122,25 @@ void TestMolecule::testPDBCentre()
 
 void TestMolecule::testPositions()
 {
-    ASSERT_VECTOR3F_EQUALS(Vector3f(1.458, 0, 0), polyalanine8.residues[0].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(3.368, 3.081, 1.154), polyalanine8.residues[1].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(6.993, 3.658, 0.156), polyalanine8.residues[2].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(8.955, 6.649, 1.45), polyalanine8.residues[3].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(12.524, 7.321, 0.318), polyalanine8.residues[4].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(14.546, 10.212, 1.741), polyalanine8.residues[5].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(18.052, 10.989, 0.485), polyalanine8.residues[6].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(20.141, 13.77, 2.026), polyalanine8.residues[7].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(1.458, 0, 0), polyalanine8.Residues[0].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(3.368, 3.081, 1.154), polyalanine8.Residues[1].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(6.993, 3.658, 0.156), polyalanine8.Residues[2].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(8.955, 6.649, 1.45), polyalanine8.Residues[3].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(12.524, 7.321, 0.318), polyalanine8.Residues[4].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(14.546, 10.212, 1.741), polyalanine8.Residues[5].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(18.052, 10.989, 0.485), polyalanine8.Residues[6].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(20.141, 13.77, 2.026), polyalanine8.Residues[7].position);
 
     ASSERT_VECTOR3F_EQUALS(Vector3f(10.754625, 6.96, 0.91625), polyalanine8.center);
 
-    ASSERT_VECTOR3F_EQUALS(Vector3f(-9.29663, -6.96, -0.91625), polyalanine8.residues[0].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(-7.38663, -3.879, 0.23775), polyalanine8.residues[1].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(-3.76163, -3.302, -0.76025), polyalanine8.residues[2].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(-1.79963, -0.311, 0.53375), polyalanine8.residues[3].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(1.76937, 0.361, -0.59825), polyalanine8.residues[4].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(3.79137, 3.252, 0.82475), polyalanine8.residues[5].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(7.29737, 4.029, -0.43125), polyalanine8.residues[6].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(9.38637, 6.81, 1.10975), polyalanine8.residues[7].relative_position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(-9.29663, -6.96, -0.91625), polyalanine8.Residues[0].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(-7.38663, -3.879, 0.23775), polyalanine8.Residues[1].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(-3.76163, -3.302, -0.76025), polyalanine8.Residues[2].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(-1.79963, -0.311, 0.53375), polyalanine8.Residues[3].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(1.76937, 0.361, -0.59825), polyalanine8.Residues[4].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(3.79137, 3.252, 0.82475), polyalanine8.Residues[5].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(7.29737, 4.029, -0.43125), polyalanine8.Residues[6].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(9.38637, 6.81, 1.10975), polyalanine8.Residues[7].relativePosition);
 }
 
 void TestMolecule::testRotate()
@@ -154,29 +161,29 @@ void TestMolecule::testTranslate()
 
     // Check that absolute positions have changed
 
-    ASSERT_VECTOR3F_EQUALS(Vector3f(2.458, 1, 1), polyalanine8.residues[0].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(4.368, 4.081, 2.154), polyalanine8.residues[1].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(7.993, 4.658, 1.156), polyalanine8.residues[2].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(9.955, 7.649, 2.45), polyalanine8.residues[3].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(13.524, 8.321, 1.318), polyalanine8.residues[4].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(15.546, 11.212, 2.741), polyalanine8.residues[5].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(19.052, 11.989, 1.485), polyalanine8.residues[6].position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(21.141, 14.77, 3.026), polyalanine8.residues[7].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(2.458, 1, 1), polyalanine8.Residues[0].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(4.368, 4.081, 2.154), polyalanine8.Residues[1].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(7.993, 4.658, 1.156), polyalanine8.Residues[2].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(9.955, 7.649, 2.45), polyalanine8.Residues[3].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(13.524, 8.321, 1.318), polyalanine8.Residues[4].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(15.546, 11.212, 2.741), polyalanine8.Residues[5].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(19.052, 11.989, 1.485), polyalanine8.Residues[6].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(21.141, 14.77, 3.026), polyalanine8.Residues[7].position);
 
     // Check that centre has changed
 
-    ASSERT_VECTOR3F_EQUALS(Vector3f(), polyalanine8.residues[0].position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(11.754625, 7.96, 1.91625), polyalanine8.center);
 
     // Check that relative positions have not changed
 
-    ASSERT_VECTOR3F_EQUALS(Vector3f(-9.29663, -6.96, -0.91625), polyalanine8.residues[0].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(-7.38663, -3.879, 0.23775), polyalanine8.residues[1].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(-3.76163, -3.302, -0.76025), polyalanine8.residues[2].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(-1.79963, -0.311, 0.53375), polyalanine8.residues[3].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(1.76937, 0.361, -0.59825), polyalanine8.residues[4].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(3.79137, 3.252, 0.82475), polyalanine8.residues[5].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(7.29737, 4.029, -0.43125), polyalanine8.residues[6].relative_position);
-    ASSERT_VECTOR3F_EQUALS(Vector3f(9.38637, 6.81, 1.10975), polyalanine8.residues[7].relative_position);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(-9.29663, -6.96, -0.91625), polyalanine8.Residues[0].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(-7.38663, -3.879, 0.23775), polyalanine8.Residues[1].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(-3.76163, -3.302, -0.76025), polyalanine8.Residues[2].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(-1.79963, -0.311, 0.53375), polyalanine8.Residues[3].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(1.76937, 0.361, -0.59825), polyalanine8.Residues[4].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(3.79137, 3.252, 0.82475), polyalanine8.Residues[5].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(7.29737, 4.029, -0.43125), polyalanine8.Residues[6].relativePosition);
+    ASSERT_VECTOR3F_EQUALS(Vector3f(9.38637, 6.81, 1.10975), polyalanine8.Residues[7].relativePosition);
 }
 
 void TestMolecule::testPotential()

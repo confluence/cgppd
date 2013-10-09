@@ -13,6 +13,7 @@ class TestReplica : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestReplica);
     CPPUNIT_TEST(testMC);
+    CPPUNIT_TEST(testCPUandGPUPotential);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -24,6 +25,7 @@ private:
 public:
     void setUp();
     void testMC();
+    void testCPUandGPUPotential();
     void tearDown();
 };
 
@@ -80,4 +82,10 @@ void TestReplica::testMC()
 #if USING_CUDA
     child_replica.FreeDevice();
 #endif
+}
+
+void TestReplica::testCPUandGPUPotential()
+{
+    //TODO Test CUDA+rigid molecules vs CPU+rigid molecules vs reference conformation 1
+    //TODO Test CUDA+flexible molecules vs CPU+flexible molecules vs hand-calculated reference
 }

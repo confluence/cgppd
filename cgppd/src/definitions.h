@@ -59,13 +59,13 @@
     #define DEBUG   true
 
     #define DEBUG_PARSING false
-    #define DEBUG_MC true
-    #define DEBUG_LENGTH true
+    #define DEBUG_MC false
+    #define DEBUG_LENGTH false
     #define DEBUG_BOUNDARY false
     #define INFO_POTENTIAL false
-    #define DEBUG_POTENTIAL true
-    #define DEBUG_LOCAL true
-    #define DEBUG_FLEX true
+    #define DEBUG_POTENTIAL false
+    #define DEBUG_LOCAL false
+    #define DEBUG_FLEX false
     #define DEBUG_LJ false
     #define DEBUG_CUDA false
 
@@ -176,5 +176,7 @@
     #if GLVIS
         void GlutDisplay();
     #endif
+
+    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 0
 
 #endif /*DEFINITIONS_H_*/
