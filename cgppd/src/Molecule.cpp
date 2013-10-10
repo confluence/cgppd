@@ -69,6 +69,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     index = m.index;
 
 #if FLEXIBLE_LINKS
+    is_flexible = m.is_flexible;
     Links = new Link[m.linkCount];
     memcpy(Links, m.Links, m.linkCount*sizeof(Link));
     linkCount = m.linkCount;
@@ -754,7 +755,7 @@ uint Molecule::random_residue_index(gsl_rng * rng)
 
 // TODO: add comments
 
-Potential Molecule::E()
+Potential Molecule::E(bool include_LJ_and_DH)
 {
     Potential potential;
 
@@ -763,45 +764,57 @@ Potential Molecule::E()
 #define iSeg Segments[si]
 #define jSeg Segments[sj]
 
-    // LJ and DH between segments within molecule
-    if (update_LJ_and_DH)
+    // We may be using the GPU to calculate the internal LJ and DH, or not calculating it at all
+    if (include_LJ_and_DH)
     {
-        potential.reset_LJ_subtotal();
-        potential.reset_DH_subtotal();
-
-        for (size_t si = 0; si < segmentCount; si++)
+        // LJ and DH between all residue pairs within molecule
+        if (update_LJ_and_DH)
         {
-            for (size_t sj = si + 1; sj < segmentCount; sj++)
+            potential.reset_LJ_subtotal();
+            potential.reset_DH_subtotal();
+
+//             for (size_t ri = 0; ri < residueCount; ri++)
+//             {
+//                 for (size_t rj = ri + 1; rj < residueCount; rj++) {
+
+                        // TODO: crap! How are we going to exclude neighbouring residues from the GPU version?
+//                 }
+//             }
+
+            for (size_t si = 0; si < segmentCount; si++)
             {
-                for (size_t i = iSeg.start; i <= iSeg.end; i++)
+                for (size_t sj = si + 1; sj < segmentCount; sj++)
                 {
-                    for (size_t j = jSeg.start; j <= jSeg.end; j++) {
-                        double r(iRes.distance(jRes, bounding_value) + EPS);
-                        // apply intra-linker condition to eliminate overlap and closeness
-                        if (j - i >= 4)
-                        {
-                            /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                            potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
-                            /* Calculate electrostatic potential for each residue pair; increment molecule total. */
-                            potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
+                    for (size_t i = iSeg.start; i <= iSeg.end; i++)
+                    {
+                        for (size_t j = jSeg.start; j <= jSeg.end; j++) {
+                            double r(iRes.distance(jRes, bounding_value) + EPS);
+                            // apply intra-linker condition to eliminate overlap and closeness
+                            if (j - i >= 4)
+                            {
+                                /* Calculate LJ-type potential for each residue pair; increment molecule total. */
+                                potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
+                                /* Calculate electrostatic potential for each residue pair; increment molecule total. */
+                                potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
+                            }
                         }
                     }
                 }
             }
+
+            /* Cache new values on the molecule */
+            LJ = potential.LJ_subtotal;
+            DH = potential.DH_subtotal;
+
+            update_LJ_and_DH = false;
         }
 
-        /* Cache new values on the molecule */
-        LJ = potential.LJ_subtotal;
-        DH = potential.DH_subtotal;
+        /* Add molecule totals to potential totals */
+        /* TODO: what impact do side calculations like this have on kahan sum accuracy? */
 
-        update_LJ_and_DH = false;
+        potential.increment_LJ(LJ);
+        potential.increment_DH(DH);
     }
-
-    /* Add molecule totals to potential totals */
-    /* TODO: what impact do side calculations like this have on kahan sum accuracy? */
-
-    potential.increment_LJ(LJ);
-    potential.increment_DH(DH);
 
     for (size_t si = 0; si < segmentCount; si++)
     {
