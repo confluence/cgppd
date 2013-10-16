@@ -3,6 +3,7 @@
 
 import sys
 import re
+from collections import defaultdict
 
 COMMENT = re.compile(r"^\s*#")
 
@@ -10,14 +11,13 @@ def pair_potentials_from_file(filename):
     with open(filename, 'r') as pp_file:
         lines = [l for l in pp_file if not COMMENT.search(l)]
 
-    amino_acids = [a.upper for a in lines[0].strip().split()]
-    print amino_acids
+    amino_acids = [a.upper() for a in lines[0].strip().split()]
 
-    pair_potentials = {}
+    pair_potentials = defaultdict(dict)
 
     for l in lines[1:]:
         chunks = l.strip().split()
-        acid_i = chunks[0]
+        acid_i = chunks[0].upper()
         other_acids = amino_acids[amino_acids.index(acid_i):]
         potentials = [float(p) for p in chunks[1:]]
 
