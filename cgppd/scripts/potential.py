@@ -29,39 +29,39 @@ def pair_potentials_from_file(filename):
     return pair_potentials
 
 
-#class Potential(object):
+class Potential(object):
 
-    #def __init__(self, residues, pair_potentials):
-        #self.residues = residues
-        #self.pair_potentials = pair_potentials
-        #self.components = {}
+    def __init__(self, molecules, pair_potentials):
+        self.molecules = molecules
+        self.pair_potentials = pair_potentials
+        self.components = {}
 
-    #@property
-    #def LJ(self):
-        #if "LJ" not in self.components:
-            #pass # TODO
+    @property
+    def LJ(self):
+        if "LJ" not in self.components:
+            pass # TODO
 
-        #return self.components["LJ"]
+        return self.components["LJ"]
 
-    #@property
-    #def DH(self):
-        #pass # TODO
+    @property
+    def DH(self):
+        pass # TODO
 
-    #@property
-    #def bond(self):
-        #pass # TODO
+    @property
+    def bond(self):
+        pass # TODO
 
-    #@property
-    #def angle(self):
-        #pass # TODO
+    @property
+    def angle(self):
+        pass # TODO
 
-    #@property
-    #def torsion(self):
-        #pass # TODO
+    @property
+    def torsion(self):
+        pass # TODO
 
-    #@property
-    #def total(self):
-        #pass # TODO
+    @property
+    def total(self):
+        pass # TODO
 
 if __name__ == "__main__":
      potentials = pair_potentials_from_file(sys.argv[1])
