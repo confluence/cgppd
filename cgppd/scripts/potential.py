@@ -6,16 +6,32 @@ from collections import defaultdict
 import numpy as np
 import argparse
 
+E0 = -2.27
+LAMBDA = 0.159
+XI = 10.0
+
 COMMENT = re.compile(r"^\s*#")
 ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) [A-Z]? *\d+ *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(\d+\.\d{2}).*')
-
+ACID = re.compile("""#Amino acid class initialisation data
+#name
+#abbriviation
+#short symbol
+#van der Waal radius
+#residue charge
+.*
+(.*)
+.*
+(.*)
+(.*)
+""")
 
 class Residue(object):
-    def __init__(self, amino_acid, x, y, z, flexible, molecule_no):
+    def __init__(self, amino_acid, x, y, z, flexible, molecule_no, residue_no):
         self.amino_acid = amino_acid
         self.flexible = flexible
         self.position = np.array((x, y, z))
         self.molecule_no = molecule_no
+        self.residue_no = residue_no
 
 
 class Protein(object):
@@ -27,16 +43,27 @@ class Protein(object):
 
 
 class Potential(object):
-
-    def __init__(self, proteins, pair_potentials):
+    def __init__(self, proteins, charge, radius, pair_potentials):
         self.proteins = proteins
+        self.charge = charge
+        self.radius = radius
         self.pair_potentials = pair_potentials
-        self.components = {}
+        self.components = defaultdict(float)
 
     @classmethod
-    def from_filelist(cls, potentialfilename, *pdbfilenames):
+    def from_filelist(cls, aminoacidfilename, potentialfilename, *pdbfilenames):
+        charge = {}
+        radius = {}
         pair_potentials = defaultdict(dict)
         proteins = []
+
+        with open(aminoacidfilename, 'r') as aa_file:
+            acids = AMINOACID.findall(aa_file.read())
+
+        for a, r, c in acids:
+            amino_acid = a.upper()
+            radius[amino_acid] = float(r)
+            charge[amino_acid] = float(c)
 
         with open(potentialfilename, 'r') as pp_file:
             lines = [l for l in pp_file if not COMMENT.search(l)]
@@ -57,6 +84,7 @@ class Potential(object):
             print "file %s" % filename
             with open(filename) as pdbfile:
                 protein = None
+                residue_no = 0
 
                 for line in pdbfile:
                     ca_atom = ATOM.match(line)
@@ -65,80 +93,54 @@ class Potential(object):
 
                         if not protein:
                             protein = Protein()
-                        protein.append_residue(Residue(amino_acid, float(x), float(y), float(z), bool(float(flexible)), len(proteins)))
+                        protein.append_residue(Residue(amino_acid, float(x), float(y), float(z), bool(float(flexible)), len(proteins), residue_no))
+                        residue_no += 1
 
                     elif line.startswith("TER"):
                         proteins.append(protein)
                         protein = None
+                        residue_no = 0
 
                 if protein:
                     proteins.append(protein)
 
-        return cls(proteins, pair_potentials)
+        return cls(proteins, charge, radius, pair_potentials)
 
-    @property
-    def residues(self):
-        return [r for p in self.proteins for r in p.residues]
+    def calculate(self):
+        residues = [r for p in self.proteins for r in p.residues]
+
+        for i, ri in enumerate(residues):
+            for rj in residues[i + 1:]:
+                if not include_internal and ri.molecule_no == rj.molecule_no:
+                    continue
+
+                if ri.molecule_no == rj.molecule_no and np.abs(ri.residue_no - rj.residue_no) < 4:
+                    continue
+
+                r = np.linalg.norm(rj.position - ri.position)
+                Eij = LAMBDA * (pair_potentials[ri.amino_acid][rj.amino_acid] - E0)
+                sigmaij = (self.radius[ri.amino_acid] + self.radius[rj.amino_acid])/2.0
+                r0ij = 2**(1/6) * sigmaij
+
+                if Eij < 0:
+                    LJ = 4 * np.abs(Eij) * ((sigmaij / r)**12 - (sigmaij / r)**6)
+                elif r < r0ij:
+                    LJ = 4 * Eij * ((sigmaij / r)**12 - (sigmaij / r)**6) + 2 * Eij
+                else: # r >= r0ij
+                    LJ = -4 * Eij * ((sigmaij / r)**12 - (sigmaij / r)**6)
+
+                self.components["LJ"] += LJ
+
+                DH = self.charge[ri.amino_acid] * self.charge[rj.amino_acid] * np.exp(-r / XI) / 4 * np.pi * ??? * r
+                # TODO: units -- coulombs?
 
 
-# LAMBDA
-# E0
-
-    @property
-    def LJ(self, include_internal):
-
-        if "LJ" not in self.components:
-
-            for i, ri in enumerate(self.residues):
-                for rj in self.residues[i + 1:]:
-                    if not include_internal and ri.molecule_no == rj.molecule_no:
-                        continue
-
-                    r = np.linalg.norm(rj.position - ri.position)
-
-    #double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
-
-    #// sigmaij = (sigmai + sigmaj) / 2
-    #double sigmaij(0.5f * (ri.vanderWaalRadius + rj.vanderWaalRadius));
-    #double LJtmp(powf(sigmaij / r, 6.0f)); // (sigmaij/r)^6
-
-    #// if attractive interactions (Eij < 0), or repulsive interactions (Eij > 0) and r >= r0ij:
-    #// uij(r) = -4Eij( (sigmaij/r)^12 - (sigmaij/r)^6 )
-    #double LJ(-4.0f * Eij * LJtmp * (LJtmp - 1.0f));
-
-    #// if repulsive interactions (Eij > 0) and r < r0ij:
-    #// uij(r) = 4Eij( (sigmaij/r)^12 - (sigmaij/r)^6 ) + 2Eij
-    #if (Eij > 0.0f && r < sigmaij * r0_constant)
-    #{
-        #LJ = -LJ + 2.0f * Eij;
-    #}
-
-        return self.components["LJ"]
-
-    @property
-    def DH(self):
-        pass # TODO
-
-    @property
-    def bond(self):
-        pass # TODO
-
-    @property
-    def angle(self):
-        pass # TODO
-
-    @property
-    def torsion(self):
-        pass # TODO
-
-    @property
-    def total(self):
-        pass # TODO
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
+    parser.add_argument("aminoacids", help="Amino acid data file")
     parser.add_argument("potential", help="Pair potential file")
     parser.add_argument("files", help="Input PDB files", nargs="+")
     args = parser.parse_args()
 
-    potential = Potential.from_filelist(args.potential, *args.files)
+    potential = Potential.from_filelist(args.aminoacids, args.potential, *args.files)
