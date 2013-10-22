@@ -9,10 +9,14 @@ import argparse
 E0 = -2.27
 LAMBDA = 0.159
 XI = 10.0
+LJ_CONVERSION_FACTOR = 0.3507221006079
+BTU_to_J = 0.948
+DH_CONSTANT = BTU_to_J * 1.602176487 * 1.602176487 # TODO: is this the elemental charge? What about the e-19?
+KBT_TO_KCALMOL = 1.0 / (294.0 * 8.314472 / 4184.0)
 
 COMMENT = re.compile(r"^\s*#")
 ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) [A-Z]? *\d+ *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(\d+\.\d{2}).*')
-ACID = re.compile("""#Amino acid class initialisation data
+AMINOACID = re.compile("""#Amino acid class initialisation data
 #name
 #abbriviation
 #short symbol
@@ -106,7 +110,7 @@ class Potential(object):
 
         return cls(proteins, charge, radius, pair_potentials)
 
-    def calculate(self):
+    def calculate(self, include_internal):
         residues = [r for p in self.proteins for r in p.residues]
 
         for i, ri in enumerate(residues):
@@ -118,7 +122,7 @@ class Potential(object):
                     continue
 
                 r = np.linalg.norm(rj.position - ri.position)
-                Eij = LAMBDA * (pair_potentials[ri.amino_acid][rj.amino_acid] - E0)
+                Eij = LAMBDA * (self.pair_potentials[ri.amino_acid][rj.amino_acid] - E0)
                 sigmaij = (self.radius[ri.amino_acid] + self.radius[rj.amino_acid])/2.0
                 r0ij = 2**(1/6) * sigmaij
 
@@ -129,11 +133,17 @@ class Potential(object):
                 else: # r >= r0ij
                     LJ = -4 * Eij * ((sigmaij / r)**12 - (sigmaij / r)**6)
 
-                self.components["LJ"] += LJ
+                self.components["LJ"] += LJ * LJ_CONVERSION_FACTOR * KBT_TO_KCALMOL
 
-                DH = self.charge[ri.amino_acid] * self.charge[rj.amino_acid] * np.exp(-r / XI) / 4 * np.pi * ??? * r
-                # TODO: units -- coulombs?
+                DH = self.charge[ri.amino_acid] * self.charge[rj.amino_acid] * np.exp(-r / XI) / r
+                self.components["DH"] += DH * DH_CONSTANT * KBT_TO_KCALMOL
 
+                # TODO: why are the unit conversions what they are?
+                # TODO: WTF happened to the 4piD?
+
+    @property
+    def total(self):
+        return sum(self.components.values())
 
 
 if __name__ == "__main__":
@@ -144,3 +154,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     potential = Potential.from_filelist(args.aminoacids, args.potential, *args.files)
+    potential.calculate(False)
+    print potential.components
+    print potential.total
