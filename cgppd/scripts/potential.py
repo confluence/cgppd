@@ -14,6 +14,9 @@ BTU_to_J = 0.948
 E_CHARGE = 1.602176487 # what about the e-19?
 KBT_TO_KCALMOL = 1.0 / (294.0 * 8.314472 / 4184.0)
 
+K_SPRING = 378
+R0 = 3.81
+
 COMMENT = re.compile(r"^\s*#")
 ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) [A-Z]? *\d+ *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(\d+\.\d{2}).*')
 AMINOACID = re.compile("""#Amino acid class initialisation data
@@ -157,7 +160,17 @@ class Potential(object):
                 # TODO: why are the unit conversions what they are?
                 # TODO: WTF happened to the 4piD?
 
+        for p in self.proteins:
+            for s in p.segments:
+                for r1, r2 in zip(s[:-1], s[1:]):
+                    r = np.linalg.norm(r1.position - r2.position)
+                    self.components["bond"] += K_SPRING * (r - R0)**2 / 2.0
 
+                for r1, r2, r3 in zip(s[:-2], s[1:-1], s[2:]):
+                    pass # angle
+
+                for r1, r2, r3, r4 in zip(s[:-3], s[1:-2], s[2:-1], s[3:]):
+                    pass # torsion
 
         self.components["total"] = 0
         self.components["total"] = sum(self.components.values())
