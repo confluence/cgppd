@@ -11,7 +11,7 @@ LAMBDA = 0.159
 XI = 10.0
 LJ_CONVERSION_FACTOR = 0.3507221006079
 BTU_to_J = 0.948
-DH_CONSTANT = BTU_to_J * 1.602176487 * 1.602176487 # TODO: is this the elemental charge? What about the e-19?
+E_CHARGE = 1.602176487 # what about the e-19?
 KBT_TO_KCALMOL = 1.0 / (294.0 * 8.314472 / 4184.0)
 
 COMMENT = re.compile(r"^\s*#")
@@ -41,9 +41,23 @@ class Residue(object):
 class Protein(object):
     def __init__(self):
         self.residues = []
+        self.segments = [] # flexible segments
 
     def append_residue(self, residue):
         self.residues.append(residue)
+
+    def find_segments(self):
+        segment = None
+        for r in self.residues:
+            if r.flexible:
+                if not segment:
+                    segment = []
+                segment.append(r)
+
+            if not r.flexible:
+                if segment:
+                    self.segments.append(segment)
+                    segment = None
 
 
 class Potential(object):
@@ -85,7 +99,6 @@ class Potential(object):
                 pair_potentials[acid_j][acid_i] = potential_value
 
         for filename in pdbfilenames:
-            print "file %s" % filename
             with open(filename) as pdbfile:
                 protein = None
                 residue_no = 0
@@ -107,6 +120,9 @@ class Potential(object):
 
                 if protein:
                     proteins.append(protein)
+
+        for protein in proteins:
+            protein.find_segments()
 
         return cls(proteins, charge, radius, pair_potentials)
 
@@ -136,14 +152,18 @@ class Potential(object):
                 self.components["LJ"] += LJ * LJ_CONVERSION_FACTOR * KBT_TO_KCALMOL
 
                 DH = self.charge[ri.amino_acid] * self.charge[rj.amino_acid] * np.exp(-r / XI) / r
-                self.components["DH"] += DH * DH_CONSTANT * KBT_TO_KCALMOL
+                self.components["DH"] += DH * BTU_to_J * E_CHARGE * E_CHARGE * KBT_TO_KCALMOL
 
                 # TODO: why are the unit conversions what they are?
                 # TODO: WTF happened to the 4piD?
 
-    @property
-    def total(self):
-        return sum(self.components.values())
+
+
+        self.components["total"] = 0
+        self.components["total"] = sum(self.components.values())
+
+    def __str__(self):
+        return "\n".join("%s: %g" % (k, self.components[k]) for k in ("LJ", "DH", "bond", "angle", "torsion", "total"))
 
 
 if __name__ == "__main__":
@@ -151,9 +171,9 @@ if __name__ == "__main__":
     parser.add_argument("aminoacids", help="Amino acid data file")
     parser.add_argument("potential", help="Pair potential file")
     parser.add_argument("files", help="Input PDB files", nargs="+")
+    parser.add_argument("-i", "--internal", help="Calculate internal molecule potential", action="store_true")
     args = parser.parse_args()
 
     potential = Potential.from_filelist(args.aminoacids, args.potential, *args.files)
-    potential.calculate(False)
-    print potential.components
-    print potential.total
+    potential.calculate(args.internal)
+    print potential
