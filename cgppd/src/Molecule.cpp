@@ -5,7 +5,7 @@ using namespace std;
 // TODO: we probably need a default constructor for dynamic arrays. :/
 Molecule::Molecule() : residueCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)),
 #if FLEXIBLE_LINKS
-linkCount(0), segmentCount(0), linkerCount(0), LJ(0), DH(0), update_LJ_and_DH(true), local_move_successful(false),
+linkCount(0), segmentCount(0), linkerCount(0), LJ(0), DH(0), update_LJ_and_DH(true), local_move_successful(false), is_flexible(false),
 #endif // FLEXIBLE_LINKS
 volume(0.0f)
 {
@@ -712,6 +712,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
 
         if (S.flexible) {
             vLinkers.push_back(s);
+            is_flexible = true;
         }
     }
 
@@ -765,39 +766,26 @@ Potential Molecule::E(bool include_LJ_and_DH)
 #define jSeg Segments[sj]
 
     // We may be using the GPU to calculate the internal LJ and DH, or not calculating it at all
-    if (include_LJ_and_DH)
+    if (is_flexible && include_LJ_and_DH)
     {
         // LJ and DH between all residue pairs within molecule
         if (update_LJ_and_DH)
         {
+            // TODO: we don't need this anymore. Eliminate it.
             potential.reset_LJ_subtotal();
             potential.reset_DH_subtotal();
 
-//             for (size_t ri = 0; ri < residueCount; ri++)
-//             {
-//                 for (size_t rj = ri + 1; rj < residueCount; rj++) {
-
-                        // TODO: crap! How are we going to exclude neighbouring residues from the GPU version?
-//                 }
-//             }
-
-            for (size_t si = 0; si < segmentCount; si++)
+            for (size_t i = 0; i < residueCount; i++)
             {
-                for (size_t sj = si + 1; sj < segmentCount; sj++)
-                {
-                    for (size_t i = iSeg.start; i <= iSeg.end; i++)
+                for (size_t j = i + 1; j < residueCount; j++) {
+                    double r(iRes.distance(jRes, bounding_value) + EPS);
+                    // apply intra-linker condition to eliminate overlap and closeness
+                    if (j - i >= 4) // TODO: merge into for
                     {
-                        for (size_t j = jSeg.start; j <= jSeg.end; j++) {
-                            double r(iRes.distance(jRes, bounding_value) + EPS);
-                            // apply intra-linker condition to eliminate overlap and closeness
-                            if (j - i >= 4)
-                            {
-                                /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                                potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
-                                /* Calculate electrostatic potential for each residue pair; increment molecule total. */
-                                potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
-                            }
-                        }
+                        /* Calculate LJ-type potential for each residue pair; increment molecule total. */
+                        potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
+                        /* Calculate electrostatic potential for each residue pair; increment molecule total. */
+                        potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
                     }
                 }
             }
@@ -821,38 +809,6 @@ Potential Molecule::E(bool include_LJ_and_DH)
         // Flexible linker potentials
         if (iSeg.flexible)
         {
-            // LJ and DH within linker
-            if (iSeg.update_LJ_and_DH)
-            {
-                potential.reset_LJ_subtotal();
-                potential.reset_DH_subtotal();
-
-                for (size_t i = iSeg.start; i <= iSeg.end; i++)
-                {
-                    for (size_t j = i + 1; j <= iSeg.end; j++)
-                    {
-                        if (j - i >= 4)
-                        {
-                            double r(iRes.distance(jRes, bounding_value) + EPS);
-                            /* Calculate LJ-type potential for each residue pair; increment segment total. */
-                            potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
-                            /* Calculate electrostatic potential if residues separated by more than 3 residues (kim2008 p. 1429); increment segment total. */
-                            potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
-                        }
-                    }
-                }
-
-                /* Cache new values on the segment */
-                iSeg.LJ = potential.LJ_subtotal;
-                iSeg.DH = potential.DH_subtotal;
-
-                iSeg.update_LJ_and_DH = false;
-            }
-
-            /* Add segment totals to potential totals */
-            potential.increment_LJ(iSeg.LJ);
-            potential.increment_DH(iSeg.DH);
-
             for (size_t i = iSeg.start; i <= iSeg.end; i++)
             {
                 // Pseudo-bond

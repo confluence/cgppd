@@ -505,7 +505,7 @@ Potential Replica::E(Molecule *a, Molecule *b)
 
 
 #if FLEXIBLE_LINKS
-Potential Replica::internal_molecule_E() {
+Potential Replica::internal_molecule_E(bool include_LJ_and_DH) {
     Potential potential;
 
     for (size_t mI = 0; mI < moleculeCount; mI++)
@@ -514,7 +514,7 @@ Potential Replica::internal_molecule_E() {
         if (molecules[mI].moleculeRoleIdentifier != CROWDER_IDENTIFIER)
         {
 #endif
-            potential.increment(molecules[mI].E());
+            potential.increment(molecules[mI].E(include_LJ_and_DH));
 #if REPULSIVE_CROWDING
         }
 #endif
@@ -644,7 +644,7 @@ void Replica::MCSearchAcceptReject()
     //cudaStreamSynchronize(cudaStream);  // sync, newPotential needs to have been returned
     newPotential = SumGridResults();
 #if FLEXIBLE_LINKS
-    newPotential += internal_molecule_E().total();
+    newPotential += internal_molecule_E(true).total();
 #endif
 
     //cout << "new energy replica[" << temperature << "] = " << newPotential << endl;
@@ -968,7 +968,7 @@ double Replica::EonDevice()
 #endif
     //TODO add new timer for this
 #if FLEXIBLE_LINKS
-    result += internal_molecule_E().total();
+    result += internal_molecule_E(true).total(); // TODO: change this to false once we calculate internal LJ and DH on the GPU
 #endif
     return result;
 }
@@ -982,7 +982,7 @@ double Replica::EonDeviceNC()
 
     //TODO add new timer for this
 #if FLEXIBLE_LINKS
-    result += internal_molecule_E().total();
+    result += internal_molecule_E(true).total();
 #endif
 
     return result;

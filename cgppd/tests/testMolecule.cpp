@@ -188,7 +188,8 @@ void TestMolecule::testTranslate()
 
 void TestMolecule::testPotential()
 {
-    // TODO
+    Potential potential = polyalanine8.E(true); // with internal LJ and DH
+    potential.print_log(ALWAYS, "potential in test:");
 }
 
 #if FLEXIBLE_LINKS
