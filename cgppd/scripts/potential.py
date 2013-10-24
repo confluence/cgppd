@@ -17,6 +17,13 @@ KBT_TO_KCALMOL = 1.0 / (294.0 * 8.314472 / 4184.0)
 K_SPRING = 378
 R0 = 3.81
 
+GAMMA_ANGLE =  0.1
+EPSILON_ALPHA = 4.3
+THETA_ALPHA = 1.6
+THETA_BETA = 2.27
+K_ALPHA = 106.4
+K_BETA = 26.3
+
 COMMENT = re.compile(r"^\s*#")
 ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) [A-Z]? *\d+ *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(\d+\.\d{2}).*')
 AMINOACID = re.compile("""#Amino acid class initialisation data
@@ -167,7 +174,10 @@ class Potential(object):
                     self.components["bond"] += K_SPRING * (r - R0)**2 / 2.0
 
                 for r1, r2, r3 in zip(s[:-2], s[1:-1], s[2:]):
-                    pass # angle
+                    ba = r1.position - r2.position
+                    bc = r3.position - r2.position
+                    theta = np.arccos(np.dot(ba, bc) / np.linalg.norm(ba) / np.linalg.norm(bc))
+                    self.components["angle"] += np.log(np.exp(-GAMMA_ANGLE * (K_ALPHA * (theta - THETA_ALPHA)**2 + EPSILON_ALPHA)) + np.exp(-GAMMA_ANGLE * K_BETA * (theta - THETA_BETA)**2)) / - GAMMA_ANGLE
 
                 for r1, r2, r3, r4 in zip(s[:-3], s[1:-2], s[2:-1], s[3:]):
                     pass # torsion
