@@ -62,7 +62,7 @@ public:
 
 #if FLEXIBLE_LINKS
     TorsionalLookupMatrix torsions;
-    Potential internal_molecule_E();
+    Potential internal_molecule_E(bool include_LJ_and_DH);
 #endif
 
     Residue * contiguousResidues;
