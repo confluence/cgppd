@@ -83,6 +83,13 @@ class Potential(object):
         self.torsions = torsions
         self.components = defaultdict(float)
 
+    @staticmethod
+    def distance(pos1, pos2, bounding_value=None):
+        diffs = [c1 - c2 for (c1, c2) in zip(pos1, pos2)]
+        if bounding_value is not None:
+            diffs = [d - bounding_value*round(d/float(bounding_value)) for d in diffs]
+        return sum(d**2 for d in diffs)**0.5
+
     @classmethod
     def from_filelist(cls, aminoacidfilename, potentialfilename, torsionfilename, *pdbfilenames):
         charge = {}
@@ -151,7 +158,7 @@ class Potential(object):
 
         return cls(proteins, charge, radius, pair_potentials, torsions)
 
-    def calculate(self, include_internal):
+    def calculate(self, include_internal, bounding_value=None):
         residues = [r for p in self.proteins for r in p.residues]
 
         for i, ri in enumerate(residues):
@@ -162,12 +169,10 @@ class Potential(object):
                 if ri.molecule_no == rj.molecule_no and np.abs(ri.residue_no - rj.residue_no) < 4:
                     continue
 
-                r = np.linalg.norm(rj.position - ri.position) + EPS
-
-                print "i: %d j: ? ipos: %r jpos: %r r: %f" % (i, ri.position, rj.position, r)
+                r = self.distance(rj.position, ri.position, bounding_value) + EPS
                 Eij = LAMBDA * (self.pair_potentials[ri.amino_acid][rj.amino_acid] - E0)
                 sigmaij = (self.radius[ri.amino_acid] + self.radius[rj.amino_acid])/2.0
-                r0ij = 2**(1/6) * sigmaij
+                r0ij = 2**(1/6.0) * sigmaij
 
                 if Eij < 0:
                     LJ = 4 * np.abs(Eij) * ((sigmaij / r)**12 - (sigmaij / r)**6)
@@ -224,8 +229,9 @@ if __name__ == "__main__":
     parser.add_argument("torsions", help="Torsion data file")
     parser.add_argument("files", help="Input PDB files", nargs="+")
     parser.add_argument("-i", "--internal", help="Calculate internal molecule potential", action="store_true")
+    parser.add_argument("-b", "--boundary", help="Periodic boundary", type=float, default=None)
     args = parser.parse_args()
 
     potential = Potential.from_filelist(args.aminoacids, args.potential, args.torsions, *args.files)
-    potential.calculate(args.internal)
+    potential.calculate(args.internal, args.boundary)
     print potential
