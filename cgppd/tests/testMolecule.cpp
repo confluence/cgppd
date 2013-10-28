@@ -191,9 +191,7 @@ void TestMolecule::testPotential()
     Potential potential_ala = polyalanine8.E(true); // with internal LJ and DH
     potential_ala.print_log(ALWAYS, "polyalanine potential");
 
-    cout << "START" << endl;
     Potential potential_ang = angiotensin.E(true);
-    cout << "END" << endl;
     potential_ang.print_log(ALWAYS, "angiotensin potential");
 }
 
