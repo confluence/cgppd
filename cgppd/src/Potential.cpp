@@ -89,6 +89,8 @@ double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue
         // eqn 11: kim2008
         int r1 = ri.aminoAcidIndex;
         int r2 = rj.aminoAcidIndex;
+
+
         l.e_torsion = (1 + cos(phi - torsions.getSigma(r1, r2, 1))) * torsions.getV(r1, r2, 1) +
             (1 + cos(2 * phi - torsions.getSigma(r1, r2, 2))) * torsions.getV(r1, r2, 2) +
             (1 + cos(3 * phi - torsions.getSigma(r1, r2, 3))) * torsions.getV(r1, r2, 3) +

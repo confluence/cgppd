@@ -209,10 +209,12 @@ class Potential(object):
                     b2xb3 = np.cross(b2, b3)
                     phi = np.arctan2((np.linalg.norm(b2) * np.dot(b1, b2xb3)), np.dot(np.cross(b1, b2), b2xb3))
 
-                    aa1 = ri.amino_acid
-                    aa2 = rj.amino_acid
+                    aa1 = r2.amino_acid
+                    aa2 = r3.amino_acid
 
                     self.components["torsion"] += sum((1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5))
+                    #print [(1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5)]
+                    #print sum((1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5))
 
 
         self.components["total"] = 0
