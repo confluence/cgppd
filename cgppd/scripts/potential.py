@@ -128,7 +128,7 @@ class Potential(object):
             aa1, aa2, v, n, sigma = TORSION.match(l).groups()
             if aa2 not in torsions[aa1]:
                 torsions[aa1][aa2] = {}
-            torsions[aa1][aa2][int(n)] = {"V": float(v), "sigma": float(sigma)}
+            torsions[aa1][aa2][int(n)] = {"V": float(v), "sigma": np.radians(float(sigma))}
 
         for filename in pdbfilenames:
             with open(filename) as pdbfile:

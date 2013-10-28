@@ -188,9 +188,7 @@ void TestMolecule::testTranslate()
 
 void TestMolecule::testPotential()
 {
-    cout << "+++++++++++START" << endl;
     Potential potential = polyalanine8.E(true); // with internal LJ and DH
-    cout << "+++++++++++END" << endl;
     potential.print_log(ALWAYS, "potential in test:");
 }
 
