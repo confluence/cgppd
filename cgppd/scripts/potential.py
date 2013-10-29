@@ -15,7 +15,7 @@ E_CHARGE = 1.602176487 # what about the e-19?
 KBT_TO_KCALMOL = 1.0 / (294.0 * 8.314472 / 4184.0)
 EPS = 1e-38
 
-K_SPRING = 378
+K_SPRING = 378.0
 R0 = 3.81
 
 GAMMA_ANGLE =  0.1
@@ -221,7 +221,7 @@ class Potential(object):
         self.components["total"] = sum(self.components.values())
 
     def __str__(self):
-        return "\n".join("%s: %g" % (k, self.components[k]) for k in ("LJ", "DH", "bond", "angle", "torsion", "total"))
+        return "\n".join("%s: %f" % (k, self.components[k]) for k in ("LJ", "DH", "bond", "angle", "torsion", "total"))
 
 
 if __name__ == "__main__":
