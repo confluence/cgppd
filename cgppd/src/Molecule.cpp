@@ -811,9 +811,11 @@ Potential Molecule::E(bool include_LJ_and_DH)
         {
             for (size_t i = iSeg.start; i <= iSeg.end; i++)
             {
+                cout << i << endl;
                 // Pseudo-bond
                 if (i < iSeg.end)
                 {
+                    printf("BOND %d %d %f\n", i, i+1, calculate_bond(iRes, Links[i], Residues[i+1], bounding_value));
                     potential.increment_bond(calculate_bond(iRes, Links[i], Residues[i+1], bounding_value));
                 }
 
@@ -823,12 +825,14 @@ Potential Molecule::E(bool include_LJ_and_DH)
                     // Pseudo-angle
                     if (i < linkCount)
                     {
+                        printf("ANGLE %d %d %d %f\n", i-1, i, i+1, calculate_angle(Residues[i-1], iRes, Residues[i+1]));
                         potential.increment_angle(calculate_angle(Residues[i-1], iRes, Residues[i+1]));
                     }
 
                     // Pseudo-torsion
                     if (i < linkCount - 1 && !Links[i+1].dummy)
                     {
+                        printf("TORSION %d %d %d %d %g\n", i-1, i, i+1, i+2, calculate_torsion(Residues[i-1], iRes, Links[i], Residues[i+1], Residues[i+2], torsions));
                         potential.increment_torsion(calculate_torsion(Residues[i-1], iRes, Links[i], Residues[i+1], Residues[i+2], torsions));
                     }
                 }

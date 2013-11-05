@@ -4,6 +4,11 @@ NOW
 
 VERY NEXT THING:
 
+
+Argh, more potential reimplementation fixes:
+* for consistency with C++ version, include previous residue in angle and torsion calculations (need to update segment algorithm)
+* Why is the internal DH wrong?!
+
 * Add correct handling for internal LJ/DH for unit tests
 * Eventually, Molecule E shouldn't handle LJ/DH at all
     * Replica CPU E should be altered to handle it as well as the GPU E
@@ -11,8 +16,11 @@ VERY NEXT THING:
     * Just add a test for a flexible version of the first test conformation
     * later make sure that the right option is selected
 
+* It should be possible to force rigidity at runtime
+* Set a rigid flag on the replica; override rigid identifier on all molecules passed to gpu if necessary
+
 * OK, new plan:
-    * add temporary pos and meta variables to combine most of the shared / texture mem lines
+    * add temporary pos and meta variables to combine most of the shared / texture mem lines -- DONE?
     * load the meta earlier (if texture mem; currently that isn't the case)
     * now both values will be available in the outer conditional and we don't have to do anything hacky
     * pos.w = mol id or padder flag. meta.w = res id or crowder flag or rigid flag (-3? -4?)

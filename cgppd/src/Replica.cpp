@@ -8,7 +8,7 @@ using namespace std;
 
 Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP),
 #if FLEXIBLE_LINKS
-    max_segment_count(0),
+    max_segment_count(0), calculate_rigid_potential_only(false),
 #endif
 #if USING_CUDA
     replicaIsOnDevice(false),
@@ -433,7 +433,9 @@ Potential Replica::E()
         {
 #endif
 #if FLEXIBLE_LINKS
-            potential.increment(molecules[mI].E(true));
+            if (!calculate_rigid_potential_only) {
+                potential.increment(molecules[mI].E(true));
+            }
 #endif
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
             {
@@ -497,8 +499,10 @@ Potential Replica::E(Molecule *a, Molecule *b)
         }
     }
 #if FLEXIBLE_LINKS
-    potential.increment(a->E(true));
-    potential.increment(b->E(true));
+    if (!calculate_rigid_potential_only) {
+        potential.increment(a->E(true));
+        potential.increment(b->E(true));
+    }
 #endif
     return potential;
 }
@@ -644,7 +648,9 @@ void Replica::MCSearchAcceptReject()
     //cudaStreamSynchronize(cudaStream);  // sync, newPotential needs to have been returned
     newPotential = SumGridResults();
 #if FLEXIBLE_LINKS
-    newPotential += internal_molecule_E(true).total();
+    if (!calculate_rigid_potential_only) {
+        newPotential += internal_molecule_E(true).total();
+    }
 #endif
 
     //cout << "new energy replica[" << temperature << "] = " << newPotential << endl;
@@ -968,7 +974,9 @@ double Replica::EonDevice()
 #endif
     //TODO add new timer for this
 #if FLEXIBLE_LINKS
-    result += internal_molecule_E(true).total(); // TODO: change this to false once we calculate internal LJ and DH on the GPU
+    if (!calculate_rigid_potential_only) {
+        result += internal_molecule_E(true).total(); // TODO: change this to false once we calculate internal LJ and DH on the GPU
+    }
 #endif
     return result;
 }
@@ -982,7 +990,9 @@ double Replica::EonDeviceNC()
 
     //TODO add new timer for this
 #if FLEXIBLE_LINKS
-    result += internal_molecule_E(true).total();
+    if (!calculate_rigid_potential_only) {
+        result += internal_molecule_E(true).total();
+    }
 #endif
 
     return result;

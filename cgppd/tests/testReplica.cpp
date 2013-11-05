@@ -12,7 +12,6 @@
 class TestReplica : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestReplica);
-    CPPUNIT_TEST(testMC);
     CPPUNIT_TEST(testCPUandGPUPotential);
     CPPUNIT_TEST_SUITE_END();
 
@@ -24,7 +23,6 @@ private:
 
 public:
     void setUp();
-    void testMC();
     void testCPUandGPUPotential();
     void tearDown();
 };
@@ -46,8 +44,8 @@ void TestReplica::setUp()
 
     replica.reserveContiguousMoleculeArray(2);
 
-    replica.loadMolecule("data/conf1/1a.pdb");
-    replica.loadMolecule("data/conf1/1b.pdb");
+    replica.loadMolecule("data/conf1_flexible/1a.pdb");
+    replica.loadMolecule("data/conf1_flexible/1b.pdb");
 
 #if USING_CUDA
     int cuda_blockSize;
@@ -68,7 +66,7 @@ void TestReplica::tearDown()
     cout.flush();
 }
 
-void TestReplica::testMC()
+void TestReplica::testCPUandGPUPotential()
 {
     Replica child_replica;
     argdata parameters;
@@ -77,15 +75,17 @@ void TestReplica::testMC()
     child_replica.device_LJPotentials = ljp_t;
     child_replica.ReplicaDataToDevice();
 #endif
-    child_replica.potential = child_replica.E().total();
-    child_replica.MCSearch(20, 0);
+    cout << "START" << endl;
+    Potential potential_flexible = child_replica.E();
+    cout << "END" << endl;
+    potential_flexible.print_log(ALWAYS, "Flexible");
+
+    child_replica.calculate_rigid_potential_only = true;
+    Potential potential_rigid = child_replica.E();
+    potential_rigid.print_log(ALWAYS, "Rigid");
+
 #if USING_CUDA
     child_replica.FreeDevice();
 #endif
 }
 
-void TestReplica::testCPUandGPUPotential()
-{
-    //TODO Test CUDA+rigid molecules vs CPU+rigid molecules vs reference conformation 1
-    //TODO Test CUDA+flexible molecules vs CPU+flexible molecules vs hand-calculated reference
-}

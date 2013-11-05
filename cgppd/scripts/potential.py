@@ -189,33 +189,37 @@ class Potential(object):
                 # TODO: why are the unit conversions what they are?
                 # TODO: WTF happened to the 4piD?
 
-        for p in self.proteins:
-            for s in p.segments:
-                for r1, r2 in zip(s[:-1], s[1:]):
-                    r = np.linalg.norm(r1.position - r2.position)
-                    self.components["bond"] += K_SPRING * (r - R0)**2 / 2.0
+        if include_internal:
+            for p in self.proteins:
+                for s in p.segments:
+                    print [r.amino_acid for r in s]
 
-                for r1, r2, r3 in zip(s[:-2], s[1:-1], s[2:]):
-                    ba = r1.position - r2.position
-                    bc = r3.position - r2.position
-                    theta = np.arccos(np.dot(ba, bc) / np.linalg.norm(ba) / np.linalg.norm(bc))
+                    for r1, r2 in zip(s[:-1], s[1:]):
+                        print r1.amino_acid, r2.amino_acid
+                        r = np.linalg.norm(r1.position - r2.position)
+                        self.components["bond"] += K_SPRING * (r - R0)**2 / 2.0
 
-                    self.components["angle"] += np.log(np.exp(-GAMMA_ANGLE * (K_ALPHA * (theta - THETA_ALPHA)**2 + EPSILON_ALPHA)) + np.exp(-GAMMA_ANGLE * K_BETA * (theta - THETA_BETA)**2)) / - GAMMA_ANGLE
+                    for r1, r2, r3 in zip(s[:-2], s[1:-1], s[2:]):
+                        print r1.amino_acid, r2.amino_acid, r3.amino_acid
+                        ba = r1.position - r2.position
+                        bc = r3.position - r2.position
+                        theta = np.arccos(np.dot(ba, bc) / np.linalg.norm(ba) / np.linalg.norm(bc))
 
-                for r1, r2, r3, r4 in zip(s[:-3], s[1:-2], s[2:-1], s[3:]):
-                    b1 = r2.position - r1.position
-                    b2 = r3.position - r2.position
-                    b3 = r4.position - r3.position
-                    b2xb3 = np.cross(b2, b3)
-                    phi = np.arctan2((np.linalg.norm(b2) * np.dot(b1, b2xb3)), np.dot(np.cross(b1, b2), b2xb3))
+                        self.components["angle"] += np.log(np.exp(-GAMMA_ANGLE * (K_ALPHA * (theta - THETA_ALPHA)**2 + EPSILON_ALPHA)) + np.exp(-GAMMA_ANGLE * K_BETA * (theta - THETA_BETA)**2)) / - GAMMA_ANGLE
 
-                    aa1 = r2.amino_acid
-                    aa2 = r3.amino_acid
+                    for r1, r2, r3, r4 in zip(s[:-3], s[1:-2], s[2:-1], s[3:]):
+                        print r1.amino_acid, r2.amino_acid, r3.amino_acid, r4.amino_acid
+                        b1 = r2.position - r1.position
+                        b2 = r3.position - r2.position
+                        b3 = r4.position - r3.position
+                        b2xb3 = np.cross(b2, b3)
+                        phi = np.arctan2((np.linalg.norm(b2) * np.dot(b1, b2xb3)), np.dot(np.cross(b1, b2), b2xb3))
 
-                    self.components["torsion"] += sum((1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5))
-                    #print [(1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5)]
-                    #print sum((1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5))
+                        aa1 = r2.amino_acid
+                        aa2 = r3.amino_acid
 
+                        self.components["torsion"] += sum((1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5))
+                        print self.components["torsion"]
 
         self.components["total"] = 0
         self.components["total"] = sum(self.components.values())
