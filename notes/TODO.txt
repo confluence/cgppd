@@ -8,6 +8,7 @@ VERY NEXT THING:
 Argh, more potential reimplementation fixes:
 * for consistency with C++ version, include previous residue in angle and torsion calculations (need to update segment algorithm)
 * Why is the internal DH wrong?!
+* Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom.
 
 * Add correct handling for internal LJ/DH for unit tests
 * Eventually, Molecule E shouldn't handle LJ/DH at all
