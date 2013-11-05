@@ -4,23 +4,12 @@ NOW
 
 VERY NEXT THING:
 
-* alter GPU code with option to calculate internal E
-    * prepare a unit test which tests that cpu E = gpu E
-    * in Replica: if CUDA & flexible links, pass molecule id + residue id to CUDA as 4th position parameter instead of molecule id
-    * in Molecule: if flexible links & cuda, don't do the LJ and DH on the CPU in the molecule
-        * maybe refactor so that this is incorporated in replica cpu E
-        * currently omitting rigid domains; can't do that on the GPU, so change it
-        * what about rigid molecules and the current reference results? We can just special case the method to use if flexible linkers are defined but the molecules are all rigid so that the potential is not affected. Normal conditionals instead of macros.
-
-PROBLEM: residues which are close together have to be excluded from internal molecule LJ and DH. How are we going to do that?
-* Can we determine residue index from blockdim, etc.?
-* Can we repurpose meta.w to be padder *or* residue index?
-    * I think we can.
-    * But we will need to fetch it earlier in the kernel.
-
-* put residue id / padder flag in pos.w and molecule id / crowder id in meta.w. If not flexible, set ri the same (e.g. 0) -- then the neighbour comparison will always be true. Remove id check from outer conditional; add neighbour check to inner comparison (after meta is loaded)?
-
-* Another constant for no internal E?
+* Add correct handling for internal LJ/DH for unit tests
+* Eventually, Molecule E shouldn't handle LJ/DH at all
+    * Replica CPU E should be altered to handle it as well as the GPU E
+    * Temporarily need to make it do the right thing for tests
+    * Just add a test for a flexible version of the first test conformation
+    * later make sure that the right option is selected
 
 * OK, new plan:
     * add temporary pos and meta variables to combine most of the shared / texture mem lines
@@ -30,6 +19,10 @@ PROBLEM: residues which are close together have to be excluded from internal mol
     * if (molecules same and (molecule is rigid or residues are neighbouring) or padder, do nothing
     * if (ypos.w == pos.w && (ymeta.w == RIGID_IDENTIFIER || abs(ymeta.w - meta.w) <= 4)) || pos.w == PADDER_IDENTIFIER
     * is the crowder handling in the optimal place?
+
+* TO CHANGE:
+    * pass in the right values from Replica
+    * changes to kernel
 
 
 * linker validation tests:

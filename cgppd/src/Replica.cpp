@@ -433,7 +433,7 @@ Potential Replica::E()
         {
 #endif
 #if FLEXIBLE_LINKS
-            potential.increment(molecules[mI].E());
+            potential.increment(molecules[mI].E(true));
 #endif
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
             {
@@ -497,8 +497,8 @@ Potential Replica::E(Molecule *a, Molecule *b)
         }
     }
 #if FLEXIBLE_LINKS
-    potential.increment(a->E());
-    potential.increment(b->E());
+    potential.increment(a->E(true));
+    potential.increment(b->E(true));
 #endif
     return potential;
 }
