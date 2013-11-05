@@ -63,6 +63,7 @@ public:
 #if FLEXIBLE_LINKS
     TorsionalLookupMatrix torsions;
     Potential internal_molecule_E(bool include_LJ_and_DH);
+    bool calculate_rigid_potential_only; // flag for use in tests to skip calculation of internal potential components
 #endif
 
     Residue * contiguousResidues;
