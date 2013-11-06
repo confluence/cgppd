@@ -4,33 +4,23 @@ NOW
 
 VERY NEXT THING:
 
-
-Argh, more potential reimplementation fixes:
-* for consistency with C++ version, include previous residue in angle and torsion calculations (need to update segment algorithm)
-* Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom. Keep the way it is for now; ask Rob.
-
-* Add correct handling for internal LJ/DH for unit tests
-* Eventually, Molecule E shouldn't handle LJ/DH at all
-    * Replica CPU E should be altered to handle it as well as the GPU E
-    * Temporarily need to make it do the right thing for tests
-    * Just add a test for a flexible version of the first test conformation
-    * later make sure that the right option is selected
-
-* It should be possible to force rigidity at runtime
-* Set a rigid flag on the replica; override rigid identifier on all molecules passed to gpu if necessary
-
-* OK, new plan:
+* CUDA changes:
     * add temporary pos and meta variables to combine most of the shared / texture mem lines -- DONE?
+    * pass in the right information
+        * pos.w = mol id or padder flag. meta.w = res id or crowder flag or rigid flag (-3? -4?)
+        * always use the rigid identifier if we are setting the rigid potential flag
+
     * load the meta earlier (if texture mem; currently that isn't the case)
     * now both values will be available in the outer conditional and we don't have to do anything hacky
-    * pos.w = mol id or padder flag. meta.w = res id or crowder flag or rigid flag (-3? -4?)
     * if (molecules same and (molecule is rigid or residues are neighbouring) or padder, do nothing
     * if (ypos.w == pos.w && (ymeta.w == RIGID_IDENTIFIER || abs(ymeta.w - meta.w) <= 4)) || pos.w == PADDER_IDENTIFIER
     * is the crowder handling in the optimal place?
 
-* TO CHANGE:
-    * pass in the right values from Replica
-    * changes to kernel
+
+
+OUTSTANDING QUESTIONS:
+
+* Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom. Keep the way it is for now; ask Rob.
 
 
 * linker validation tests:
