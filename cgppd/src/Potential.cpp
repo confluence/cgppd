@@ -268,11 +268,18 @@ double Potential::total()
 #endif // FLEXIBLE_LINKS
 }
 
-void Potential::print_log(const bool level, const char * prefix)
+void Potential::to_string(char * destination)
 {
 #if FLEXIBLE_LINKS
-    LOG(level, "%s:\tLJ: %f\tDH: %f\tbond: %f\tangle: %f\ttorsion: %f\tTOTAL: %f\n", prefix, total_LJ(), total_DH(), total_bond(), total_angle(), total_torsion(), total());
+    sprintf(destination, "LJ: %f DH: %f bond: %f angle: %f torsion: %f TOTAL: %f\n", total_LJ(), total_DH(), total_bond(), total_angle(), total_torsion(), total());
 #else // if not FLEXIBLE_LINKS
-    LOG(level, "%s:\tLJ: %f\tDH: %f\tTOTAL: %f\n", prefix, total_LJ(), total_DH(), total());
+    sprintf(destination, "LJ: %f DH: %f TOTAL: %f\n", total_LJ(), total_DH(), total());
 #endif // FLEXIBLE_LINKS
+}
+
+void Potential::print_log(const bool level, const char * prefix)
+{
+    char potential_string[256];
+    to_string(potential_string);
+    LOG(level, "%s: %s\n", prefix, potential_string);
 }

@@ -1,6 +1,3 @@
-#include <cppunit/extensions/TestFactoryRegistry.h>
-
-#include <cppunit/extensions/HelperMacros.h>
 #include "definitions.h"
 #if USING_CUDA
 #include <cutil.h>
@@ -8,6 +5,7 @@
 #endif
 
 #include <Replica.h>
+#include <testCommon.h>
 
 class TestTenReplicas : public CppUnit::TestFixture
 {

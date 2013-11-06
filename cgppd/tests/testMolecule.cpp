@@ -1,32 +1,7 @@
 #include <string>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/SourceLine.h>
-#include <cppunit/TestAssert.h>
 #include <ctype.h>
 #include <Molecule.h>
-
-
-void check_vector3f_equal(Vector3f expected, Vector3f actual, CppUnit::SourceLine sourceLine)
-{
-    float eps(0.00001);
-    if (fabs(expected.x - actual.x) < eps && fabs(expected.y - actual.y) < eps && fabs(expected.z - actual.z) < eps)
-    {
-        return;
-    }
-
-    char expected_char[256];
-    sprintf(expected_char, "vector3f(%f, %f, %f)", expected.x, expected.y, expected.z);
-    string expected_str(expected_char);
-
-    char actual_char[256];
-    sprintf(actual_char, "vector3f(%f, %f, %f)", actual.x, actual.y, actual.z);
-    string actual_str(actual_char);
-
-    ::CppUnit::Asserter::failNotEqual(expected_str, actual_str, sourceLine);
-}
-
-#define ASSERT_VECTOR3F_EQUALS(expected, actual) check_vector3f_equal(expected, actual, CPPUNIT_SOURCELINE())
+#include <testCommon.h>
 
 class TestMolecule : public CppUnit::TestFixture
 {

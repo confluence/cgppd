@@ -1,7 +1,4 @@
 #include <iostream>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/extensions/HelperMacros.h>
-
 #include "definitions.h"
 
 #if USING_CUDA
@@ -10,6 +7,7 @@
 #endif
 
 #include "Simulation.h"
+#include <testCommon.h>
 
 class TestSimulation : public CppUnit::TestFixture
 {

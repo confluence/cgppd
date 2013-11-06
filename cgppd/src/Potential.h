@@ -78,6 +78,7 @@ public:
     double total();
 
     /* Log */
+    void to_string(char * destination);
     void print_log(const bool level, const char * prefix);
 };
 
