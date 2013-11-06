@@ -478,7 +478,6 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
     }
 #endif
 
-    //__shared__ float sharedmem_results[TILE_DIM];	// array of temp results to sum, one per thread run.
     sharedmem_results[tx] = 0.0f;//EPS;
 #if  CULL_LOWER_TRIANGULAR_SUM  // only works if we throw away the entire block, otherwise results cannot be guaranteed correct due to the parallel sum
     if (bx < by)
@@ -499,8 +498,6 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
 
     // copy residues from GRAM to shared memory tiles
 
-    //__shared__ float4 X_tile_residuePositions[TILE_DIM];
-    //__shared__ float4 X_tile_residueMeta[TILE_DIM];
 #if POSITIONDATA_MEMORY == SHARED_MEM
     X_tile_residuePositions[positionOfPosition + tx] = residuePositions[bx*blockDim.x+tx];
 #endif
@@ -540,16 +537,22 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
 #elif POSITIONDATA_MEMORY == SHARED_MEM
             float4 pos = X_tile_residuePositions[positionOfPosition + i];
 #endif
+            // pos.x = residue X coordinate
+            // pos.y = residue Y coordinate
+            // pos.z = residue Z coordinate
+            // pos.w = PADDER_IDENTIFIER or molecule id
+
 #if METADATA_MEMORY == TEXTURE_MEM
             float4 meta = tex1Dfetch(residueMetaTex,(bx*blockDim.x+i));
 #elif METADATA_MEMORY == SHARED_MEM
             float4 meta = X_tile_residueMeta[positionOfMeta + i];
 #endif
+            // meta.x = aminoacid index
+            // meta.y = charge
+            // meta.z = vdw radius
+            // meta.w = CROWDER_IDENTIFIER TODO: or RIGID_IDENTIFIER or residue id
 
             if (yresiduep.w == pos.w || pos.w < 0.0f )		// same molecule || padding residue
-// #else
-//             if (yresiduep.w == X_tile_residuePositions[positionOfPosition + i].w || X_tile_residuePositions[positionOfPosition + i].w < 0.0f )		// same molecule || padding residue
-// #endif
             {
                 // Xpos.w == Ypos.w means that they are the same molecule
                 // if either is -2 then its a padding residue and must be ignored
@@ -557,18 +560,8 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
             }
             else
             {
-// #if METADATA_MEMORY == TEXTURE_MEM
-//                 float4 meta = tex1Dfetch(residueMetaTex,(bx*blockDim.x+i));
-// #endif
-                //m.x = aminoacid index
-                //m.y = charge
-                //m.z = vdw radius
-                //m.w = crowder if == CROWDER_IDENTIFIER
-// #if POSITIONDATA_MEMORY == TEXTURE_MEM
+
                 float r(length(yresiduep,pos) + EPS);  // add eps so that r is never 0, can happen in a collision
-// #else
-//                 float r(length(yresiduep,X_tile_residuePositions[positionOfPosition + i]) + EPS);  // add eps so that r is never 0, can happen in a collision
-// #endif
 
 #if USE_POTENTIAL_CUTOFF
                 if (r>interaction_cutoff) continue;
@@ -578,11 +571,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                 float DH(0.0f);
 
 #if REPULSIVE_CROWDING
-// #if METADATA_MEMORY == TEXTURE_MEM
                 if (yresiduem.w == CROWDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER) // repulsive crowder interaction
-// #else
-//                 if (yresiduem.w == CROWDER_IDENTIFIER || X_tile_residueMeta[positionOfMeta + i].w == CROWDER_IDENTIFIER) // repulsive crowder interaction
-// #endif
                 {
                     if (r<const_repulsive_cutoff)
                         LJ = crowderPotential(r);
@@ -590,14 +579,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                 else  // normal LJ interaction
                 {
 #endif
-
-
-
-// #if METADATA_MEMORY == TEXTURE_MEM
                     int ijX(rint( AA_COUNT*yresiduem.x + meta.x));
-// #else
-//                     int ijX(rint( AA_COUNT*yresiduem.x + X_tile_residueMeta[positionOfMeta + i].x));
-// #endif
                     //do the texture fetch first
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
                     float Eij(lambda*(tex1Dfetch(LJTexture,ijX) - e0));
@@ -609,22 +591,11 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                     float Eij(lambda*(LJPotentialData[ijX] - e0));
 #endif
 
-// #if METADATA_MEMORY == TEXTURE_MEM
                     DH = dhPotential(yresiduem.y,meta.y,r);
-// #else
-//                     DH = dhPotential(yresiduem.y,X_tile_residueMeta[positionOfMeta + i].y,r);
-// #endif
                     dh_subtotal += DH;
 
-
-
-
                     // sigmaij is the average atomic radius determined by the van der waals radius in kim2008
-// #if METADATA_MEMORY == TEXTURE_MEM
                     float sigmaij((yresiduem.z + meta.z) * 0.5f);
-// #else
-//                     float sigmaij((yresiduem.z + X_tile_residueMeta[positionOfMeta + i].z) * 0.5f);
-// #endif
 
                     float LJtmp(__powf(sigmaij/r,6.0f));
                     //float r0 = sigmaij*1.122462048309372981433533049679f; //sigma*pow(2.0,(1.0/6.0));
