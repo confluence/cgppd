@@ -11,9 +11,8 @@ VERY NEXT THING:
         * always use the rigid identifier if we are setting the rigid potential flag -- DONE
 
     * load the meta earlier (if texture mem; currently that isn't the case) -- DONE?
-    * now both values will be available in the outer conditional and we don't have to do anything hacky
     * if (molecules same and (molecule is rigid or residues are neighbouring) or padder, do nothing
-    * if (ypos.w == pos.w && (ymeta.w == RIGID_IDENTIFIER || abs(ymeta.w - meta.w) <= 4)) || pos.w == PADDER_IDENTIFIER
+    * if (ypos.w == pos.w && (ymeta.w == RIGID_IDENTIFIER || abs(ymeta.w - meta.w) < 4)) || pos.w == PADDER_IDENTIFIER
     * is the crowder handling in the optimal place?
 
 

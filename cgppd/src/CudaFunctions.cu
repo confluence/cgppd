@@ -550,9 +550,9 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
             // meta.x = aminoacid index
             // meta.y = charge
             // meta.z = vdw radius
-            // meta.w = CROWDER_IDENTIFIER TODO: or RIGID_IDENTIFIER or residue id
+            // meta.w = CROWDER_IDENTIFIER or RIGID_IDENTIFIER or residue id
 
-            if (yresiduep.w == pos.w || pos.w < 0.0f )		// same molecule || padding residue
+            if ((yresiduep.w == pos.w && (meta.w == RIGID_IDENTIFIER || fabs(yresiduem.w - meta.w) < 4)) || pos.w == PADDER_IDENTIFIER)		// (same molecule && (rigid molecule || neighbouring residues)) || padding residue
             {
                 // Xpos.w == Ypos.w means that they are the same molecule
                 // if either is -2 then its a padding residue and must be ignored

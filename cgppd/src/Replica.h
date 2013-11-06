@@ -176,8 +176,6 @@ public:
 #endif
 
     void ReplicaDataToDevice();	// copy the replica to the device
-    void ReplicaDataToHost(); // TODO: Never used?
-    void UpdateDeviceData(); // TODO: Never used?
     void MoleculeDataToDevice(int MoleculeID); // update a molecule on the device
     double EonDevice();
     double EonDeviceNC();

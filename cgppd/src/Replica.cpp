@@ -805,104 +805,6 @@ void Replica::ReplicaDataToDevice()
     return;
 }
 
-void Replica::ReplicaDataToHost()
-{
-
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL(cutStartTimer(replicaToHostTimer));
-#endif
-    int residueCount = 0;
-
-    for (int m=0; m<moleculeCount; m++)
-    {
-        residueCount += molecules[m].residueCount;
-    }
-
-
-//#ifdef 	CUDA_STREAMS ==== doesn't work because host code needs it to be synchronous for now
-//	CUDA_memcpy_to_host_async(device_float4_residuePositions, host_float4_residuePositions, sizeof(float4)*dataSetSize, cudaStream);
-//	CUDA_memcpy_to_host_async(device_float4_residueMeta, host_float4_residueMeta, sizeof(float4)*dataSetSize, cudaStream);
-//#else
-    // copy all the above to the device
-    cudaMemcpy(host_float4_residuePositions, device_float4_residuePositions, sizeof(float4)*paddedSize, cudaMemcpyDeviceToHost);
-    //CUDA_memcpy_to_host(host_float4_residuePositions, device_float4_residuePositions, sizeof(float4)*paddedSize);
-
-    // I dont think this next line is neccessary because it would not have changed on the device
-    //CUDA_memcpy_to_host(device_float4_residueMeta, host_float4_residueMeta, sizeof(float4)*paddedSize);
-//#endif
-
-
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaToHostTimer) );
-#endif
-    // position of the molecule in the gpu array
-    int arrayIndex = 0;
-    // unpack the residues from the host array
-    for (int m=0; m<moleculeCount; m++)
-    {
-        arrayIndex = host_moleculeStartPositions[m];   // start position of the first molecule in the host/gpu array
-        for (int offset=0; offset<molecules[m].residueCount; offset++)
-        {
-            molecules[m].Residues[offset].position.x = host_float4_residuePositions[arrayIndex+offset].x;
-            molecules[m].Residues[offset].position.y = host_float4_residuePositions[arrayIndex+offset].y;
-            molecules[m].Residues[offset].position.z = host_float4_residuePositions[arrayIndex+offset].z;
-        }
-    }
-
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaToHostTimer) );
-#endif
-    return;
-}
-
-
-void Replica::UpdateDeviceData()
-{
-    if (!replicaIsOnDevice)
-    {
-        cout << "ERROR: Replica::UpdateDeviceData() called without initialising device data"<< endl;
-        ReplicaDataToDevice();
-    }
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(replicaUpdateGPUTimer) );
-#endif
-    // works only if the replica is already on the device
-    // keep a counter to calculate the offset from the beginning of the residues array
-    int arrayIndex = 0;
-    // pack the residues into an array and copy it to the correct place on the GPU
-    for (int m=0; m<moleculeCount; m++)
-    {
-        host_moleculeStartPositions[m] = arrayIndex;   // start position of the first molecule in the host/gpu array
-        for (int rc=0; rc<molecules[m].residueCount; rc++)
-        {
-            host_float4_residuePositions[arrayIndex].x = molecules[m].Residues[rc].position.x;
-            host_float4_residuePositions[arrayIndex].y = molecules[m].Residues[rc].position.y;
-            host_float4_residuePositions[arrayIndex].z = molecules[m].Residues[rc].position.z;
-            host_float4_residuePositions[arrayIndex].w = float(m);  // residue belongs to this molecule id
-            //	host_float4_residueMeta[arrayIndex].x = molecules[m].Residues[rc].aminoAcidIndex;
-            //	host_float4_residueMeta[arrayIndex].y = molecules[m].Residues[rc].electrostaticCharge;
-            //	host_float4_residueMeta[arrayIndex].z = molecules[m].Residues[rc].vanderWaalRadius;
-            //	host_float4_residueMeta[arrayIndex].w = temperature;
-            arrayIndex++;
-        }
-    }
-
-    // copy all the above to the device
-#if 	CUDA_STREAMS
-    cudaMemcpyAsync(device_float4_residuePositions, host_float4_residuePositions, sizeof(float4)*paddedSize, cudaMemcpyHostToDevice,cudaStream);
-    //CUDA_memcpy_to_device_async(device_float4_residuePositions, host_float4_residuePositions, sizeof(float4)*paddedSize,cudaStream);
-
-#else
-    cudaMemcpy(device_float4_residuePositions, host_float4_residuePositions, sizeof(float4)*paddedSize, cudaMemcpyHostToDevice);
-    //CUDA_memcpy_to_device(device_float4_residuePositions, host_float4_residuePositions, sizeof(float4)*paddedSize);
-
-#endif
-#if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaUpdateGPUTimer) );
-#endif
-    return;
-}
-
 // update a molecule on the device
 void Replica::MoleculeDataToDevice(int MoleculeID)
 {
@@ -932,6 +834,9 @@ void Replica::MoleculeDataToDevice(int MoleculeID)
         host_float4_residuePositions[residueIndex].y = molecules[MoleculeID].Residues[rc].position.y;
         host_float4_residuePositions[residueIndex].z = molecules[MoleculeID].Residues[rc].position.z;
         host_float4_residuePositions[residueIndex].w = float(MoleculeID);  // residue belongs to this molecule id
+
+        //TODO: I don't think the new meta stuff will ever change. If tests need to override it, they can re-run ReplicaDataToDevice
+
         residueIndex++;
     }
 
@@ -951,7 +856,7 @@ void Replica::MoleculeDataToDevice(int MoleculeID)
     return;
 }
 
-void Replica::EonDeviceAsync()
+void Replica::EonDeviceAsync() // TODO: need to add flexible potential to this, or is it done elsewhere?
 {
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
@@ -989,7 +894,7 @@ double Replica::EonDevice()
     //TODO add new timer for this
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
-        result += internal_molecule_E(true).total(); // TODO: change this to false once we calculate internal LJ and DH on the GPU
+        result += internal_molecule_E(false).total(); // TODO: change this to false once we calculate internal LJ and DH on the GPU
     }
 #endif
     return result;
@@ -1005,7 +910,7 @@ double Replica::EonDeviceNC()
     //TODO add new timer for this
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
-        result += internal_molecule_E(true).total();
+        result += internal_molecule_E(false).total();
     }
 #endif
 
