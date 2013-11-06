@@ -51,9 +51,9 @@ DEFINE+=-DEnableOPENGL
 endif
 
 # Always create these, because we might make test with TEST=no (although that would be silly)
-TEST_INCLUDE=${INCLUDE} -I/usr/include/cppunit/ -Isrc
+TEST_INCLUDE=${INCLUDE} -I/usr/include/cppunit/ -Isrc -Itests
 TEST_LINKS=${LINKS} -lcppunit
-TEST_SOURCES:=$(shell find tests/ -name "*.cpp")
+TEST_SOURCES:=$(shell find tests/ -regex '.*\.\(cpp\|h\)')
 
 ifeq ($(DEBUG),yes)
 CFLAGS+=-g
