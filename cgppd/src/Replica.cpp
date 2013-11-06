@@ -736,7 +736,21 @@ void Replica::ReplicaDataToDevice()
             host_float4_residueMeta[arrayIndex].x = molecules[m].Residues[rc].aminoAcidIndex;
             host_float4_residueMeta[arrayIndex].y = molecules[m].Residues[rc].electrostaticCharge;
             host_float4_residueMeta[arrayIndex].z = molecules[m].Residues[rc].vanderWaalRadius;
-            host_float4_residueMeta[arrayIndex].w = molecules[m].moleculeRoleIdentifier;
+            if (molecules[m].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
+            {
+                // This molecule is a crowder
+                host_float4_residueMeta[arrayIndex].w = CROWDER_IDENTIFIER;
+            }
+            else if (!molecules[m].is_flexible || calculate_rigid_potential_only)
+            {
+                // This molecule is rigid, or we are treating it as rigid anyway for test purposes
+                host_float4_residueMeta[arrayIndex].w = RIGID_IDENTIFIER;
+            }
+            else
+            {
+                // This is a flexible molecule; we need the residue IDs to calculate internal LJ and DH
+                host_float4_residueMeta[arrayIndex].w = float(rc);
+            }
 
             arrayIndex++;
         }

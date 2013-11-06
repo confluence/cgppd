@@ -5,12 +5,12 @@ NOW
 VERY NEXT THING:
 
 * CUDA changes:
-    * add temporary pos and meta variables to combine most of the shared / texture mem lines -- DONE?
+    * add temporary pos and meta variables to combine most of the shared / texture mem lines -- DONE
     * pass in the right information
-        * pos.w = mol id or padder flag. meta.w = res id or crowder flag or rigid flag (-3? -4?)
-        * always use the rigid identifier if we are setting the rigid potential flag
+        * pos.w = mol id or padder flag. meta.w = res id or crowder flag or rigid flag (-3) -- DONE
+        * always use the rigid identifier if we are setting the rigid potential flag -- DONE
 
-    * load the meta earlier (if texture mem; currently that isn't the case)
+    * load the meta earlier (if texture mem; currently that isn't the case) -- DONE?
     * now both values will be available in the outer conditional and we don't have to do anything hacky
     * if (molecules same and (molecule is rigid or residues are neighbouring) or padder, do nothing
     * if (ypos.w == pos.w && (ymeta.w == RIGID_IDENTIFIER || abs(ymeta.w - meta.w) <= 4)) || pos.w == PADDER_IDENTIFIER
