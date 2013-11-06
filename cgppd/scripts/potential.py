@@ -42,20 +42,20 @@ AMINOACID = re.compile("""#Amino acid class initialisation data
 TORSION = re.compile(r"([A-Z]{3}) +([A-Z]{3}) +(.*) +(\d) +(.*)")
 
 class Residue(object):
-    def __init__(self, amino_acid, x, y, z, flexible, molecule_no, residue_no):
+    def __init__(self, amino_acid, x, y, z, flexible, residue_no):
         self.amino_acid = amino_acid
         self.flexible = flexible
         self.position = np.array((x, y, z))
-        self.molecule_no = molecule_no
         self.residue_no = residue_no
 
 
 class Protein(object):
-    def __init__(self):
+    def __init__(self, ):
         self.residues = []
         self.segments = [] # flexible segments
 
     def append_residue(self, residue):
+        residue.protein = self
         self.residues.append(residue)
 
     def find_segments(self):
@@ -142,7 +142,7 @@ class Potential(object):
 
                         if not protein:
                             protein = Protein()
-                        protein.append_residue(Residue(amino_acid, float(x), float(y), float(z), bool(float(flexible)), len(proteins), residue_no))
+                        protein.append_residue(Residue(amino_acid, float(x), float(y), float(z), bool(float(flexible)), residue_no))
                         residue_no += 1
 
                     elif line.startswith("TER"):
@@ -163,10 +163,10 @@ class Potential(object):
 
         for i, ri in enumerate(residues):
             for rj in residues[i + 1:]:
-                if not include_internal and ri.molecule_no == rj.molecule_no:
+                if ri.protein == rj.protein and (not include_internal or not ri.protein.segments):
                     continue
 
-                if ri.molecule_no == rj.molecule_no and np.abs(ri.residue_no - rj.residue_no) < 4:
+                if ri.protein == rj.protein and np.abs(ri.residue_no - rj.residue_no) < 4:
                     continue
 
                 r = self.distance(rj.position, ri.position, bounding_value) + EPS
@@ -192,15 +192,21 @@ class Potential(object):
         if include_internal:
             for p in self.proteins:
                 for s in p.segments:
-                    print [r.amino_acid for r in s]
-
                     for r1, r2 in zip(s[:-1], s[1:]):
-                        print r1.amino_acid, r2.amino_acid
                         r = np.linalg.norm(r1.position - r2.position)
                         self.components["bond"] += K_SPRING * (r - R0)**2 / 2.0
 
+                    # add previous and next residue if they exist (ask Rob if we should add one more for the torsion)
+                    # if so, make this less hacky
+                    i_first = p.residues.index(s[0])
+                    if i_first > 0:
+                        s.insert(0, p.residues[i_first - 1])
+
+                    i_last = p.residues.index(s[-1])
+                    if i_last < len(p.residues) - 1:
+                        s.append(p.residues[i_last + 1])
+
                     for r1, r2, r3 in zip(s[:-2], s[1:-1], s[2:]):
-                        print r1.amino_acid, r2.amino_acid, r3.amino_acid
                         ba = r1.position - r2.position
                         bc = r3.position - r2.position
                         theta = np.arccos(np.dot(ba, bc) / np.linalg.norm(ba) / np.linalg.norm(bc))
@@ -208,7 +214,6 @@ class Potential(object):
                         self.components["angle"] += np.log(np.exp(-GAMMA_ANGLE * (K_ALPHA * (theta - THETA_ALPHA)**2 + EPSILON_ALPHA)) + np.exp(-GAMMA_ANGLE * K_BETA * (theta - THETA_BETA)**2)) / - GAMMA_ANGLE
 
                     for r1, r2, r3, r4 in zip(s[:-3], s[1:-2], s[2:-1], s[3:]):
-                        print r1.amino_acid, r2.amino_acid, r3.amino_acid, r4.amino_acid
                         b1 = r2.position - r1.position
                         b2 = r3.position - r2.position
                         b3 = r4.position - r3.position
@@ -219,7 +224,6 @@ class Potential(object):
                         aa2 = r3.amino_acid
 
                         self.components["torsion"] += sum((1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5))
-                        print self.components["torsion"]
 
         self.components["total"] = 0
         self.components["total"] = sum(self.components.values())

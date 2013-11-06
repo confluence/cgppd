@@ -75,9 +75,7 @@ void TestReplica::testCPUandGPUPotential()
     child_replica.device_LJPotentials = ljp_t;
     child_replica.ReplicaDataToDevice();
 #endif
-    cout << "START" << endl;
     Potential potential_flexible = child_replica.E();
-    cout << "END" << endl;
     potential_flexible.print_log(ALWAYS, "Flexible");
 
     child_replica.calculate_rigid_potential_only = true;
