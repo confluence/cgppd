@@ -11,6 +11,8 @@ NOW
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
     * are the large molecule tests not running for long enough, or has the rejection problem resurfaced? 512 is not very compact.
+    * there's a suspicious cliff
+    * run 2048 with same parameters for completeness
     * try re-running large molecules for longer
     * try re-running them with a bigger boundary
     * how feasible would it be to run simulations until the length / radius converges? Test whenever samples are taken? Will need to specify exchange frequency rather than number of exchanges.
