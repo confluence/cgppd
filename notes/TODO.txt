@@ -11,13 +11,15 @@ VERY NEXT THING:
         * always use the rigid identifier if we are setting the rigid potential flag -- DONE
 
     * load the meta earlier (if texture mem; currently that isn't the case) -- DONE?
-    * if (molecules same and (molecule is rigid or residues are neighbouring) or padder, do nothing
+    * if (molecules same and (molecule is rigid or residues are neighbouring) or padder, do nothing -- DONE
     * if (ypos.w == pos.w && (ymeta.w == RIGID_IDENTIFIER || abs(ymeta.w - meta.w) < 4)) || pos.w == PADDER_IDENTIFIER
     * is the crowder handling in the optimal place?
 
 
 
 OUTSTANDING QUESTIONS:
+
+* Why is GL preview broken for polyalanine? Try to fix this by Monday before the demo.
 
 * Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom. Keep the way it is for now; ask Rob.
 
@@ -28,14 +30,14 @@ OUTSTANDING QUESTIONS:
 
    N LJ REP LJ OFF
 ---------------------------------
-   4    X
-   8    X
-  16    X
-  32    X
-  64    X?
- 128    X?
- 256    X?
- 512    X
+   4
+   8
+  16
+  32
+  64
+ 128
+ 256
+ 512
 1024
 2048
 
