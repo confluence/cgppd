@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import logging
 
 FILENAME = re.compile('output/(.*)/pdb/sample_(.*)_(.*)K_.*.pdb')
+SUMMARYFILENAME = re.compile('output/(.*)/summary')
 ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
 POTENTIAL = re.compile('REMARK potential: (.*)')
 
@@ -140,59 +141,45 @@ def plot_vs_N(func):
 
 
 class Simulation(object):
-    def __init__(self, name, chains, conformations, length=None, radius=None):
+    def __init__(self, name, chains, conformations):
         self.name = name
         self.conformations = conformations
         self.chains = chains
-        self._rms_length = length or {}
-        self._rms_radius = radius or {}
+        self._rms_length = {}
+        self._rms_radius = {}
 
     @classmethod
-    def from_filelist(cls, filenames, **kwargs):
-        conformations = []
+    def write_summary(cls, filenames, summaryfilename, **kwargs):
+        with open(summaryfilename, 'w') as summaryfile:
+            for filename in filenames:
+                with open(filename) as pdbfile:
+                    logging.debug("Parsing file '%s'..." % filename)
+                    name, sample, temperature = FILENAME.match(filename).groups()
+                    conformation = Conformation(int(sample), float(temperature))
 
-        for filename in filenames:
-            with open(filename) as pdbfile:
-                logging.debug("Parsing file '%s'..." % filename)
-                name, sample, temperature = FILENAME.match(filename).groups()
-                conformation = Conformation(int(sample), float(temperature))
+                    protein = None
 
-                protein = None
+                    for line in pdbfile:
+                        if line.startswith("ATOM"):
+                            amino_acid, chain, index, x, y, z = ATOM.match(line).groups()
 
-                for line in pdbfile:
-                    if line.startswith("ATOM"):
-                        amino_acid, chain, index, x, y, z = ATOM.match(line).groups()
+                            if not protein:
+                                protein = Protein(chain)
+                            protein.append_residue(Residue(amino_acid, int(index), float(x), float(y), float(z)))
 
-                        if not protein:
-                            protein = Protein(chain)
-                        protein.append_residue(Residue(amino_acid, int(index), float(x), float(y), float(z)))
+                        elif line.startswith("TER"):
+                            conformation.add_protein(protein)
+                            protein = None
 
-                    elif line.startswith("TER"):
-                        conformation.add_protein(protein)
-                        protein = None
+                        elif line.startswith("REMARK potential"):
+                            conformation.potential = float(POTENTIAL.match(line).group(1))
 
-                    elif line.startswith("REMARK potential"):
-                        conformation.potential = float(POTENTIAL.match(line).group(1))
-
-            conformations.append(conformation)
-
-        # TODO: get chains and name from PDB
-        chains = dict(l.split(":") for l in kwargs["labels"])
-        if not chains and conformations:
-            chains = dict((c, c) for c in conformations[0].proteins)
-
-        return cls(name, chains, conformations)
+                summaryfile.write(str(conformation))
 
     @classmethod
     def from_summary(cls, filename, **kwargs):
         with open(filename) as summaryfile:
             summary = summaryfile.read()
-
-            name, length, radius, summary = RMS_LENGTH_RADIUS.search(summary).groups()
-
-            length_dict = dict((k, float(v)) for (k, v) in FLOAT_PER_CHAIN.findall(length))
-            radius_dict = dict((k, float(v)) for (k, v) in FLOAT_PER_CHAIN.findall(radius))
-
             conformations = []
 
             for s in re.split("sample", summary):
@@ -215,15 +202,9 @@ class Simulation(object):
             if not chains and conformations:
                 chains = dict((c, c) for c in conformations[0].proteins)
 
-            return cls(name, chains, conformations, length_dict, radius_dict)
+            name = SUMMARYFILENAME.match(filename).group(1)
 
-
-    def write_summary(self, filename):
-        with open(filename, 'w') as summaryfile:
-            summaryfile.write(str(self))
-
-            for c in self.conformations:
-                summaryfile.write(str(c))
+            return cls(name, chains, conformations)
 
     @plot_histogram
     def plot_length(self, chain):
@@ -233,7 +214,6 @@ class Simulation(object):
         ylabel = "Frequency (count)"
 
         return values, full_description, xlabel, ylabel
-
 
     @plot_histogram
     def plot_radius(self, chain):
@@ -284,14 +264,13 @@ class SimulationSet(object):
             summaryfilename = "%s/%s/summary" % (root_dir, d)
             sim_dir = "%s/%s/pdb" % (root_dir, d)
 
+            if not os.path.isfile(summaryfilename):
+                if os.path.exists(sim_dir):
+                    files = glob.glob("%s/*" % sim_dir)
+                    Simulation.write_summary(files, summaryfilename, **kwargs)
+
             if os.path.isfile(summaryfilename):
                 s = Simulation.from_summary(summaryfilename, **kwargs)
-                simulations.append(s)
-
-            elif os.path.exists(sim_dir):
-                files = glob.glob("%s/*" % sim_dir)
-                s = Simulation.from_filelist(files, **kwargs)
-                s.write_summary(summaryfilename)
                 simulations.append(s)
 
             if not simulations:
@@ -342,7 +321,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--no-display", help="Don't display plots", action="store_true")
 
     parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
-    
+
     parser.add_argument("-t", "--title", default="Untitled", help="Simulation title")
     parser.add_argument("-l", "--label", action="append", dest="labels", default=[], help="Chain label")
 
