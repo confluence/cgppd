@@ -10,18 +10,21 @@ NOW
 
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
-
+    * are the large molecule tests not running for long enough, or has the rejection problem resurfaced? 512 is not very compact.
+    * try re-running large molecules for longer
+    * try re-running them with a bigger boundary
+    * how feasible would it be to run simulations until the length / radius converges? Test whenever samples are taken? Will need to specify exchange frequency rather than number of exchanges.
 
    N LJ REP LJ OFF
 ---------------------------------
-   4
-   8
-  16
-  32
-  64
- 128
- 256
- 512
+   4 X
+   8 X
+  16 X
+  32 X
+  64 X
+ 128 X
+ 256 X
+ 512 X?
 1024
 2048
 
@@ -42,7 +45,7 @@ NOW
 * fix chain processing
 * remove printing of old cruft about translation/rotation
 
-* 300k replica -- how is it found if tehre isn't one?!
+* 300k replica -- how is it found if there isn't one?!
 * paircount needs to be updated for flexible linkers
 
 * start writing up
