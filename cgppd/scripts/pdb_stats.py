@@ -84,13 +84,10 @@ class Conformation(object):
 
 def plot_histogram(func):
     def _plot_method(self, chain, **kwargs):
-        if not all(chain in c.proteins for c in self.conformations):
-            raise ValueError("Chain '%s' does not appear in all conformations." % chain)
-
-        values, full_description, xlabel, ylabel = func(self, chain)
+        values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
 
-        title = "Distribution of %s %s" % (self.chains[chain], full_description)
+        title = "Distribution of %s %s" % (chain_name, graph_name)
 
         plt.hist(values, bins=kwargs['bins'])
         plt.title(title)
@@ -102,22 +99,43 @@ def plot_histogram(func):
 
         if kwargs['save']:
             # TODO: printable name
-            plt.savefig("hist_%s_%s_%s_%d.png" % (self.name.replace('/',''), self.chains[chain], description, time.time()))
+            plt.savefig("hist_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
 
         plt.close()
 
     return _plot_method
 
 
-def plot_vs_N(func):
+def plot_vs_sample(func):
     def _plot_method(self, chain, **kwargs):
-        if not all(chain in c.proteins for s in self.simulations for c in s.conformations):
-            raise ValueError("Chain '%s' does not appear in all conformations." % chain)
-
-        values, full_description, xlabel, ylabel = func(self, chain)
+        values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
 
-        title = " Root-mean-square %s %s" % (self.simulations[0].chains[chain], full_description)
+        title = "%s %s vs sample time" % (chain_name, graph_name)
+
+        plt.plot(values, 'bo')
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+
+        if not kwargs['no_display']:
+            plt.show()
+
+        if kwargs['save']:
+            # TODO: printable name
+            plt.savefig("sampled_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
+
+        plt.close()
+
+    return _plot_method
+
+
+def plot_vs_2powN(func):
+    def _plot_method(self, chain, **kwargs):
+        values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
+        description = func.__name__[5:]
+
+        title = " Root-mean-square %s %s" % (chain_name, graph_name)
 
         logging.info("Plotting values: %r" % values)
 
@@ -133,7 +151,7 @@ def plot_vs_N(func):
 
         if kwargs['save']:
             # TODO: printable name
-            plt.savefig("rms_%s_%s_%s_%d.png" % (self.name.replace('/',''), self.simulations[0].chains[chain], description, time.time()))
+            plt.savefig("rms_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
 
         plt.close()
 
@@ -207,22 +225,44 @@ class Simulation(object):
             return cls(name, chains, conformations)
 
     @plot_histogram
-    def plot_length(self, chain):
+    def plot_hist_length(self, chain):
         values = [c.proteins[chain].length for c in self.conformations]
-        full_description = "end-to-end length"
+        graph_name = "end-to-end length"
+        chain_name = self.chains[chain]
         xlabel = u"Length (Å)"
         ylabel = "Frequency (count)"
 
-        return values, full_description, xlabel, ylabel
+        return values, graph_name, chain_name, xlabel, ylabel
 
     @plot_histogram
-    def plot_radius(self, chain):
+    def plot_hist_radius(self, chain):
         values = [c.proteins[chain].radius for c in self.conformations]
-        full_description = "radius of gyration"
+        graph_name = "radius of gyration"
+        chain_name = self.chains[chain]
         xlabel = u"Radius (Å)"
         ylabel = "Frequency (count)"
 
-        return values, full_description, xlabel, ylabel
+        return values, graph_name, chain_name, xlabel, ylabel
+
+    @plot_vs_sample
+    def plot_sample_length(self, chain):
+        values = [c.proteins[chain].length for c in self.conformations]
+        graph_name = "end-to-end length"
+        chain_name = self.chains[chain]
+        xlabel = "Sample"
+        ylabel = u"Length (Å)"
+
+        return values, graph_name, chain_name, xlabel, ylabel
+
+    @plot_vs_sample
+    def plot_sample_radius(self, chain):
+        values = [c.proteins[chain].radius for c in self.conformations]
+        graph_name = "radius of gyration"
+        chain_name = self.chains[chain]
+        xlabel = "Sample"
+        ylabel = u"Radius (Å)"
+
+        return values, graph_name, chain_name, xlabel, ylabel
 
     def __str__(self):
         length = " ".join("%s %f" % (k, v) for (k, v) in self.rms_length.iteritems())
@@ -281,29 +321,39 @@ class SimulationSet(object):
 
     def plot_hist_radius(self, chain, **kwargs):
         for s in self.simulations:
-            s.plot_radius(chain, **kwargs)
+            s.plot_hist_radius(chain, **kwargs)
 
     def plot_hist_length(self, chain, **kwargs):
         for s in self.simulations:
-            s.plot_length(chain, **kwargs)
+            s.plot_hist_length(chain, **kwargs)
 
-    @plot_vs_N
+    def plot_sample_radius(self, chain, **kwargs):
+        for s in self.simulations:
+            s.plot_sample_radius(chain, **kwargs)
+
+    def plot_sample_length(self, chain, **kwargs):
+        for s in self.simulations:
+            s.plot_sample_length(chain, **kwargs)
+
+    @plot_vs_2powN
     def plot_radius(self, chain):
         values = [s.rms_radius[chain] for s in self.simulations]
-        full_description = "radius of gyration"
+        graph_name = "radius of gyration"
+        chain_name = self.simulations[0].chains[chain]
         xlabel = "Number of residues (count)"
         ylabel = u"Average radius (Å)"
 
-        return values, full_description, xlabel, ylabel
+        return values, graph_name, chain_name, xlabel, ylabel
 
-    @plot_vs_N
+    @plot_vs_2powN
     def plot_length(self, chain):
         values = [s.rms_length[chain] for s in self.simulations]
-        full_description = "end-to-end length"
+        graph_name = "end-to-end length"
+        chain_name = self.simulations[0].chains[chain]
         xlabel = "Number of residues (count)"
         ylabel = u"Average length (Å)"
 
-        return values, full_description, xlabel, ylabel
+        return values, graph_name, chain_name, xlabel, ylabel
 
 
 AVAILABLE_PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("plot_"))

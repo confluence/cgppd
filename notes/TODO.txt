@@ -13,22 +13,9 @@ NOW
     * are the large molecule tests not running for long enough, or has the rejection problem resurfaced? 512 is not very compact.
     * there's a suspicious cliff
     * run 2048 with same parameters for completeness
-    * try re-running large molecules for longer
+    * try re-running large molecules for longer -- DONE; results inconclusive
     * try re-running them with a bigger boundary
     * how feasible would it be to run simulations until the length / radius converges? Test whenever samples are taken? Will need to specify exchange frequency rather than number of exchanges.
-
-   N LJ REP LJ OFF
----------------------------------
-   4 X
-   8 X
-  16 X
-  32 X
-  64 X
- 128 X
- 256 X
- 512 X?
-1024
-2048
 
 * Write unit tests for all the mutations. Seriously, we need those.
 
