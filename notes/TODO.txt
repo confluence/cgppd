@@ -7,6 +7,7 @@ NOW
 --------------------------------------------------------------------------------
 
 * Why is GL preview broken for polyalanine? Try to fix this by Monday before the demo.
+    * probably the boundary; sample diubuquitin with flexible tails is fine.
 
 * linker validation tests:
     * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
@@ -16,6 +17,9 @@ NOW
     * try re-running large molecules for longer -- DONE; results inconclusive
     * try re-running them with a bigger boundary
     * how feasible would it be to run simulations until the length / radius converges? Test whenever samples are taken? Will need to specify exchange frequency rather than number of exchanges.
+    * PROBLEM: 2048 PDBs have a float size problem. This probably means that the length and radius are wrong.
+        * Partial solution: calculate radius and length at sample time (make it optional) and prefer that data.
+        * Programmatic generation of polyalanine? Can we reverse-engineer it from the generated PDBs?
 
 * Write unit tests for all the mutations. Seriously, we need those.
 
