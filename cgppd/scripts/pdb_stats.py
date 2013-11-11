@@ -218,7 +218,7 @@ class Simulation(object):
             # TODO: get chains and name from PDB
             chains = dict(l.split(":") for l in kwargs["labels"])
             if not chains and conformations:
-                chains = dict((c, c) for c in conformations[0].proteins)
+                chains = dict((c, "chain %s" % c) for c in conformations[0].proteins)
 
             name = SUMMARYFILENAME.match(filename).group(1)
 
@@ -228,7 +228,7 @@ class Simulation(object):
     def plot_hist_length(self, chain):
         values = [c.proteins[chain].length for c in self.conformations]
         graph_name = "end-to-end length"
-        chain_name = self.chains[chain]
+        chain_name = "%s %s" % (self.name, self.chains[chain])
         xlabel = u"Length (Å)"
         ylabel = "Frequency (count)"
 
@@ -238,7 +238,7 @@ class Simulation(object):
     def plot_hist_radius(self, chain):
         values = [c.proteins[chain].radius for c in self.conformations]
         graph_name = "radius of gyration"
-        chain_name = self.chains[chain]
+        chain_name = "%s %s" % (self.name, self.chains[chain])
         xlabel = u"Radius (Å)"
         ylabel = "Frequency (count)"
 
@@ -248,7 +248,7 @@ class Simulation(object):
     def plot_sample_length(self, chain):
         values = [c.proteins[chain].length for c in self.conformations]
         graph_name = "end-to-end length"
-        chain_name = self.chains[chain]
+        chain_name = "%s %s" % (self.name, self.chains[chain])
         xlabel = "Sample"
         ylabel = u"Length (Å)"
 
@@ -258,7 +258,7 @@ class Simulation(object):
     def plot_sample_radius(self, chain):
         values = [c.proteins[chain].radius for c in self.conformations]
         graph_name = "radius of gyration"
-        chain_name = self.chains[chain]
+        chain_name = "%s %s" % (self.name, self.chains[chain])
         xlabel = "Sample"
         ylabel = u"Radius (Å)"
 
