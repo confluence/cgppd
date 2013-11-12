@@ -83,21 +83,21 @@ class Conformation(object):
 
 
 def plot_histogram(func):
-    def _plot_method(self, chain, **kwargs):
+    def _plot_method(self, chain, args):
         values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
 
         title = "Distribution of %s %s" % (chain_name, graph_name)
 
-        plt.hist(values, bins=kwargs['bins'])
+        plt.hist(values, bins=args.bins)
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-        if not kwargs['no_display']:
+        if not args.no_display:
             plt.show()
 
-        if kwargs['save']:
+        if args.save:
             # TODO: printable name
             plt.savefig("hist_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
 
@@ -107,7 +107,7 @@ def plot_histogram(func):
 
 
 def plot_vs_sample(func):
-    def _plot_method(self, chain, **kwargs):
+    def _plot_method(self, chain, args):
         values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
 
@@ -118,10 +118,10 @@ def plot_vs_sample(func):
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-        if not kwargs['no_display']:
+        if not args.no_display:
             plt.show()
 
-        if kwargs['save']:
+        if args.save:
             # TODO: printable name
             plt.savefig("sampled_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
 
@@ -131,7 +131,7 @@ def plot_vs_sample(func):
 
 
 def plot_vs_2powN(func):
-    def _plot_method(self, chain, **kwargs):
+    def _plot_method(self, chain, args):
         values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
         description = func.__name__[5:]
 
@@ -140,16 +140,20 @@ def plot_vs_2powN(func):
         logging.info("Plotting values: %r" % values)
 
         plt.plot([2**i for i in range(2, len(values) + 2)], values, 'bo')
-        plt.plot([2**i for i in range(2, len(values) + 2)], [2**i**(2/3.0) for i in range(2, len(values) + 2)], 'ro', color='lightgrey')
+
+        if args.expected_scale:
+            power = reduce(lambda x, y: x/y, [float(n) for n in args.expected_scale.split('/')])
+            plt.plot([2**i for i in range(2, len(values) + 2)], [2**i**(power) for i in range(2, len(values) + 2)], 'ro', color='lightgrey')
+
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.xscale('log', basex=2)
 
-        if not kwargs['no_display']:
+        if not args.no_display:
             plt.show()
 
-        if kwargs['save']:
+        if args.save:
             # TODO: printable name
             plt.savefig("rms_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
 
@@ -319,21 +323,21 @@ class SimulationSet(object):
 
         return cls(kwargs["title"], simulations)
 
-    def plot_hist_radius(self, chain, **kwargs):
+    def plot_hist_radius(self, chain, *args, **kwargs):
         for s in self.simulations:
-            s.plot_hist_radius(chain, **kwargs)
+            s.plot_hist_radius(chain, *args, **kwargs)
 
-    def plot_hist_length(self, chain, **kwargs):
+    def plot_hist_length(self, chain, *args, **kwargs):
         for s in self.simulations:
-            s.plot_hist_length(chain, **kwargs)
+            s.plot_hist_length(chain, *args, **kwargs)
 
-    def plot_sample_radius(self, chain, **kwargs):
+    def plot_sample_radius(self, chain, *args, **kwargs):
         for s in self.simulations:
-            s.plot_sample_radius(chain, **kwargs)
+            s.plot_sample_radius(chain, *args, **kwargs)
 
-    def plot_sample_length(self, chain, **kwargs):
+    def plot_sample_length(self, chain, *args, **kwargs):
         for s in self.simulations:
-            s.plot_sample_length(chain, **kwargs)
+            s.plot_sample_length(chain, *args, **kwargs)
 
     @plot_vs_2powN
     def plot_radius(self, chain):
@@ -374,6 +378,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-t", "--title", default="Untitled", help="Simulation title")
     parser.add_argument("-l", "--label", action="append", dest="labels", default=[], help="Chain label")
+    parser.add_argument("-e", "--expected-scale", help="Power of N for expected scale markers")
 
     args = parser.parse_args()
 
@@ -401,5 +406,5 @@ if __name__ == "__main__":
                 print "Unsupported plot type: %s" % plot
 
             for chain in args.chains:
-                plot_method(chain, bins=args.bins, no_display=args.no_display, save=args.save)
+                plot_method(chain, args)
 
