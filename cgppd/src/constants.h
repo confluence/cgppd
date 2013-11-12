@@ -56,8 +56,8 @@
     #define kappa       invDebye
 
     // these are used for linker validation
-    #define LJ_OFF false
-    #define LJ_REPULSIVE true
+    #define LJ_OFF true
+    #define LJ_REPULSIVE false
 
     #if LJ_REPULSIVE
         #undef e0
