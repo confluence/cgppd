@@ -1,25 +1,11 @@
-
-
-
-
 --------------------------------------------------------------------------------
 NOW
 --------------------------------------------------------------------------------
 
-* Why is GL preview broken for polyalanine? Try to fix this by Monday before the demo.
-    * probably the boundary; sample diubuquitin with flexible tails is fine.
-
-* linker validation tests:
-    * polyalanine with increasing polymer length (using single replica at first; will see how it goes)
-    * are the large molecule tests not running for long enough, or has the rejection problem resurfaced? 512 is not very compact.
-    * there's a suspicious cliff
-    * run 2048 with same parameters for completeness
-    * try re-running large molecules for longer -- DONE; results inconclusive
-    * try re-running them with a bigger boundary
-    * how feasible would it be to run simulations until the length / radius converges? Test whenever samples are taken? Will need to specify exchange frequency rather than number of exchanges.
-    * PROBLEM: 2048 PDBs have a float size problem. This probably means that the length and radius are wrong.
-        * Partial solution: calculate radius and length at sample time (make it optional) and prefer that data.
-        * Programmatic generation of polyalanine? Can we reverse-engineer it from the generated PDBs?
+* use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
+* make sure that the change has been made in all the options
+* potential test for repulsive LJ -- add options for no LJ / repulsive LJ to python script
+* remove the caching? refactor the CPU internal LJ/DH to move it outside the molecule?
 
 * Write unit tests for all the mutations. Seriously, we need those.
 
@@ -42,8 +28,7 @@ NOW
 * paircount needs to be updated for flexible linkers
 
 * start writing up
-    * skeleton
-    * design / implementation of changes chapter
+    * design / implementation chapter
 
 --------------------------------------------------------------------------------
 MAIL ROB
@@ -52,7 +37,6 @@ MAIL ROB
 * Units! Where do they come from? Are any conversions required for the linker components?
 * Is the flex move actually a valid extension of the model? Does the polymer test demonstrate that?
 * Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom. Keep the way it is for now; ask Rob.
-
 
 --------------------------------------------------------------------------------
 SOON
@@ -88,6 +72,15 @@ REFACTOR
 --------------------------------------------------------------------------------
 LATER / MAYBE
 --------------------------------------------------------------------------------
+
+OPTIONS
+
+* Does the asynchronous CUDA stuff still work?
+* Does the Kahan sum stuff still work?
+
+CLEANUP
+
+* Remove completely unused sections of code? Look at the CUDA code. etc.; see what is actually connected up. Are we ever going to use CUDA MC?
 
 TWISTER
 

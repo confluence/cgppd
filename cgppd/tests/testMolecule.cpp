@@ -164,20 +164,17 @@ void TestMolecule::testTranslate()
 void TestMolecule::testPotential()
 {
     Potential potential_ala = polyalanine8.E(true); // with internal LJ and DH
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.945580, potential_ala.total_LJ(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.000000, potential_ala.total_DH(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.045626, potential_ala.total_bond(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(1.272977, potential_ala.total_angle(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(10.872785, potential_ala.total_torsion(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(13.136967, potential_ala.total(), 0.00001);
-
     Potential potential_ang = angiotensin.E(true); // with internal LJ and DH
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-0.253939, potential_ang.total_LJ(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.052889, potential_ang.total_DH(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.642773, potential_ang.total_bond(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(4.887786, potential_ang.total_angle(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(15.871156, potential_ang.total_torsion(), 0.00001);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(21.200665, potential_ang.total(), 0.00001);
+#if !LJ_REPULSIVE && !LJ_OFF
+    double expected_ala_potential[6] = {0.945580, 0.000000, 0.045626, 1.272977, 10.872785, 13.136967};
+    ASSERT_POTENTIAL_EQUALS(expected_ala_potential, potential_ala);
+
+    double expected_ang_potential[6] = {-0.253939, 0.052889, 0.642773, 4.887786, 15.871156, 21.200665};
+    ASSERT_POTENTIAL_EQUALS(expected_ang_potential, potential_ang);
+#elif LJ_OFF
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, potential_ala.total_LJ(), 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, potential_ang.total_LJ(), 0.00001);
+#endif // !LJ_REPULSIVE && !LJ_OFF
 }
 
 #if FLEXIBLE_LINKS

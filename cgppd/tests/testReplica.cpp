@@ -73,19 +73,31 @@ void TestReplica::testCPUandGPUPotential()
     child_replica.device_LJPotentials = ljp_t;
     child_replica.ReplicaDataToDevice();
 #endif
+
+#if !LJ_REPULSIVE && !LJ_OFF
     double expected_flexible_potential[6] = {300.864756, 0.337112, 0.180426, 1.555213, 3.495782, 306.433290};
+#elif LJ_OFF
+    double expected_flexible_potential[6] = {0.0, 0.337112, 0.180426, 1.555213, 3.495782, 5.568534};
+# endif // !LJ_REPULSIVE && !LJ_OFF
+
     ASSERT_POTENTIAL_EQUALS(expected_flexible_potential, child_replica.E());
 #if USING_CUDA
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(306.433290, child_replica.EonDevice(), 0.0001);
-#endif
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential[5], child_replica.EonDevice(), 0.0001);
+#endif // USING_CUDA
 
     child_replica.calculate_rigid_potential_only = true;
+    child_replica.ReplicaDataToDevice();
+
+#if !LJ_REPULSIVE && !LJ_OFF
     double expected_rigid_potential[6] = {-0.080765, -0.212940, 0.000000, -0.000000, 0.000000, -0.293705};
+#elif LJ_OFF
+    double expected_rigid_potential[6] = {0.0, -0.212940, 0.000000, -0.000000, 0.000000, -0.212940};
+# endif // !LJ_REPULSIVE && !LJ_OFF
+
     ASSERT_POTENTIAL_EQUALS(expected_rigid_potential, child_replica.E());
 #if USING_CUDA
-    child_replica.ReplicaDataToDevice();
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-0.293705, child_replica.EonDevice(), 0.00001);
-#endif
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_rigid_potential[5], child_replica.EonDevice(), 0.0001);
+#endif // USING_CUDA
 
 #if USING_CUDA
     child_replica.FreeDevice();
