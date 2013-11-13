@@ -5,7 +5,32 @@ NOW
 * use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
 * make sure that the change has been made in all the options
 * potential test for repulsive LJ -- add options for no LJ / repulsive LJ to python script
-* remove the caching? refactor the CPU internal LJ/DH to move it outside the molecule?
+
+THINGS THAT PROBABLY NEED TO BE CHECKED
+
+* check if compensated summation explains the discrepancy between the reference conformation values in the thesis and the implementation.
+* fix chain processing
+* remove printing of old cruft about translation/rotation
+* 300k replica -- how is it found if there isn't one?!
+* paircount needs to be updated for flexible linkers
+* What happens if molecule consists of multiple chains?
+* make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
+
+WRITE THESIS
+
+* start with design / implementation chapter
+
+MAIL ROB
+
+* Units! Where do they come from? Are any conversions required for the linker components?
+* Is the flex move actually a valid extension of the model? Does the polymer test demonstrate that?
+* Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom. Keep the way it is for now; ask Rob.
+
+--------------------------------------------------------------------------------
+SOON
+--------------------------------------------------------------------------------
+
+MUTATIONS/WRAPPING
 
 * Write unit tests for all the mutations. Seriously, we need those.
 
@@ -19,32 +44,11 @@ NOW
             * Make an effort always to update the relative position and then the absolute position -- eliminate recalculate_relative_positions
             * If we do that, moving twice for wrapping won't be a problem -- just calculate the absolute position once after wrapping!
 
-* check if compensated summation explains the discrepancy between the reference conformation values in the thesis and the implementation.
-
-* fix chain processing
-* remove printing of old cruft about translation/rotation
-
-* 300k replica -- how is it found if there isn't one?!
-* paircount needs to be updated for flexible linkers
-
-* start writing up
-    * design / implementation chapter
-
---------------------------------------------------------------------------------
-MAIL ROB
---------------------------------------------------------------------------------
-
-* Units! Where do they come from? Are any conversions required for the linker components?
-* Is the flex move actually a valid extension of the model? Does the polymer test demonstrate that?
-* Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom. Keep the way it is for now; ask Rob.
-
---------------------------------------------------------------------------------
-SOON
---------------------------------------------------------------------------------
-
 TEST
 
-* stuff that's disabled, e.g. Kahan sums
+* stuff that's disabled
+    * Kahan sums
+    * asynchronous CUDA
 
 POSTPROCESS
 
@@ -52,7 +56,9 @@ POSTPROCESS
 
 OPTIONS
 
-* make flex and crankshaft moves optional
+* add possibility to individually enable / disable all the MC mutations?
+    * would be useful to disable whole-molecule translation / rotation for individual molecule tests
+    * and to disable flex moves if rigid domains should be static relative to each other
 
 REFACTOR
 
@@ -73,47 +79,15 @@ REFACTOR
 LATER / MAYBE
 --------------------------------------------------------------------------------
 
-OPTIONS
-
-* Does the asynchronous CUDA stuff still work?
-* Does the Kahan sum stuff still work?
-
 CLEANUP
 
 * Remove completely unused sections of code? Look at the CUDA code. etc.; see what is actually connected up. Are we ever going to use CUDA MC?
 
-TWISTER
-
-* make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
-* single rng for all replicas
-    * CAUTION: this may be a problem because of threading (safety and/or performance). Look into it in greater detail.
-
-ADD
-
-* Extra MC moves (just domain rotation?) on GPU?
-* Make angle terms, crankshaft moves optional; test efficiency / accuracy of including them
-* Make flexing optional; doesn't really work in cases with flexible loops coming out of domains.
-* Validation with a simple test case
-* Is the caching stuff actually a good idea, or is it just overhead?
-    * Write another version of the CPU bond calculation, which throws out the caching and calculates everything
-* What happens if molecule consists of multiple chains?
-
-CHECKPOINTING
-
-* put checkpointing back in
-    * save individual pdb files
-    * save checkpointing file with list of pdb files to load and iteration count
-    * when resuming, make sure the iteration count is increased and e.g. sampling starts immediately if it needs to
-    * save/load:
-        * parameters.currentStep
-        * per-replica cumulative data (same stuff that is swapped during replica exchange)
-        * per-simulation cumulative data (total tests and exchanges)
 
 OPTIMISE / TEST
 
-* is caching of internal potential subtotals important?
+* is caching of internal potential subtotals important? Probably still useful for CPU LJ/DH code.
 * is it *actually* worth summing vector components separately?
-* init of gpu memory seems slower (underlying software change?)
 
 ADD
 
