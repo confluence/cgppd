@@ -82,6 +82,16 @@ class Conformation(object):
         return "sample %d at %fK with potential %f\n%s" % (self.sample, self.temperature, self.potential, "\n".join(str(p) for p in self.proteins.values()))
 
 
+def process_plot(plt, chain_name, description, args):
+    if not args.no_display:
+        plt.show()
+
+    if args.save:
+        save_name = "%s_%s_%d.png" % (chain_name, description, time.time())
+        save_name = save_name.replace('/', '_').replace(' ', '_')
+        plt.savefig(save_name)
+
+
 def plot_histogram(func):
     def _plot_method(self, chain, args):
         values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
@@ -94,12 +104,7 @@ def plot_histogram(func):
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-        if not args.no_display:
-            plt.show()
-
-        if args.save:
-            # TODO: printable name
-            plt.savefig("hist_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
+        process_plot(plt, chain_name, description, args)
 
         plt.close()
 
@@ -118,12 +123,7 @@ def plot_vs_sample(func):
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-        if not args.no_display:
-            plt.show()
-
-        if args.save:
-            # TODO: printable name
-            plt.savefig("sampled_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
+        process_plot(plt, chain_name, description, args)
 
         plt.close()
 
@@ -150,12 +150,7 @@ def plot_vs_2powN(func):
         plt.ylabel(ylabel)
         plt.xscale('log', basex=2)
 
-        if not args.no_display:
-            plt.show()
-
-        if args.save:
-            # TODO: printable name
-            plt.savefig("rms_%s_%s_%s_%d.png" % (self.name.replace('/',''), chain_name, description, time.time()))
+        process_plot(plt, chain_name, description, args)
 
         plt.close()
 
