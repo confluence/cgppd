@@ -2,6 +2,8 @@
 NOW
 --------------------------------------------------------------------------------
 
+* running polymer tests at lower temperature to see if it makes any difference - remember that LJ is currently OFF. So we should be able to see a change (or not) soon.
+
 * use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
 * make sure that the change has been made in all the options
 * potential test for repulsive LJ -- add options for no LJ / repulsive LJ to python script
