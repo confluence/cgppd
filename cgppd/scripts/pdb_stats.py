@@ -143,7 +143,7 @@ def plot_vs_2powN(func):
 
         if args.expected_scale:
             power = reduce(lambda x, y: x/y, [float(n) for n in args.expected_scale.split('/')])
-            plt.plot([2**i for i in range(2, len(values) + 2)], [2**i**(power) for i in range(2, len(values) + 2)], 'ro', color='lightgrey')
+            plt.plot([2**i for i in range(2, len(values) + 2)], [args.guess_parameter * (2**i)**(power) for i in range(2, len(values) + 2)], 'ro', color='lightgrey')
 
         plt.title(title)
         plt.xlabel(xlabel)
@@ -374,6 +374,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--title", default="Untitled", help="Simulation title")
     parser.add_argument("-l", "--label", action="append", dest="labels", default=[], help="Chain label")
     parser.add_argument("-e", "--expected-scale", help="Power of N for expected scale markers")
+    parser.add_argument("-g", "--guess-parameter", type=float, default=1.0, help="Guess constant factor for scale function")
 
     args = parser.parse_args()
 
