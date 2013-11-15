@@ -29,6 +29,7 @@ WRITE THESIS
 
 MAIL ROB
 
+* What happened to the constants in the DH calculation?
 * Units! Where do they come from? Are any conversions required for the linker components?
 * Is the flex move actually a valid extension of the model? Does the polymer test demonstrate that?
     * Kolinski & Skolnick 1994 (I) suggests a similar move for protein folding simulations.
