@@ -18,6 +18,11 @@ THINGS THAT PROBABLY NEED TO BE CHECKED
 * What happens if molecule consists of multiple chains?
 * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 
+BENCHMARKING
+
+* do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
+* how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
+
 WRITE THESIS
 
 * start with design / implementation chapter
