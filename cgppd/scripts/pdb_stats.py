@@ -3,7 +3,6 @@
 
 import sys
 import argparse
-import time
 import glob
 import os
 
@@ -11,6 +10,7 @@ import re
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import optimize
 
 import logging
 
@@ -82,12 +82,15 @@ class Conformation(object):
         return "sample %d at %fK with potential %f\n%s" % (self.sample, self.temperature, self.potential, "\n".join(str(p) for p in self.proteins.values()))
 
 
-def process_plot(plt, chain_name, description, args):
+def process_plot(plt, chain_name, plotted_value, args):
     if not args.no_display:
         plt.show()
 
     if args.save:
-        save_name = "%s_%s_%d.png" % (chain_name, description, time.time())
+        parts = [chain_name, plotted_value]
+        if args.log_log:
+            parts.append("ll")
+        save_name = "_".join(str(p) for p in parts) + ".png"
         save_name = save_name.replace('/', '_').replace(' ', '_')
         plt.savefig(save_name)
 
@@ -95,7 +98,7 @@ def process_plot(plt, chain_name, description, args):
 def plot_histogram(func):
     def _plot_method(self, chain, args):
         values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
-        description = func.__name__[5:]
+        plotted_value = func.__name__[5:]
 
         title = "Distribution of %s %s" % (chain_name, graph_name)
 
@@ -104,7 +107,7 @@ def plot_histogram(func):
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-        process_plot(plt, chain_name, description, args)
+        process_plot(plt, chain_name, plotted_value, args)
 
         plt.close()
 
@@ -114,7 +117,7 @@ def plot_histogram(func):
 def plot_vs_sample(func):
     def _plot_method(self, chain, args):
         values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
-        description = func.__name__[5:]
+        plotted_value = func.__name__[5:]
 
         title = "%s %s vs sample time" % (chain_name, graph_name)
 
@@ -123,7 +126,7 @@ def plot_vs_sample(func):
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-        process_plot(plt, chain_name, description, args)
+        process_plot(plt, chain_name, plotted_value, args)
 
         plt.close()
 
@@ -133,24 +136,37 @@ def plot_vs_sample(func):
 def plot_vs_2powN(func):
     def _plot_method(self, chain, args):
         values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
-        description = func.__name__[5:]
+        plotted_value = func.__name__[5:]
 
         title = " Root-mean-square %s %s" % (chain_name, graph_name)
 
         logging.info("Plotting values: %r" % values)
 
-        plt.plot([2**i for i in range(2, len(values) + 2)], values, 'bo')
+        xvalues = [2**i for i in range(2, len(values) + 2)]
 
-        if args.expected_scale:
-            power = reduce(lambda x, y: x/y, [float(n) for n in args.expected_scale.split('/')])
-            plt.plot([2**i for i in range(2, len(values) + 2)], [args.guess_parameter * (2**i)**(power) for i in range(2, len(values) + 2)], 'ro', color='lightgrey')
+        plt.plot(xvalues, values, 'bo')
+
+        if args.exponent:
+            power = reduce(lambda x, y: x/y, [float(n) for n in args.exponent.split('/')])
+
+            fitfunc = lambda p, N: p[0] * np.array(N) ** power # Target function
+            errfunc = lambda p, N, y: fitfunc(p, N) - y # Distance to the target function
+            p0 = [args.guess_parameter] # Initial guess for the parameters
+            p1, success = optimize.leastsq(errfunc, p0[:], args=(xvalues, values))
+
+            print "A = %g" % p1[0]
+
+            plt.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
 
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.xscale('log', basex=2)
 
-        process_plot(plt, chain_name, description, args)
+        if args.log_log:
+            plt.xscale('log', basex=2)
+            plt.yscale('log')
+
+        process_plot(plt, chain_name, plotted_value, args)
 
         plt.close()
 
@@ -166,7 +182,7 @@ class Simulation(object):
         self._rms_radius = {}
 
     @classmethod
-    def write_summary(cls, filenames, summaryfilename, **kwargs):
+    def write_summary(cls, filenames, summaryfilename, args):
         with open(summaryfilename, 'w') as summaryfile:
             for filename in filenames:
                 with open(filename) as pdbfile:
@@ -194,7 +210,7 @@ class Simulation(object):
                 summaryfile.write(str(conformation))
 
     @classmethod
-    def from_summary(cls, filename, **kwargs):
+    def from_summary(cls, filename, args):
         with open(filename) as summaryfile:
             summary = summaryfile.read()
             conformations = []
@@ -215,7 +231,7 @@ class Simulation(object):
                 conformations.append(Conformation(int(sample), float(temperature), float(potential), proteins))
 
             # TODO: get chains and name from PDB
-            chains = dict(l.split(":") for l in kwargs["labels"])
+            chains = dict(n.split(":") for n in args.names)
             if not chains and conformations:
                 chains = dict((c, "chain %s" % c) for c in conformations[0].proteins)
 
@@ -293,46 +309,46 @@ class SimulationSet(object):
         self.simulations = simulations
 
     @classmethod
-    def from_dirlist(cls, *dirs, **kwargs):
-        root_dir = kwargs.get("root_dir", ".")
+    def from_dirlist(cls, args):
         simulations = []
 
-        for d in dirs:
+        for d in args.dirs:
             logging.info("Processing directory '%s'..." % d)
 
-            summaryfilename = "%s/%s/summary" % (root_dir, d)
-            sim_dir = "%s/%s/pdb" % (root_dir, d)
+            summaryfilename = "%s/%s/summary" % (args.root_dir, d)
+            sim_dir = "%s/%s/pdb" % (args.root_dir, d)
 
             if not os.path.isfile(summaryfilename):
                 if os.path.exists(sim_dir):
                     files = glob.glob("%s/*" % sim_dir)
-                    Simulation.write_summary(files, summaryfilename, **kwargs)
+                    Simulation.write_summary(files, summaryfilename, args)
 
             if os.path.isfile(summaryfilename):
-                s = Simulation.from_summary(summaryfilename, **kwargs)
+                s = Simulation.from_summary(summaryfilename, args)
                 simulations.append(s)
 
             if not simulations:
                 logging.error("No simulations found. Exiting.")
                 sys.exit(1)
 
-        return cls(kwargs["title"], simulations)
+        # TODO: fix this
+        return cls(args.title, simulations)
 
-    def plot_hist_radius(self, chain, *args, **kwargs):
+    def plot_hist_radius(self, chain, args):
         for s in self.simulations:
-            s.plot_hist_radius(chain, *args, **kwargs)
+            s.plot_hist_radius(chain, args)
 
-    def plot_hist_length(self, chain, *args, **kwargs):
+    def plot_hist_length(self, chain, args):
         for s in self.simulations:
-            s.plot_hist_length(chain, *args, **kwargs)
+            s.plot_hist_length(chain, args)
 
-    def plot_sample_radius(self, chain, *args, **kwargs):
+    def plot_sample_radius(self, chain, args):
         for s in self.simulations:
-            s.plot_sample_radius(chain, *args, **kwargs)
+            s.plot_sample_radius(chain, args)
 
-    def plot_sample_length(self, chain, *args, **kwargs):
+    def plot_sample_length(self, chain, args):
         for s in self.simulations:
-            s.plot_sample_length(chain, *args, **kwargs)
+            s.plot_sample_length(chain, args)
 
     @plot_vs_2powN
     def plot_radius(self, chain):
@@ -367,14 +383,17 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--plot", action="append", dest="plots", default=[], help="Requested plots (available: %s)" % ", ".join(AVAILABLE_PLOTS))
     parser.add_argument("-b", "--bins", help="Number of bins in the histograms", default=30, type=int)
     parser.add_argument("-s", "--save", help="Save plots", action="store_true")
-    parser.add_argument("-n", "--no-display", help="Don't display plots", action="store_true")
+    parser.add_argument("-d", "--no-display", help="Don't display plots", action="store_true")
 
     parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
 
+    # TODO just put these in the files, seriously
     parser.add_argument("-t", "--title", default="Untitled", help="Simulation title")
-    parser.add_argument("-l", "--label", action="append", dest="labels", default=[], help="Chain label")
-    parser.add_argument("-e", "--expected-scale", help="Power of N for expected scale markers")
+    parser.add_argument("-n", "--name", action="append", dest="names", default=[], help="Chain name")
+
+    parser.add_argument("-e", "--exponent", help="Power of N for expected scale markers")
     parser.add_argument("-g", "--guess-parameter", type=float, default=1.0, help="Guess constant factor for scale function")
+    parser.add_argument("-l", "--log-log", help="Use log-log plot", action="store_true")
 
     args = parser.parse_args()
 
@@ -393,7 +412,7 @@ if __name__ == "__main__":
     # TODO: write chain names into PDB files (COMPND)
     #s = Simulation.from_glob("UIM/Ub", *args.files, **{"A":"ubiquitin", "B":"UIM"})
 
-    s = SimulationSet.from_dirlist(*args.dirs, root_dir=args.root_dir, title=args.title, labels=args.labels)
+    s = SimulationSet.from_dirlist(args)
 
     if s:
         for plot in args.plots:
