@@ -29,6 +29,7 @@ WRITE THESIS
 
 MAIL ROB
 
+* potential is now much bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct?
 * What happened to the constants in the DH calculation?
 * Units! Where do they come from? Are any conversions required for the linker components?
 * Is the flex move actually a valid extension of the model? Does the polymer test demonstrate that?
