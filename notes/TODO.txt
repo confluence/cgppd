@@ -2,6 +2,9 @@
 NOW
 --------------------------------------------------------------------------------
 
+* is the internal E maths right in the GPU version and the python implementation, or are we calculating the internal E twice?! should be j = i + ??
+* Surely it wouldn't match the CPU E if it were wrong.
+
 * running polymer tests at lower temperature to see if it makes any difference - remember that LJ is currently OFF. So we should be able to see a change (or not) soon.
 
 * use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
