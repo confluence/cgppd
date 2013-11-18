@@ -37,7 +37,8 @@ MAIL ROB
 * Kolinski & Skolnick and Liang & Wong both suggest a broader class of crankshaft moves which rotate more than one residue at a time
     * Liang & Wong use "crankshaft" for a two-bead rotation and call a one-bead rotation a "three-bead flip"
     * Kolinski & Skolnick discuss rotations of 1, 2 and 3 beads at a time
-* Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom. Keep the way it is for now; ask Rob.
+* Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom.
+* Thesis doesn't seem to mention per-replica translation and rotation amounts (check that they actually are calculated like that; mention it)
 
 --------------------------------------------------------------------------------
 SOON
