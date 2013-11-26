@@ -37,7 +37,8 @@ void TestTenReplicas::setUp()
 #endif
 
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
-    testboxdim = 118.4f;
+//     testboxdim = 118.4f;
+    testboxdim = 1000.0f;
 
 #if USING_CUDA
     cudaMalloc((void**)&ljp_t, LJArraySize);
@@ -76,7 +77,7 @@ void TestTenReplicas::testSanity()
         { -1.056291,  -1.056291},
         {-10.277430, -10.277432},
         { -7.577059,  -7.577060},
-        {  0.000106,   0.000106},
+        { -0.000079,  -0.000079},
         { -5.559506,  -5.559508},
         { -5.441210,  -5.441211},
         {-10.657519, -10.657518},

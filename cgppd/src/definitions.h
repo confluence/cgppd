@@ -95,7 +95,7 @@
         #define USING_CUDA 0
     #endif
 
-    #define COMPENSATE_KERNEL_SUM	  0
+    #define COMPENSATE_KERNEL_SUM	  false
 
     #ifdef EnableFlexibleLinkers
         #define FLEXIBLE_LINKS  1
@@ -178,6 +178,6 @@
         void GlutDisplay();
     #endif
 
-    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 0
+    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST true
 
 #endif /*DEFINITIONS_H_*/
