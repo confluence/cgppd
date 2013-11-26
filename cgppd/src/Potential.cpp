@@ -138,7 +138,7 @@ void Potential::kahan_sum(double &sum, const double i, double &c)
 {
     double y(i - c);
     double t(sum + y);
-    k.c = (t - sum) - y;
+    c = (t - sum) - y;
     sum = t;
 }
 #endif // COMPENSATE_KERNEL_SUM

@@ -5,15 +5,12 @@ NOW
 * is the internal E maths right in the GPU version and the python implementation, or are we calculating the internal E twice?! should be j = i + ??
 * Surely it wouldn't match the CPU E if it were wrong.
 
-* running polymer tests at lower temperature to see if it makes any difference - remember that LJ is currently OFF. So we should be able to see a change (or not) soon.
-
 * use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
 * make sure that the change has been made in all the options
 * potential test for repulsive LJ -- add options for no LJ / repulsive LJ to python script
 
 THINGS THAT PROBABLY NEED TO BE CHECKED
 
-* check if compensated summation explains the discrepancy between the reference conformation values in the thesis and the implementation.
 * fix chain processing
 * remove printing of old cruft about translation/rotation
 * 300k replica -- how is it found if there isn't one?!
@@ -64,7 +61,7 @@ MUTATIONS/WRAPPING
 TEST
 
 * stuff that's disabled
-    * Kahan sums
+    * Kahan sums -- sort of tested; no difference apparent
     * asynchronous CUDA
 
 POSTPROCESS
