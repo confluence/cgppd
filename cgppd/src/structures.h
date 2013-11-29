@@ -30,6 +30,7 @@
         float bound;
         int * waitingThreadCount;
         char prefix[256];
+        char title[256];
         FILE * fractionBound;
         FILE * boundConformations;
         pthread_mutex_t * waitingCounterMutex;
@@ -44,6 +45,7 @@
     struct moldata
     {
         char pdbfilename[256];
+        char name[256];
         float px;
         float py;
         float pz;
@@ -57,6 +59,7 @@
         moldata(): px(0), py(0), pz(0), translate(false), rx(0), ry(0), rz(0), ra(0), crowder(false)
         {
             memset(pdbfilename, 0, 256);
+            memset(name, 0, 256);
         }
     };
 
@@ -80,6 +83,7 @@
         int sampleStartsAfter;
         int checkpointFrequency;
         char prefix[256];
+        char title[256];
         char file[256];
         char logfile[256];
         bool inputFile;
@@ -108,6 +112,7 @@
             memset(prefix, 0, 256);
             memset(file, 0, 256);
             memset(logfile, 0, 256);
+            memset(title, 0, 256);
         }
     };
 

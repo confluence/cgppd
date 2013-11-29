@@ -27,13 +27,10 @@ int main(int argc, char **argv)
 #endif // LJ_LOOKUP_METHOD
 #endif // USING_CUDA
 
-#if COMPENSATE_KERNEL_SUM
-    LOG(ALWAYS, "\tKahan summation in kernels\n");
-#endif
-
-#if FLEXIBLE_LINKS
-    LOG(ALWAYS, "\tFlexible linkers\n");
-#endif
+    LOG(COMPENSATE_KERNEL_SUM, "\tKahan summation in kernels\n");
+    LOG(FLEXIBLE_LINKS, "\tFlexible linkers\n");
+    LOG(LJ_REPULSIVE, "\tLennard-Jones potentials always repulsive\n");
+    LOG(LJ_OFF, "\tLennard-Jones potentials off\n");
 
     int pid = int( getpid() );
 

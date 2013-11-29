@@ -201,6 +201,8 @@ void Simulation::init(int argc, char **argv, int pid)
         data[i].waitingThreadCount = &waitingThreads;
         memset(data[i].prefix, 0, 256);
         strcpy(data[i].prefix, parameters.prefix);
+        memset(data[i].title, 0, 256);
+        strcpy(data[i].title, parameters.title);
         data[i].fractionBound = fractionBoundFile;
         data[i].boundConformations = boundConformationsFile;
 
@@ -979,18 +981,10 @@ void Simulation::loadArgsFromFile()
         {
             moldata m;
             int result = 0;
+            char pos_flag;
 
-            if (line[0] == 't')
-            {
-                result = sscanf(line, "t(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
-                m.translate = true;
-            }
-
-            if (line[0] == 'p')
-            {
-                result = sscanf(line, "p(%f,%f,%f) r(%f,%f,%f,%f) %s", &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename);
-                m.translate = false;
-            }
+            result = sscanf(line, "%c(%f,%f,%f) r(%f,%f,%f,%f) %s %s", &pos_flag, &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename, m.name);
+            m.translate = (pos_flag == 't');
 
             if (result < 8)
             {
@@ -1063,13 +1057,25 @@ void Simulation::loadArgsFromFile()
             }
             else if (strcmp(key, "prefix") == 0)
             {
-                sprintf(parameters.prefix, "%s_%s_%d", value, CROWDING_NAME_SUFFIX, parameters.pid);
+                sprintf(parameters.prefix, "%s_%d", value, parameters.pid);
+            }
+            else if (strcmp(key, "title") == 0)
+            {
+                int length = 0;
+                length += sprintf(parameters.title + length, value, parameters.pid);
+                value = strtok(NULL," ");
+                while (value != NULL)
+                {
+                    length += sprintf(parameters.title + length, " %s", value, parameters.pid);
+                    value = strtok(NULL," ");
+                }
             }
             else {
                 LOG(WARN, "\tUnknown parameter: %s\n", key);
             }
         }
     }
+
     input.close();
 }
 
@@ -1130,6 +1136,19 @@ void Simulation::check_and_modify_parameters()
             LOG(WARN, "\tWARNING: Too many streams; setting equal to %d.\n", parameters.streams);
         }
     }
+
+    int length = strlen(parameters.prefix);
+#if REPULSIVE_CROWDING
+    length += sprintf(parameters.prefix + length, "_repcrowding");
+#endif
+
+#if LJ_REPULSIVE
+    length += sprintf(parameters.prefix + length, "_repLJ");
+#endif
+
+#if LJ_OFF
+    length += sprintf(parameters.prefix + length, "_LJoff");
+#endif
 
 }
 

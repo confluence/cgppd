@@ -11,6 +11,7 @@ sampleafter 1000
 boundary 100
 temperaturemax 300
 temperaturemin 288
+title Config file for unit tests
 
 files
 
@@ -23,8 +24,8 @@ files
 # r(x,y,z,a) = rotate about axis x,y,z by a in a clockwise manner
 # filename is the path to the file, can be relative to the executable or absolute
 
-p(45,45,45) r(0,1,0,3.142) data/application/ubq.pdb
-p(65,65,65) r(1,0,0,-3.142) data/application/uim.pdb
+p(45,45,45) r(0,1,0,3.142) data/application/ubq.pdb ubiquitin
+p(65,65,65) r(1,0,0,-3.142) data/application/uim.pdb UIM1
 
 crowders
 

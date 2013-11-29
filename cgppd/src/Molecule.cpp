@@ -10,6 +10,7 @@ linkCount(0), segmentCount(0), linkerCount(0), LJ(0), DH(0), update_LJ_and_DH(tr
 volume(0.0f)
 {
     memset(filename, 0, 256);
+    memset(name, 0, 256);
     memset(last_MC_move, 0, 256);
 }
 
@@ -68,6 +69,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     volume = m.volume;
     index = m.index;
     strcpy(filename, m.filename);
+    strcpy(name, m.name);
 
 #if FLEXIBLE_LINKS
     is_flexible = m.is_flexible;

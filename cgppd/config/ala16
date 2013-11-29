@@ -10,7 +10,8 @@ boundary 1000.0
 temperaturemax 500
 temperaturemin 240
 prefix ala16
+title Polyalanine (ala16) polymer test
 
 files
 
-p(0,0,0) r(0,0,0,0) data/polyalanine/ALA_16.pdb
+p(0,0,0) r(0,0,0,0) data/polyalanine/ALA_16.pdb 16-polyalanine

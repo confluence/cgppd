@@ -8,6 +8,7 @@ import os
 
 import re
 import math
+from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize
@@ -174,10 +175,10 @@ def plot_vs_2powN(func):
 
 
 class Simulation(object):
-    def __init__(self, name, chains, conformations):
+    def __init__(self, name, chains, temperatures):
         self.name = name
-        self.conformations = conformations
         self.chains = chains
+        self.temperatures = temperatures
         self._rms_length = {}
         self._rms_radius = {}
 
@@ -213,7 +214,7 @@ class Simulation(object):
     def from_summary(cls, filename, args):
         with open(filename) as summaryfile:
             summary = summaryfile.read()
-            conformations = []
+            temperatures = defaultdict(list)
 
             for s in re.split("sample", summary):
                 if not s:
@@ -228,16 +229,18 @@ class Simulation(object):
                     chain, length, radius = CHAIN.match(c).groups()
                     proteins[chain] = Protein(chain, float(length), float(radius))
 
-                conformations.append(Conformation(int(sample), float(temperature), float(potential), proteins))
+                temperatures[float(temperature)].append(Conformation(int(sample), float(temperature), float(potential), proteins))
 
             # TODO: get chains and name from PDB
             chains = dict(n.split(":") for n in args.names)
-            if not chains and conformations:
-                chains = dict((c, "chain %s" % c) for c in conformations[0].proteins)
 
             name = SUMMARYFILENAME.match(filename).group(1)
 
-            return cls(name, chains, conformations)
+            return cls(name, chains, temperatures)
+
+    @property
+    def conformations(self):
+        return [c for t in sorted(self.temperatures.keys()) for c in self.temperatures[t]]
 
     @plot_histogram
     def plot_hist_length(self, chain):
@@ -394,6 +397,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--exponent", help="Power of N for expected scale markers")
     parser.add_argument("-g", "--guess-parameter", type=float, default=1.0, help="Guess constant factor for scale function")
     parser.add_argument("-l", "--log-log", help="Use log-log plot", action="store_true")
+    parser.add_argument("-f", "--filter", type=float, help="Filter by temperature")
 
     args = parser.parse_args()
 

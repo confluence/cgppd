@@ -31,6 +31,8 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
         moldata mol = parameters.mdata[s];
         int mi = loadMolecule(mol.pdbfilename);
 
+        sprintf(molecules[mi].name, "%s", mol.name);
+
         if (mol.translate)
         {
             if (mol.px || mol.py || mol.pz) {
@@ -1055,7 +1057,7 @@ void Replica::sample(SimulationData * data, int current_step, float boundEnergyT
         char savename[256];
         memset(savename,0,256);
         sprintf(savename, "output/%s/pdb/sample_%d_%0.1fK_%5.2f.pdb", data->prefix, current_step, temperature, nonCrowderPotential);
-        saveAsSinglePDB(savename);
+        saveAsSinglePDB(savename, data->title);
 
         pthread_mutex_lock(data->writeFileMutex);
         fprintf(data->boundConformations, "%d; %0.5f (%0.5f); %0.1f\n%s\n", current_step, nonCrowderPotential, potential, temperature, savename);
@@ -1092,17 +1094,31 @@ void Replica::acceptance_ratio(FILE * acceptanceRatioFile)
     reject = 0;
 }
 
-void Replica::saveAsSinglePDB(const char *filename, bool skip_crowders)
+void Replica::saveAsSinglePDB(const char *filename, const char *title, bool skip_crowders)
 {
     FILE * output;
     output = fopen (filename,"w");
-    fprintf(output,"REMARK %s \n",filename);
+    fprintf(output,"REMARK filename: %s \n", filename);
+    fprintf(output,"REMARK title: %s \n", title);
     fprintf(output,"REMARK potential: %0.10f \n",float(potential));
     fprintf(output,"REMARK temperature: %5.1f \n",temperature);
+#if FLEXIBLE_LINKS
+    fprintf(output,"REMARK Flexible linkers are on \n");
+#endif
+#if REPULSIVE_CROWDING
+    fprintf(output,"REMARK Repulsive crowding is on \n");
+#endif
+#if LJ_REPULSIVE
+    fprintf(output,"REMARK Lennard-Jones potentials are repulsive \n");
+#endif
+#if LJ_OFF
+    fprintf(output,"REMARK Lennard-Jones potentials are off \n");
+#endif
 
     for (size_t i = 0;i < moleculeCount; i++)
     {
-        fprintf(output,"REMARK Molecule: %d\n",int(i));
+        fprintf(output,"REMARK Molecule: %d %s\n", int(i), molecules[i].name);
+        // TODO: probably remove these
         fprintf(output,"REMARK Rotation relative to input Q(w,x,y,z): %f %f %f %f\n",molecules[i].rotation.w,molecules[i].rotation.x,molecules[i].rotation.y,molecules[i].rotation.z);
         fprintf(output,"REMARK Centroid position P(x,y,z): %f %f %f\n",molecules[i].center.x,molecules[i].center.y,molecules[i].center.z);
     }
