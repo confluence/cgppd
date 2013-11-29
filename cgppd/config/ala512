@@ -10,7 +10,8 @@ boundary 1000.0
 temperaturemax 500
 temperaturemin 240
 prefix ala512
+title Polyalanine (ala512) polymer test
 
 files
 
-p(0,0,0) r(0,0,0,0) data/polyalanine/ALA_512.pdb
+p(0,0,0) r(0,0,0,0) data/polyalanine/ALA_512.pdb 512-polyalanine

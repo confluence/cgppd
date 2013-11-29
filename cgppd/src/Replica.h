@@ -56,7 +56,7 @@ public:
 
     int loadMolecule(const char *pdbfilename);
 
-    void saveAsSinglePDB(const char *filename, bool skip_crowders=true);
+    void saveAsSinglePDB(const char *filename, const char *title, bool skip_crowders=true);
 
     AminoAcids aminoAcids;
 

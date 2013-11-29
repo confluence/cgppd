@@ -123,6 +123,7 @@ public:
     float length;
 
     char filename[256];
+    char name[256];
     char last_MC_move[256];
 
     Vector3f translation; // TODO remove
