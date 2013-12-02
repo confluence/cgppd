@@ -98,7 +98,7 @@ def process_plot(plt, chain_name, plotted_value, args):
 
 def plot_histogram(func):
     def _plot_method(self, chain, args):
-        values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
+        values, graph_name, chain_name, xlabel, ylabel = func(self, chain, args)
         plotted_value = func.__name__[5:]
 
         title = "Distribution of %s %s" % (chain_name, graph_name)
@@ -117,7 +117,7 @@ def plot_histogram(func):
 
 def plot_vs_sample(func):
     def _plot_method(self, chain, args):
-        values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
+        values, graph_name, chain_name, xlabel, ylabel = func(self, chain, args)
         plotted_value = func.__name__[5:]
 
         title = "%s %s vs sample time" % (chain_name, graph_name)
@@ -136,7 +136,7 @@ def plot_vs_sample(func):
 
 def plot_vs_2powN(func):
     def _plot_method(self, chain, args):
-        values, graph_name, chain_name, xlabel, ylabel = func(self, chain)
+        values, graph_name, chain_name, xlabel, ylabel = func(self, chain, args)
         plotted_value = func.__name__[5:]
 
         title = " Root-mean-square %s %s" % (chain_name, graph_name)
@@ -243,7 +243,7 @@ class Simulation(object):
         return [c for t in sorted(self.temperatures.keys()) for c in self.temperatures[t]]
 
     @plot_histogram
-    def plot_hist_length(self, chain):
+    def plot_hist_length(self, chain, args):
         values = [c.proteins[chain].length for c in self.conformations]
         graph_name = "end-to-end length"
         chain_name = "%s %s" % (self.name, self.chains[chain])
@@ -253,7 +253,7 @@ class Simulation(object):
         return values, graph_name, chain_name, xlabel, ylabel
 
     @plot_histogram
-    def plot_hist_radius(self, chain):
+    def plot_hist_radius(self, chain, args):
         values = [c.proteins[chain].radius for c in self.conformations]
         graph_name = "radius of gyration"
         chain_name = "%s %s" % (self.name, self.chains[chain])
@@ -263,7 +263,7 @@ class Simulation(object):
         return values, graph_name, chain_name, xlabel, ylabel
 
     @plot_vs_sample
-    def plot_sample_length(self, chain):
+    def plot_sample_length(self, chain, args):
         values = [c.proteins[chain].length for c in self.conformations]
         graph_name = "end-to-end length"
         chain_name = "%s %s" % (self.name, self.chains[chain])
@@ -273,7 +273,7 @@ class Simulation(object):
         return values, graph_name, chain_name, xlabel, ylabel
 
     @plot_vs_sample
-    def plot_sample_radius(self, chain):
+    def plot_sample_radius(self, chain, args):
         values = [c.proteins[chain].radius for c in self.conformations]
         graph_name = "radius of gyration"
         chain_name = "%s %s" % (self.name, self.chains[chain])
@@ -354,7 +354,7 @@ class SimulationSet(object):
             s.plot_sample_length(chain, args)
 
     @plot_vs_2powN
-    def plot_radius(self, chain):
+    def plot_radius(self, chain, args):
         values = [s.rms_radius[chain] for s in self.simulations]
         graph_name = "radius of gyration"
         chain_name = self.simulations[0].chains[chain]
@@ -364,7 +364,7 @@ class SimulationSet(object):
         return values, graph_name, chain_name, xlabel, ylabel
 
     @plot_vs_2powN
-    def plot_length(self, chain):
+    def plot_length(self, chain, args):
         values = [s.rms_length[chain] for s in self.simulations]
         graph_name = "end-to-end length"
         chain_name = self.simulations[0].chains[chain]
