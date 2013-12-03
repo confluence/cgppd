@@ -397,7 +397,6 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--exponent", help="Power of N for expected scale markers")
     parser.add_argument("-g", "--guess-parameter", type=float, default=1.0, help="Guess constant factor for scale function")
     parser.add_argument("-l", "--log-log", help="Use log-log plot", action="store_true")
-    parser.add_argument("-f", "--filter", type=float, help="Filter by temperature")
 
     args = parser.parse_args()
 
