@@ -38,7 +38,8 @@ MAIL ROB
     * Liang & Wong use "crankshaft" for a two-bead rotation and call a one-bead rotation a "three-bead flip"
     * Kolinski & Skolnick discuss rotations of 1, 2 and 3 beads at a time
 * Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom.
-* Thesis doesn't seem to mention per-replica translation and rotation amounts (check that they actually are calculated like that; mention it)
+* Thesis doesn't seem to mention per-replica translation and rotation amounts -- YES IT DOES; p. 121
+* According to thesis, meta is a float3. It's actually float4 now. -- MENTIONED, p. 172
 
 --------------------------------------------------------------------------------
 SOON
