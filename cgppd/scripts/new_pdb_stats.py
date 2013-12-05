@@ -203,8 +203,8 @@ class SimulationSet(object):
             plt.savefig("change_my_name.png") # TODO
 
     def plot_histogram(self, datasets, args):
-        for ((name, temperature, chain_id), chains) in datasets:
-            for measurement in self.MEASUREMENTS:
+        for ((name, temperature, chain_id), chains) in datasets: #TODO slot in sim
+            for measurement in self.MEASUREMENTS: # TODO: maybe rearrange so this goes on the outside; put multiple graphs on the same plot
                 values = [getattr(c, measurement) for c in chains]
                 plt.hist(values, bins=30)
                 plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
@@ -215,8 +215,8 @@ class SimulationSet(object):
                 plt.close()
 
     def plot_samples(self, datasets, args):
-        for ((name, temperature, chain_id), chains) in datasets:
-            for measurement in self.MEASUREMENTS:
+        for ((temperature, chain_id), chains) in datasets: #TODO slot in sim
+            for measurement in self.MEASUREMENTS: # TODO: maybe rearrange so this goes on the outside; put multiple graphs on the same plot
                 values = [getattr(c, measurement) for c in chains]
                 plt.plot(values, bo)
                 plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
@@ -233,7 +233,7 @@ class SimulationSet(object):
     def all_plots(self, args):
         datasets = {}
 
-        for sim in self.simulations:
+        for sim in self.simulations: # these are ordered because of the way they were entered
             for t in sim.temperatures:
                 if args.temperatures and t not in args.temperatures:
                     continue
@@ -243,12 +243,15 @@ class SimulationSet(object):
                         if args.chains and c.chain_id not in args.chains:
                             continue
 
-                        key = (sim.N or sim.name, c.temperature, c.chain_id)
+                        key = (c.temperature, c.chain_id)
+                        #s_key = sim.N or sim.name # TODO we need to record N
 
                         if key not in datasets:
                             datasets[key] = []
+                        if not datasets[key]:
+                            datasets[key].append([])
 
-                        datasets[key].append(c)
+                        datasets[key][-1].append(c) # TODO check that this does the right thing TODO problem: this does not record N TODO: change it back to a dict and order at the other end?
 
         for plot in args.plots:
             plot_method = getattr(self, "plot_%s" % plot, None)
