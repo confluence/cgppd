@@ -81,13 +81,15 @@ class Temperature(object):
 
 
 class Simulation(object):
-    FILENAME = re.compile('output/(.*)/pdb/sample_(.*)_(.*)K_ *(.*).pdb')
+    FILENAME = re.compile('.*/pdb/sample_(.*)_(.*)K_ *(.*).pdb')
+    SUMMARYFILENAME = re.compile('.*?[^/]*?(\d*)(_.*)?/summary')
     ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
     SAMPLE = re.compile('(\d+) at (\d+\.\d+)K with potential (-?\d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
     CHAIN = re.compile('chain (.*) length (\d+\.\d+) radius (\d+\.\d+)')
 
-    def __init__(self, temperatures):
+    def __init__(self, temperatures, name, N=None):
         self.temperatures = temperatures # actually needs to be a dict
+        self.N = N
 
     @classmethod
     def write_summary(cls, filenames, summaryfilename, args):
@@ -95,7 +97,7 @@ class Simulation(object):
             for filename in filenames:
                 with open(filename) as pdbfile:
                     logging.debug("Parsing file '%s'..." % filename)
-                    name, sample_id, temperature, potential = cls.FILENAME.match(filename).groups()
+                    sample_id, temperature, potential = cls.FILENAME.match(filename).groups()
 
                     sample = Sample(int(sample_id), float(temperature), float(potential))
                     chain = None
@@ -119,6 +121,10 @@ class Simulation(object):
 
     @classmethod
     def from_summary(cls, filename, args):
+        m = SUMMARYFILENAME.match(filename)
+        name = m.group(1)
+        N = m.group(2) or None
+
         with open(filename) as summaryfile:
             summary = summaryfile.read()
             temperatures = {}
@@ -143,7 +149,7 @@ class Simulation(object):
 
                 temperatures[temperature].add_sample(sample)
 
-            return cls(temperatures)
+            return cls(temperatures, name, N)
 
     @property
     def temperatures_list(self):
@@ -157,6 +163,8 @@ def natural_sort(l):
 
 
 class SimulationSet(object):
+    MEASUREMENTS = ('length', 'radius')
+
     def __init__(self, simulations):
         self.simulations = simulations # list
 
@@ -187,36 +195,60 @@ class SimulationSet(object):
 
         return cls(simulations)
 
-    def _display_or_save_plot(self, figure):
+    def _display_or_save_plot(self, plt):
         if not args.no_display:
-            display(figure)
+            plt.show()
 
         if args.save:
-            figure.savefig("changemyname.png")
+            plt.savefig("change_my_name.png") # TODO
 
-    def plot_histogram(self, chains, args):
-        # split up by chain and measurement and temperature in here?
-        # maybe split it up outside and pass it in?
-        pass
+    def plot_histogram(self, datasets, args):
+        for ((name, temperature, chain_id), chains) in datasets:
+            for measurement in self.MEASUREMENTS:
+                values = [getattr(c, measurement) for c in chains]
+                plt.hist(values, bins=30)
+                plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
+                plt.xlabel(u"%s (Å)" % measurement)
+                plt.ylabel("Frequency (count)")
 
-    def plot_samples(self, chains, args):
-        # split up by chain and measurement and temperature in here
-        pass
+                self._display_or_save_plot(plt)
+                plt.close()
 
-    def plot_vs_N(self, chains, args):
-        # split up by chain and measurement and temperature in here
+    def plot_samples(self, datasets, args):
+        for ((name, temperature, chain_id), chains) in datasets:
+            for measurement in self.MEASUREMENTS:
+                values = [getattr(c, measurement) for c in chains]
+                plt.plot(values, bo)
+                plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
+                plt.xlabel("Sample time")
+                plt.ylabel(u"%s (Å)" % measurement)
+
+                self._display_or_save_plot(plt)
+                plt.close()
+
+    def plot_vs_N(self, datasets, args):
         # aggregate (or not) in here
         pass
 
     def all_plots(self, args):
-        # filter stuff here
-        chains = [c for sim in self.simulations for t in sim.temperatures for s in t.samples for c in s.chains]
+        datasets = {}
 
-        if args.chains:
-            chains = [c for c in chains if c.chain_id in args.chains]
+        for sim in self.simulations:
+            for t in sim.temperatures:
+                if args.temperatures and t not in args.temperatures:
+                    continue
 
-        if args.temperatures:
-            chains = [c for c in chains if c.temperature in args.temperatures]
+                for s in t.samples:
+                    for c in s.chains:
+                        if args.chains and c.chain_id not in args.chains:
+                            continue
+
+                        key = (sim.N or sim.name, c.temperature, c.chain_id)
+
+                        if key not in datasets:
+                            datasets[key] = []
+
+                        datasets[key].append(c)
 
         for plot in args.plots:
             plot_method = getattr(self, "plot_%s" % plot, None)
@@ -224,12 +256,10 @@ class SimulationSet(object):
             if not plot_method:
                 print "Unsupported plot type: %s" % plot
 
-            plot_method(args)
+            plot_method(datasets, args)
 
 
 PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("plot_"))
-MEASUREMENTS = ('length', 'radius')
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
@@ -239,9 +269,9 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--directory-prefix", help="Directory prefix")
 
     parser.add_argument("-p", "--plot", action="append", dest="plots", default=[], help="Select plot(s) (available: %s)" % ", ".join(PLOTS))
-    parser.add_argument("-m", "--measurement", action="append", dest="measurements", default=[], help="Select measurement(s) (available: %s)" % ", ".join(MEASUREMENTS))
+    parser.add_argument("-m", "--measurement", action="append", dest="measurements", default=[], help="Select measurement(s) (available: %s)" % ", ".join(SimulationSet.MEASUREMENTS))
     parser.add_argument("-c", "--chain", action="append", dest="chains", default=[], help="Select chain(s)")
-    parser.add_argument("-t", "--temperature", action="append", dest="temperatures", default=[], help="Select temperature(s)")
+    parser.add_argument("-t", "--temperature", action="append", type=float, dest="temperatures", default=[], help="Select temperature(s)")
     parser.add_argument("-a", "--aggregate", help="Aggregate temperatures (plot vs N only)", action="store_true")
 
     parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
