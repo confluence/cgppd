@@ -156,10 +156,40 @@ class Simulation(object):
         return [self.temperatures[t] for t in sorted(self.temperatures.keys())]
 
 
-def natural_sort(l):
-    convert = lambda text: int(text) if text.isdigit() else text.lower()
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
-    return sorted(l, key=alphanum_key)
+class Dataset(object):
+    def __init__(self, has_range):
+        self.data = {}
+        self._simulations = set()
+        self._chain_ids = set()
+        self._temperatures = set()
+        self.has_range = has_range
+
+    def natural_sort(l):
+        convert = lambda text: int(text) if text.isdigit() else text.lower()
+        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+        return sorted(l, key=alphanum_key)
+
+    def add_chain(self, simulation, chain_id, temperature, chain):
+        if key not in self.data:
+            self.data[key] = []
+        self.data[key].append(chain)
+
+        self._simulations.add(simulation)
+        self._chain_ids.add(chain_id)
+        self._temperatures.add(temperature)
+
+    @property
+    def simulations(self):
+        # either N or name
+        return sorted(list(self._simulations))
+
+    @property
+    def chain_ids(self):
+        return sorted(list(self._chain_ids))
+
+    @property
+    def temperatures(self):
+        return sorted(list(self._temperatures))
 
 
 class SimulationSet(object):
@@ -173,8 +203,8 @@ class SimulationSet(object):
         simulations = []
 
         if args.directory_prefix:
-            # Automatically select and order all directories in the root directory
-            dirs = natural_sort([d for d in os.listdir(args.root_dir) if d.startswith(args.directory_prefix)])
+            # Automatically select all directories in the root directory
+            dirs = [d for d in os.listdir(args.root_dir) if d.startswith(args.directory_prefix)]
         else:
             dirs = args.dirs
 
@@ -202,36 +232,45 @@ class SimulationSet(object):
         if args.save:
             plt.savefig("change_my_name.png") # TODO
 
-    def plot_histogram(self, datasets, args):
-        for ((name, temperature, chain_id), chains) in datasets: #TODO slot in sim
-            for measurement in self.MEASUREMENTS: # TODO: maybe rearrange so this goes on the outside; put multiple graphs on the same plot
-                values = [getattr(c, measurement) for c in chains]
-                plt.hist(values, bins=30)
-                plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
-                plt.xlabel(u"%s (Å)" % measurement)
-                plt.ylabel("Frequency (count)")
+    def plot_histogram(self, dataset, args):
+        for sim in dataset.simulations:
+            for chain_id in dataset.chain_ids:
+                for temperature in dataset.temperatures:
+                    chains = dataset.data[(sim, chain_id, temperature)]
+                    for measurement in self.MEASUREMENTS:
+                        values = [getattr(c, measurement) for c in chains]
+                        plt.hist(values, bins=30)
+                        plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
+                        plt.xlabel(u"%s (Å)" % measurement)
+                        plt.ylabel("Frequency (count)")
 
-                self._display_or_save_plot(plt)
-                plt.close()
+                        self._display_or_save_plot(plt)
+                        plt.close()
 
-    def plot_samples(self, datasets, args):
-        for ((temperature, chain_id), chains) in datasets: #TODO slot in sim
-            for measurement in self.MEASUREMENTS: # TODO: maybe rearrange so this goes on the outside; put multiple graphs on the same plot
-                values = [getattr(c, measurement) for c in chains]
-                plt.plot(values, bo)
-                plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
-                plt.xlabel("Sample time")
-                plt.ylabel(u"%s (Å)" % measurement)
+    def plot_samples(self, dataset, args):
+        for sim in dataset.simulations:
+            for chain_id in dataset.chain_ids:
+                for temperature in dataset.temperatures:
+                    chains = dataset.data[(sim, chain_id, temperature)]
+                    for measurement in self.MEASUREMENTS:
+                        values = [getattr(c, measurement) for c in chains]
+                        plt.plot(values, bo)
+                        plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
+                        plt.xlabel("Sample time")
+                        plt.ylabel(u"%s (Å)" % measurement)
 
-                self._display_or_save_plot(plt)
-                plt.close()
+                        self._display_or_save_plot(plt)
+                        plt.close()
 
-    def plot_vs_N(self, datasets, args):
+    def plot_vs_N(self, dataset, args):
         # aggregate (or not) in here
-        pass
+        if not dataset.has_range:
+            logging.error("This dataset does not have a range of residue sizes.")
+            sys.exit(1)
 
     def all_plots(self, args):
-        datasets = {}
+        has_range = all(s.N for s in self.simulations)
+        dataset = Dataset(has_range)
 
         for sim in self.simulations: # these are ordered because of the way they were entered
             for t in sim.temperatures:
@@ -243,15 +282,7 @@ class SimulationSet(object):
                         if args.chains and c.chain_id not in args.chains:
                             continue
 
-                        key = (c.temperature, c.chain_id)
-                        #s_key = sim.N or sim.name # TODO we need to record N
-
-                        if key not in datasets:
-                            datasets[key] = []
-                        if not datasets[key]:
-                            datasets[key].append([])
-
-                        datasets[key][-1].append(c) # TODO check that this does the right thing TODO problem: this does not record N TODO: change it back to a dict and order at the other end?
+                        dataset.add_chain(sim.N or sim.name, c.temperature, c.chain_id, c)
 
         for plot in args.plots:
             plot_method = getattr(self, "plot_%s" % plot, None)
@@ -259,7 +290,7 @@ class SimulationSet(object):
             if not plot_method:
                 print "Unsupported plot type: %s" % plot
 
-            plot_method(datasets, args)
+            plot_method(dataset, args)
 
 
 PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("plot_"))
