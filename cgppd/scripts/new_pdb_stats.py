@@ -157,40 +157,30 @@ class Simulation(object):
 
 
 class Dataset(object):
-    def __init__(self):
+    def __init__(self, simulation_set, args):
         self.data = {}
-        self._simulations = set()
-        self._chain_ids = set()
-        self._temperatures = set()
 
-    def natural_sort(l):
-        convert = lambda text: int(text) if text.isdigit() else text.lower()
-        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
-        return sorted(l, key=alphanum_key)
+        for sim in simulation_set.simulations:
+            for t in sim.temperatures_list:
+                if args.temperatures and t not in args.temperatures:
+                    continue
 
-    def add_chain(self, simulation, chain_id, temperature, chain):
-        key = (simulation, chain_id, temperature)
+                for s in t.samples:
+                    for c in s.chains:
+                        if args.chains and c.chain_id not in args.chains:
+                            continue
 
-        if key not in self.data:
-            self.data[key] = []
-        self.data[key].append(chain)
+                        key = (sim.N or sim.name, c.chain_id, c.temperature)
 
-        self._simulations.add(simulation)
-        self._chain_ids.add(chain_id)
-        self._temperatures.add(temperature)
+                        if key not in self.data:
+                            self.data[key] = []
+                        self.data[key].append(c)
 
-    @property
-    def simulations(self):
-        # either N or name
-        return sorted(list(self._simulations))
+        self.simulations, self.chain_ids, self.temperatures = [sorted(list(set(l))) for l in zip(*self.data.keys())]
 
-    @property
-    def chain_ids(self):
-        return sorted(list(self._chain_ids))
-
-    @property
-    def temperatures(self):
-        return sorted(list(self._temperatures))
+        self.measurements = set(simulation_set.MEASUREMENTS)
+        if args.measurements:
+            self.measurements &= set(args.measurements)
 
 
 class SimulationSet(object):
@@ -228,13 +218,13 @@ class SimulationSet(object):
             plt.savefig("change_my_name.png") # TODO
 
     def plot_histogram(self, dataset, args):
-        for sim in dataset.simulations:
-            for chain_id in dataset.chain_ids:
-                for temperature in dataset.temperatures:
-                    chains = dataset.data[(sim, chain_id, temperature)]
-                    for measurement in self.MEASUREMENTS:
-                        if args.measurements and measurement not in args.measurements:
-                            continue
+        for measurement in dataset.measurements:
+
+            for sim in dataset.simulations:
+                for chain_id in dataset.chain_ids:
+                    for temperature in dataset.temperatures:
+                        chains = dataset.data[(sim, chain_id, temperature)]
+
                         values = np.array([getattr(c, measurement) for c in chains])
                         plt.hist(values, bins=30)
                         plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
@@ -245,13 +235,13 @@ class SimulationSet(object):
                         plt.close()
 
     def plot_samples(self, dataset, args):
-        for sim in dataset.simulations:
-            for chain_id in dataset.chain_ids:
-                for temperature in dataset.temperatures:
-                    chains = dataset.data[(sim, chain_id, temperature)]
-                    for measurement in self.MEASUREMENTS:
-                        if args.measurements and measurement not in args.measurements:
-                            continue
+        for measurement in dataset.measurements:
+
+            for sim in dataset.simulations:
+                for chain_id in dataset.chain_ids:
+                    for temperature in dataset.temperatures:
+                        chains = dataset.data[(sim, chain_id, temperature)]
+
                         values = np.array([getattr(c, measurement) for c in chains])
                         plt.plot(values, 'bo')
                         plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
@@ -268,11 +258,9 @@ class SimulationSet(object):
             logging.error("This dataset does not have a range of residue sizes.")
             sys.exit(1)
 
-        for chain_id in dataset.chain_ids:
-            for temperature in dataset.temperatures: # TODO: optionally aggregate temperatures
-                for measurement in self.MEASUREMENTS:
-                    if args.measurements and measurement not in args.measurements:
-                        continue
+        for measurement in dataset.measurements:
+            for chain_id in dataset.chain_ids:
+                for temperature in dataset.temperatures: # TODO: optionally aggregate temperatures
 
                     values = []
 
@@ -306,19 +294,7 @@ class SimulationSet(object):
                     plt.close()
 
     def all_plots(self, args):
-        dataset = Dataset()
-
-        for sim in self.simulations:
-            for t in sim.temperatures_list:
-                if args.temperatures and t not in args.temperatures:
-                    continue
-
-                for s in t.samples:
-                    for c in s.chains:
-                        if args.chains and c.chain_id not in args.chains:
-                            continue
-
-                        dataset.add_chain(sim.N or sim.name, c.chain_id, c.temperature, c)
+        dataset = Dataset(self, args)
 
         for plot in args.plots:
             plot_method = getattr(self, "plot_%s" % plot, None)
