@@ -34,15 +34,15 @@ class Chain(object):
         self.residues = residues or []
 
     def add_residue(self, residue):
-        residues.append(residue)
+        self.residues.append(residue)
 
     def measure(self):
-        if length is None:
+        if self.length is None:
             start = self.residues[0].position
             end = self.residues[-1].position
             self.length = np.linalg.norm(end - start)
 
-        if radius is None:
+        if self.radius is None:
             mass = len(self.residues)
             centre_of_mass = np.array([r.position for r in self.residues]).mean(axis=0)
             # Avoid having to square unnecessary square roots by calculating squared distances with a dot product
@@ -82,7 +82,7 @@ class Temperature(object):
 
 class Simulation(object):
     FILENAME = re.compile('.*/pdb/sample_(.*)_(.*)K_ *(.*).pdb')
-    SUMMARYFILENAME = re.compile('.*?[^/]*?(\d*)(_.*)?/summary')
+    SUMMARYFILENAME = re.compile('.*?([^/]*?(\d*)(_.*)?)/summary')
     ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
     SAMPLE = re.compile('(\d+) at (\d+\.\d+)K with potential (-?\d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
     CHAIN = re.compile('chain (.*) length (\d+\.\d+) radius (\d+\.\d+)')
@@ -121,7 +121,7 @@ class Simulation(object):
 
     @classmethod
     def from_summary(cls, filename, args):
-        m = SUMMARYFILENAME.match(filename)
+        m = cls.SUMMARYFILENAME.match(filename)
         name = m.group(1)
         N = m.group(2) or None
 
@@ -157,12 +157,11 @@ class Simulation(object):
 
 
 class Dataset(object):
-    def __init__(self, has_range):
+    def __init__(self):
         self.data = {}
         self._simulations = set()
         self._chain_ids = set()
         self._temperatures = set()
-        self.has_range = has_range
 
     def natural_sort(l):
         convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -170,6 +169,8 @@ class Dataset(object):
         return sorted(l, key=alphanum_key)
 
     def add_chain(self, simulation, chain_id, temperature, chain):
+        key = (simulation, chain_id, temperature)
+
         if key not in self.data:
             self.data[key] = []
         self.data[key].append(chain)
@@ -202,17 +203,11 @@ class SimulationSet(object):
     def from_dirlist(cls, args):
         simulations = []
 
-        if args.directory_prefix:
-            # Automatically select all directories in the root directory
-            dirs = [d for d in os.listdir(args.root_dir) if d.startswith(args.directory_prefix)]
-        else:
-            dirs = args.dirs
-
-        for d in dirs:
+        for d in args.dirs:
             logging.info("Processing directory '%s'..." % d)
 
-            summaryfilename = "%s/%s/summary" % (args.root_dir, d)
-            sim_dir = "%s/%s/pdb" % (args.root_dir, d)
+            summaryfilename = "%s/summary" % d
+            sim_dir = "%s/pdb" % d
 
             if not os.path.isfile(summaryfilename):
                 if os.path.exists(sim_dir):
@@ -225,7 +220,7 @@ class SimulationSet(object):
 
         return cls(simulations)
 
-    def _display_or_save_plot(self, plt):
+    def _display_or_save_plot(self, plt, args):
         if not args.no_display:
             plt.show()
 
@@ -238,13 +233,15 @@ class SimulationSet(object):
                 for temperature in dataset.temperatures:
                     chains = dataset.data[(sim, chain_id, temperature)]
                     for measurement in self.MEASUREMENTS:
-                        values = [getattr(c, measurement) for c in chains]
+                        if args.measurements and measurement not in args.measurements:
+                            continue
+                        values = np.array([getattr(c, measurement) for c in chains])
                         plt.hist(values, bins=30)
                         plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
                         plt.xlabel(u"%s (Å)" % measurement)
                         plt.ylabel("Frequency (count)")
 
-                        self._display_or_save_plot(plt)
+                        self._display_or_save_plot(plt, args)
                         plt.close()
 
     def plot_samples(self, dataset, args):
@@ -253,27 +250,66 @@ class SimulationSet(object):
                 for temperature in dataset.temperatures:
                     chains = dataset.data[(sim, chain_id, temperature)]
                     for measurement in self.MEASUREMENTS:
-                        values = [getattr(c, measurement) for c in chains]
-                        plt.plot(values, bo)
+                        if args.measurements and measurement not in args.measurements:
+                            continue
+                        values = np.array([getattr(c, measurement) for c in chains])
+                        plt.plot(values, 'bo')
                         plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
                         plt.xlabel("Sample time")
                         plt.ylabel(u"%s (Å)" % measurement)
 
-                        self._display_or_save_plot(plt)
+                        self._display_or_save_plot(plt, args)
                         plt.close()
 
     def plot_vs_N(self, dataset, args):
-        # aggregate (or not) in here
-        if not dataset.has_range:
+        try:
+            xvalues = np.array([int(N) for N in dataset.simulations])
+        except TypeError:
             logging.error("This dataset does not have a range of residue sizes.")
             sys.exit(1)
 
-    def all_plots(self, args):
-        has_range = all(s.N for s in self.simulations)
-        dataset = Dataset(has_range)
+        for chain_id in dataset.chain_ids:
+            for temperature in dataset.temperatures: # TODO: optionally aggregate temperatures
+                for measurement in self.MEASUREMENTS:
+                    if args.measurements and measurement not in args.measurements:
+                        continue
 
-        for sim in self.simulations: # these are ordered because of the way they were entered
-            for t in sim.temperatures:
+                    values = []
+
+                    for N in dataset.simulations: # TODO should be sorted
+                        chains = dataset.data[(N, chain_id, temperature)]
+                        chain_values = np.array([getattr(c, measurement) for c in chains])
+                        values.append(np.sqrt(np.mean(chain_values**2)))
+
+                    plt.plot(xvalues, values, 'bo')
+
+                    if args.fit:
+                        power = reduce(lambda x, y: x/y, [float(n) for n in args.fit.split('/')])
+
+                        fitfunc = lambda p, N: p[0] * np.array(N) ** power # Target function
+                        errfunc = lambda p, N, y: fitfunc(p, N) - y # Distance to the target function
+                        p0 = [1.0] # Initial guess for the parameters
+                        p1, success = optimize.leastsq(errfunc, p0[:], args=(xvalues, values))
+
+                        print "A = %g" % p1[0]
+
+                        plt.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
+
+                    plt.title("%s root-mean-square %s at %s" % (chain_id, measurement, temperature)) # TODO: optionally aggregate temperatures
+                    plt.xlabel("Number of residues (count)")
+                    plt.ylabel(u"Average %s (Å)" % measurement)
+
+                    plt.xscale('log', basex=2)
+                    plt.yscale('log')
+
+                    self._display_or_save_plot(plt, args)
+                    plt.close()
+
+    def all_plots(self, args):
+        dataset = Dataset()
+
+        for sim in self.simulations:
+            for t in sim.temperatures_list:
                 if args.temperatures and t not in args.temperatures:
                     continue
 
@@ -282,7 +318,7 @@ class SimulationSet(object):
                         if args.chains and c.chain_id not in args.chains:
                             continue
 
-                        dataset.add_chain(sim.N or sim.name, c.temperature, c.chain_id, c)
+                        dataset.add_chain(sim.N or sim.name, c.chain_id, c.temperature, c)
 
         for plot in args.plots:
             plot_method = getattr(self, "plot_%s" % plot, None)
@@ -299,14 +335,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
 
-    parser.add_argument("-r", "--root-dir", default=".", help="Root directory")
-    parser.add_argument("-d", "--directory-prefix", help="Directory prefix")
-
     parser.add_argument("-p", "--plot", action="append", dest="plots", default=[], help="Select plot(s) (available: %s)" % ", ".join(PLOTS))
     parser.add_argument("-m", "--measurement", action="append", dest="measurements", default=[], help="Select measurement(s) (available: %s)" % ", ".join(SimulationSet.MEASUREMENTS))
     parser.add_argument("-c", "--chain", action="append", dest="chains", default=[], help="Select chain(s)")
     parser.add_argument("-t", "--temperature", action="append", type=float, dest="temperatures", default=[], help="Select temperature(s)")
     parser.add_argument("-a", "--aggregate", help="Aggregate temperatures (plot vs N only)", action="store_true")
+    parser.add_argument("-f", "--fit", help="Attempt to fit values to function with the provided exponent (plot vs N only)")
 
     parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
     parser.add_argument("-s", "--save", help="Save plots", action="store_true")
