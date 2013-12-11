@@ -8,6 +8,7 @@ import os
 
 import re
 import math
+import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize
@@ -82,13 +83,14 @@ class Temperature(object):
 
 class Simulation(object):
     FILENAME = re.compile('.*/pdb/sample_(.*)_(.*)K_ *(.*).pdb')
-    SUMMARYFILENAME = re.compile('.*?([^/]*?(\d*)(_.*)?)/summary')
+    NAME = re.compile('(\d*)$')
     ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
     SAMPLE = re.compile('(\d+) at (\d+\.\d+)K with potential (-?\d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
     CHAIN = re.compile('chain (.*) length (\d+\.\d+) radius (\d+\.\d+)')
 
     def __init__(self, temperatures, name, N=None):
         self.temperatures = temperatures # actually needs to be a dict
+        self.name = name
         self.N = N
 
     @classmethod
@@ -121,9 +123,8 @@ class Simulation(object):
 
     @classmethod
     def from_summary(cls, filename, args):
-        m = cls.SUMMARYFILENAME.match(filename)
-        name = m.group(1)
-        N = m.group(2) or None
+        name = filename.split('/')[-2].split("_")[0]
+        N = cls.NAME.search(name).group(1) or None
 
         with open(filename) as summaryfile:
             summary = summaryfile.read()
@@ -178,6 +179,11 @@ class Dataset(object):
 
         self.simulations, self.chain_ids, self.temperatures = [sorted(list(set(l))) for l in zip(*self.data.keys())]
 
+        num_t = len(self.temperatures)
+        dimy = np.ceil(num_t**0.5)
+        dimx = np.ceil(num_t/dimy)
+        self.dimx, self.dimy = int(dimx), int(dimy)
+
         self.measurements = set(simulation_set.MEASUREMENTS)
         if args.measurements:
             self.measurements &= set(args.measurements)
@@ -210,46 +216,70 @@ class SimulationSet(object):
 
         return cls(simulations)
 
-    def _display_or_save_plot(self, plt, args):
-        if not args.no_display:
-            plt.show()
-
-        if args.save:
-            plt.savefig("change_my_name.png") # TODO
+    def _display_plot(self, plt, fig, title, xlabel, ylabel):
+        plt.tight_layout()
+        fig.suptitle(title, fontsize=14)
+        fig.text(0.5, 0.02, xlabel, ha='center', va='center')
+        fig.text(0.02, 0.5, ylabel, ha='center', va='center', rotation='vertical')
+        plt.show()
+        plt.close()
 
     def plot_histogram(self, dataset, args):
         for measurement in dataset.measurements:
 
             for sim in dataset.simulations:
                 for chain_id in dataset.chain_ids:
-                    for temperature in dataset.temperatures:
+                    fig = plt.figure()
+
+                    for i, temperature in enumerate(dataset.temperatures):
+                        ax = fig.add_subplot(dataset.dimy, dataset.dimx, i + 1)
+
                         chains = dataset.data[(sim, chain_id, temperature)]
 
                         values = np.array([getattr(c, measurement) for c in chains])
-                        plt.hist(values, bins=30)
-                        plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
-                        plt.xlabel(u"%s (Å)" % measurement)
-                        plt.ylabel("Frequency (count)")
+                        ax.hist(values)
 
-                        self._display_or_save_plot(plt, args)
-                        plt.close()
+                        ax.set_title("%sK" % temperature)
+
+                        labels = ax.get_xticklabels()
+                        for label in labels:
+                            label.set_rotation(30)
+                            label.set_fontsize(10)
+
+                    title = "%s %s" % (chain_id, measurement)
+                    xlabel = u"%s (Å)" % measurement
+                    ylabel = "Frequency (count)"
+
+
+                    self._display_plot(plt, fig, title, xlabel, ylabel)
 
     def plot_samples(self, dataset, args):
         for measurement in dataset.measurements:
 
             for sim in dataset.simulations:
                 for chain_id in dataset.chain_ids:
-                    for temperature in dataset.temperatures:
+                    fig = plt.figure()
+
+                    for i, temperature in enumerate(dataset.temperatures):
+                        ax = fig.add_subplot(dataset.dimy, dataset.dimx, i + 1)
+
                         chains = dataset.data[(sim, chain_id, temperature)]
 
                         values = np.array([getattr(c, measurement) for c in chains])
-                        plt.plot(values, 'bo')
-                        plt.title("%s %s at %sK" % (chain_id, measurement, temperature))
-                        plt.xlabel("Sample time")
-                        plt.ylabel(u"%s (Å)" % measurement)
+                        ax.plot(values, 'bo')
 
-                        self._display_or_save_plot(plt, args)
-                        plt.close()
+                        ax.set_title("%sK" % temperature)
+
+                        labels = ax.get_xticklabels()
+                        for label in labels:
+                            label.set_rotation(30)
+                            label.set_fontsize(10)
+
+                    title = "%s %s" % (chain_id, measurement)
+                    xlabel = "Sample time"
+                    ylabel = u"%s (Å)" % measurement
+
+                    self._display_plot(plt, fig, title, xlabel, ylabel)
 
     def plot_vs_N(self, dataset, args):
         try:
@@ -260,14 +290,36 @@ class SimulationSet(object):
 
         for measurement in dataset.measurements:
             for chain_id in dataset.chain_ids:
-                for temperature in dataset.temperatures: # TODO: optionally aggregate temperatures
+                values_per_temperature = []
 
+                if args.aggregate: # aggregate all temperatures
                     values = []
 
-                    for N in dataset.simulations: # TODO should be sorted
-                        chains = dataset.data[(N, chain_id, temperature)]
+                    for N in dataset.simulations:
+                        chains = [c for t in dataset.temperatures for c in dataset.data[(N, chain_id, t)]]
                         chain_values = np.array([getattr(c, measurement) for c in chains])
                         values.append(np.sqrt(np.mean(chain_values**2)))
+
+                    values_per_temperature.append((None, values))
+
+                else:
+                    for temperature in dataset.temperatures:
+                        values = []
+
+                        for N in dataset.simulations:
+                            chains = dataset.data[(N, chain_id, temperature)]
+                            chain_values = np.array([getattr(c, measurement) for c in chains])
+                            values.append(np.sqrt(np.mean(chain_values**2)))
+
+                        values_per_temperature.append((temperature, values))
+
+                fig = plt.figure()
+
+                for i, (temperature, values) in enumerate(values_per_temperature):
+                    if temperature is not None:
+                        ax = fig.add_subplot(dataset.dimy, dataset.dimx, i + 1)
+                    else:
+                        ax = fig.add_subplot(1, 1, i + 1)
 
                     plt.plot(xvalues, values, 'bo')
 
@@ -281,17 +333,21 @@ class SimulationSet(object):
 
                         print "A = %g" % p1[0]
 
-                        plt.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
+                        ax.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
 
-                    plt.title("%s root-mean-square %s at %s" % (chain_id, measurement, temperature)) # TODO: optionally aggregate temperatures
-                    plt.xlabel("Number of residues (count)")
-                    plt.ylabel(u"Average %s (Å)" % measurement)
+                        if temperature is not None:
+                            ax.set_title("%sK" % temperature)
+                        else:
+                            ax.set_title("All temperatures (%sK - %sK)" % (dataset.temperatures[0], dataset.temperatures[-1]))
 
-                    plt.xscale('log', basex=2)
-                    plt.yscale('log')
+                        ax.set_xscale('log', basex=2) # TODO: investigate using the loglog function instead; maybe add an option for it
+                        ax.set_yscale('log')
 
-                    self._display_or_save_plot(plt, args)
-                    plt.close()
+                title = "%s root-mean-square %s" % (chain_id, measurement)
+                xlabel = "Number of residues (count)"
+                ylabel = u"Average %s (Å)" % measurement
+
+                self._display_plot(plt, fig, title, xlabel, ylabel)
 
     def all_plots(self, args):
         dataset = Dataset(self, args)
@@ -301,6 +357,7 @@ class SimulationSet(object):
 
             if not plot_method:
                 print "Unsupported plot type: %s" % plot
+                sys.exit(1)
 
             plot_method(dataset, args)
 
@@ -319,8 +376,6 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--fit", help="Attempt to fit values to function with the provided exponent (plot vs N only)")
 
     parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
-    parser.add_argument("-s", "--save", help="Save plots", action="store_true")
-    parser.add_argument("-n", "--no-display", help="Don't display plots", action="store_true")
 
     args = parser.parse_args()
 
