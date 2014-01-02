@@ -57,11 +57,14 @@
 
     // these are used for linker validation
     #define LJ_OFF false
-    #define LJ_REPULSIVE false
+    #define LJ_REPULSIVE true
+    #define LJ_SIGMA_SCALING_FACTOR 0.5f // by default, average the two radii
 
     #if LJ_REPULSIVE
         #undef e0
         #define e0  0.0001f // k_b T
+        #undef LJ_SIGMA_SCALING_FACTOR
+        #define LJ_SIGMA_SCALING_FACTOR 0.25f
     #endif
 
     #if LJ_OFF

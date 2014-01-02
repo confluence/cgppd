@@ -14,7 +14,7 @@ double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &
     double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
 
     // sigmaij = (sigmai + sigmaj) / 2
-    double sigmaij(0.5f * (ri.vanderWaalRadius + rj.vanderWaalRadius));
+    double sigmaij(LJ_SIGMA_SCALING_FACTOR * (ri.vanderWaalRadius + rj.vanderWaalRadius));
     double LJtmp(powf(sigmaij / r, 6.0f)); // (sigmaij/r)^6
 
     // if attractive interactions (Eij < 0), or repulsive interactions (Eij > 0) and r >= r0ij:
