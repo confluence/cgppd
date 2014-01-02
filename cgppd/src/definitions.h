@@ -59,7 +59,7 @@
     #define DEBUG_LENGTH false
     #define DEBUG_BOUNDARY false
     #define INFO_POTENTIAL false
-    #define DEBUG_POTENTIAL false
+    #define DEBUG_POTENTIAL true
     #define DEBUG_LOCAL false
     #define DEBUG_FLEX false
     #define DEBUG_LJ false
