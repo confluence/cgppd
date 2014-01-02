@@ -2,10 +2,9 @@
 2g33_full.vdb
 .*\.kate-swp
 .*~
-.*/obj/.*
-.*/output/.*
-.*/output_pdb/.*
+obj/.*
+output/.*
 .*\.cubin
-^cgppd/cgppd$
-^cgppd/test$
+cgppd$
+test$
 .*\.d
