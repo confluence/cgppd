@@ -117,7 +117,7 @@ class Simulation(object):
                             chain = None
 
                     summaryfile.write(str(sample))
-                    for chain in sample.chains.itervalues():
+                    for chain in sample.chains:
                         chain.measure()
                         summaryfile.write(str(chain))
 
