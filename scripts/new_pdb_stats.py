@@ -52,7 +52,7 @@ class Chain(object):
 
 
     def __str__(self):
-        return "chain %s length %f radius %f" % (self.chain_id, self.length, self.radius)
+        return "chain %s length %f radius %f\n" % (self.chain_id, self.length, self.radius)
 
 
 class Sample(object):
@@ -66,7 +66,7 @@ class Sample(object):
         self.chains.append(chain)
 
     def __str__(self):
-        return "sample %d at %fK with potential %f" % (self.sample_id, self.temperature, self.potential)
+        return "sample %d at %fK with potential %f\n" % (self.sample_id, self.temperature, self.potential)
 
 
 class Temperature(object):
@@ -333,7 +333,7 @@ class SimulationSet(object):
                         p0 = [1.0] # Initial guess for the parameters
                         p1, success = optimize.leastsq(errfunc, p0[:], args=(xvalues, values))
 
-                        print "A = %g" % p1[0]
+                        logging.debug("A = %g" % p1[0])
 
                         ax.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
 
@@ -354,11 +354,14 @@ class SimulationSet(object):
     def all_plots(self, args):
         dataset = Dataset(self, args)
 
+        if not args.plots:
+            logging.info("No plots selected. Preprocessing only.") 
+
         for plot in args.plots:
             plot_method = getattr(self, "plot_%s" % plot, None)
 
             if not plot_method:
-                print "Unsupported plot type: %s" % plot
+                logging.warn("Unsupported plot type: %s" % plot)
                 sys.exit(1)
 
             plot_method(dataset, args)
