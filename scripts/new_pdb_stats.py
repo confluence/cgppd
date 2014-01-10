@@ -206,11 +206,13 @@ class SimulationSet(object):
             sim_dir = "%s/pdb" % d
 
             if not os.path.isfile(summaryfilename):
+		logging.info("Writing new summary file...")
                 if os.path.exists(sim_dir):
                     files = glob.glob("%s/*" % sim_dir)
                     Simulation.write_summary(files, summaryfilename, args)
 
             if os.path.isfile(summaryfilename):
+		logging.info("Loading summary file...")
                 s = Simulation.from_summary(summaryfilename, args)
                 simulations.append(s)
 
@@ -375,11 +377,13 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--aggregate", help="Aggregate temperatures (plot vs N only)", action="store_true")
     parser.add_argument("-f", "--fit", help="Attempt to fit values to function with the provided exponent (plot vs N only)")
 
-    parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="store_true")
+    parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="count")
 
     args = parser.parse_args()
 
-    if args.verbose:
+    if args.verbose > 1:
+	logging.basicConfig(level=logging.DEBUG)
+    elif args.verbose:
         logging.basicConfig(level=logging.INFO)
 
     s = SimulationSet.from_dirlist(args)
