@@ -3,7 +3,7 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 * fix cuda-less build and print some output of potential breakdown for analysis
-* make graphs of LJ-rep simylations with smaller sigma
+* make graphs of LJ-rep simulations with smaller sigma
     * should we try crankshaft moves with more residues to improve these simulations?
 * start diubiquitin simulations (two molecules, one molecule, with and without fake side chain made from alanine)
 * redo Ian's tail/no tail simulations with flexible tail; replicate post-processing used in original thesis
