@@ -88,7 +88,9 @@ void TestReplica::testCPUandGPUPotential()
 #endif // USING_CUDA
 
     child_replica.calculate_rigid_potential_only = true;
+#if USING_CUDA
     child_replica.ReplicaDataToDevice();
+#endif // USING_CUDA
 
 #if !LJ_REPULSIVE && !LJ_OFF
     double expected_rigid_potential[6] = {-0.080765, -0.212940, 0.000000, -0.000000, 0.000000, -0.293705};
