@@ -57,7 +57,7 @@
 
     // these are used for linker validation
     #define LJ_OFF false
-    #define LJ_REPULSIVE true
+    #define LJ_REPULSIVE false
     #define LJ_SIGMA_SCALING_FACTOR 0.5f // by default, average the two radii
 
     #if LJ_REPULSIVE
