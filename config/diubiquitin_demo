@@ -14,5 +14,4 @@ prefix diubiquitin_demo
 files
 
 t(0,0,0) r(0,0,0,0) data/application/ubq.pdb
-t(15.65679527, -29.73593464, 22.60611406) r(-0.29920657, 0.47262495, 0.82891561, 1.43721788092) data/application/ubq.pdb
-
+t(6.51253211, -12.36882937, 9.40314038) r(-0.29920657, 0.47262495, 0.82891561, 1.43721788092) data/application/ubq.pdb
