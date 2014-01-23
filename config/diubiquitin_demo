@@ -13,6 +13,6 @@ prefix diubiquitin_demo
 
 files
 
-p(80,80,80) r(0,0,0,0) data/application/ubq_flex.pdb
-p(80,120,80) r(0,1,0,3.142) data/application/ubq_flex.pdb
+p(0,0,0) r(0,0,0,0) data/application/ubq.pdb
+t(-8.44538293, 16.03976743, -12.19389323) r(-0.29920657, 0.47262495, 0.82891561, 1.70437477267) data/application/ubq.pdb
 
