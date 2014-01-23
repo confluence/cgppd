@@ -60,9 +60,9 @@ rot_matrix = np.array([[a*a+b*b-c*c-d*d, 2*(b*c-a*d), 2*(b*d+a*c)],
 rot_v_s = np.dot(rot_matrix, v_s)
 print "rot_v_s %s" % rot_v_s
 
-# calculate translation vector: end of rotated tail -> binding site
+# calculate translation vector: end of rotated tail -> binding site (-v_t!)
 
-trans = v_t - rot_v_s
+trans = -v_t - rot_v_s
 
 print "trans %s" % trans
 
