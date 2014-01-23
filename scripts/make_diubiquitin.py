@@ -42,8 +42,8 @@ print "v_s %s" % v_s
 A = np.cross(v_s, v_t)
 axis = A/np.linalg.norm(A)
 
-cos_theta = np.dot(v_s, v_t) / (np.linalg.norm(v_s) * np.linalg.norm(v_t))
-theta = np.arccos(cos_theta)
+sin_theta = np.linalg.norm(A) / (np.linalg.norm(v_s) * np.linalg.norm(v_t))
+theta = np.arcsin(sin_theta)
 
 print "axis %s theta %s" % (axis, theta)
 
