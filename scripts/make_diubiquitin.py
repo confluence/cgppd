@@ -66,9 +66,12 @@ trans = v_t - rot_v_s
 
 print "trans %s" % trans
 
-# add padding of 8.8 A in the same direction
+# add padding of 3.8 A in the same direction
 
-padding = 8.8 * trans/np.linalg.norm(trans)
+padding = 3.8 * (trans/np.linalg.norm(trans))
+
+print "padding %s" % padding
+
 trans += padding
 
 print "trans %s" % trans
