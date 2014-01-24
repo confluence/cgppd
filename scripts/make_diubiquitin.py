@@ -20,56 +20,43 @@ with open(sys.argv[1]) as pdbfile:
         ubiquitin.append(np.array((float(x), float(y), float(z))))
 
 centre = sum(ubiquitin)/float(len(ubiquitin))
-print "centre %s" % centre
 end = ubiquitin[76 - 1]
-print "end %s" % end
-lys_48 = ubiquitin[48 - 1]
-print "lys 48 %s" % lys_48
 
-# target vector = binding site -> centre
+binding_sites = {
+    "LYS 48": ubiquitin[48 - 1],
+    "LYS 63": ubiquitin[63 - 1],
+    "MET 1": ubiquitin[1 - 1],
+}
 
-v_t = centre - lys_48
+for sitename, site in binding_sites.iteritems():
+    # target vector = binding site -> centre
 
-print "v_t %s" % v_t
+    v_t = centre - site
 
-# starting vector = centre -> end of tail
+    # starting vector = centre -> end of tail
 
-v_s = end - centre
+    v_s = end - centre
 
-print "v_s %s" % v_s
+    # calculate rotation axis and angle from these vectors
 
-# calculate rotation axis and angle from these vectors
+    A = np.cross(v_s, v_t)
+    axis = A/np.linalg.norm(A)
 
-A = np.cross(v_s, v_t)
-axis = A/np.linalg.norm(A)
+    sin_theta = np.linalg.norm(A) / (np.linalg.norm(v_s) * np.linalg.norm(v_t))
+    theta = np.arcsin(sin_theta)
 
-sin_theta = np.linalg.norm(A) / (np.linalg.norm(v_s) * np.linalg.norm(v_t))
-theta = np.arcsin(sin_theta)
+    # apply rotation to end of tail (relative to centre; i.e. v_s)
 
-print "axis %s theta %s" % (axis, theta)
+    rot_v_s = np.array(vector(v_s).rotate(theta, axis))
 
-# apply rotation to end of tail (relative to centre; i.e. v_s)
+    # calculate translation vector: end of rotated tail -> binding site (-v_t!)
 
-rot_v_s = np.array(vector(v_s).rotate(theta, axis))
+    trans = -v_t - rot_v_s
 
-print "rot_v_s %s" % rot_v_s
+    # add padding of 3.8 A in the same direction
 
-# calculate translation vector: end of rotated tail -> binding site (-v_t!)
+    trans += 3.8 * (trans/np.linalg.norm(trans))
 
-trans = -v_t - rot_v_s
+    # output translation and rotation
 
-print "trans %s" % trans
-
-# add padding of 3.8 A in the same direction
-
-padding = 3.8 * (trans/np.linalg.norm(trans))
-
-print "padding %s" % padding
-
-trans += padding
-
-print "trans %s" % trans
-
-# output translation and rotation
-
-print "LYS 48: translation %s rotation axis %s theta %s" % (trans, axis, theta)
+    print "%s: translation %s rotation axis %s theta %s" % (sitename, trans, axis, theta)
