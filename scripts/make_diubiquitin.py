@@ -3,6 +3,7 @@
 import sys
 import numpy as np
 import re
+from visual import vector
 
 ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z ]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
 
@@ -49,15 +50,8 @@ print "axis %s theta %s" % (axis, theta)
 
 # apply rotation to end of tail (relative to centre; i.e. v_s)
 
-a = np.cos(theta/2)
-b,c,d = -axis * np.sin(theta/2)
-rot_matrix = np.array([[a*a+b*b-c*c-d*d, 2*(b*c-a*d), 2*(b*d+a*c)],
-                     [2*(b*c+a*d), a*a+c*c-b*b-d*d, 2*(c*d-a*b)],
-                     [2*(b*d-a*c), 2*(c*d+a*b), a*a+d*d-b*b-c*c]])
+rot_v_s = np.array(vector(v_s).rotate(theta, axis))
 
-
-
-rot_v_s = np.dot(rot_matrix, v_s)
 print "rot_v_s %s" % rot_v_s
 
 # calculate translation vector: end of rotated tail -> binding site (-v_t!)

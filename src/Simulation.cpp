@@ -732,11 +732,11 @@ void Simulation::closeSamplingFiles()
 
 void Simulation::printHelp()
 {
-    cout << "Usage: cgppd -f <filename> [-c] [-h] [-p] [-q] [-t x] [-s x] [-g x] [-m x ] [-a x] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
+    cout << "Usage: cgppd -f <filename> [-h] [-p] [-q] [-v] [-t x] [-s x] [-g x] [-m x ] [-a x] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
     cout << "\t-h|--help: show this dialog" << endl;
     cout << "\t-f|--file <file>: Input config file" << endl;
     cout << "\t-p|--preview:        use the open GL preview of this configuration, performs no simulation" << endl;
-    cout << "\t-q|--nosim:       Do everything except the simulation (for use with -v)" << endl;
+    cout << "\t-q|--nosim:       Do everything except the simulation (for use with -p)" << endl;
     cout << "The following values override those in the config file" << endl;
     cout << "\t-t|--threads x:  The number of CPU/pthreads to use" << endl;
     cout << "\t-s|--streams x:  The number of CUDA Streams" << endl;
