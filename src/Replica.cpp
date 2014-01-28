@@ -125,8 +125,8 @@ void Replica::init_child_replica(const Replica& ir, const int index, const doubl
 #if USING_CUDA
 void Replica::setup_CUDA(float * device_LJ_potentials)
 {
-        device_LJPotentials = device_LJ_potentials;
-        ReplicaDataToDevice();
+    device_LJPotentials = device_LJ_potentials;
+    ReplicaDataToDevice();
 }
 
 void Replica::teardown_CUDA()
@@ -776,7 +776,7 @@ void Replica::ReplicaDataToDevice()
 
 
 // cant stream as the amount of stuff is larger than pagable memory
-#if 	CUDA_STREAMS
+#if CUDA_STREAMS
     cudaMemcpyAsync(device_float4_residuePositions, host_float4_residuePositions, sizeof(float4)*paddedSize, cudaMemcpyHostToDevice,cudaStream);
     cudaStreamSynchronize(cudaStream);
 #else
