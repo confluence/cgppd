@@ -44,16 +44,16 @@ int main(int argc, char **argv)
     }
 #endif
 
+#if PRINT_STARTING_PDB
+    char start_pdb_filename[256];
+    memset(start_pdb_filename, 0, 256);
+    sprintf(start_pdb_filename, "%s_start.pdb", simulation.parameters.prefix);
+    simulation.initialReplica.saveAsSinglePDB(start_pdb_filename, simulation.parameters.title);
+#endif
+
     if (!simulation.parameters.skipsimulation)
     {
         simulation.run();
-    }
-    else
-    {
-        char start_pdb_filename[256];
-        memset(start_pdb_filename, 0, 256);
-        sprintf(start_pdb_filename, "%s_start.pdb", simulation.parameters.prefix);
-        simulation.initialReplica.saveAsSinglePDB(start_pdb_filename, simulation.parameters.title);
     }
 
 #if GLVIS

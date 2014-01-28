@@ -47,23 +47,23 @@
     // code things
 //     #define VERBOSE_THREAD_LOGGING 1
 
-    #define ALWAYS   true
+    #define ALWAYS   1
 
-    #define ERROR   true
-    #define WARN   true
-    #define INFO    true
-    #define DEBUG   true
+    #define ERROR   1
+    #define WARN   1
+    #define INFO    1
+    #define DEBUG   1
 
-    #define DEBUG_PARSING false
-    #define DEBUG_MC false
-    #define DEBUG_LENGTH false
-    #define DEBUG_BOUNDARY false
-    #define INFO_POTENTIAL false
-    #define DEBUG_POTENTIAL false
-    #define DEBUG_LOCAL false
-    #define DEBUG_FLEX false
-    #define DEBUG_LJ false
-    #define DEBUG_CUDA false
+    #define DEBUG_PARSING 0
+    #define DEBUG_MC 0
+    #define DEBUG_LENGTH 0
+    #define DEBUG_BOUNDARY 0
+    #define INFO_POTENTIAL 0
+    #define DEBUG_POTENTIAL 0
+    #define DEBUG_LOCAL 0
+    #define DEBUG_FLEX 0
+    #define DEBUG_LJ 0
+    #define DEBUG_CUDA 0
 
     #define LOG(level, ...) \
             do { if (level) printf(__VA_ARGS__); } while (0)
@@ -90,7 +90,7 @@
         #define USING_CUDA 0
     #endif
 
-    #define COMPENSATE_KERNEL_SUM	  false
+    #define COMPENSATE_KERNEL_SUM 0
 
     #ifdef EnableFlexibleLinkers
         #define FLEXIBLE_LINKS  1
@@ -173,6 +173,7 @@
         void GlutDisplay();
     #endif
 
-    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST false
+    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 0
+    #define PRINT_STARTING_PDB 1
 
 #endif /*DEFINITIONS_H_*/
