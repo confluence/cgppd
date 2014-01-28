@@ -59,4 +59,4 @@ for sitename, site in binding_sites.iteritems():
 
     # output translation and rotation
 
-    print "%s: translation %s rotation axis %s theta %s" % (sitename, trans, axis, theta)
+    print "# %s:\nt(%f, %f, %f) r(%f, %f, %f, %f) %s" % (sitename, trans[0], trans[1], trans[2], axis[0], axis[1], axis[2], theta, sys.argv[1])
