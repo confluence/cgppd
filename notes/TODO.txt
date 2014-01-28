@@ -2,11 +2,12 @@
 RIGHT NOW
 --------------------------------------------------------------------------------
 
-* fix cuda-less build and print some output of potential breakdown for analysis
-* make graphs of LJ-rep simulations with smaller sigma
-    * should we try crankshaft moves with more residues to improve these simulations?
-* start diubiquitin simulations (two molecules, one molecule, with and without fake side chain made from alanine)
-* redo Ian's tail/no tail simulations with flexible tail; replicate post-processing used in original thesis
+* start diubiquitin simulations
+    * one molecule
+    * with and without fake side chain made from alanine
+    * make sure everything works if molecule has multiple chains
+
+* async CUDA version: CUDA / streams setup happens in the wrong order; causes segfault; needs to be re-refactored a bit.
 
 * write foundations chapter
 
@@ -14,21 +15,22 @@ RIGHT NOW
 NOW
 --------------------------------------------------------------------------------
 
-* is the internal E maths right in the GPU version and the python implementation, or are we calculating the internal E twice?! should be j = i + ??
-* Surely it wouldn't match the CPU E if it were wrong.
+VALIDATION
+* make graphs for small sigma simulation
+* should we try crankshaft moves with more residues, and see if this improves the repulsive LJ results?
 
+CLEANUP / BUGFIX
+* add compilation flags for repulsive LJ and LJ off
 * use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
-* make sure that the change has been made in all the options
 * potential test for repulsive LJ -- add options for no LJ / repulsive LJ to python script
-
-THINGS THAT PROBABLY NEED TO BE CHECKED
-
 * fix chain processing
 * remove printing of old cruft about translation/rotation
 * 300k replica -- how is it found if there isn't one?!
 * paircount needs to be updated for flexible linkers
-* What happens if molecule consists of multiple chains?
 * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
+
+OTHER
+* redo Ian's tail/no tail simulations with flexible tail; replicate post-processing used in original thesis
 
 BENCHMARKING
 
@@ -37,17 +39,20 @@ BENCHMARKING
 
 MAIL ROB
 
-* potential is now much bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct? Also including the potential from inside proteins should raise the total (right)?
+* potential is now much (?) bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct? Also including the potential from inside proteins should raise the total (right)?
+    * analyse potential breakdown (from CPU-only version)
+
 * What happened to the constants in the DH calculation?
 * Units! Where do they come from? Are any conversions required for the linker components?
+
 * Is the flex move actually a valid extension of the model? Does the polymer test demonstrate that?
     * Kolinski & Skolnick 1994 (I) suggests a similar move for protein folding simulations.
 * Kolinski & Skolnick and Liang & Wong both suggest a broader class of crankshaft moves which rotate more than one residue at a time
     * Liang & Wong use "crankshaft" for a two-bead rotation and call a one-bead rotation a "three-bead flip"
     * Kolinski & Skolnick discuss rotations of 1, 2 and 3 beads at a time
+
 * Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom.
-* Thesis doesn't seem to mention per-replica translation and rotation amounts -- YES IT DOES; p. 121
-* According to thesis, meta is a float3. It's actually float4 now. -- MENTIONED, p. 172
+    * make sure all this works correctly across chain boundary
 
 --------------------------------------------------------------------------------
 SOON
@@ -71,11 +76,6 @@ TEST
 
 * stuff that's disabled
     * Kahan sums -- sort of tested; no difference apparent
-    * asynchronous CUDA
-
-POSTPROCESS
-
-* write it completely separately in Python
 
 OPTIONS
 
@@ -106,7 +106,6 @@ CLEANUP
 
 * Remove completely unused sections of code? Look at the CUDA code. etc.; see what is actually connected up. Are we ever going to use CUDA MC?
 
-
 OPTIMISE / TEST
 
 * is caching of internal potential subtotals important? Probably still useful for CPU LJ/DH code.
@@ -114,4 +113,4 @@ OPTIMISE / TEST
 
 ADD
 
-* Multiple GPUs?  Does that work?
+* Multiple GPUs?  Does that work?  It should just work.
