@@ -70,9 +70,8 @@ void TestReplica::testCPUandGPUPotential()
     argdata parameters;
     child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, parameters);
 #if USING_CUDA
-    child_replica.device_LJPotentials = ljp_t;
-    child_replica.ReplicaDataToDevice();
-#endif
+    child_replica.setup_CUDA(ljp_t);
+#endif // USING_CUDA
 
 #if !LJ_REPULSIVE && !LJ_OFF
     double expected_flexible_potential[6] = {300.864756, 0.337112, 0.180426, 1.555213, 3.495782, 306.433290};
@@ -106,7 +105,7 @@ void TestReplica::testCPUandGPUPotential()
 #endif // USING_CUDA
 
 #if USING_CUDA
-    child_replica.FreeDevice();
+    child_replica.teardown_CUDA();
 #endif
 }
 
