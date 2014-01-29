@@ -30,6 +30,7 @@ CUDA=yes
 GL=yes
 STREAMS=no
 LINKERS=yes
+LJ=normal
 
 TEST=yes
 DEBUG=no
@@ -65,6 +66,14 @@ endif
 
 ifeq ($(LINKERS),yes)
 DEFINE+=-DEnableFlexibleLinkers
+endif
+
+ifeq ($(LJ),off)
+DEFINE+=-DEnableLJOff
+endif
+
+ifeq ($(LJ),repulsive)
+DEFINE+=-DEnableLJRepulsive
 endif
 
 OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
