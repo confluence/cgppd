@@ -33,8 +33,12 @@ void TestReplica::setUp()
     testboxdim = 118.4f;
 
 #if USING_CUDA
+#if CUDA_STREAMS
+    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData, &replica.cudaStream, 1);
+#else
     setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData);
-#endif
+#endif // CUDA_STREAMS
+#endif // USING_CUDA
 
     replica.aminoAcids = aminoAcidData;
     replica.label = 1;
@@ -56,11 +60,12 @@ void TestReplica::setUp()
 void TestReplica::tearDown()
 {
 #if USING_CUDA
-    cudaFree(ljp_t);
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    unbindLJTexture();
-#endif
-#endif
+#if CUDA_STREAMS
+    teardown_CUDA(ljp_t, &replica.cudaStream, 1);
+#else
+    teardown_CUDA(ljp_t);
+#endif // CUDA_STREAMS
+#endif // USING_CUDA
     cout.flush();
 }
 
@@ -70,7 +75,11 @@ void TestReplica::testCPUandGPUPotential()
     argdata parameters;
     child_replica.init_child_replica(replica, 1, 300.0f, 0.2f, 0.5f, parameters);
 #if USING_CUDA
+#if CUDA_STREAMS
+    child_replica.setup_CUDA(ljp_t, &replica.cudaStream, 0);
+#else
     child_replica.setup_CUDA(ljp_t);
+#endif // CUDA_STREAMS
 #endif // USING_CUDA
 
 #if !LJ_REPULSIVE && !LJ_OFF

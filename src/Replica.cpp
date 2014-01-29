@@ -2,10 +2,6 @@
 
 using namespace std;
 
-#if USING_CUDA || INCLUDE_TIMERS
-#include <cutil.h>
-#endif
-
 Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP),
 #if FLEXIBLE_LINKS
     max_segment_count(0), calculate_rigid_potential_only(false),
@@ -123,29 +119,33 @@ void Replica::init_child_replica(const Replica& ir, const int index, const doubl
 }
 
 #if USING_CUDA
+
+#if CUDA_STREAMS
+void Replica::setup_CUDA(float * device_LJ_potentials, cudaStream_t * streams, int stream_index)
+#else
 void Replica::setup_CUDA(float * device_LJ_potentials)
+#endif // CUDA_STREAMS
 {
     device_LJPotentials = device_LJ_potentials;
+#if CUDA_STREAMS
+    cudaStream = streams[stream_index];  // use rotation to assign replicas to streams
+#endif // CUDA_STREAMS
     ReplicaDataToDevice();
+#if CUDA_STREAMS
+    ReserveSumSpace(); // reserve a space for the potential summation to be stored
+#endif // CUDA_STREAMS
 }
 
 void Replica::teardown_CUDA()
 {
-    FreeDevice();
-}
-
 #if CUDA_STREAMS
-void Replica::setup_CUDA_streams(cudaStream_t * streams, int stream_index)
-{
-    cudaStream = streams[stream_index];  // use rotation to assign replicas to streams
-    ReserveSumSpace();                   // reserve a space for the potential summation to be stored
+    FreeSumSpace();
+    cutilCheckMsg("Error freeing sum space");
+#endif // CUDA_STREAMS
+    FreeDevice();
+    cutilCheckMsg("Error freeing device");
 }
 
-void Replica::teardown_CUDA_streams()
-{
-    FreeSumSpace();
-}
-#endif // CUDA_STREAMS
 #endif // USING_CUDA
 
 #if INCLUDE_TIMERS
@@ -585,11 +585,13 @@ void Replica::ReserveSumSpace()
     resultSize = gridSize;
     //for a parallel sum each grid must have one cell in the array of results from all the threads
     cudaMallocHost((void**)&kernelResult, sizeof(float)*resultSize*resultSize);
+    cutilCheckMsg("Error allocating sum space on host");
     cudaMalloc((void **)&device_kernelResult,sizeof(float)*resultSize*resultSize);
+    cutilCheckMsg("Error allocating sum space on device");
 
-    cudaError_t err;
-    if ((err = cudaGetLastError()) != cudaSuccess)
-        printf("CUDA error: %s\n", cudaGetErrorString(err));
+//     cudaError_t err;
+//     if ((err = cudaGetLastError()) != cudaSuccess)
+//         printf("CUDA error: %s\n", cudaGetErrorString(err));
 
     memset(kernelResult,0,sizeof(float)*resultSize*resultSize);
     //CUDA_memcpy_to_device_async(device_kernelResult,kernelResult,sizeof(float)*resultSize*resultSize,cudaStream);
@@ -600,7 +602,9 @@ void Replica::ReserveSumSpace()
 void Replica::FreeSumSpace()
 {
     cudaFreeHost(kernelResult);
+    cutilCheckMsg("Error freeing sum space on host");
     cudaFree((void**)&device_kernelResult);
+    cutilCheckMsg("Error freeing sum space on device");
 }
 
 float Replica::SumGridResults()
