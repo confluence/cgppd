@@ -2,12 +2,12 @@
 RIGHT NOW
 --------------------------------------------------------------------------------
 
+* verify that async version produces sensible results
+
 * start diubiquitin simulations
     * one molecule
     * with and without fake side chain made from alanine
     * make sure everything works if molecule has multiple chains
-
-* async CUDA version: CUDA / streams setup happens in the wrong order; causes segfault; needs to be re-refactored a bit.
 
 * write foundations chapter
 
