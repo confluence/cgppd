@@ -86,38 +86,38 @@ void Simulation::init(int argc, char **argv, int pid)
 
     LOG(parameters.verbosity > 1, "\tCPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
 
-// #if USING_CUDA
-//     float * deviceLJpTmp;
-// #if CUDA_STREAMS
-//     cudaStream_t streams[0];
-//     setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData, streams, 1);
-//     initialReplica.setup_CUDA(deviceLJpTmp, streams, 0);
-// #else
-//     setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData);
-//     initialReplica.setup_CUDA(deviceLJpTmp);
-// #endif // CUDA_STREAMS
-//
-//     double GPUE = initialReplica.EonDevice();
-//     double GPUE_NC = initialReplica.EonDeviceNC();
-//     initialReplica.potential = GPUE;
-//
-//     LOG(parameters.verbosity > 1, "\tGPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
-//     LOG(parameters.verbosity > 1, "\tAbsolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
-//     LOG(parameters.verbosity > 1, "\tRelative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
-//
-//     if (abs(p - GPUE) / abs(p) > 0.01)
-//     {
-//         LOG(WARN,"\tWARNING: Inconsistency between GPU and CPU result. Check simulation!\n");
-//     }
-//
-//     initialReplica.teardown_CUDA();
-// #if CUDA_STREAMS
-//     teardown_CUDA(deviceLJpTmp, streams, 1);
-// #else
-//     teardown_CUDA(deviceLJpTmp);
-// #endif // CUDA_STREAMS
-//
-// #endif
+#if USING_CUDA
+    float * deviceLJpTmp;
+#if CUDA_STREAMS
+    cudaStream_t streams[0];
+    setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData, streams, 1);
+    initialReplica.setup_CUDA(deviceLJpTmp, streams, 0);
+#else
+    setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData);
+    initialReplica.setup_CUDA(deviceLJpTmp);
+#endif // CUDA_STREAMS
+
+    double GPUE = initialReplica.EonDevice();
+    double GPUE_NC = initialReplica.EonDeviceNC();
+    initialReplica.potential = GPUE;
+
+    LOG(parameters.verbosity > 1, "\tGPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
+    LOG(parameters.verbosity > 1, "\tAbsolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
+    LOG(parameters.verbosity > 1, "\tRelative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
+
+    if (abs(p - GPUE) / abs(p) > 0.01)
+    {
+        LOG(WARN,"\tWARNING: Inconsistency between GPU and CPU result. Check simulation!\n");
+    }
+
+    initialReplica.teardown_CUDA();
+#if CUDA_STREAMS
+    teardown_CUDA(deviceLJpTmp, streams, 1);
+#else
+    teardown_CUDA(deviceLJpTmp);
+#endif // CUDA_STREAMS
+
+#endif
 
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
     {
