@@ -1124,6 +1124,13 @@ void Replica::saveAsSinglePDB(const char *filename, const char *title, bool skip
 #if LJ_OFF
     fprintf(output,"REMARK Lennard-Jones potentials are off \n");
 #endif
+#if USING_CUDA && CUDA_STREAMS
+    fprintf(output,"REMARK CGPPD flavour: asynchronous CUDA \n");
+#elif USING_CUDA
+    fprintf(output,"REMARK CGPPD flavour: sequential CUDA \n");
+#else
+    fprintf(output,"REMARK CGPPD flavour: CPU-only \n");
+#endif
 
     for (size_t i = 0;i < moleculeCount; i++)
     {

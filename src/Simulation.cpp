@@ -1152,7 +1152,6 @@ void Simulation::check_and_modify_parameters()
 #if LJ_OFF
     length += sprintf(parameters.prefix + length, "_LJoff");
 #endif
-
 }
 
 void Simulation::writeFileIndex()
