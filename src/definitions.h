@@ -174,6 +174,6 @@
     #endif
 
     #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 0
-    #define PRINT_STARTING_PDB 1
+    #define PRINT_STARTING_PDB 0
 
 #endif /*DEFINITIONS_H_*/
