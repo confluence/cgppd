@@ -86,41 +86,38 @@ void Simulation::init(int argc, char **argv, int pid)
 
     LOG(parameters.verbosity > 1, "\tCPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
 
-#if USING_CUDA
-    setup_CUDA(0, parameters.bound, initialReplica.device_LJPotentials, &aminoAcidData);
-
-#if CUDA_STREAMS
-    cudaStreamCreate(&initialReplica.cudaStream);
-#endif
-
-    initialReplica.ReplicaDataToDevice();
-
-    double GPUE = initialReplica.EonDevice();
-    double GPUE_NC = initialReplica.EonDeviceNC();
-    initialReplica.potential = GPUE;
-
-    LOG(parameters.verbosity > 1, "\tGPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
-    LOG(parameters.verbosity > 1, "\tAbsolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
-    LOG(parameters.verbosity > 1, "\tRelative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
-
-#if CUDA_STREAMS
-    cudaStreamSynchronize(initialReplica.cudaStream);
-    cudaStreamDestroy(initialReplica.cudaStream);
-#endif
-
-    if (abs(p - GPUE) / abs(p) > 0.01)
-    {
-        LOG(WARN,"\tWARNING: Inconsistency between GPU and CPU result. Check simulation!\n");
-    }
-    initialReplica.FreeDevice();
-    cutilCheckMsg("Error freeing device");
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    unbindLJTexture();
-    cutilCheckMsg("Error freeing texture");
-#endif
-
-    cudaFree(initialReplica.device_LJPotentials); // TODO: valgrind complains that this is uninitialised; fix it
-#endif
+// #if USING_CUDA
+//     float * deviceLJpTmp;
+// #if CUDA_STREAMS
+//     cudaStream_t streams[0];
+//     setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData, streams, 1);
+//     initialReplica.setup_CUDA(deviceLJpTmp, streams, 0);
+// #else
+//     setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData);
+//     initialReplica.setup_CUDA(deviceLJpTmp);
+// #endif // CUDA_STREAMS
+//
+//     double GPUE = initialReplica.EonDevice();
+//     double GPUE_NC = initialReplica.EonDeviceNC();
+//     initialReplica.potential = GPUE;
+//
+//     LOG(parameters.verbosity > 1, "\tGPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
+//     LOG(parameters.verbosity > 1, "\tAbsolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
+//     LOG(parameters.verbosity > 1, "\tRelative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
+//
+//     if (abs(p - GPUE) / abs(p) > 0.01)
+//     {
+//         LOG(WARN,"\tWARNING: Inconsistency between GPU and CPU result. Check simulation!\n");
+//     }
+//
+//     initialReplica.teardown_CUDA();
+// #if CUDA_STREAMS
+//     teardown_CUDA(deviceLJpTmp, streams, 1);
+// #else
+//     teardown_CUDA(deviceLJpTmp);
+// #endif // CUDA_STREAMS
+//
+// #endif
 
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
     {
@@ -433,7 +430,11 @@ void Simulation::exchange_frequency()
 }
 
 #if USING_CUDA
+#if CUDA_STREAMS
+void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials, AminoAcids * amino_acid_data, cudaStream_t * streams, int streams_per_thread)
+#else
 void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials, AminoAcids * amino_acid_data)
+#endif // CUDA_STREAMS
 {
     // initialise cuda for use in this thread
     cuInit(0);
@@ -455,34 +456,38 @@ void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     bindLJTexture(device_LJ_potentials);
 #endif
-}
 
-void teardown_CUDA(float * device_LJ_potentials)
-{
-#if LJ_LOOKUP_METHOD == TEXTURE_MEM
-    unbindLJTexture();
-#endif
-
-    cudaFree(device_LJ_potentials);
+#if CUDA_STREAMS
+    // TODO: check whether this needs to happen before any of the things above.
+    for (int i = 0; i < streams_per_thread; i++)
+    {
+        cudaStreamCreate(&streams[i]);
+    }
+#endif // CUDA_STREAMS
 }
 
 #if CUDA_STREAMS
-void setup_CUDA_streams(cudaStream_t * streams, int streams_per_thread)
+void teardown_CUDA(float * device_LJ_potentials, cudaStream_t * streams, int streams_per_thread)
+#else
+void teardown_CUDA(float * device_LJ_potentials)
+#endif // CUDA_STREAMS
 {
-    for (int i = 0; i < streams_per_thread; i++)
-    {
-        cudaStreamCreate(&streams[i]); // TODO: is this right?
-    }
-}
+#if LJ_LOOKUP_METHOD == TEXTURE_MEM
+    unbindLJTexture();
+    cutilCheckMsg("Error freeing texture");
+#endif
 
-void teardown_CUDA_streams(cudaStream_t * streams, int streams_per_thread)
-{
+    cudaFree(device_LJ_potentials);
+
+#if CUDA_STREAMS
+    // TODO: check whether this needs to happen before any of the things above.
     for (int i = 0; i < streams_per_thread; i++)
     {
         cudaStreamDestroy(streams[i]);
     }
-}
 #endif // CUDA_STREAMS
+}
+
 #endif // USING_CUDA
 
 void *MCthreadableFunction(void *arg)
@@ -508,23 +513,24 @@ void *MCthreadableFunction(void *arg)
 #endif
 
 #if USING_CUDA
-    float * deviceLJpTmp;
-    setup_CUDA(data->GPUID, data->bound, deviceLJpTmp, &data->replica[replica_offset].aminoAcids);
-
     // create streams for each subsequent MCSearch
     // ensure the replica can find the lookup table
     // initialise data on the device and copy the initial batch
 
+    float * deviceLJpTmp;
 #if CUDA_STREAMS
     cudaStream_t streams[16];   // reserve 16 stream slots but create only as many as needed
-    setup_CUDA_streams(streams, data->streams_per_thread);
-#endif
+    setup_CUDA(data->GPUID, data->bound, deviceLJpTmp, &data->replica[replica_offset].aminoAcids, streams, data->streams_per_thread);
+#else
+    setup_CUDA(data->GPUID, data->bound, deviceLJpTmp, &data->replica[replica_offset].aminoAcids);
+#endif // CUDA_STREAMS
 
     for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
-        data->replica[tx + replica_offset].setup_CUDA(deviceLJpTmp);
 #if CUDA_STREAMS
-        data->replica[tx + replica_offset].setup_CUDA_streams(streams, tx % data->streams_per_thread);
+        data->replica[tx + replica_offset].setup_CUDA(deviceLJpTmp, streams, tx % data->streams_per_thread);
+#else
+        data->replica[tx + replica_offset].setup_CUDA(deviceLJpTmp);
 #endif
     }
 #endif // USING_CUDA
@@ -644,18 +650,16 @@ void *MCthreadableFunction(void *arg)
     // sync all streams and free gpu memory
     for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
-#if CUDA_STREAMS
-        data->replica[tx + replica_offset].teardown_CUDA_streams();
-#endif
         data->replica[tx + replica_offset].teardown_CUDA();
     }
 
 #if CUDA_STREAMS
-    teardown_CUDA_streams(streams, data->streams_per_thread);
-#endif
-
+    teardown_CUDA(deviceLJpTmp, streams, data->streams_per_thread);
+#else
     teardown_CUDA(deviceLJpTmp);
-#endif
+#endif // CUDA_STREAMS
+
+#endif // USING_CUDA
     printf (" >>> Monte-Carlo thread %d exited.\n",int(data->index));
     return 0;
 }

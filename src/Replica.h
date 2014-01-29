@@ -1,11 +1,24 @@
 #ifndef REPLICA_H_
 #define REPLICA_H_
+
 #include "vector3f.h"
 #include "definitions.h"
 #include "structures.h"
 #include "Quaternion.h"
 #include <fstream>
 #include <vector>
+#include "AminoAcids.h"
+
+#if USING_CUDA
+    #include <cuda.h>
+    #include <cutil.h>
+    #include <cutil_inline.h>
+    #include <builtin_types.h>
+    #include "cudaExterns.h"
+#elif INCLUDE_TIMERS
+    #include <cutil.h>
+#endif  // USING_CUDA
+
 #include "Molecule.h"
 #include "Potential.h"
 #include <gsl/gsl_qrng.h>
@@ -15,18 +28,7 @@
 #include <pthread.h>
 //#include "rngfunctions.h"
 
-
 using namespace std;
-
-#if USING_CUDA
-
-#include <cutil.h>
-#include <cuda.h>
-#include <builtin_types.h>
-
-#include "cudaExterns.h"
-
-#endif  // USING_CUDA
 
 class Replica
 {
@@ -133,12 +135,12 @@ public:
 
     float *device_LJPotentials;
 
-    void setup_CUDA(float * device_LJ_potentials);
-    void teardown_CUDA();
 #if CUDA_STREAMS
-    void setup_CUDA_streams(cudaStream_t * streams, int stream_index);
-    void teardown_CUDA_streams();
-#endif
+    void setup_CUDA(float * device_LJ_potentials, cudaStream_t * streams, int stream_index);
+#else
+    void setup_CUDA(float * device_LJ_potentials);
+#endif // CUDA_STREAMS
+    void teardown_CUDA();
 
     int *device_residueCount;
     int *device_moleculeCount;

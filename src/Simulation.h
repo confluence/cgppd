@@ -120,11 +120,12 @@ public:
 };
 
 #if USING_CUDA
+#if CUDA_STREAMS
+void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials, AminoAcids * amino_acid_data, cudaStream_t * streams, int streams_per_thread);
+void teardown_CUDA(float * device_LJ_potentials, cudaStream_t * streams, int streams_per_thread);
+#else
 void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials, AminoAcids * amino_acid_data);
 void teardown_CUDA(float * device_LJ_potentials);
-#if CUDA_STREAMS
-void setup_CUDA_streams(cudaStream_t * streams, int streams_per_thread);
-void teardown_CUDA_streams(cudaStream_t * streams, int streams_per_thread);
 #endif // CUDA_STREAMS
 #endif // USING_CUDA
 

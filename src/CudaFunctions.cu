@@ -22,7 +22,7 @@ using namespace std;
 void bindLJTexture(float * ljp)
 {
     size_t offset;
-    cudaBindTexture(&offset, LJTexture, ljp, sizeof(float)*AA_COUNT*AA_COUNT);
+    cudaBindTexture(&offset, LJTexture, ljp, LJArraySize);
     if (int(offset)>0)
         printf("!!! Texture offset %d\n",int(offset));
 }
