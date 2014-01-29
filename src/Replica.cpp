@@ -594,16 +594,18 @@ void Replica::ReserveSumSpace()
 //         printf("CUDA error: %s\n", cudaGetErrorString(err));
 
     memset(kernelResult,0,sizeof(float)*resultSize*resultSize);
+    cutilCheckMsg("Error zeroing sum space on host");
     //CUDA_memcpy_to_device_async(device_kernelResult,kernelResult,sizeof(float)*resultSize*resultSize,cudaStream);
     //CUDA_memcpy_to_device(device_kernelResult,kernelResult,sizeof(float)*resultSize*resultSize);
     cudaMemset(device_kernelResult, 0, sizeof(float)*resultSize*resultSize);
+    cutilCheckMsg("Error zeroing sum space on device");
 }
 
 void Replica::FreeSumSpace()
 {
     cudaFreeHost(kernelResult);
     cutilCheckMsg("Error freeing sum space on host");
-    cudaFree((void**)&device_kernelResult);
+    cudaFree(device_kernelResult);
     cutilCheckMsg("Error freeing sum space on device");
 }
 
@@ -626,6 +628,7 @@ float Replica::SumGridResults()
         potentialSum += kernelResult[i];
 
     cudaMemset(device_kernelResult, 0, sizeof(float)*resultSize*resultSize);
+    cutilCheckMsg("Error zeroing sum space on device after summing");
     return potentialSum * KBTConversionFactor;
 }
 #endif

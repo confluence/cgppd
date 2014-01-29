@@ -116,8 +116,7 @@ void Simulation::init(int argc, char **argv, int pid)
 #else
     teardown_CUDA(deviceLJpTmp);
 #endif // CUDA_STREAMS
-
-#endif
+#endif // USING_CUDA
 
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
     {
