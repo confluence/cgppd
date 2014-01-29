@@ -15,6 +15,7 @@
     #define KcalmoltoK_bt  (1.0f/K_bTtoKcalmol)
     #define BTU_to_J             0.948f
     #define Xi 10.0f
+    #define LJ_SIGMA_SCALING_FACTOR 0.5f // by default, average the two radii
     #define LJ_CONVERSION_FACTOR 0.3507221006079f  // 1/(KBTConversionFactor)^2
     #define DH_CONVERSION_FACTOR BTU_to_J //10e7f //2.0f
     #define DH_constant_component (DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f)
@@ -56,9 +57,17 @@
     #define kappa       invDebye
 
     // these are used for linker validation
-    #define LJ_OFF false
-    #define LJ_REPULSIVE false
-    #define LJ_SIGMA_SCALING_FACTOR 0.5f // by default, average the two radii
+    #ifdef EnableLJOff
+        #define LJ_OFF 1
+    #else
+        #define LJ_OFF 0
+    #endif
+
+    #ifdef EnableLJRepulsive
+        #define LJ_REPULSIVE 1
+    #else
+        #define LJ_REPULSIVE 0
+    #endif
 
     #if LJ_REPULSIVE
         #undef e0
