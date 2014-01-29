@@ -363,7 +363,7 @@ void Replica::MCSearch(int steps, int mcstep)
         float delta = newPotential - potential;
 
         // accept change if its better.
-        if (delta < 0.0)
+        if (delta < 0.0f)
         {
             potential = newPotential;
             accept++;
@@ -675,15 +675,18 @@ void Replica::MCSearchAcceptReject()
     if (delta < 0.0f)
     {
         potential = newPotential;
+        accept++;
         LOG(DEBUG_MC, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
     }
     else if (gsl_rng_uniform(rng) < exp(-delta*4.184f/(Rgas*temperature)))
     {
         potential = newPotential;
+        acceptA++;
         LOG(DEBUG_MC, "* Replace: delta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*4.184f/(Rgas*temperature)));
     }
     else
     {
+        reject++;
 //         molecules[lastMutationIndex].undoStateChange(&savedMolecule);
         molecules[lastMutationIndex].MC_backup_restore(&savedMolecule);
         LOG(DEBUG_MC, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
