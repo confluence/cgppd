@@ -2,6 +2,7 @@
 RIGHT NOW
 --------------------------------------------------------------------------------
 
+* Oops. Fix GSL error. :/
 * verify that async version produces sensible results
 
 * start diubiquitin simulations
