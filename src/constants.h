@@ -16,7 +16,7 @@
     #define BTU_to_J             0.948f
     #define Xi 10.0f
     #define LJ_SIGMA_SCALING_FACTOR 0.5f // by default, average the two radii
-    #define LJ_CONVERSION_FACTOR 0.3507221006079f  // 1/(KBTConversionFactor)^2
+    #define LJ_CONVERSION_FACTOR 0.3507221006079f  // 1/(KBTConversionFactor)^2 (NO, IT ISN'T)
     #define DH_CONVERSION_FACTOR BTU_to_J //10e7f //2.0f
     #define DH_constant_component (DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f)
     #define CF KBTConversionFactor

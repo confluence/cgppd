@@ -59,7 +59,7 @@
     #define DEBUG_LENGTH 0
     #define DEBUG_BOUNDARY 0
     #define INFO_POTENTIAL 0
-    #define DEBUG_POTENTIAL 0
+    #define DEBUG_POTENTIAL 1
     #define DEBUG_LOCAL 0
     #define DEBUG_FLEX 0
     #define DEBUG_LJ 0
