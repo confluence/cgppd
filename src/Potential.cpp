@@ -234,11 +234,13 @@ void Potential::increment(const Potential p)
 
 double Potential::total_LJ()
 {
+    LOG(DEBUG_POTENTIAL, "Base LJ: %f After conversion: %f After K_bT to kcal/mol conversion: %f\n", LJ, LJ * LJ_CONVERSION_FACTOR, LJ * LJ_CONVERSION_FACTOR * KBTConversionFactor);
     return LJ * LJ_CONVERSION_FACTOR * KBTConversionFactor;
 }
 
 double Potential::total_DH()
 {
+    LOG(DEBUG_POTENTIAL, "Base DH: %f After conversion: %f After K_bT to kcal/mol conversion: %f\n", DH, DH * DH_constant_component, DH * DH_constant_component * KBTConversionFactor);
     return DH * DH_constant_component * KBTConversionFactor;
 }
 
