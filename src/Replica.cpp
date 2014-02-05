@@ -370,7 +370,7 @@ void Replica::MCSearch(int steps, int mcstep)
             LOG(DEBUG_MC, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
         }
         // accept change if it meets the boltzmann criteria, must be (kJ/mol)/(RT), delta is in kcal/mol @ 294K
-        else if (gsl_rng_uniform(rng) < exp(-(delta*4184.0f)/(Rgas*temperature)))
+        else if (gsl_rng_uniform(rng) < exp(-(delta*4.184f)/(Rgas*temperature)))
         {
             potential = newPotential;
             acceptA++;
@@ -387,8 +387,6 @@ void Replica::MCSearch(int steps, int mcstep)
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
         }
-
-        last_potential_obj.print_log(DEBUG_POTENTIAL && strncmp(molecules[moleculeNo].last_MC_move, "Local", 5) == 0, "CPU E component for last local move");
 
         LOG(DEBUG_LENGTH, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
         LOG(DEBUG_MC, "\n");
@@ -693,7 +691,6 @@ void Replica::MCSearchAcceptReject()
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
 
-    last_potential_obj.print_log(DEBUG_POTENTIAL && strncmp(molecules[lastMutationIndex].last_MC_move, "Local", 5) == 0, "CPU E component for last local move");
 }
 #endif  // streams
 
