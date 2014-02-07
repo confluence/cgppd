@@ -627,7 +627,7 @@ float Replica::SumGridResults()
 
     cudaMemset(device_kernelResult, 0, sizeof(float)*resultSize*resultSize);
     cutilCheckMsg("Error zeroing sum space on device after summing");
-    return potentialSum * KBTConversionFactor;
+    return potentialSum;
 }
 #endif
 
