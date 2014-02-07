@@ -351,7 +351,6 @@ void Replica::MCSearch(int steps, int mcstep)
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
         newPotential = EonDevice();  // sequential cuda call
-        //if (abs(temperature-300)<1) cout << newPotential << " " << EonDeviceNC() << endl;
 #if PERFORM_GPU_AND_CPU_E
         float cpu_e(E().total());
         float err = abs(cpu_e - newPotential) / abs(cpu_e);
@@ -369,18 +368,17 @@ void Replica::MCSearch(int steps, int mcstep)
             accept++;
             LOG(DEBUG_MC, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
         }
-        // accept change if it meets the boltzmann criteria, must be (kJ/mol)/(RT), delta is in kcal/mol @ 294K
-        else if (gsl_rng_uniform(rng) < exp(-(delta*4.184f)/(Rgas*temperature)))
+        // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
+        else if (gsl_rng_uniform(rng) < exp(-(delta*kcal)/(Rgas*temperature)))
         {
             potential = newPotential;
             acceptA++;
-            LOG(DEBUG_MC, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta * 4.184f/(Rgas*temperature)));
+            LOG(DEBUG_MC, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta * kcal/(Rgas*temperature)));
         }
         //reject
         else
         {
             reject++;
-//             molecules[moleculeNo].undoStateChange(&savedMolecule);
             molecules[moleculeNo].MC_backup_restore(&savedMolecule);
             LOG(DEBUG_MC, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
 #if CUDA_E
@@ -652,7 +650,6 @@ void Replica::MCSearchEvaluate()
 
 void Replica::MCSearchAcceptReject()
 {
-    //cudaStreamSynchronize(cudaStream);  // sync, newPotential needs to have been returned
     newPotential = SumGridResults();
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
@@ -660,32 +657,30 @@ void Replica::MCSearchAcceptReject()
     }
 #endif
 
-    //cout << "new energy replica[" << temperature << "] = " << newPotential << endl;
-
 #if PERFORM_GPU_AND_CPU_E
     float cpu_e(E().total());
     float err = abs(cpu_e-newPotential)/abs(cpu_e);
     printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 #endif
 
-    float delta = (newPotential - potential);  // needs to be in K_bT
-    // if the change is bad then discard it.
+    float delta = (newPotential - potential);
     if (delta < 0.0f)
     {
         potential = newPotential;
         accept++;
         LOG(DEBUG_MC, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
     }
-    else if (gsl_rng_uniform(rng) < exp(-delta*4.184f/(Rgas*temperature)))
+    // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
+    else if (gsl_rng_uniform(rng) < exp(-delta*kcal/(Rgas*temperature)))
     {
         potential = newPotential;
         acceptA++;
-        LOG(DEBUG_MC, "* Replace: delta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*4.184f/(Rgas*temperature)));
+        LOG(DEBUG_MC, "* Replace: delta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*kcal/(Rgas*temperature)));
     }
     else
+    // if the change is bad then discard it.
     {
         reject++;
-//         molecules[lastMutationIndex].undoStateChange(&savedMolecule);
         molecules[lastMutationIndex].MC_backup_restore(&savedMolecule);
         LOG(DEBUG_MC, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
