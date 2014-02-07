@@ -137,41 +137,50 @@ void TestTenReplicas::testSanity()
 #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
         if (i == 4)
         {
-            printf("%2d %10.3e %10.3e %10.3e\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
+            printf("%2d CPU: %10.3e %10.3e %10.3e\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
         }
         else
         {
-            printf("%2d %10.3f %10.3f %10.3f\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
+            printf("%2d CPU: %10.3f %10.3f %10.3f\n", i + 1, cpu.total(), cpu.total_LJ(), cpu.total_DH());
         }
 #endif
 
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu.total(), e);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc.total(), e);
+//         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu.total(), e);
+//         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc.total(), e);
 
 #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
-        if (i != 4)
-        {
-            float relative_error_total = abs(CHARMM_results[i].total - cpu.total())/abs(CHARMM_results[i].total);
-            float relative_error_LJ = abs(CHARMM_results[i].LJ - cpu.total_LJ())/abs(CHARMM_results[i].LJ);
-            float relative_error_DH = abs(CHARMM_results[i].DH - cpu.total_DH())/abs(CHARMM_results[i].DH);
+        float relative_error_total = abs(CHARMM_results[i].total - cpu.total())/abs(CHARMM_results[i].total);
+        float relative_error_LJ = abs(CHARMM_results[i].LJ - cpu.total_LJ())/abs(CHARMM_results[i].LJ);
+        float relative_error_DH = abs(CHARMM_results[i].DH - cpu.total_DH())/abs(CHARMM_results[i].DH);
 
-            printf("ERRORS: %f %f %f\n", relative_error_total, relative_error_LJ, relative_error_DH);
+        printf("ERRORS: %f %f %f\n", relative_error_total, relative_error_LJ, relative_error_DH);
 
-            mean_relative_error_total += relative_error_total/9;
-            mean_relative_error_LJ += relative_error_LJ / 9;
-            mean_relative_error_DH += relative_error_DH / 9;
+        mean_relative_error_total += relative_error_total/ 10;
+        mean_relative_error_LJ += relative_error_LJ / 10;
+        mean_relative_error_DH += relative_error_DH / 10;
 
-            max_relative_error_total = max(max_relative_error_total, relative_error_total);
-            max_relative_error_LJ = max(max_relative_error_LJ, relative_error_LJ);
-            max_relative_error_DH = max(max_relative_error_DH, relative_error_DH);
-        }
+        max_relative_error_total = max(max_relative_error_total, relative_error_total);
+        max_relative_error_LJ = max(max_relative_error_LJ, relative_error_LJ);
+        max_relative_error_DH = max(max_relative_error_DH, relative_error_DH);
 #endif
 
 #if USING_CUDA
         double gpu = replicas[i].EonDevice();
         double gpu_nc = replicas[i].EonDeviceNC();
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu, e);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu_nc, e);
+
+        #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+        if (i == 4)
+        {
+            printf("%2d GPU: %10.3e\n\n", i + 1, gpu);
+        }
+        else
+        {
+            printf("%2d GPU: %10.3f\n\n", i + 1, gpu);
+        }
+
+#endif
+//         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu, e);
+//         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].gpu, gpu_nc, e);
 
         replicas[i].FreeDevice();
 #endif

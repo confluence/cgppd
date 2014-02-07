@@ -1,36 +1,30 @@
 #ifndef CONSTANTS_H_
     #define CONSTANTS_H_
 
-    // global constants
+    // LJ and DH constants
 
-    #define K_b         1.3806504240e-23f   // boltzmann constant  J/K
-    #define E_charge    1.602176487e-19f    // elemental charge in coulombs
-    #define Angstrom    1e-10f              // one angstrom
-    #define D_water     80.0f               // dialectric constant for water
-    #define N_A         6.02214179e23f      // avogadros number
-    #define Rgas        8.314472f           // universal gas constant
-    #define PI          float(M_PIl)
-    #define KBTConversionFactor  (1.0f/(294.0f*Rgas/4184.0f))  // use 294K for verification (should this be 298?)
-    #define K_bTtoKcalmol  KBTConversionFactor
-    #define KcalmoltoK_bt  (1.0f/K_bTtoKcalmol)
-    #define BTU_to_J             0.948f
-    #define Xi 10.0f
-    #define LJ_SIGMA_SCALING_FACTOR 0.5f // by default, average the two radii
-    #define LJ_CONVERSION_FACTOR 0.3507221006079f  // 1/(KBTConversionFactor)^2 (NO, IT ISN'T)
-    #define DH_CONVERSION_FACTOR BTU_to_J //10e7f //2.0f
-    #define DH_constant_component (DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f)
-    #define CF KBTConversionFactor
-    #define r0_constant 1.122462048309372981433533049679f // constant factor of r0_ij in LJ calculation
+    // These conversions were incorrect in CGPPD v1. They should now be fixed.
 
-    //#define LJPDSOURCE    "data/pair_potentials_BT"
-    //#define e0            0.0372f     // K_b T : experimental fitted value, see [K & B 2008], BT model
-    //#define lambda        1.700f      // scalar  : experimental fitted value, see [K & B 2008]
-    //#define LJPDSOURCE    "data/pair_potentials_MJ1999"
-    //#define e0            0.0328f     // K_b T : experimental fitted value, see [K & B 2008], MJ1999 model
-    //#define lambda        1.480f      // scalar  : experimental fitted value, see [K & B 2008]
-    #define LJPDSOURCE      "data/pair_potentials_MJ1996"
-    #define e0              -2.27f          // K_b T : experimental fitted value, see [K & B 2008], MJ1996 model
-    #define lambda          0.159f          // scalar  : experimental fitted value, see [K & B 2008]
+    #define E_charge    1.602176487e-19f    // elemental charge (in coulombs)
+    #define Ang         1e-10f              // one angstrom (in metres)
+    #define D_water     80.0f               // dielectric constant for water
+    #define Rgas        8.3144621f          // universal gas constant (in J / mol K)
+    #define T_room      298.0f              // room temperature (in Kelvin)
+    #define kcal        4184.0f             // one kilocalorie (in joules)
+    #define N_A         6.02214129e23f      // Avogadro's constant (in 1 / mol)
+
+    #define RT_to_kcalmol       (T_room * Rgas / kcal) // conversion from RT units to kcal/mol
+    #define r0_constant         pow(2.0f, 1.0f/6.0f) // constant factor in r0_ij
+
+    #define LJPDSOURCE          "data/pair_potentials_MJ1996" // contact potentials from MJ1996 model; see [K&H 2008]
+    #define e0                  -2.27f          // RT units: experimental fitted value for MJ1996 model, see [K&H 2008]
+    #define lambda              0.159f          // scalar: experimental fitted value for MJ1996 model, see [K&H 2008]
+
+    #define Xi                      10.0f // Debye screening length (in angstroms)
+    #define eps0                    8.85418782e-12f  // permittivity of free space (in farads / metre)
+    #define DH_CONVERSION_FACTOR    (pow(E_charge, 2.0f) * N_A / (4.0f * float(M_PIl) * eps0 * kcal * Ang * D_water)) // as CCELEC in CHARMM
+
+    // TODO: probably move these to the definitions file; they're implementation details. Maybe move some theoretical stuff from there to here.
     #define AA_COUNT        20
     #define AA_COUNTf       float(AA_COUNT)
     #define LJArraySize     (sizeof(float)*AA_COUNT*AA_COUNT)
@@ -49,6 +43,7 @@
     #define ThetaBeta       2.27f       // radians
     #define KAlpha          106.4f      // kcal/(mol rad)^2
     #define KBeta           26.3f       // kcal/(mol rad)^2
+
     // membrane interaction constants
 
     #define Zreference  20.0f
@@ -72,8 +67,9 @@
     #if LJ_REPULSIVE
         #undef e0
         #define e0  0.0001f // k_b T
-        #undef LJ_SIGMA_SCALING_FACTOR
-        #define LJ_SIGMA_SCALING_FACTOR 0.25f
+        // This is probably unnecessary, in which case it should be reverted.
+//         #undef LJ_SIGMA_SCALING_FACTOR
+//         #define LJ_SIGMA_SCALING_FACTOR 0.25f
     #endif
 
     #if LJ_OFF

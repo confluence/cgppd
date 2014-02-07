@@ -14,8 +14,8 @@ double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &
     double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
 
     // sigmaij = (sigmai + sigmaj) / 2
-    double sigmaij(LJ_SIGMA_SCALING_FACTOR * (ri.vanderWaalRadius + rj.vanderWaalRadius));
-    double LJtmp(powf(sigmaij / r, 6.0f)); // (sigmaij/r)^6
+    double sigmaij(0.5f * (ri.vanderWaalRadius + rj.vanderWaalRadius));
+    double LJtmp(pow(sigmaij / r, 6.0f)); // (sigmaij/r)^6
 
     // if attractive interactions (Eij < 0), or repulsive interactions (Eij > 0) and r >= r0ij:
     // uij(r) = -4Eij( (sigmaij/r)^12 - (sigmaij/r)^6 )
@@ -234,14 +234,12 @@ void Potential::increment(const Potential p)
 
 double Potential::total_LJ()
 {
-    LOG(DEBUG_POTENTIAL, "Base LJ: %f After conversion: %f After K_bT to kcal/mol conversion: %f\n", LJ, LJ * LJ_CONVERSION_FACTOR, LJ * LJ_CONVERSION_FACTOR * KBTConversionFactor);
-    return LJ * LJ_CONVERSION_FACTOR * KBTConversionFactor;
+    return LJ * RT_to_kcalmol;
 }
 
 double Potential::total_DH()
 {
-    LOG(DEBUG_POTENTIAL, "Base DH: %f After conversion: %f After K_bT to kcal/mol conversion: %f\n", DH, DH * DH_constant_component, DH * DH_constant_component * KBTConversionFactor);
-    return DH * DH_constant_component * KBTConversionFactor;
+    return DH * DH_CONVERSION_FACTOR;
 }
 
 #if FLEXIBLE_LINKS
@@ -264,9 +262,9 @@ double Potential::total_torsion()
 double Potential::total()
 {
 #if FLEXIBLE_LINKS
-    return (DH * DH_constant_component + LJ * LJ_CONVERSION_FACTOR) * KBTConversionFactor + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion;
+    return DH * DH_CONVERSION_FACTOR + LJ * RT_to_kcalmol + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion;
 #else // if not FLEXIBLE_LINKS
-    return (LJ * LJ_CONVERSION_FACTOR + DH * DH_constant_component) * KBTConversionFactor;
+    return DH * DH_CONVERSION_FACTOR + LJ * RT_to_kcalmol;
 #endif // FLEXIBLE_LINKS
 }
 

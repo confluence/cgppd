@@ -30,7 +30,7 @@
     #define INITIAL_ROTATIONAL_STEP				0.2f // rads
     #define MIN_ROTATION						0.2f
     #define MAX_ROTATION						0.4f
-    #define BOUND_ENERGY_VALUE					-1.1844f	// 2k_bT in kcal/mol at 294K
+    #define BOUND_ENERGY_VALUE					-1.1844f	// 2k_bT in kcal/mol at 294K TODO: this is wrong! Should use 298K
     #define translate_rotate_bernoulli_bias 	0.5f // translations / mutations (rotations+translations) ratio
     #define GEOMETRIC_CUTOFF					8.0f
     #define bool_recordAllSamples				true //false
@@ -59,7 +59,7 @@
     #define DEBUG_LENGTH 0
     #define DEBUG_BOUNDARY 0
     #define INFO_POTENTIAL 0
-    #define DEBUG_POTENTIAL 1
+    #define DEBUG_POTENTIAL 0
     #define DEBUG_LOCAL 0
     #define DEBUG_FLEX 0
     #define DEBUG_LJ 0
@@ -173,7 +173,7 @@
         void GlutDisplay();
     #endif
 
-    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 0
+    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 1
     #define PRINT_STARTING_PDB 0
 
 #endif /*DEFINITIONS_H_*/

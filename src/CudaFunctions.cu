@@ -32,32 +32,6 @@ void unbindLJTexture()
     cudaUnbindTexture(LJTexture);
 }
 
-/*void bindLJTexture2D(float *ljp)
-{
-	const textureReference *texRefPtr;
-	cudaGetTextureReference(&texRefPtr, "LJTexture2D");
-	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-
-	LJTexture2D.addressMode[0] = cudaAddressModeWrap;
-	LJTexture2D.addressMode[1] = cudaAddressModeWrap;
-	LJTexture2D.filterMode = cudaFilterModePoint;
-	LJTexture2D.normalized = false;
-
-	size_t offset;
-	cudaBindTexture2D(&offset, texRefPtr, ljp, &channelDesc, AA_COUNT, AA_COUNT, AA_COUNT*sizeof(float)+1);
-
-	if (int(offset)>0)
-		printf("!!! Texture offset %d\n",int(offset));
-}*/
-
-
-/*void unbindLJTexture2D ()
-{
-	const textureReference *texRefPtr;
-	cudaGetTextureReference(&texRefPtr, "LJTexture2D");
-	cudaUnbindTexture(texRefPtr);
-}*/
-
 #endif
 
 #if METADATA_MEMORY == TEXTURE_MEM
@@ -205,101 +179,7 @@ void CUDA_Esum_async(float* result, float *d_resultMatrix, int resultSize, int d
 {
     // parallel sum on gpu if required
 }
-/*
-void CUDA_EonDevice_B(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, float* result, int blockSize, int datasetSize)
-{
-	// result stored on the device
-	// gridSize can be arbitrary
-	int gridSize = datasetSize/blockSize;
-	// the parallel sum of the results must have an array with size that is a power of 2
-	int resultSize = int(pow(2,ceil(log(float(gridSize))/log(2.0))));
-	//resultSize *= resultSize;
 
-	//for a parallel sum each grid must have one cell in the array of results from all the threads
-	float *d_result;
-	cudaMalloc((void **)&d_result,sizeof(float)*resultSize*resultSize);
-	cudaMemset(d_result,0,sizeof(float)*resultSize*resultSize);
-
-
-	// Launch the device computation
-	// result must become an array of dimentions the same as grid so that the multiple thread blocks can sum in it properly
-
-	dim3 dimBlock(blockSize,blockSize,1);   // threads
-	dim3 dimGrid(gridSize,gridSize,1);    	// blocks
-
-	E_SimpleKernel<<< dimGrid,dimBlock >>>(residuePositions, residueMeta, residueCount, moleculePositions, moleculeCount, LJPotentials, d_result);
-
-
-	//sum the results from the thread blocks on the GPU
-	 fix this for multiple reduction sums!!!
-
-	//    float * sumResults;
-	//
-	//    if (resultSize*resultSize<=512) //options are 1 ... 256 == 16x16 thread blocks, ie fits in one kernel
-	//    {
-	//    	parallelSum_kernel<<<1,resultSize*resultSize>>>(d_result,d_stride);  // THIS WORKS!
-	//	}
-	//    else   // resultsize > 512 == 32x32,64x64,128x128,256x256 .... etc
-	//    {
-	//    	int threadBlockSize = 512;				// maximum coverage by threads
-	//    	gridSize = resultSize*resultSize/512;   // how many grids we need
-	//	   	cudaMalloc((void **)&sumResults,sizeof(float)*gridSize);
-	//		cudaMemset(sumResults,0,sizeof(float)*gridSize);
-	//	   	parallelSum_kernel<<<gridSize,threadBlockSize>>>(d_result,sumResults);
-	//
-	//	}
-	//	cudaFree(d_stride);
-	//	cudaMemcpy(result,d_result, sizeof(float), cudaMemcpyDeviceToHost);
-
-	#ifdef _EMU
-
-	printf("After || sum\n");
-	for (int i=0;i<resultSize;i++)
-	{
-		for (int j=0;j<resultSize;j++)
-			printf (" %10.7f",d_result[i*resultSize+j]);
-		printf("\n");
-	}
-	#endif
-	// copy the result back to host memory
-	// sum it on the CPU, seems faster than a kernel for 64x64 at least
-
-		float *tmpSums = new float [resultSize*resultSize];
-		cudaMemcpy(tmpSums,d_result, sizeof(float)*resultSize*resultSize, cudaMemcpyDeviceToHost);
-		result[0] = 0;
-		for (int i=0;i<resultSize*resultSize;i++)
-			result[0] += tmpSums[i];
-		result[0] *= KBTConversionFactor;
-
-	// free the memory assigned for this iteration.
-	cudaFree(d_result);
-
-	return;
-};
-
-
-void CUDA_rotateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_rotationVector, float4* d_center, cudaStream_t stream)
-{
-	int grids = int(ceil(float(moleculeLength)/512.0f));
-	int threads = int(ceil(float(moleculeLength)/float(grids)));
-	dim3 dimBlock(moleculeLength,1,1);   // threads
-	dim3 dimGrid(grids,1,1);    	// blocks
-
-	rotateMolecule_kernel<<<dimGrid,dimBlock,0,stream>>>(d_residuePositions, d_startPosition, d_moleculeLength, d_rotationVector, d_center);
-}
-*/
-/*
-void CUDA_translateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_translation, float4* d_center, cudaStream_t stream)
-{
-	int grids = int(ceil(float(moleculeLength)/512.0f));
-	int threads = int(ceil(float(moleculeLength)/float(grids)));
-	dim3 dimBlock(moleculeLength,1,1);   // threads
-	dim3 dimGrid(grids,1,1);    	// blocks
-
-	translateMolecule_kernel <<< dimGrid,dimBlock,0,stream >>> (d_residuePositions, d_startPosition, d_moleculeLength, d_translation, d_center);
-}
-
-*/
 // alternative summation algorithm will work with up to 33554432 residues
 void CUDA_EonDevice(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, double* result, int blockSize, int datasetSize, int sm_size)
 {
@@ -344,7 +224,6 @@ void CUDA_EonDevice(float4 *residuePositions, float4 *residueMeta, int * residue
 #if PARALLEL_SUM
     parallelSum_kernel<<<1,gridSize>>>(d_result);
     cudaMemcpy(result,d_result, sizeof(float), cudaMemcpyDeviceToHost);
-    result[0] *= KBTConversionFactor;
 #else
     cudaMemcpy(tmpSums,d_result, sizeof(float)*resultSize*resultSize, cudaMemcpyDeviceToHost);
     result[0] = 0.0f;
@@ -374,7 +253,6 @@ void CUDA_EonDevice(float4 *residuePositions, float4 *residueMeta, int * residue
     result[0] += tmpSums[i];
 #endif
     }
-    result[0] *= KBTConversionFactor;
 
     delete [] tmpSums;
 #endif
@@ -416,7 +294,6 @@ void CUDA_EonDeviceTest(float *d_x, float *d_y,float *d_z, int *d_id, float4 *re
     {
         result[0] += tmpSums[i];
     }
-    result[0] *= KBTConversionFactor;
     delete [] tmpSums;
 
     // free the memory assigned for this iteration.
@@ -598,11 +475,10 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                     float sigmaij((yresiduem.z + meta.z) * 0.5f);
 
                     float LJtmp(__powf(sigmaij/r,6.0f));
-                    //float r0 = sigmaij*1.122462048309372981433533049679f; //sigma*pow(2.0,(1.0/6.0));
 
                     LJ = -4.0f*Eij*LJtmp*(LJtmp-1.0f);
                     //LJ = __fmul_rn(-4.0f,__fmul_rn(Eij,__fmul_rn(LJtmp,__fadd_rn(LJtmp,-1.0f))));
-                    if (Eij>0.0f && r < (sigmaij*1.122462048309372981433533049679f))
+                    if (Eij>0.0f && r < (sigmaij*r0_constant))
                     {
                         LJ = -LJ + 2.0f*Eij;
                     }
@@ -622,7 +498,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
 
             } // if !(X_tile_residuePositions.w == Y_tile_residuePositions.w || X_tile_residuePositions.w < CROWDER_IDENTIFIER )
         } // for i = 0..Bdx
-        sharedmem_results[tx] = (lj_subtotal * LJ_CONVERSION_FACTOR) + (dh_subtotal * DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f);
+        sharedmem_results[tx] = (lj_subtotal * RT_to_kcalmol) + (dh_subtotal * DH_CONVERSION_FACTOR);
 
 #if CULL_LOWER_TRIANGULAR_SUM
         if (bx==by)
@@ -738,12 +614,12 @@ __global__ void E_MoleculeKernel(float4 * residuePositionsA, float4 * residueMet
                 float sigmaij((A_meta.z + B_Meta[positionOfMeta + i].z) * 0.5f);
                 float LJtmp(__powf(sigmaij/r,6.0f));
                 float LJ (-4.0f*Eij*LJtmp*(LJtmp-1.0f));
-                if (Eij>0.0f && r < (sigmaij*1.122462048309372981433533049679f))
+                if (Eij>0.0f && r < (sigmaij*r0_constant))
                     LJ = -LJ + 2.0f*Eij;
                 lj_subtotal += LJ;
 
             } // for i = 0..Bdx
-            sharedmem_results[tx] = (lj_subtotal * LJ_CONVERSION_FACTOR) + (dh_subtotal * DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f);
+            sharedmem_results[tx] = (lj_subtotal * RT_to_kcalmol) + (dh_subtotal * DH_CONVERSION_FACTOR);
         } // if !padding
 
         __syncthreads();  // make sure all threads are done before moving to the enxt tile
@@ -825,7 +701,6 @@ void CUDA_EonDeviceNC(float4 *residuePositions, float4 *residueMeta, int * resid
     {
         result[0] += tmpSums[i];
     }
-    result[0] *= KBTConversionFactor;
 
     delete [] tmpSums;
 
@@ -966,21 +841,19 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
 // #endif
 
                 float LJtmp(__powf(sigmaij/r,6.0f));
-                //float r0 = sigmaij*1.122462048309372981433533049679f; //sigma*pow(2.0,(1.0/6.0));
 
                 LJ = -4.0f*Eij*LJtmp*(LJtmp-1.0f);
                 //LJ = __fmul_rn(-4.0f,__fmul_rn(Eij,__fmul_rn(LJtmp,__fadd_rn(LJtmp,-1.0f))));
-                if (Eij>0.0f && r < (sigmaij*1.122462048309372981433533049679f))
+                if (Eij>0.0f && r < (sigmaij*r0_constant))
                 {
                     LJ = -LJ + 2.0f*Eij;
                 }
 
                 lj_subtotal += LJ;
-                //sharedmem_results[tx] += (LJ * LJ_CONVERSION_FACTOR) + (DH * DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f ); // moved outside loop
 
             } // if !(X_tile_residuePositions.w == Y_tile_residuePositions.w || X_tile_residuePositions.w < CROWDER_IDENTIFIER )
         } // for i = 0..Bdx
-        sharedmem_results[tx] = (lj_subtotal * LJ_CONVERSION_FACTOR) + (dh_subtotal * DH_CONVERSION_FACTOR * 1.602176487f * 1.602176487f);
+        sharedmem_results[tx] = (lj_subtotal * RT_to_kcalmol) + (dh_subtotal * DH_CONVERSION_FACTOR);
 
 #if CULL_LOWER_TRIANGULAR_SUM
         if (bx==by)
