@@ -1065,11 +1065,11 @@ void Simulation::loadArgsFromFile()
             else if (strcmp(key, "title") == 0)
             {
                 int length = 0;
-                length += sprintf(parameters.title + length, value, parameters.pid);
+                length += sprintf(parameters.title + length, "%s", value);
                 value = strtok(NULL," ");
                 while (value != NULL)
                 {
-                    length += sprintf(parameters.title + length, " %s", value, parameters.pid);
+                    length += sprintf(parameters.title + length, " %s", value);
                     value = strtok(NULL," ");
                 }
             }
