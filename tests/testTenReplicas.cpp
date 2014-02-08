@@ -90,6 +90,19 @@ void TestTenReplicas::testSanity()
         { -8.528,  -7.459,  -1.069}
     };
 
+    static const Subtotals kim_results[10] = {
+        { -0.29408521,   -0.08092694,   -0.21315828},
+        { -1.05641714,   -1.32250603,    0.26608889},
+        { -10.27830468,   -9.09456258,   -1.18374210},
+        { -7.58417170,   -5.90453581,   -1.67963588},
+        { -0.00007911,   -0.00002116,   -0.00005795},
+        { -5.56456404,   -4.81153585,   -0.75302819},
+        { -5.45256876,   -4.18365757,   -1.26891119},
+        { -10.67030306,   -9.22300158,   -1.44730149},
+        { -9.90411112,   -7.95237776,   -1.95173336},
+        { -8.51812492,   -7.44768961,   -1.07043531}
+    };
+
     float mean_relative_error_total(0);
     float mean_relative_error_LJ(0);
     float mean_relative_error_DH(0);
@@ -149,9 +162,9 @@ void TestTenReplicas::testSanity()
 //         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_results[i].cpu, cpu_nc.total(), e);
 
 #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
-        float relative_error_total = abs(CHARMM_results[i].total - cpu.total())/abs(CHARMM_results[i].total);
-        float relative_error_LJ = abs(CHARMM_results[i].LJ - cpu.total_LJ())/abs(CHARMM_results[i].LJ);
-        float relative_error_DH = abs(CHARMM_results[i].DH - cpu.total_DH())/abs(CHARMM_results[i].DH);
+        float relative_error_total = abs(kim_results[i].total - cpu.total())/abs(kim_results[i].total);
+        float relative_error_LJ = abs(kim_results[i].LJ - cpu.total_LJ())/abs(kim_results[i].LJ);
+        float relative_error_DH = abs(kim_results[i].DH - cpu.total_DH())/abs(kim_results[i].DH);
 
         printf("ERRORS: %f %f %f\n", relative_error_total, relative_error_LJ, relative_error_DH);
 
