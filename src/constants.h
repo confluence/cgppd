@@ -13,7 +13,6 @@
     #define kcal        4184.0f             // one kilocalorie (in joules)
     #define N_A         6.02214129e23f      // Avogadro's constant (in 1 / mol)
 
-    #define RT_to_kcalmol       (T_room * Rgas / kcal) // conversion from RT units to kcal/mol
     #define r0_constant         pow(2.0f, 1.0f/6.0f) // constant factor in r0_ij
 
     #define LJPDSOURCE          "data/pair_potentials_MJ1996" // contact potentials from MJ1996 model; see [K&H 2008]
@@ -22,7 +21,14 @@
 
     #define Xi                      10.0f // Debye screening length (in angstroms)
     #define eps0                    8.85418782e-12f  // permittivity of free space (in farads / metre)
+
+    // UNCOMMENT THESE TWO LINES FOR ACCURATE UNIT CONVERSIONS
+    #define RT_to_kcalmol       (T_room * Rgas / kcal) // conversion from RT units to kcal/mol
     #define DH_CONVERSION_FACTOR    (pow(E_charge, 2.0f) * N_A / (4.0f * float(M_PIl) * eps0 * kcal * Ang * D_water)) // as CCELEC in CHARMM
+
+    // UNCOMMENT THESE TWO LINES FOR CHARMM COMPATIBILITY (for comparisons to reference conformations)
+//     #define RT_to_kcalmol       0.6f // estimate used in patched CHARMM and by Young Kim
+//     #define DH_CONVERSION_FACTOR 332.0716f / D_water // CHARMM's CCELEC
 
     // TODO: probably move these to the definitions file; they're implementation details. Maybe move some theoretical stuff from there to here.
     #define AA_COUNT        20
