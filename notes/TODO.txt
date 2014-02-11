@@ -2,12 +2,7 @@
 RIGHT NOW
 --------------------------------------------------------------------------------
 
-* Fix bad potential constants
-    * one for LJ and one for DH - done
-    * fix on CPU and GPU - done
-    * check that reference results are sensible
-    * fix independent script and all the tests
-    * then check units for bonded components
+* Fix bad potential constants -- add a compatibility scaling factor for DH comparison to YK's results
 
 * verify that async version produces sensible results
 
@@ -21,12 +16,19 @@ RIGHT NOW
 NOW
 --------------------------------------------------------------------------------
 
+OPTIMISATION
+
+* why not precalculate the LJ coefficients which are independent from r?
+    * We could definitely at least store Eij instead of eij.
+    * How much extra storage / memory transfer overhead would be required for 3 coefficients (3EijSigij, 2Eij and 2^(1/6)Sigij)?
+    * Maybe do it and test it? float3 table instead of float.
+
 VALIDATION
-* make graphs for small sigma simulation
+
 * should we try crankshaft moves with more residues, and see if this improves the repulsive LJ results?
 
 CLEANUP / BUGFIX
-* add compilation flags for repulsive LJ and LJ off
+
 * use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
 * potential test for repulsive LJ -- add options for no LJ / repulsive LJ to python script
 * fix chain processing
@@ -36,6 +38,7 @@ CLEANUP / BUGFIX
 * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 
 OTHER
+
 * redo Ian's tail/no tail simulations with flexible tail; replicate post-processing used in original thesis
 
 BENCHMARKING
@@ -43,13 +46,12 @@ BENCHMARKING
 * do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
 * how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
 
-MAIL ROB
+MODEL CORRECTNESS
 
 * potential is now much (?) bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct? Also including the potential from inside proteins should raise the total (right)?
     * analyse potential breakdown (from CPU-only version)
 
-* What happened to the constants in the DH calculation?
-* Units! Where do they come from? Are any conversions required for the linker components?
+* Are any conversions required for the linker components?
 
 * Is the flex move actually a valid extension of the model? Does the polymer test demonstrate that?
     * Kolinski & Skolnick 1994 (I) suggests a similar move for protein folding simulations.
