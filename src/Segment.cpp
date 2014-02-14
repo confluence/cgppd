@@ -15,12 +15,13 @@ Segment::Segment()
 
 uint Segment::random_residue_index(gsl_rng * r)
 {
+    LOG(DEBUG_FLEX_MC, "in random_residue_index; n is %d\n", size);
     return (int) gsl_rng_uniform_int(r, size) + start;
 }
 
 uint Segment::random_residue_index_middle(gsl_rng * r)
 {
-
+    LOG(DEBUG_FLEX_MC, "in random_residue_index_middle; n is %d\n", size - 2);
     if (size > 2)
     {
         return (int) gsl_rng_uniform_int(r, size - 2) + start + 1;
