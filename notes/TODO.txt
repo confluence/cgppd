@@ -8,6 +8,7 @@ RIGHT NOW
 
 * diubiquitin simulations
     * Fix GSL error which is presumably triggered by multiple chains
+        * now is a good time to start using vectors for links and segments instead of needlessly copying them into arrays
     * Add fake side chain by appending an alanine residue to the tail of the second Ubq
 
 * write foundations chapter

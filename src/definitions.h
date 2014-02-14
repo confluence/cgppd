@@ -64,6 +64,7 @@
     #define DEBUG_FLEX 0
     #define DEBUG_LJ 0
     #define DEBUG_CUDA 0
+    #define DEBUG_FLEX_MC 1
 
     #define LOG(level, ...) \
             do { if (level) printf(__VA_ARGS__); } while (0)
