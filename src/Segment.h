@@ -1,6 +1,7 @@
 #ifndef SEGMENT_H_
 #define SEGMENT_H_
 #include <gsl/gsl_rng.h>
+#include "definitions.h"
 
 class Segment
 {
