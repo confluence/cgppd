@@ -7,6 +7,12 @@ RIGHT NOW
 * verify that async version produces sensible results
 
 * diubiquitin simulations
+    * MAJOR PROBLEM: need to calculate angle, etc. between non-consecutive residues if one chain is attached to the side of another chain.
+        * stop using occupancy. Define flexible sequences explicitly in the config file -- then non-consecutive residues can be in the same segment.
+        * need to refactor segment and link code
+        * links only for flexible parts? Can bridge non-consecutive residues.
+        * syntax for all flexible linkers (for polymers) and individual residues.
+
     * Fix GSL error which is presumably triggered by multiple chains
         * now is a good time to start using vectors for links and segments instead of needlessly copying them into arrays
     * Add fake side chain by appending an alanine residue to the tail of the second Ubq
