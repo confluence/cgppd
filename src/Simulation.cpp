@@ -962,6 +962,7 @@ void Simulation::loadArgsFromFile()
 #define PARAMETER_SECTION 0
 #define MOLECULE_SECTION 1
 #define CROWDER_SECTION 2
+#define SEGMENT_SECTION 3
 
     int section = PARAMETER_SECTION;
 
@@ -979,6 +980,10 @@ void Simulation::loadArgsFromFile()
         else if (strcmp(line, "crowders") == 0)
         {
             section = CROWDER_SECTION;
+        }
+        else if (strcmp(line, "segments") == 0)
+        {
+            section = SEGMENT_SECTION;
         }
         else if (section == MOLECULE_SECTION || section == CROWDER_SECTION)
         {
@@ -1004,8 +1009,31 @@ void Simulation::loadArgsFromFile()
                 }
 
                 parameters.mdata.push_back(m);
+                // TODO: if the molecule is named, add it to the name map
                 LOG(parameters.verbosity > 1, "\tAdded molecule from file %s.\n", m.pdbfilename);
             }
+        }
+        else if (section == SEGMENT_SECTION)
+        {
+            char * molname = strtok(line," ");
+            char * word = strtok(NULL," ");
+            
+            if (strcmp(word, "all") == 0)
+            {
+                //TODO: all flexible
+            }
+            else
+            {
+                //TODO: list of numbers
+                
+                while (word != NULL)
+                {
+                    // TODO: append to segment data vector
+                    word = strtok(NULL," ");
+                }
+            }
+
+            // TODO: get mdata from the map; add segment data vector
         }
         else if (section == PARAMETER_SECTION)
         {
