@@ -113,12 +113,22 @@ void TestSimulation::testLoadArgsFromFile()
     CPPUNIT_ASSERT(strcmp(s.parameters.file, "tests/argtestfile") == 0);
     CPPUNIT_ASSERT(strcmp(s.parameters.logfile, "") == 0);
 
-    CPPUNIT_ASSERT_EQUAL((int)s.parameters.mdata.size(), 7);
+    CPPUNIT_ASSERT_EQUAL(7, (int)s.parameters.mdata.size());
+    CPPUNIT_ASSERT_EQUAL(2, (int)s.parameters.mdata_map.size());
     
+    moldata uim_data = s.parameters.mdata[s.parameters.mdata_map["UIM1"]];
+    moldata ubq_data = s.parameters.mdata[s.parameters.mdata_map["ubiquitin"]];
     
-
-//     writeFileIndex(&a);
-
+    CPPUNIT_ASSERT_EQUAL(true, uim_data.all_flexible);
+    CPPUNIT_ASSERT_EQUAL(0, (int)uim_data.segments.size());
+    
+    CPPUNIT_ASSERT_EQUAL(false, ubq_data.all_flexible);
+    CPPUNIT_ASSERT_EQUAL(1, (int)ubq_data.segments.size());
+    
+    CPPUNIT_ASSERT_EQUAL(72, ubq_data.segments[0].residue_indices[0]);
+    CPPUNIT_ASSERT_EQUAL(73, ubq_data.segments[0].residue_indices[1]);
+    CPPUNIT_ASSERT_EQUAL(74, ubq_data.segments[0].residue_indices[2]);
+    CPPUNIT_ASSERT_EQUAL(75, ubq_data.segments[0].residue_indices[3]);
 }
 
 void TestSimulation::tearDown()
