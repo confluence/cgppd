@@ -180,6 +180,8 @@ void TestMolecule::testTranslate()
 #if FLEXIBLE_LINKS
 void TestMolecule::testSegments()
 {
+    // TODO: this all needs to be redone.
+    
     CPPUNIT_ASSERT_EQUAL(1, angiotensin.segmentCount);
 //     CPPUNIT_ASSERT_EQUAL(1, angiotensin.linkerCount);
 

@@ -5,9 +5,15 @@ RIGHT NOW
 REFACTOR SEGMENT CODE
 
 * new input:
-    * ability to mark a molecule as entirely flexible
-    * ability do define a segment by listing individual residues
+    * ability to mark a molecule as entirely flexible - DONE
+    * ability do define a segment by listing individual residues - DONE
     * initially to simplify the flex move we need to order the chains correctly
+
+* initialisation code: - NEXT
+    * move molecule-specific init code out of replica and into molecule to make it easier to test.
+    * move per-molecule replica code into replica's loadMolecule, which should take moldata (and pass it to molecule's init)
+
+* update unit test while updating the model.
 
 * new model:
     * links between residues in each chain, which may not be flexible
