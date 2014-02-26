@@ -1021,14 +1021,12 @@ void Simulation::loadArgsFromFile()
         }
         else if (section == SEGMENT_SECTION)
         {
-            char * molname = strtok(line, " ");
-            moldata m = parameters.mdata[parameters.mdata_map[string(molname)]];
-            
+            char * molname = strtok(line, " ");            
             char * word = strtok(NULL, " ");
                         
             if (strcmp(word, "all") == 0)
             {
-                m.all_flexible = true;
+                parameters.mdata[parameters.mdata_map[string(molname)]].all_flexible = true;
             }
             else
             {
@@ -1040,7 +1038,7 @@ void Simulation::loadArgsFromFile()
                     word = strtok(NULL, " ");
                 }
                 
-                m.segments.push_back(s);
+                parameters.mdata[parameters.mdata_map[string(molname)]].segments.push_back(s);
             }
         }
         else if (section == PARAMETER_SECTION)
