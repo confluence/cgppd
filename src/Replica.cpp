@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP),
+Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP), contiguousResiduesSize(0),
 #if FLEXIBLE_LINKS
     max_segment_count(0), calculate_rigid_potential_only(false),
 #endif
