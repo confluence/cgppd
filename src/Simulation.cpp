@@ -1010,35 +1010,43 @@ void Simulation::loadArgsFromFile()
 
                 parameters.mdata.push_back(m);
                 // TODO: if the molecule is named, add it to the name map
+                // TODO: check if this comparison is right
+                if (m.name && m.name[0] != '\0')
+                {
+                    parameters.mdata_map[string(m.name)] = parameters.mdata.size() - 1;
+                }
+
                 LOG(parameters.verbosity > 1, "\tAdded molecule from file %s.\n", m.pdbfilename);
             }
         }
         else if (section == SEGMENT_SECTION)
         {
-            char * molname = strtok(line," ");
-            char * word = strtok(NULL," ");
+            char * molname = strtok(line, " ");
+            moldata m = parameters.mdata[parameters.mdata_map[string(molname)]];
             
+            char * word = strtok(NULL, " ");
+                        
             if (strcmp(word, "all") == 0)
             {
-                //TODO: all flexible
+                m.all_flexible = true;
             }
             else
             {
-                //TODO: list of numbers
-                
+                segdata s;
+
                 while (word != NULL)
                 {
-                    // TODO: append to segment data vector
-                    word = strtok(NULL," ");
+                    s.residue_indices.push_back(atoi(word) - 1);
+                    word = strtok(NULL, " ");
                 }
+                
+                m.segments.push_back(s);
             }
-
-            // TODO: get mdata from the map; add segment data vector
         }
         else if (section == PARAMETER_SECTION)
         {
-            char * key = strtok(line," ");
-            char * value = strtok(NULL," ");
+            char * key = strtok(line, " ");
+            char * value = strtok(NULL, " ");
 
             LOG(parameters.verbosity > 1, "\tParameter %s = %s\n", key, value);
 

@@ -1,12 +1,14 @@
-
 #ifndef STRUCTURES_H_
     #define STRUCTURES_H_
 
     #include <vector>
+    #include <map>
     #include <iostream>
     #include <string.h>
 
     #include "definitions.h"
+
+    using namespace std;
 
     class Replica;
 
@@ -43,6 +45,11 @@
         pthread_cond_t * waitingReplicaExchangeCond;
     };
 
+    struct segdata
+    {
+        vector<int> residue_indices;
+    };
+
     struct moldata
     {
         char pdbfilename[256];
@@ -56,8 +63,11 @@
         float rz;
         float ra;
         bool crowder;
+        bool all_flexible;
 
-        moldata(): px(0), py(0), pz(0), translate(false), rx(0), ry(0), rz(0), ra(0), crowder(false)
+        vector<segdata> segments;
+
+        moldata(): px(0), py(0), pz(0), translate(false), rx(0), ry(0), rz(0), ra(0), crowder(false), all_flexible(false)
         {
             memset(pdbfilename, 0, 256);
             memset(name, 0, 256);
@@ -96,7 +106,8 @@
         // TODO: this is gone until checkpointing goes back in
 //         char checkpointfilename[256];
         bool resume;
-        std::vector<moldata> mdata;
+        vector<moldata> mdata;
+        map<string, int> mdata_map;
         int verbosity;
 
         argdata() :

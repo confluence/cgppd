@@ -114,6 +114,8 @@ void TestSimulation::testLoadArgsFromFile()
     CPPUNIT_ASSERT(strcmp(s.parameters.logfile, "") == 0);
 
     CPPUNIT_ASSERT_EQUAL((int)s.parameters.mdata.size(), 7);
+    
+    
 
 //     writeFileIndex(&a);
 

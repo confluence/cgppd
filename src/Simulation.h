@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstring>
 #include <cmath>
+#include <string.h>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <gsl/gsl_qrng.h>
