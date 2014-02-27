@@ -14,6 +14,8 @@ REFACTOR SEGMENT CODE
     * some kind of graph which can return all residues branching off in one direction from a particular residue
 
 * new model:
+    * SEE PYTHON MOCKUP
+    * we also need a way to return two neighbours for crankshaft move
     * links between residues in each chain, which may not be flexible
     * links between residues in flexible segment (may be non-contiguous)
     * build a graph representation (simple adjacency map?) -- mock this up in Python to work out the logic.
