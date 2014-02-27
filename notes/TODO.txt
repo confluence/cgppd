@@ -7,22 +7,27 @@ REFACTOR SEGMENT CODE
 * new input:
     * ability to mark a molecule as entirely flexible - DONE
     * ability do define a segment by listing individual residues - DONE
-    * initially to simplify the flex move we need to order the chains correctly
 
-* initialisation code: - NEXT
-    * move molecule-specific init code out of replica and into molecule to make it easier to test.
-    * move per-molecule replica code into replica's loadMolecule, which should take moldata (and pass it to molecule's init)
-
-* update unit test while updating the model.
+* new geometry structures
+    * delete link and segment
+    * alter potential functions to take array of residues + bond / angle / torsion object
+    * some kind of graph which can return all residues branching off in one direction from a particular residue
 
 * new model:
     * links between residues in each chain, which may not be flexible
     * links between residues in flexible segment (may be non-contiguous)
-    * precalculate list of bonds (equivalent to list to flexible links)
-    * precalculate list of angles (add object)
-    * precalculate list of torsions (add object)
-    * precalculate residues available for MC moves
+    * build a graph representation (simple adjacency map?) -- mock this up in Python to work out the logic.
+        * precalculate set of bonds -- all flexible edges
+        * precalculate set of angles -- for each vertex B next to flexible edge, ABC for each (A,B) in vertex.neighbours if neighbours > 1
+        * precalculate set of torsions -- for each edge BC which is flexible or next to flexible edge, ABCD for each AB and BC in edge.neighbours if neighbours > 1
+        * precalculate set of residues available for local translation / crankshaft -- all vertices between all flexible edges
+        * precalculate set of residues available for flex -- all vertices touching flexible edge
     * segments limited to one molecule
+    * eliminate potential caching (premature optimisation)
+
+* update unit test while updating the model.
+    * move molecule-specific init code out of replica and into molecule to make it easier to test.
+    * move per-molecule replica code into replica's loadMolecule, which should take moldata (and pass it to molecule's init)
 
 * diubiquitin simulations -- once the segment code is fixed
 
