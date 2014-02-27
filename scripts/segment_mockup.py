@@ -8,6 +8,9 @@ class Residue(object):
         self.label = label
         self.chain = chain
 
+    def __str__(self):
+        return "Residue(%d, %s)" % (self.label, self.chain)
+
 
 # utility class for the graph
 class Graph(object):
@@ -49,12 +52,19 @@ class Bond(object):
         self.i = i
         self.j = j
 
+    def __str__(self):
+        return "Bond(%d, %d)" % (self.i + 1, self.j + 1)
+
+
 
 class Angle(object):
     def __init__(self, i, j, k):
         self.i = i
         self.j = j
         self.k = k
+
+    def __str__(self):
+        return "Angle(%d, %d, %d)" % (self.i + 1, self.j + 1, self.k + 1)
 
 
 class Torsion(object):
@@ -64,8 +74,16 @@ class Torsion(object):
         self.k = k
         self.l = l
 
+    def __str__(self):
+        return "Torsion(%d, %d, %d, %d)" % (self.i + 1, self.j + 1, self.k + 1, self.l + 1)
+
+
+def pretty_print(lst):
+    print ", ".join([str(i) for i in lst])
+
+
 residues = []
-segments = [(72, 73, 74, 75), (72 + 76, 73 + 76, 74 + 76, 75 + 76)] # indices (starting from zero)
+segments = [(72, 73, 74, 75, 123), (72 + 76, 73 + 76, 74 + 76, 75 + 76)] # indices (starting from zero)
 
 # Create diubiquitin
 
@@ -81,13 +99,13 @@ graph = Graph()
 
 vertices = list(range(len(residues)))
 
-for i, j in zip(vertices[:-1], vertices[1:])
+for i, j in zip(vertices[:-1], vertices[1:]):
     if residues[i].chain == residues[j].chain:
-        graph.add_edge(i, j, false) # molecule is not all flexible
+        graph.add_edge(i, j, False) # molecule is not all flexible
 
 for s in segments:
-    for i, j in zip(segments[:-1], segments[1:]):
-        graph.add_edge(i, j, true) # these are flexible
+    for i, j in zip(s[:-1], s[1:]):
+        graph.add_edge(i, j, True) # these are flexible
 
 # create sets of geometric features for potential calculation
 
@@ -96,10 +114,11 @@ angles = set()
 torsions = set()
 
 for (i, j) in graph.edges():
-    bonds.add(Bond(i, j))
+    if graph.flexible(i, j):
+        bonds.add(Bond(i, j))
 
 for j in graph.vertices():
-    neighbours = graph.neighbours(j)
+    neighbours = list(graph.neighbours(j))
     if len(neighbours) > 1: # j is between at least two other residues
         for (i, k) in zip(neighbours[:-1], neighbours[1:]):
             if graph.flexible(i, j) or graph.flexible(j, k):
@@ -110,21 +129,35 @@ for (j, k) in graph.edges():
     neighbours_k = graph.neighbours(k)
 
     if len(neighbours_j) > 1 and len(neighbours_k) > 1: # jk is between at least two other edges
-        for i in neighbours_j - set(k):
-            for l in neighbours_k - set(j):
+        for i in (neighbours_j - set([k])):
+            for l in (neighbours_k - set([j])):
                 if graph.flexible(i, j) or graph.flexible(j, k) or graph.flexible(k, l):
                     torsions.add(Torsion(i, j, k, l))
 
 # create sets of residues available for MC moves
 
 mc_local_residues = set()
+mc_crankshaft_residues = set()
 mc_flex_residues = set()
 
 for i in graph.vertices():
     neighbours = graph.neighbours(i)
 
     if all(graph.flexible(i, j) for j in neighbours):
-        mc_local_residues.add(i) # local translation or crankshaft is allowed (should residues be excluded from cranksaft if they have > 2 neighbours? Maybe?)
+        mc_local_residues.add(residues[i]) # local translation is allowed
+        if len(neighbours) > 1:
+            mc_crankshaft_residues.add(residues[i]) # crankshaft is allowed
 
     if any(graph.flexible(i, j) for j in neighbours):
-        mc_flex_residues.add(i) # flex move about this residue is allowed
+        mc_flex_residues.add(residues[i]) # flex move about this residue is allowed
+
+
+# see if we did it right
+
+pretty_print(bonds)
+pretty_print(angles)
+pretty_print(torsions)
+
+pretty_print(mc_local_residues)
+pretty_print(mc_crankshaft_residues)
+pretty_print(mc_flex_residues)
