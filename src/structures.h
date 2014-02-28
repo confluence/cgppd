@@ -2,7 +2,7 @@
 #define STRUCTURES_H_
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <iostream>
 #include <string.h>
 
@@ -107,7 +107,7 @@ struct argdata
 //         char checkpointfilename[256];
     bool resume;
     vector<moldata> mdata;
-    map<string, int> mdata_map;
+    unordered_map<string, int> mdata_map;
     int verbosity;
 
     argdata() :
@@ -126,44 +126,6 @@ struct argdata
         memset(logfile, 0, 256);
         memset(title, 0, 256);
     }
-};
-
-// GEOMETRY FOR FLEXIBLE LINKERS
-
-struct Bond
-{
-    // residue indices
-    int i;
-    int j;
-
-    // cache for tests
-    double length;
-    double potential;
-};
-
-struct Angle
-{
-    // residue indices
-    int i;
-    int j;
-    int k;
-
-    // cache for tests
-    double theta;
-    double potential;
-};
-
-struct Torsion
-{
-    // residue indices
-    int i;
-    int j;
-    int k;
-    int l;
-
-    // cache for tests
-    double phi;
-    double potential;
 };
 
 #endif

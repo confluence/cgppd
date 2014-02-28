@@ -120,7 +120,7 @@ for (i, j) in graph.edges():
 for j in graph.vertices():
     neighbours = list(graph.neighbours(j))
     if len(neighbours) > 1: # j is between at least two other residues
-        for (i, k) in zip(neighbours[:-1], neighbours[1:]):
+        for (i, k) in zip(neighbours[:-1], neighbours[1:]): # TODO TODO TODO this is actually wrong; it just happens to work if len(neighbours) <= 3
             if graph.flexible(i, j) or graph.flexible(j, k):
                 angles.add(Angle(i, j, k))
 
@@ -161,3 +161,6 @@ pretty_print(torsions)
 pretty_print(mc_local_residues)
 pretty_print(mc_crankshaft_residues)
 pretty_print(mc_flex_residues)
+
+# TODO: find a random branch off a residue (for the flex move)
+# TODO: get two neighbours for a crankshaft move (in case there are > 2)
