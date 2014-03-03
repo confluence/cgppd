@@ -3,7 +3,7 @@
 INCLUDE=
 LIBS=-L/usr/lib64
 LINKS=-lpthread -lgsl -lgslcblas
-CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
+CFLAGS=-fno-omit-frame-pointer -O2
 COMPILER=g++
 HGVERSION:= $(shell hg parents --template 'hgid: {node|short}')
 DEFINE=
@@ -18,8 +18,8 @@ NODEPS=clean help
 
 ### the following line enables debug output and emulation
 # TODO maybe enable this when debug is on
-#NVCC_COMPILER_FLAGS=-g -deviceemu -D_EMU
-#NVCC_COMPILER_FLAGS=-g
+# NVCC_COMPILER_FLAGS=-g -deviceemu -D_EMU
+# NVCC_COMPILER_FLAGS=-g
 NVCC_ARCH=-arch=sm_20
 
 ################################################################################

@@ -9,7 +9,7 @@ REFACTOR SEGMENT CODE
     * ability do define a segment by listing individual residues - DONE
 
 * new model:
-    * written, but does not compile. Need e.g. to define a hashable pair type https://stackoverflow.com/questions/20590656/error-for-hash-function-of-pair-of-ints
+    * writing - MOSTLY DONE
     * still need code for random branch(flex) and random neighbour pair (crankshaft)
     * self-contained unit test
 
