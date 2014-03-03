@@ -53,7 +53,7 @@ class Bond(object):
         self.j = j
 
     def __str__(self):
-        return "Bond(%d, %d)" % (self.i + 1, self.j + 1)
+        return "Bond(%d, %d)" % (self.i, self.j)
 
 
 
@@ -64,7 +64,7 @@ class Angle(object):
         self.k = k
 
     def __str__(self):
-        return "Angle(%d, %d, %d)" % (self.i + 1, self.j + 1, self.k + 1)
+        return "Angle(%d, %d, %d)" % (self.i, self.j, self.k)
 
 
 class Torsion(object):
@@ -75,7 +75,7 @@ class Torsion(object):
         self.l = l
 
     def __str__(self):
-        return "Torsion(%d, %d, %d, %d)" % (self.i + 1, self.j + 1, self.k + 1, self.l + 1)
+        return "Torsion(%d, %d, %d, %d)" % (self.i, self.j, self.k, self.l)
 
 
 def pretty_print(lst):
@@ -88,10 +88,10 @@ segments = [(72, 73, 74, 75, 123), (72 + 76, 73 + 76, 74 + 76, 75 + 76)] # indic
 # Create diubiquitin
 
 for i in range(76):
-    residues.append(Residue(i + 1, "A"))
+    residues.append(Residue(i, "A"))
 
 for i in range(76):
-    residues.append(Residue(i + 77, "B"))
+    residues.append(Residue(i + 76, "B"))
 
 # create graph
 
