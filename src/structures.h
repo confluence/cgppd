@@ -2,7 +2,7 @@
 #define STRUCTURES_H_
 
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <iostream>
 #include <string.h>
 
@@ -107,7 +107,7 @@ struct argdata
 //         char checkpointfilename[256];
     bool resume;
     vector<moldata> mdata;
-    unordered_map<string, int> mdata_map;
+    map<string, int> mdata_map;
     int verbosity;
 
     argdata() :
