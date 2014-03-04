@@ -143,7 +143,7 @@ class Graph(object):
         branch = set(edge)
 
         for out_edge in out_edges:
-            branch |= self.branch(out_edge, visited_edges | branch)
+            branch |= self.branch(out_edge, visited_edges | set([edge]))
 
         return branch
                 
