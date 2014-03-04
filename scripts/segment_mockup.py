@@ -135,9 +135,7 @@ class Graph(object):
 
             if any(self.flexible(i, j) for j in neighbours):
                 self.mc_flex_residues.add(residues[i]) # flex move about this residue is allowed
-                
-    # TODO also add method for returning residues for flex move
-    
+
     def branch(self, edge, visited_edges=None):
         i, j = edge
         out_edges = set((j, k) for k in self.neighbours(j) if k != i and (j, k) not in visited_edges)
@@ -152,8 +150,9 @@ class Graph(object):
     def random_branch(self, i):
         j = random.choice(list(self.neighbours[i]))
         return self.branch((i, j), set())
-
-    # TODO also add method for returning residues for crankshaft move
+    
+    def random_neighbour_pair(self, i):
+        return set(random.sample(list(self.neighbours(i)), 2))
 
 
 residues = []
@@ -191,5 +190,11 @@ pretty_print(graph.branch((75, 123), set()))
 print "branch starting from (148, 149)"
 pretty_print(graph.branch((148, 149), set()))
 
-# TODO: find a random branch off a residue (for the flex move)
-# TODO: get two neighbours for a crankshaft move (in case there are > 2)
+print "random pairs of neighbours for 123 (not that we can crankshaft 123)"
+pretty_print(graph.random_neighbour_pair(123))
+pretty_print(graph.random_neighbour_pair(123))
+pretty_print(graph.random_neighbour_pair(123))
+pretty_print(graph.random_neighbour_pair(123))
+
+print "random pair of neighbours for 74 (should always be the same)"
+pretty_print(graph.random_neighbour_pair(74))
