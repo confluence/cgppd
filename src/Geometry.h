@@ -149,7 +149,7 @@ public:
     set<int> MC_crankshaft_residues;
     set<int> MC_flex_residues;
 
-    set<int> branch(int i, int j, set<pair<int, int> > visited_edges);
+    set<int> branch(int i, int j, set<pair<int, int> > visited_edges=set<pair<int, int> >());
 };
 
 #endif

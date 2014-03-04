@@ -110,23 +110,29 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
 
 }
 
-// set<int> Graph::branch(int i, int j, set<pair<int, int> > visited_edges)
-// {
-//     set<pair<int, int> > out_edges;
-//     set<int> & neighbours = adjacency_map[j];
-// 
-//     for (set<int>::iterator k = neighbours.begin(); k != neighbours.end(); k++) {
-//         pair<int, int> jk = make_pair(j, k);
-//         if (*k != i && !visited_edges.count(jk)) {
-//             out_edges.insert(jk);
-//         }
-//     }
-// 
-//     set<int> this_branch;
-//     this_branch.insert(i);
-//     this_branch.insert(j);
-// 
-//     for (set<pair<int, int> >::iterator oe = out_edges.begin(); oe != out_edges.end(); oe++) {
-//         set<int> & out_branch = branch(oe->first, oe->second, )
-//     }
-// }
+set<int> Graph::branch(int i, int j, set<pair<int, int> > visited_edges)
+{
+    set<pair<int, int> > out_edges;
+    set<int> & neighbours = adjacency_map[j];
+
+    for (set<int>::iterator k = neighbours.begin(); k != neighbours.end(); k++) {
+        pair<int, int> jk = make_pair(j, *k);
+        if (*k != i && !visited_edges.count(jk)) {
+            out_edges.insert(jk);
+        }
+    }
+
+    set<int> this_branch;
+    this_branch.insert(i);
+    this_branch.insert(j);
+
+    set<pair<int, int> > new_visited_edges = visited_edges;
+    new_visited_edges.insert(make_pair(i, j));
+
+    for (set<pair<int, int> >::iterator oe = out_edges.begin(); oe != out_edges.end(); oe++) {
+        const set<int> & out_branch = branch(oe->first, oe->second, new_visited_edges);
+        this_branch.insert(out_branch.begin(), out_branch.end());
+    }
+
+    return this_branch;
+}
