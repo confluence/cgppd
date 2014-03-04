@@ -49,3 +49,17 @@ void check_potential_equal(double * expected, Potential actual, CppUnit::SourceL
 
     ::CppUnit::Asserter::failNotEqual(expected_str, actual_str, sourceLine);
 }
+
+template <>
+string join(const string sep, set<int> values)
+{
+    string s;
+
+    for (typename set<int>::iterator i = values.begin(); i != values.end(); i++) {
+        char temp[11];
+        sprintf(temp, "%d", *i);
+        s += sep + string(temp);
+    }
+
+    return s;
+}
