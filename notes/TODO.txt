@@ -9,16 +9,18 @@ REFACTOR SEGMENT CODE
     * ability do define a segment by listing individual residues - DONE
 
 * new model:
-    * writing - MOSTLY DONE
-    * still need code for random branch(flex) and random neighbour pair (crankshaft)
-    * self-contained unit test
+    * writing - DONE
+    * still need code for random branch(flex) and random neighbour pair (crankshaft) - DONE, minus integration (random bits go outside, in molecule)
+    * self-contained unit test - DONE
 
 * update rest of code
     * delete link and segment
     * alter potential functions to take array of residues + bond / angle / torsion object
-    * eliminate potential caching (premature optimisation)
+    * alter MC functions to select random residues / edges from graph
+    * eliminate potential caching (premature optimisation)? Not necessary; there's room on the bond/angle/torsion objects for caching. Just remove this from Residue.
     * move molecule-specific init code out of replica and into molecule to make it easier to test.
     * move per-molecule replica code into replica's loadMolecule, which should take moldata (and pass it to molecule's init)
+    * update molecule unit test to test all MC moves and potential
 
 * diubiquitin simulations -- once the segment code is fixed
 
