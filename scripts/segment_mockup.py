@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import random
+
 # This is a Python mockup of the refactored C++ flexible linker geometry code
 
 # the actual residue data object
@@ -85,9 +87,6 @@ class Graph(object):
 
     def flexible(self, i, j):
         return self.flexibility_map[(i, j)]
-
-    # TODO also add method for returning residues for flex move
-    # TODO also add method for returning residues for crankshaft move
     
     def parse(self, residues, all_flexible, segments):
         vertices = list(range(len(residues)))
@@ -136,7 +135,25 @@ class Graph(object):
 
             if any(self.flexible(i, j) for j in neighbours):
                 self.mc_flex_residues.add(residues[i]) # flex move about this residue is allowed
+                
+    # TODO also add method for returning residues for flex move
+    
+    def branch(self, edge, visited_edges=None):
+        i, j = edge
+        out_edges = set((j, k) for k in self.neighbours(j) if k != i and (j, k) not in visited_edges)
         
+        branch = set(edge)
+
+        for out_edge in out_edges:
+            branch |= self.branch(out_edge, visited_edges | branch)
+
+        return branch
+                
+    def random_branch(self, i):
+        j = random.choice(list(self.neighbours[i]))
+        return self.branch((i, j), set())
+
+    # TODO also add method for returning residues for crankshaft move
 
 
 residues = []
@@ -164,6 +181,15 @@ pretty_print(graph.torsions)
 pretty_print(graph.mc_local_residues)
 pretty_print(graph.mc_crankshaft_residues)
 pretty_print(graph.mc_flex_residues)
+
+print "branch starting from (123, 122)"
+pretty_print(graph.branch((123, 122), set()))
+
+print "branch starting from (75, 123)"
+pretty_print(graph.branch((75, 123), set()))
+
+print "branch starting from (148, 149)"
+pretty_print(graph.branch((148, 149), set()))
 
 # TODO: find a random branch off a residue (for the flex move)
 # TODO: get two neighbours for a crankshaft move (in case there are > 2)
