@@ -37,7 +37,7 @@ template <typename Type>
 void check_set_equal(set<Type> expected, set<Type> actual, CppUnit::SourceLine sourceLine)
 {
     if (expected != actual) {
-        ::CppUnit::Asserter::failNotEqual(join("\n", expected), join("\n", actual), sourceLine);
+        ::CppUnit::Asserter::failNotEqual(join(" ", expected), join(" ", actual), sourceLine);
     }
     
     return;

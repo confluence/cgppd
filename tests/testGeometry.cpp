@@ -108,4 +108,25 @@ void TestGeometry::testInit()
     expected_residues.insert(148);
     
     ASSERT_SET_EQUALS(expected_residues, graph.MC_flex_residues);
+    
+    set<int> expected_residues_branch_123_122;
+    for (int i = 76; i < 124; i++) {
+        expected_residues_branch_123_122.insert(i);
+    }
+    
+    ASSERT_SET_EQUALS(expected_residues_branch_123_122, graph.branch(123, 122));
+
+    set<int> expected_residues_branch_75_123;
+    for (int i = 75; i < 152; i++) {
+        expected_residues_branch_75_123.insert(i);
+    }
+    
+    ASSERT_SET_EQUALS(expected_residues_branch_75_123, graph.branch(75, 123));
+    
+    set<int> expected_residues_branch_148_149;
+    for (int i = 148; i < 152; i++) {
+        expected_residues_branch_148_149.insert(i);
+    }
+    
+    ASSERT_SET_EQUALS(expected_residues_branch_148_149, graph.branch(148, 149));
 }
