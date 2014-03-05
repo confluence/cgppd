@@ -21,14 +21,16 @@ struct Bond
     // cache for tests
     double length;
     double potential;
+    bool update_potential;
 
-    Bond(): i(0), j(0), length(0.0f), potential(0.0f) {}
-    Bond(int i, int j, double length=0.0f, double potential=0.0f)
+    Bond(): i(0), j(0), length(0.0f), potential(0.0f), update_potential(true) {}
+    Bond(int i, int j, double length=0.0f, double potential=0.0f, bool update_potential=true)
     {
         this->i = i;
         this->j = j;
         this->length = length;
         this->potential = potential;
+        this->update_potential = update_potential;
     }
 
     bool operator<(const Bond &b) const
@@ -58,15 +60,17 @@ struct Angle
     // cache for tests
     double theta;
     double potential;
+    bool update_potential;
 
-    Angle(): i(0), j(0), k(0), theta(0.0f), potential(0.0f) {}
-    Angle(int i, int j, int k, double theta=0.0f, double potential=0.0f)
+    Angle(): i(0), j(0), k(0), theta(0.0f), potential(0.0f), update_potential(true) {}
+    Angle(int i, int j, int k, double theta=0.0f, double potential=0.0f, bool update_potential=true)
     {
         this->i = i;
         this->j = j;
         this->k = k;
         this->theta = theta;
         this->potential = potential;
+        this->update_potential = update_potential;
     }
 
     bool operator<(const Angle &a) const
@@ -97,9 +101,10 @@ struct Torsion
     // cache for tests
     double phi;
     double potential;
+    bool update_potential;
 
-    Torsion(): i(0), j(0), k(0), l(0), phi(0.0f), potential(0.0f) {}
-    Torsion(int i, int j, int k, int l, double phi=0.0f, double potential=0.0f)
+    Torsion(): i(0), j(0), k(0), l(0), phi(0.0f), potential(0.0f), update_potential(true) {}
+    Torsion(int i, int j, int k, int l, double phi=0.0f, double potential=0.0f, bool update_potential=true)
     {
         this->i = i;
         this->j = j;
@@ -107,6 +112,7 @@ struct Torsion
         this->l = l;
         this->phi = phi;
         this->potential = potential;
+        this->update_potential = update_potential;
     }
 
     bool operator<(const Torsion &t) const
@@ -145,9 +151,13 @@ public:
     set<Angle> angles;
     set<Torsion> torsions;
 
-    set<int> MC_local_residues;
-    set<int> MC_crankshaft_residues;
-    set<int> MC_flex_residues;
+    set<int> MC_local_residues; // residue array indices
+    set<int> MC_crankshaft_residues; // residue array indices
+    set<int> MC_flex_residues; // residue array indices
+
+    map<int, set<int>> bonds_for_residue;  // bond set indices
+    map<int, set<int>> angles_for_residue;  // angle set indices
+    map<int, set<int>> torsions_for_residue;  // torsion set indices
 
     set<int> branch(int i, int j, set<pair<int, int> > visited_edges=set<pair<int, int> >());
 };

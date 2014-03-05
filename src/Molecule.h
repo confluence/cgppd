@@ -60,7 +60,7 @@ public:
     uint random_residue_index_middle(gsl_rng * rng, int li); // return random residue index from given linker which is not on a linker edge
 
     Vector3f recalculate_center(Vector3f difference);
-    void mark_cached_potentials_for_update(const int ri, const bool crankshaft);
+    void mark_cached_potentials_for_update(const int ri);
 
     void translate(Vector3f v, const int ri);
     void crankshaft(double angle, const bool flip_angle, const int ri);
