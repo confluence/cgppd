@@ -15,6 +15,8 @@ REFACTOR SEGMENT CODE
 
 * update rest of code
     * delete link and segment
+    * set up graph in molecule init (save residue vector on molecule?)
+    * update mark_cached_potentials_for_update -- need helper function on graph which returns all bonds, angles and torsions that include a residue (we can build up a map while we generate them)
     * alter potential functions to take array of residues + bond / angle / torsion object
     * alter MC functions to select random residues / edges from graph
     * eliminate potential caching (premature optimisation)? Not necessary; there's room on the bond/angle/torsion objects for caching. Just remove this from Residue.

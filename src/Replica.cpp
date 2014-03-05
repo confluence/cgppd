@@ -4,7 +4,7 @@ using namespace std;
 
 Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP), contiguousResiduesSize(0),
 #if FLEXIBLE_LINKS
-    max_segment_count(0), calculate_rigid_potential_only(false),
+    calculate_rigid_potential_only(false),
 #endif
 #if USING_CUDA
     replicaIsOnDevice(false),
@@ -24,53 +24,16 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
 
     for (size_t s = 0; s < parameters.mdata.size(); s++)
     {
-        moldata mol = parameters.mdata[s];
-        int mi = loadMolecule(mol.pdbfilename);
-
-        sprintf(molecules[mi].name, "%s", mol.name);
-
-        if (mol.translate)
-        {
-            if (mol.px || mol.py || mol.pz) {
-                molecules[mi].translate(Vector3f(mol.px, mol.py, mol.pz));
-            }
-        }
-        else
-        {
-            molecules[mi].setPosition(Vector3f(mol.px, mol.py, mol.pz));
-        }
-
-        if (mol.ra)
-        {
-            Vector3double v = Vector3double(mol.rx,mol.ry,mol.rz);
-            v.normalizeInPlace();
-            molecules[mi].rotate(v,mol.ra);
-        }
-
-        if (mol.crowder)
-        {
-            molecules[mi].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
-        }
-        else
-        {
-            nonCrowderCount++;
-            nonCrowderResidues += molecules[mi].residueCount;
-        }
+        int mi = loadMolecule(parameters.mdata[s]);
     }
 
-    // TODO: this needs to be updated for flexible linkers.
-    for (size_t mI = 0; mI < moleculeCount; mI++)
-    {
-        for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
-        {
-            for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
-            {
-                for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
-                {
-                    paircount++;
-                }
-            }
-        }
+    paircount = residueCount * (residueCount - 1) / 2; // start with the handshake algorithm
+    for (size_t m = 0; m < moleculeCount; m++) {
+#if FLEXIBLE_LINKS
+        paircount -= 4 * molecules[m].residueCount; // exclude residues 4 or fewer apart in each molecule
+#else
+        paircount -= molecules[m].residueCount * (molecules[m].residueCount - 1) / 2; // exclude all residues within the same molecule
+#endif
     }
 
 #if USING_CUDA
@@ -110,11 +73,7 @@ void Replica::init_child_replica(const Replica& ir, const int index, const doubl
 #endif
     // TODO: only one range for entire simulation (but is the library threadsafe?)
     initRNGs();
-#if FLEXIBLE_LINKS
-    savedMolecule.init_saved_molecule(max_residue_count, max_segment_count);
-#else
     savedMolecule.init_saved_molecule(max_residue_count);
-#endif
     // leaving out stuff inside thread function for now
 }
 
@@ -223,9 +182,6 @@ void Replica::copy(const Replica &r)
     aminoAcids = r.aminoAcids;
     residueCount = r.residueCount;
     max_residue_count = r.max_residue_count;
-#if FLEXIBLE_LINKS
-    max_segment_count = r.max_segment_count;
-#endif
     boundingValue = r.boundingValue;
     nonCrowderCount = r.nonCrowderCount;
     nonCrowderResidues = r.nonCrowderResidues;
@@ -270,8 +226,7 @@ void Replica::reserveContiguousMoleculeArray(int size)
     molecules = new Molecule[size];
 }
 
-// TODO: also add translation / position / rotation to this?
-int Replica::loadMolecule(const char* pdbfilename)
+int Replica::loadMolecule(const moldata mol)
 {
     if (moleculeCount+1 > moleculeArraySize) //need a new array
     {
@@ -288,15 +243,41 @@ int Replica::loadMolecule(const char* pdbfilename)
         delete [] new_molecules;
     }
 
-    molecules[moleculeCount].init(pdbfilename, aminoAcids, moleculeCount, boundingValue);
+    molecules[moleculeCount].init(mol.pdbfilename, aminoAcids, moleculeCount, boundingValue);
 
     residueCount += molecules[moleculeCount].residueCount;
     max_residue_count = max(max_residue_count, molecules[moleculeCount].residueCount);
-#if FLEXIBLE_LINKS
-    max_segment_count = max(max_segment_count, molecules[moleculeCount].segmentCount);
-#endif
+    
+    if (mol.translate)
+    {
+        if (mol.px || mol.py || mol.pz) {
+            molecules[moleculeCount].translate(Vector3f(mol.px, mol.py, mol.pz));
+        }
+    }
+    else
+    {
+        molecules[moleculeCount].setPosition(Vector3f(mol.px, mol.py, mol.pz));
+    }
+
+    if (mol.ra)
+    {
+        Vector3double v = Vector3double(mol.rx,mol.ry,mol.rz);
+        v.normalizeInPlace();
+        molecules[moleculeCount].rotate(v,mol.ra);
+    }
+
+    if (mol.crowder)
+    {
+        molecules[moleculeCount].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
+    }
+    else
+    {
+        nonCrowderCount++;
+        nonCrowderResidues += molecules[moleculeCount].residueCount;
+    }
+    
     moleculeCount++;
-    return moleculeCount-1;
+    return moleculeCount - 1;
 }
 
 // TODO: all of this needs to be done once for the whole simulation
@@ -1146,10 +1127,10 @@ void Replica::saveAsSinglePDB(const char *filename, const char *title, bool skip
         for (i = 0; i < molecules[m].residueCount; i++)
         {
             Residue r = molecules[m].Residues[i];
-            Link l = molecules[m].Links[i];
+//             Link l = molecules[m].Links[i];
             itemcount++;
 
-            fprintf(output,"ATOM  %5d CA   %3s %C%4d    %8.3f%8.3f%8.3f%6.2f%6.2f\n", itemcount, aminoAcids.get(r.aminoAcidIndex).getSNAME(), chainId, r.resSeq, r.position.x, r.position.y, r.position.z, l.flexible, 0.0f);
+            fprintf(output,"ATOM  %5d CA   %3s %C%4d    %8.3f%8.3f%8.3f%6.2f%6.2f\n", itemcount, aminoAcids.get(r.aminoAcidIndex).getSNAME(), chainId, r.resSeq, r.position.x, r.position.y, r.position.z, 0.0f, 0.0f);
 
             lastSeqNo = r.resSeq;
         }
