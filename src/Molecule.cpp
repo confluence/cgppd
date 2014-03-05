@@ -5,7 +5,7 @@ using namespace std;
 // TODO: we probably need a default constructor for dynamic arrays. :/
 Molecule::Molecule() : residueCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)),
 #if FLEXIBLE_LINKS
-linkCount(0), segmentCount(0), linkerCount(0), LJ(0), DH(0), update_LJ_and_DH(true), local_move_successful(false), is_flexible(false),
+LJ(0), DH(0), update_LJ_and_DH(true), local_move_successful(false), is_flexible(false),
 #endif // FLEXIBLE_LINKS
 volume(0.0f)
 {
@@ -16,23 +16,6 @@ volume(0.0f)
 
 Molecule::~Molecule()
 {
-#if FLEXIBLE_LINKS
-    if (linkerCount > 0)
-    {
-        delete [] Linkers;
-    }
-
-    if (segmentCount > 0)
-    {
-        delete [] Segments;
-    }
-
-    if (linkCount > 0)
-    {
-        delete [] Links;
-    }
-#endif // FLEXIBLE_LINKS
-
     if (!contiguous && residueCount > 0)
     {
         delete [] Residues;
@@ -47,6 +30,7 @@ void Molecule::init(const char* pdbfilename, AminoAcids &a, int index, const flo
 #endif // FLEXIBLE_LINKS
 
     initFromPDB(pdbfilename);
+    // TODO TODO TODO when you create the graph, don't forget to set is_flexible on the molecule
     this->index = index;
     this->bounding_value = bounding_value;
 
@@ -73,18 +57,6 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 
 #if FLEXIBLE_LINKS
     is_flexible = m.is_flexible;
-    Links = new Link[m.linkCount];
-    memcpy(Links, m.Links, m.linkCount*sizeof(Link));
-    linkCount = m.linkCount;
-
-    Segments = new Segment[m.segmentCount];
-    memcpy(Segments, m.Segments, m.segmentCount*sizeof(Segment));
-    segmentCount = m.segmentCount;
-
-    Linkers = new int[m.linkerCount];
-    memcpy(Linkers, m.Linkers, m.linkerCount*sizeof(int));
-    linkerCount = m.linkerCount;
-
     torsions = m.torsions;
 
     LJ = m.LJ;
@@ -112,28 +84,13 @@ void Molecule::MC_backup_restore(const Molecule* m)
     LJ = m->LJ;
     DH = m->DH;
     update_LJ_and_DH = m->update_LJ_and_DH;
-
-    memcpy(Links, m->Links, sizeof(Link) * m->linkCount);
-    linkCount = m->linkCount;
-
-    memcpy(Segments, m->Segments, sizeof(Segment) * m->segmentCount);
-    segmentCount = m->segmentCount;
 #endif // FLEXIBLE_LINKS
 }
 
-#if FLEXIBLE_LINKS
-void Molecule::init_saved_molecule(int max_residue_count, int max_segment_count)
-{
-    Residues = new Residue[max_residue_count];
-    Links = new Link[max_residue_count - 1];
-    Segments = new Segment[max_segment_count]; // TODO: make this a vector; then we don't have to know the size
-}
-#else // if not FLEXIBLE_LINKS
 void Molecule::init_saved_molecule(int max_residue_count)
 {
     Residues = new Residue[max_residue_count];
 }
-#endif // FLEXIBLE_LINKS
 
 void Molecule::setMoleculeRoleIdentifier(float moleculeRoleIdentifier)
 {
@@ -296,44 +253,8 @@ void Molecule::mark_cached_potentials_for_update(const int ri, const bool cranks
 
     update_LJ_and_DH = true;
 
-    for (int i = 0; i < segmentCount; i++) {
-        if (ri >= Segments[i].start && ri <= Segments[i].end) {
-            Segments[i].update_LJ_and_DH = true;
-        }
-    }
-
+    // TODO TODO TODO: needs update on graph (list of b, a and t for each mc residue)
     // We don't need to update bonds or angles for crankshaft moves; only torsions.
-    // We're not checking whether the marked residues and links fall within flexible segments, because the potential calculation ignores unnecessary segments.
-
-    if (ri > 1) {
-        Links[ri - 2].update_e_torsion = true;
-    }
-
-    if (ri > 0) {
-        if (!crankshaft) {
-            Links[ri - 1].update_e_bond = true;
-            Residues[ri - 1].update_e_angle = true;
-        }
-
-        Links[ri - 1].update_e_torsion = true;
-    }
-
-    if (!crankshaft) {
-        Residues[ri].update_e_angle = true;
-    }
-
-    if (ri + 1 < residueCount) {
-        if (!crankshaft) {
-            Links[ri].update_e_bond = true;
-            Residues[ri + 1].update_e_angle = true;
-        }
-
-        Links[ri].update_e_torsion = true;
-    }
-
-    if (ri + 2 < residueCount) {
-        Links[ri + 1].update_e_torsion = true;
-    }
 }
 
 void Molecule::translate(Vector3f v, const int ri)
@@ -442,7 +363,8 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
 void Molecule::flex(gsl_rng * rng, const double rotate_step)
 {
     Vector3double raxis = normalised_random_vector_d(rng);
-    uint li = random_linker_index(rng);
+    // TODO TODO TODO need different random function
+//     uint li = random_linker_index(rng);
     uint ri = random_residue_index(rng, li);
     bool before = (bool) gsl_ran_bernoulli(rng, 0.5);
 
@@ -453,7 +375,8 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
 {
 
     local_move_successful = false;
-    uint li = random_linker_index(rng);
+    // TODO TODO TODO need different random function
+//     uint li = random_linker_index(rng);
     for (size_t i = 0; i < NUM_LOCAL_MOVES; i++) {
         //TODO: if linker too short for crankshaft, only return translate?
         //TODO: if crankshaft disabled, only return translate
@@ -494,7 +417,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
 uint Molecule::get_MC_mutation_type(gsl_rng * rng)
 {
 #if FLEXIBLE_LINKS
-    if (linkerCount > 0)
+    if (linkerCount > 0) // TODO TODO TODO simple flexible flag on graph? What does the flexible flag on the molecule do?
     {
         return gsl_ran_discrete(rng, MC_discrete_table);
     }
@@ -548,9 +471,6 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
 bool Molecule::initFromPDB(const char* pdbfilename)
 {
     vector<Residue> vResidues;
-#if FLEXIBLE_LINKS
-    vector<Link> vLinks;
-#endif // FLEXIBLE_LINKS
 
     chainCount = 1; // there must be at least one
     strcpy(filename, pdbfilename);
@@ -615,24 +535,11 @@ bool Molecule::initFromPDB(const char* pdbfilename)
                 //R.vanderWaalRadius = float(AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius);
                 R.moleculeID = index;
                 vResidues.push_back(R);
-
-#if FLEXIBLE_LINKS
-                Link L;
-                // occupancy set to 1 on a residue indicates that the following link is flexible.
-                L.flexible = bool(occupancy);
-                vLinks.push_back(L);
-#endif // FLEXIBLE_LINKS
             }
         }
         else if (strncmp(line, "TER", 3) == 0) // Optional,Mandatory if ATOM records exist.
         {
             chainCount++;
-#if FLEXIBLE_LINKS
-            // The last link isn't a real link
-            vLinks.back().dummy = true;
-            // Set it to non-flexible regardless of the occupancy of the last residue
-            vLinks.back().flexible = false;
-#endif // FLEXIBLE_LINKS
         }
         else if (strncmp(line, "END", 3) == 0)
         {
@@ -641,7 +548,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     }
     input.close();
 
-    // copy the resides and links read into the arrays.
+    // copy the residues into an array
     residueCount = vResidues.size();
     Residues = new Residue[residueCount];
 
@@ -669,65 +576,6 @@ bool Molecule::initFromPDB(const char* pdbfilename)
     }
 
     calculateVolume();
-
-    // TODO: eliminate all the arrays; we can just keep using vectors.
-#if FLEXIBLE_LINKS
-    linkCount = vLinks.size() - 1;
-    Links = new Link[linkCount];
-    vector<Segment> vSegments;
-    vector<int> vLinkers;
-
-    for(size_t l = 0; l < linkCount; l++)
-    {
-        Link L = vLinks[l];
-        memcpy (&Links[l], &L, sizeof(L));
-
-        // End last segment
-        if (l && L.flexible != vLinks[l-1].flexible || L.dummy)
-        {
-            vSegments.back().end = l;
-        }
-
-        // Start new segment
-        if (!l || L.flexible != vLinks[l-1].flexible || vLinks[l-1].dummy)
-        {
-            Segment S;
-            S.start = l;
-            S.flexible = L.flexible;
-            vSegments.push_back(S);
-        }
-
-        // End last segment at end of molecule
-        if (l == linkCount - 1)
-        {
-            vSegments.back().end = linkCount;
-            vSegments.back().size = vSegments.back().end - vSegments.back().start + 1;
-        }
-    }
-
-    segmentCount = vSegments.size();
-    Segments = new Segment[segmentCount];
-
-    for (size_t s = 0; s < segmentCount; s++)
-    {
-        Segment S = vSegments[s];
-        memcpy(&Segments[s], &S, sizeof(S));
-
-        if (S.flexible) {
-            vLinkers.push_back(s);
-            is_flexible = true;
-        }
-    }
-
-    linkerCount = vLinkers.size();
-    Linkers = new int[linkerCount];
-
-    for (size_t l = 0; l < linkerCount; l++)
-    {
-        Linkers[l] = vLinkers[l];
-    }
-
-#endif // FLEXIBLE_LINKS
 
     return true;
 }
@@ -765,8 +613,6 @@ Potential Molecule::E(bool include_LJ_and_DH)
 
 #define iRes Residues[i]
 #define jRes Residues[j]
-#define iSeg Segments[si]
-#define jSeg Segments[sj]
 
     // We may be using the GPU to calculate the internal LJ and DH, or not calculating it at all
     if (is_flexible && include_LJ_and_DH)
@@ -807,37 +653,7 @@ Potential Molecule::E(bool include_LJ_and_DH)
         potential.increment_DH(DH);
     }
 
-    for (size_t si = 0; si < segmentCount; si++)
-    {
-        // Flexible linker potentials
-        if (iSeg.flexible)
-        {
-            for (size_t i = iSeg.start; i <= iSeg.end; i++)
-            {
-                // Pseudo-bond
-                if (i < iSeg.end)
-                {
-                    potential.increment_bond(calculate_bond(iRes, Links[i], Residues[i+1], bounding_value));
-                }
-
-                if (i > 0 && !Links[i-1].dummy)
-                {
-
-                    // Pseudo-angle
-                    if (i < linkCount)
-                    {
-                        potential.increment_angle(calculate_angle(Residues[i-1], iRes, Residues[i+1]));
-                    }
-
-                    // Pseudo-torsion
-                    if (i < linkCount - 1 && !Links[i+1].dummy)
-                    {
-                        potential.increment_torsion(calculate_torsion(Residues[i-1], iRes, Links[i], Residues[i+1], Residues[i+2], torsions));
-                    }
-                }
-            }
-        }
-    }
+    // TODO TODO TODO: this will be completely different now: iterate over bonds, angles and torsions; call potential.increment_whatever; change what is passed into those functions
 
     return potential;
 }
@@ -849,12 +665,12 @@ uint Molecule::random_linker_index(gsl_rng * rng)
 
 uint Molecule::random_residue_index(gsl_rng * rng, int li)
 {
-    return Segments[Linkers[li]].random_residue_index(rng);
+    // TODO TODO TODO: need completely different functions for this
 }
 
 uint Molecule::random_residue_index_middle(gsl_rng * rng, int li)
 {
-    return Segments[Linkers[li]].random_residue_index_middle(rng);
+    // TODO TODO TODO: need completely different functions for this
 }
 
 

@@ -14,9 +14,10 @@
 #include "Quaternion.h"
 #include "TorsionalLookupMatrix.h"
 #include "Residue.h"
-#include "Link.h"
-#include "Segment.h"
+// #include "Link.h"
+// #include "Segment.h"
 #include "Potential.h"
+#include "Geometry.h"
 
 using namespace std;
 
@@ -34,12 +35,8 @@ public:
     void log_info(int index, int verbosity);
 
     void MC_backup_restore(const Molecule* m);
-
-#if FLEXIBLE_LINKS
-    void init_saved_molecule(int max_residue_count, int max_segment_count);
-#else
     void init_saved_molecule(int max_residue_count);
-#endif
+
     void recalculate_relative_positions();
     Vector3f recalculate_center(); // TODO: actually use this
     void setPosition(Vector3f v);
@@ -95,12 +92,13 @@ public:
 #if FLEXIBLE_LINKS
     bool is_flexible;
 
-    int linkCount;
-    int segmentCount;
-    int linkerCount;
-    Link *Links;
-    Segment *Segments; // Boundaries of all domains and linkers
-    int *Linkers; // Array of indices of all flexible segments
+//     int linkCount;
+//     int segmentCount;
+//     int linkerCount;
+//     Link *Links;
+//     Segment *Segments; // Boundaries of all domains and linkers
+//     int *Linkers; // Array of indices of all flexible segments
+    Graph graph;
     TorsionalLookupMatrix torsions;
     Potential E(bool include_LJ_and_DH=true);
 
