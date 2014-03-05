@@ -247,14 +247,29 @@ Vector3f Molecule::recalculate_center(Vector3f difference)
     return ((center * residueCount) + difference) / residueCount;
 }
 
-void Molecule::mark_cached_potentials_for_update(const int ri, const bool crankshaft)
+void Molecule::mark_cached_potentials_for_update(const int ri)
 {
-    // For any move, update the LJ and DH for the entire molecule and for all segments which contain the residue
+    // For any move, update the LJ and DH for the entire molecule
 
     update_LJ_and_DH = true;
 
-    // TODO TODO TODO: needs update on graph (list of b, a and t for each mc residue)
-    // We don't need to update bonds or angles for crankshaft moves; only torsions.
+    // depending on the move, these may not all have to be recalculated, but it's not really worth checking
+
+    set<int> & ri_bonds = graph.bonds_for_residue[ri];
+    set<int> & ri_angles = graph.angles_for_residue[ri];
+    set<int> & ri_torsions = graph.torsions_for_residue[ri];
+
+    for (set<int>::iterator b = ri_bonds.begin(); b != ri_bonds.end(); b++) {
+        graph.bonds[*b].update_potential = true;
+    }
+
+    for (set<int>::iterator a = ri_angles.begin(); a != ri_angles.end(); a++) {
+        graph.angles[*a].update_potential = true;
+    }
+
+    for (set<int>::iterator t = ri_torsions.begin(); t != ri_torsions.end(); t++) {
+        graph.torsions[*t].update_potential = true;
+    }
 }
 
 void Molecule::translate(Vector3f v, const int ri)
@@ -271,7 +286,7 @@ void Molecule::translate(Vector3f v, const int ri)
         Residues[ri].position += v;
         LOG(DEBUG_LOCAL, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
-        mark_cached_potentials_for_update(ri, false);
+        mark_cached_potentials_for_update(ri);
         local_move_successful = true;
     }
 }
@@ -311,7 +326,7 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
         Residues[ri].position = Residues[ri].new_position + center_wrap_delta;
         LOG(DEBUG_LOCAL, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
-        mark_cached_potentials_for_update(ri, true);
+        mark_cached_potentials_for_update(ri);
         local_move_successful = true;
     }
 }
@@ -354,7 +369,7 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
             Residues[i].position = Residues[i].new_position + center_wrap_delta;
         }
 
-        mark_cached_potentials_for_update(ri, false);
+        mark_cached_potentials_for_update(ri);
         recalculate_relative_positions();
         calculate_length();
     }

@@ -49,6 +49,9 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
 
         if (flexibility_map[*e]) {
             bonds.insert(Bond(j, k));
+            int & b_i = bonds.size() - 1;
+            bonds_for_residue[j].insert(b_i);
+            bonds_for_residue[k].insert(b_i);
         }
 
         set<int> & neighbours_j = adjacency_map[j];
@@ -62,6 +65,11 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
                         if (*l != j) {
                             if (is_flexible(*i, j) || is_flexible(j, k) || is_flexible(k, *l)) {
                                 torsions.insert(Torsion(*i, j, k, *l));
+                                int & t_i = torsions.size() - 1;
+                                torsions_for_residue[*i].insert(t_i);
+                                torsions_for_residue[j].insert(t_i);
+                                torsions_for_residue[k].insert(t_i);
+                                torsions_for_residue[*l].insert(t_i);
                             }
                         }
                     }
@@ -89,6 +97,10 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
                 if (*i < *k) {
                     if (is_flexible(*i, j) || is_flexible(j, *k)) {
                         angles.insert(Angle(*i, j, *k));
+                        int & a_i = angles.size() - 1;
+                        angles_for_residue[*i].insert(a_i);
+                        angles_for_residue[j].insert(a_i);
+                        angles_for_residue[*k].insert(a_i);
                     }
                 }
             }
@@ -105,9 +117,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
         if (has_flexible_neighbour) {
                 MC_flex_residues.insert(j);
         }
-
     }
-
 }
 
 set<int> Graph::branch(int i, int j, set<pair<int, int> > visited_edges)

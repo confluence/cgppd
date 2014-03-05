@@ -129,4 +129,6 @@ void TestGeometry::testInit()
     }
     
     ASSERT_SET_EQUALS(expected_residues_branch_148_149, graph.branch(148, 149));
+
+    // TODO TODO TODO add a test for cached bonds / angles / torsions for each residue
 }
