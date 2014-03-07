@@ -43,15 +43,21 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
         }
     }
 
+    // Temporary sets used for construction
+    set<Bond> s_bonds;
+    set<Angle> s_angles;
+    set<Torsion> s_torsions;
+
+    set<int> s_MC_local_residues;
+    set<int> s_MC_crankshaft_residues;
+    set<int> s_MC_flex_residues;
+
     for (set<pair<int, int> >::iterator e = edges.begin(); e != edges.end(); e++) {
         const int & j = e->first;
         const int & k = e->second;
 
         if (flexibility_map[*e]) {
-            bonds.insert(Bond(j, k));
-            int & b_i = bonds.size() - 1;
-            bonds_for_residue[j].insert(b_i);
-            bonds_for_residue[k].insert(b_i);
+            s_bonds.insert(Bond(j, k));
         }
 
         set<int> & neighbours_j = adjacency_map[j];
@@ -64,12 +70,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
                     for (set<int>::iterator l = neighbours_k.begin(); l != neighbours_k.end(); l++) {
                         if (*l != j) {
                             if (is_flexible(*i, j) || is_flexible(j, k) || is_flexible(k, *l)) {
-                                torsions.insert(Torsion(*i, j, k, *l));
-                                int & t_i = torsions.size() - 1;
-                                torsions_for_residue[*i].insert(t_i);
-                                torsions_for_residue[j].insert(t_i);
-                                torsions_for_residue[k].insert(t_i);
-                                torsions_for_residue[*l].insert(t_i);
+                                s_torsions.insert(Torsion(*i, j, k, *l));
                             }
                         }
                     }
@@ -96,28 +97,58 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
             for (set<int>::iterator k = neighbours.begin(); k != neighbours.end(); k++) {
                 if (*i < *k) {
                     if (is_flexible(*i, j) || is_flexible(j, *k)) {
-                        angles.insert(Angle(*i, j, *k));
-                        int & a_i = angles.size() - 1;
-                        angles_for_residue[*i].insert(a_i);
-                        angles_for_residue[j].insert(a_i);
-                        angles_for_residue[*k].insert(a_i);
+                        s_angles.insert(Angle(*i, j, *k));
                     }
                 }
             }
         }
 
         if (!has_rigid_neighbour) {
-            MC_local_residues.insert(j);
+            s_MC_local_residues.insert(j);
 
             if (neighbours.size() > 1) {
-                MC_crankshaft_residues.insert(j);
+                s_MC_crankshaft_residues.insert(j);
             }
         }
 
         if (has_flexible_neighbour) {
-                MC_flex_residues.insert(j);
+                s_MC_flex_residues.insert(j);
         }
     }
+
+    // Copy the sets to vectors
+    std::copy(s_bonds.begin(), s_bonds.end(), std::back_inserter(bonds));
+    std::copy(s_angles.begin(), s_angles.end(), std::back_inserter(angles));
+    std::copy(s_torsions.begin(), s_torsions.end(), std::back_inserter(torsions));
+
+    std::copy(s_MC_local_residues.begin(), s_MC_local_residues.end(), std::back_inserter(MC_local_residues));
+    std::copy(s_MC_crankshaft_residues.begin(), s_MC_crankshaft_residues.end(), std::back_inserter(MC_crankshaft_residues));
+    std::copy(s_MC_flex_residues.begin(), s_MC_flex_residues.end(), std::back_inserter(MC_flex_residues));
+
+    // Cache bonds, etc. for each residue
+
+    for (int bi = 0; bi < bonds.size(); bi++) {
+        Bond & b = bonds[bi];
+        bonds_for_residue[b.i].insert(bi);
+        bonds_for_residue[b.j].insert(bi);
+    }
+
+    for (int ai = 0; ai < angles.size(); ai++) {
+        Angle & a = angles[ai];
+        angles_for_residue[a.i].insert(ai);
+        angles_for_residue[a.j].insert(ai);
+        angles_for_residue[a.k].insert(ai);
+    }
+
+    for (int ti = 0; ti < torsions.size(); ti++) {
+        Torsion & t = angles[ti];
+        torsions_for_residue[t.i].insert(ti);
+        torsions_for_residue[t.j].insert(ti);
+        torsions_for_residue[t.k].insert(ti);
+        torsions_for_residue[t.l].insert(ti);
+    }
+
+
 }
 
 set<int> Graph::branch(int i, int j, set<pair<int, int> > visited_edges)

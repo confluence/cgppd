@@ -361,7 +361,7 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
     Quaternion q(angle, raxis);
 
     // apply rotation to all residues in the branch starting from the edge ri -> neighbour
-    set<int> & branch = graph.branch(ri, neighbour);
+    const set<int> & branch = graph.branch(ri, neighbour);
 
     Vector3f accumulated_difference(0,0,0);
 
@@ -379,7 +379,7 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
         wrap_if_necessary();
 
         // apply the move
-        for (int i = start; i < end; i++) {
+        for (set<int>::iterator i = branch.begin(); i != branch.end(); i++) {
             Residues[i].position = Residues[i].new_position + center_wrap_delta;
         }
 
@@ -680,16 +680,16 @@ Potential Molecule::E(bool include_LJ_and_DH)
         potential.increment_DH(DH);
     }
 
-    for (set<Bond>::iterator b = graph.bonds.begin(); b != graph.bonds.end(); b++) {
-        potential.increment_bond(calculate_bond(residues, *b, bounding_value));
+    for (vector<Bond>::iterator b = graph.bonds.begin(); b != graph.bonds.end(); b++) {
+        potential.increment_bond(calculate_bond(Residues, *b, bounding_value));
     }
 
-    for (set<Angle>::iterator a = graph.angles.begin(); a != graph.angles.end(); a++) {
-        potential.increment_angle(calculate_angle(residues, *a));
+    for (vector<Angle>::iterator a = graph.angles.begin(); a != graph.angles.end(); a++) {
+        potential.increment_angle(calculate_angle(Residues, *a));
     }
 
-    for (set<Torsion>::iterator t = graph.torsion.begin(); t != graph.torsions.end(); t++) {
-        potential.increment_torsion(calculate_torsion(residues, *t, TorsionalLookupMatrix));
+    for (vector<Torsion>::iterator t = graph.torsions.begin(); t != graph.torsions.end(); t++) {
+        potential.increment_torsion(calculate_torsion(Residues, *t, TorsionalLookupMatrix));
     }
 
     return potential;

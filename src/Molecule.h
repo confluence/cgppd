@@ -14,8 +14,6 @@
 #include "Quaternion.h"
 #include "TorsionalLookupMatrix.h"
 #include "Residue.h"
-// #include "Link.h"
-// #include "Segment.h"
 #include "Potential.h"
 #include "Geometry.h"
 
@@ -88,18 +86,12 @@ public:
 #if FLEXIBLE_LINKS
     bool is_flexible;
 
-//     int linkCount;
-//     int segmentCount;
-//     int linkerCount;
-//     Link *Links;
-//     Segment *Segments; // Boundaries of all domains and linkers
-//     int *Linkers; // Array of indices of all flexible segments
     Graph graph;
     TorsionalLookupMatrix torsions;
     Potential E(bool include_LJ_and_DH=true);
 
-    double LJ; // cached inter-segment LJ component of this molecule
-    double DH; // cached inter-segment DH component of this molecule
+    double LJ; // cached LJ component of this molecule
+    double DH; // cached DH component of this molecule
     bool update_LJ_and_DH; // LJ and DH values need to be updated
 #endif
     size_t chainCount;

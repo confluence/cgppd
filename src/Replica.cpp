@@ -1104,7 +1104,6 @@ void Replica::saveAsSinglePDB(const char *filename, const char *title, bool skip
         for (i = 0; i < molecules[m].residueCount; i++)
         {
             Residue r = molecules[m].Residues[i];
-//             Link l = molecules[m].Links[i];
             itemcount++;
 
             fprintf(output,"ATOM  %5d CA   %3s %C%4d    %8.3f%8.3f%8.3f%6.2f%6.2f\n", itemcount, aminoAcids.get(r.aminoAcidIndex).getSNAME(), chainId, r.resSeq, r.position.x, r.position.y, r.position.z, 0.0f, 0.0f);

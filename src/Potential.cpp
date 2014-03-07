@@ -63,9 +63,9 @@ double calculate_angle(Residue * residues, Angle &angle)
 
     if (angle.update_potential)
     {
-        Residue & ri = residues[bond.i];
-        Residue & rj = residues[bond.j];
-        Residue & rk = residues[bond.k];
+        Residue & ri = residues[angle.i];
+        Residue & rj = residues[angle.j];
+        Residue & rk = residues[angle.k];
 
         Vector3f ab = ri.position - rj.position;
         Vector3f cb = rk.position - rj.position;
@@ -85,10 +85,10 @@ double calculate_torsion(Residue * residues, Torsion &torsion, TorsionalLookupMa
 {
     if (torsion.update_potential)
     {
-        Residue & ri = residues[bond.i];
-        Residue & rj = residues[bond.j];
-        Residue & rk = residues[bond.k];
-        Residue & rl = residues[bond.l];
+        Residue & ri = residues[torsion.i];
+        Residue & rj = residues[torsion.j];
+        Residue & rk = residues[torsion.k];
+        Residue & rl = residues[torsion.l];
 
         // TODO: is this the most efficient way?
         Vector3f b1 = rj.position - ri.position;

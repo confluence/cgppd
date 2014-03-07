@@ -147,17 +147,17 @@ public:
     void init(vector<Residue> residues, bool all_flexible, vector<segdata> segments);
 
     // OUTPUT -- calculate these once during init
-    set<Bond> bonds;
-    set<Angle> angles;
-    set<Torsion> torsions;
+    vector<Bond> bonds;
+    vector<Angle> angles;
+    vector<Torsion> torsions;
 
-    set<int> MC_local_residues; // residue array indices
-    set<int> MC_crankshaft_residues; // residue array indices
-    set<int> MC_flex_residues; // residue array indices
+    vector<int> MC_local_residues; // residue array indices
+    vector<int> MC_crankshaft_residues; // residue array indices
+    vector<int> MC_flex_residues; // residue array indices
 
-    map<int, set<int>> bonds_for_residue;  // bond set indices
-    map<int, set<int>> angles_for_residue;  // angle set indices
-    map<int, set<int>> torsions_for_residue;  // torsion set indices
+    map<int, set<int> > bonds_for_residue;  // bond vector indices
+    map<int, set<int> > angles_for_residue;  // angle vector indices
+    map<int, set<int> > torsions_for_residue;  // torsion vector indices
 
     set<int> branch(int i, int j, set<pair<int, int> > visited_edges=set<pair<int, int> >());
 };
