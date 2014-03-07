@@ -24,6 +24,9 @@ REFACTOR SEGMENT CODE
         * local/crankshaft: random residue from list -- DONE
         * flex: random residue from list; random neighbour -- DONE
     * delete link and segment -- DONE
+    * IMPORTANT: we need to deepcopy the graph when we copy a molecule
+    * copy bond, residue, etc. sets to vectors
+    * caching of per-residue bonds, etc.. is totally wrong; fix it. Do it at the point where they are copied into vectors.
     * update molecule unit test to test all MC moves and potential
 
 * diubiquitin simulations -- once the segment code is fixed
