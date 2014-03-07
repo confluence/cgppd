@@ -1,5 +1,6 @@
 #include <string>
 #include <ctype.h>
+#include <structures.h>
 #include <Molecule.h>
 #include <testCommon.h>
 
@@ -50,11 +51,26 @@ void TestMolecule::setUp()
 {
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
 
-    ubiquitin.init("tests/1UBQ.pdb", aminoAcidData, 0, 1000.0f);
-    angiotensin.init("tests/angiotensin.pdb", aminoAcidData, 0, 1000.0f);
+    moldata ubq_data;
+    strcpy(ubq_data.pdbfilename, "tests/1UBQ.pdb");
+    segdata seg;
+    seg.residue_indices.push_back(72);
+    seg.residue_indices.push_back(73);
+    seg.residue_indices.push_back(74);
+    seg.residue_indices.push_back(75);
+    moldata.segments.push_back(seg);
+    ubiquitin.init(ubq_data, aminoAcidData, 0, 1000.0f);
 
+    moldata ang_data;
+    strcpy(ang_data.pdbfilename, "tests/angiotensin.pdb");
+    ang_data.all_flexible = true;
+    angiotensin.init(ang_data, aminoAcidData, 0, 1000.0f);
+
+    moldata ala8_data;
+    strcpy(ala8_data.pdbfilename, "tests/ala8.pdb");
+    ala8_data.all_flexible = true;
     // small bounding value, so we can test wrapping over the boundary
-    polyalanine8.init("tests/ala8.pdb", aminoAcidData, 0, 15.0f);
+    polyalanine8.init(ala8_data, aminoAcidData, 0, 15.0f);
 }
 
 void TestMolecule::testPDBSequence()

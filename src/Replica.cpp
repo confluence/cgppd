@@ -30,7 +30,7 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     paircount = residueCount * (residueCount - 1) / 2; // start with the handshake algorithm
     for (size_t m = 0; m < moleculeCount; m++) {
 #if FLEXIBLE_LINKS
-        paircount -= 4 * molecules[m].residueCount; // exclude residues 4 or fewer apart in each molecule
+        paircount -= 3 * molecules[m].residueCount; // exclude residues 3 or fewer apart in each molecule
 #else
         paircount -= molecules[m].residueCount * (molecules[m].residueCount - 1) / 2; // exclude all residues within the same molecule
 #endif
