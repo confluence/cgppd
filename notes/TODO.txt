@@ -23,9 +23,8 @@ REFACTOR SEGMENT CODE
     * alter MC functions to select random residues / edges from graph -- DONE
         * local/crankshaft: random residue from list -- DONE
         * flex: random residue from list; random neighbour -- DONE
-    * delete link and segment
+    * delete link and segment -- DONE
     * update molecule unit test to test all MC moves and potential
-    * Argh! Check if it's >=4 or >4 for potential; update pairs
 
 * diubiquitin simulations -- once the segment code is fixed
 
