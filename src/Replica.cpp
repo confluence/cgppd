@@ -243,39 +243,16 @@ int Replica::loadMolecule(const moldata mol)
         delete [] new_molecules;
     }
 
-    molecules[moleculeCount].init(mol.pdbfilename, aminoAcids, moleculeCount, boundingValue);
+    molecules[moleculeCount].init(mol, aminoAcids, moleculeCount, boundingValue);
 
     residueCount += molecules[moleculeCount].residueCount;
     max_residue_count = max(max_residue_count, molecules[moleculeCount].residueCount);
-    
-    if (mol.translate)
-    {
-        if (mol.px || mol.py || mol.pz) {
-            molecules[moleculeCount].translate(Vector3f(mol.px, mol.py, mol.pz));
-        }
-    }
-    else
-    {
-        molecules[moleculeCount].setPosition(Vector3f(mol.px, mol.py, mol.pz));
-    }
 
-    if (mol.ra)
-    {
-        Vector3double v = Vector3double(mol.rx,mol.ry,mol.rz);
-        v.normalizeInPlace();
-        molecules[moleculeCount].rotate(v,mol.ra);
-    }
-
-    if (mol.crowder)
-    {
-        molecules[moleculeCount].setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
-    }
-    else
-    {
+    if (!mol.crowder) {
         nonCrowderCount++;
         nonCrowderResidues += molecules[moleculeCount].residueCount;
     }
-    
+
     moleculeCount++;
     return moleculeCount - 1;
 }

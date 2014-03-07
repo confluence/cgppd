@@ -29,8 +29,8 @@ public:
     ~Molecule();
 
     // TODO: write a proper init function
-    void init(const char* pdbfilename, AminoAcids &a, int index, const float bounding_value);
-    bool initFromPDB(const char* pdbfilename);
+    void init(const moldata mol, AminoAcids &a, int index, const float bounding_value);
+    vector<Residue> initFromPDB(const char* pdbfilename);
     void copy(const Molecule& m, Residue * contiguous_residue_offset);
     void log_info(int index, int verbosity);
 
@@ -55,16 +55,12 @@ public:
     void translate(gsl_rng * rng, const double translate_step);
 
 #if FLEXIBLE_LINKS
-    uint random_linker_index(gsl_rng * rng); // return random linker index
-    uint random_residue_index(gsl_rng * rng, int li); // return random residue index from given linker
-    uint random_residue_index_middle(gsl_rng * rng, int li); // return random residue index from given linker which is not on a linker edge
-
     Vector3f recalculate_center(Vector3f difference);
     void mark_cached_potentials_for_update(const int ri);
 
     void translate(Vector3f v, const int ri);
     void crankshaft(double angle, const bool flip_angle, const int ri);
-    void flex(const Vector3double raxis, const double angle, const int ri, const bool before);
+    void flex(const Vector3double raxis, const double angle, const int ri, const int neighbour);
 
     void flex(gsl_rng * rng, const double rotate_step);
     void make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step);

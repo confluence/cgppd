@@ -4,16 +4,16 @@
 #include "constants.h"
 #include "TorsionalLookupMatrix.h"
 #include "Residue.h"
-#include "Link.h"
+#include "Geometry.h"
 #include <cmath>
 #include <iostream>
 
 /* Potential component calculations */
 double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData);
 double calculate_DH(Residue &ri, Residue &rj, const double r);
-double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_value);
-double calculate_angle(Residue &rh, Residue &ri, Residue &rj);
-double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue &rk, TorsionalLookupMatrix &torsions);
+double calculate_bond(Residue * residues, Bond &bond, const float bounding_value);
+double calculate_angle(Residue * residues, Angle &angle);
+double calculate_torsion(Residue * residues, Torsion &torsion, TorsionalLookupMatrix &torsion_data);
 
 class Potential
 {
