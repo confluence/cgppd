@@ -42,64 +42,76 @@ double calculate_DH(Residue &ri, Residue &rj, const double r)
 }
 
 #if FLEXIBLE_LINKS
-double calculate_bond(Residue &ri, Link &l, Residue &rj, const float bounding_value)
+double calculate_bond(Residue * residues, Bond &bond, const float bounding_value)
 {
-    if (l.update_e_bond)
+    if (bond.update_potential)
     {
+        Residue & ri = residues[bond.i];
+        Residue & rj = residues[bond.j];
         // eqn 9: kim2008
         double r(rj.distance(ri, bounding_value));
-        l.pseudo_bond = r;
-        l.e_bond = (r - R0) * (r - R0); // in angstroms
-        l.update_e_bond = false;
+        bond.length = r;
+        bond.potential = (r - R0) * (r - R0); // in angstroms
+        bond.update_potential = false;
     }
 
-    return l.e_bond;
+    return bond.potential;
 }
 
-double calculate_angle(Residue &rh, Residue &ri, Residue &rj)
+double calculate_angle(Residue * residues, Angle &angle)
 {
-    if (ri.update_e_angle)
+
+    if (angle.update_potential)
     {
-        Vector3f ab = rh.position - ri.position;
-        Vector3f cb = rj.position - ri.position;
+        Residue & ri = residues[bond.i];
+        Residue & rj = residues[bond.j];
+        Residue & rk = residues[bond.k];
+
+        Vector3f ab = ri.position - rj.position;
+        Vector3f cb = rk.position - rj.position;
         double theta = ab.angle(cb);
-        ri.pseudo_angle = theta;
+        angle.theta = theta;
         // eqn 10: kim2008
-        ri.e_angle = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
+        angle.potential = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
                     exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
 
-        ri.update_e_angle = false;
+        angle.update_potential = false;
     }
 
-    return ri.e_angle;
+    return angle.potential;
 }
 
-double calculate_torsion(Residue &rh, Residue &ri, Link &l, Residue &rj, Residue &rk, TorsionalLookupMatrix &torsions)
+double calculate_torsion(Residue * residues, Torsion &torsion, TorsionalLookupMatrix &torsion_data)
 {
-    if (l.update_e_torsion)
+    if (torsion.update_potential)
     {
+        Residue & ri = residues[bond.i];
+        Residue & rj = residues[bond.j];
+        Residue & rk = residues[bond.k];
+        Residue & rl = residues[bond.l];
+
         // TODO: is this the most efficient way?
-        Vector3f b1 = ri.position - rh.position;
-        Vector3f b2 = rj.position - ri.position;
-        Vector3f b3 = rk.position - rj.position;
+        Vector3f b1 = rj.position - ri.position;
+        Vector3f b2 = rk.position - rj.position;
+        Vector3f b3 = rl.position - rk.position;
         Vector3f b2xb3 = b2.cross(b3);
         double phi = atan2((b2.magnitude() * b1.dot(b2xb3)), b1.cross(b2).dot(b2xb3));
 
-        l.pseudo_torsion = phi;
+        torsion.phi = phi;
         // eqn 11: kim2008
-        int r1 = ri.aminoAcidIndex;
-        int r2 = rj.aminoAcidIndex;
+        int r1 = rj.aminoAcidIndex;
+        int r2 = rk.aminoAcidIndex;
 
 
-        l.e_torsion = (1 + cos(phi - torsions.getSigma(r1, r2, 1))) * torsions.getV(r1, r2, 1) +
-            (1 + cos(2 * phi - torsions.getSigma(r1, r2, 2))) * torsions.getV(r1, r2, 2) +
-            (1 + cos(3 * phi - torsions.getSigma(r1, r2, 3))) * torsions.getV(r1, r2, 3) +
-            (1 + cos(4 * phi - torsions.getSigma(r1, r2, 4))) * torsions.getV(r1, r2, 4);
+        torsion.potential = (1 + cos(phi - torsion_data.getSigma(r1, r2, 1))) * torsion_data.getV(r1, r2, 1) +
+            (1 + cos(2 * phi - torsion_data.getSigma(r1, r2, 2))) * torsion_data.getV(r1, r2, 2) +
+            (1 + cos(3 * phi - torsion_data.getSigma(r1, r2, 3))) * torsion_data.getV(r1, r2, 3) +
+            (1 + cos(4 * phi - torsion_data.getSigma(r1, r2, 4))) * torsion_data.getV(r1, r2, 4);
 
-        l.update_e_torsion = false;
+        torsion.update_potential = false;
     }
 
-    return l.e_torsion;
+    return torsion.potential;
 }
 #endif // FLEXIBLE_LINKS
 

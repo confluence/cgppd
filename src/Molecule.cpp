@@ -22,19 +22,43 @@ Molecule::~Molecule()
     }
 };
 
-void Molecule::init(const char* pdbfilename, AminoAcids &a, int index, const float bounding_value)
+void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bounding_value)
 {
     AminoAcidsData = a;
 #if FLEXIBLE_LINKS
     torsions.loadData(TORSIONALPAIRDATA, a);
 #endif // FLEXIBLE_LINKS
 
-    initFromPDB(pdbfilename);
-    // TODO TODO TODO when you create the graph, don't forget to set is_flexible on the molecule
+    vector<Residue> vResidues = initFromPDB(mol.pdbfilename);
+
     this->index = index;
     this->bounding_value = bounding_value;
 
+    calculateVolume();
     calculate_length();
+
+    if (mol.translate) {
+        if (mol.px || mol.py || mol.pz) {
+            translate(Vector3f(mol.px, mol.py, mol.pz));
+        }
+    } else {
+        setPosition(Vector3f(mol.px, mol.py, mol.pz));
+    }
+
+    if (mol.ra) {
+        Vector3double v = Vector3double(mol.rx,mol.ry,mol.rz);
+        v.normalizeInPlace();
+        rotate(v,mol.ra);
+    }
+
+    if (mol.crowder) {
+        setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
+    }
+
+    graph.init(vResidues, mol.all_flexible, mol.segments);
+    if (mol.all_flexible || mol.segments.size()) {
+        is_flexible = true;
+    }
 }
 
 void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
@@ -331,37 +355,27 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     }
 }
 
-void Molecule::flex(const Vector3double raxis, const double angle, const int ri, const bool before)
+void Molecule::flex(const Vector3double raxis, const double angle, const int ri, const int neighbour)
 {
     // calculate quaternion from angle and axis
     Quaternion q(angle, raxis);
 
-    // apply rotation to everything before or after residue
-    int start, end;
-
-    if (before) {
-        start = 0;
-        end = ri;
-    } else {
-        start = ri + 1;
-        end = residueCount;
-    }
+    // apply rotation to all residues in the branch starting from the edge ri -> neighbour
+    set<int> & branch = graph.branch(ri, neighbour);
 
     Vector3f accumulated_difference(0,0,0);
 
-    for (int i = start; i < end; i++) {
-        Vector3f relative_position = Residues[i].position - Residues[ri].position;
+    for (set<int>::iterator i = branch.begin(); i != branch.end(); i++) {
+        Vector3f relative_position = Residues[*i].position - Residues[ri].position;
         relative_position = q.rotateVector(relative_position);
-        Residues[i].new_position = relative_position + Residues[ri].position;
-        accumulated_difference += Residues[i].new_position - Residues[i].position;
+        Residues[*i].new_position = relative_position + Residues[ri].position;
+        accumulated_difference += Residues[*i].new_position - Residues[*i].position;
     }
 
     // apply boundary conditions, possibly rejecting the move
     new_center = recalculate_center(accumulated_difference);
 
-    if (test_boundary_conditions())
-    {
-
+    if (test_boundary_conditions()) {
         wrap_if_necessary();
 
         // apply the move
@@ -378,23 +392,24 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
 void Molecule::flex(gsl_rng * rng, const double rotate_step)
 {
     Vector3double raxis = normalised_random_vector_d(rng);
-    // TODO TODO TODO need different random function
-//     uint li = random_linker_index(rng);
-    uint ri = random_residue_index(rng, li);
-    bool before = (bool) gsl_ran_bernoulli(rng, 0.5);
 
-    flex(raxis, rotate_step, ri, before);
+    set<int> & index_set = graph.MC_flex_residues;
+    int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
+
+    set<int> & neighbours = graph.adjacency_map[ri];
+    int neighbour = neighbours[gsl_rng_uniform_int(rng, neighbours.size())];
+
+    flex(raxis, rotate_step, ri, neighbour);
 }
 
 void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
 
     local_move_successful = false;
-    // TODO TODO TODO need different random function
-//     uint li = random_linker_index(rng);
+
     for (size_t i = 0; i < NUM_LOCAL_MOVES; i++) {
         //TODO: if linker too short for crankshaft, only return translate?
-        //TODO: if crankshaft disabled, only return translate
+        //TODO: if crankshaft disabled, only return translate?
         uint move = gsl_ran_bernoulli(rng, LOCAL_TRANSLATE_BIAS);
 
         switch (move)
@@ -402,7 +417,9 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             case MC_LOCAL_TRANSLATE:
             {
                 strcat(last_MC_move, "T");
-                uint ri = random_residue_index(rng, li);
+                set<int> & index_set = graph.MC_local_residues;
+                int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())]
+
                 Vector3f v = LOCAL_TRANSLATE_STEP_SCALING_FACTOR * translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
                 break;
@@ -410,7 +427,9 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
                 strcat(last_MC_move, "C");
-                uint ri = random_residue_index_middle(rng, li);
+                set<int> & index_set = graph.MC_crankshaft_residues;
+                int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())]
+
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 crankshaft(rotate_step, flip, ri);
                 break;
@@ -432,7 +451,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
 uint Molecule::get_MC_mutation_type(gsl_rng * rng)
 {
 #if FLEXIBLE_LINKS
-    if (linkerCount > 0) // TODO TODO TODO simple flexible flag on graph? What does the flexible flag on the molecule do?
+    if (is_flexible)
     {
         return gsl_ran_discrete(rng, MC_discrete_table);
     }
@@ -483,7 +502,7 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
     }
 }
 
-bool Molecule::initFromPDB(const char* pdbfilename)
+vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
 {
     vector<Residue> vResidues;
 
@@ -590,9 +609,7 @@ bool Molecule::initFromPDB(const char* pdbfilename)
         Residues[r].relativePosition.z = Residues[r].position.z - center.z;
     }
 
-    calculateVolume();
-
-    return true;
+    return vResidues;
 }
 
 void Molecule::calculateVolume()
@@ -613,11 +630,6 @@ void Molecule::calculate_length()
     length = (float) Residues[0].distance(Residues[residueCount - 1]);
 }
 
-uint Molecule::random_residue_index(gsl_rng * rng)
-{
-    return (int) gsl_rng_uniform_int(rng, residueCount);
-}
-
 #if FLEXIBLE_LINKS
 
 // TODO: add comments
@@ -626,8 +638,8 @@ Potential Molecule::E(bool include_LJ_and_DH)
 {
     Potential potential;
 
-#define iRes Residues[i]
-#define jRes Residues[j]
+    Residue & iRes = Residues[i];
+    Residue & jRes = Residues[j];
 
     // We may be using the GPU to calculate the internal LJ and DH, or not calculating it at all
     if (is_flexible && include_LJ_and_DH)
@@ -668,25 +680,19 @@ Potential Molecule::E(bool include_LJ_and_DH)
         potential.increment_DH(DH);
     }
 
-    // TODO TODO TODO: this will be completely different now: iterate over bonds, angles and torsions; call potential.increment_whatever; change what is passed into those functions
+    for (set<Bond>::iterator b = graph.bonds.begin(); b != graph.bonds.end(); b++) {
+        potential.increment_bond(calculate_bond(residues, *b, bounding_value));
+    }
+
+    for (set<Angle>::iterator a = graph.angles.begin(); a != graph.angles.end(); a++) {
+        potential.increment_angle(calculate_angle(residues, *a));
+    }
+
+    for (set<Torsion>::iterator t = graph.torsion.begin(); t != graph.torsions.end(); t++) {
+        potential.increment_torsion(calculate_torsion(residues, *t, TorsionalLookupMatrix));
+    }
 
     return potential;
 }
-
-uint Molecule::random_linker_index(gsl_rng * rng)
-{
-    return (int) gsl_rng_uniform_int(rng, linkerCount);
-}
-
-uint Molecule::random_residue_index(gsl_rng * rng, int li)
-{
-    // TODO TODO TODO: need completely different functions for this
-}
-
-uint Molecule::random_residue_index_middle(gsl_rng * rng, int li)
-{
-    // TODO TODO TODO: need completely different functions for this
-}
-
 
 #endif // FLEXIBLE_LINKS
