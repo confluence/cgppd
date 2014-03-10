@@ -145,6 +145,7 @@ public:
 
     // INPUT
     void init(vector<Residue> residues, bool all_flexible, vector<segdata> segments);
+    void copy(Graph g);
 
     // OUTPUT -- calculate these once during init
     vector<Bond> bonds;
@@ -159,6 +160,7 @@ public:
     map<int, set<int> > angles_for_residue;  // angle vector indices
     map<int, set<int> > torsions_for_residue;  // torsion vector indices
 
+    vector<int> neighbours(int i);
     set<int> branch(int i, int j, set<pair<int, int> > visited_edges=set<pair<int, int> >());
 };
 

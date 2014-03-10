@@ -13,10 +13,12 @@ using namespace std;
 #include <cutil_inline.h>
 #include <cutil_inline_runtime.h>
 
-#include "Replica.h"
-#include "Molecule.h"
+// #include "Replica.h"
+// #include "Molecule.h"
+#include "constants.h"
+#include "AminoAcids.h"
 
-//#include "cudaExterns.h"
+#include "cudaExterns.h"
 
 float * LJPotentialDataToDevice (AminoAcids *a);
 void copyLJPotentialDataToDevice (float * dev_LJPotentialData, AminoAcids *a);
