@@ -63,3 +63,17 @@ string join(const string sep, set<int> values)
 
     return s;
 }
+
+template <>
+string join(const string sep, vector<int> values)
+{
+    string s;
+
+    for (typename vector<int>::iterator i = values.begin(); i != values.end(); i++) {
+        char temp[11];
+        sprintf(temp, "%d", *i);
+        s += sep + string(temp);
+    }
+
+    return s;
+}

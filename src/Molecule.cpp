@@ -26,7 +26,7 @@ void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bou
 {
     AminoAcidsData = a;
 #if FLEXIBLE_LINKS
-    torsions.loadData(TORSIONALPAIRDATA, a);
+    torsion_data.loadData(TORSIONALPAIRDATA, a);
 #endif // FLEXIBLE_LINKS
 
     vector<Residue> vResidues = initFromPDB(mol.pdbfilename);
@@ -67,7 +67,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     memcpy(contiguous_residue_offset, m.Residues, m.residueCount*sizeof(Residue));
     Residues = contiguous_residue_offset;
     residueCount = m.residueCount;
-
+    graph.copy(m.graph); // TODO TODO TODO check that this is actually a deep copy
     bounding_value = m.bounding_value;
     AminoAcidsData = m.AminoAcidsData;
     center = m.center;
@@ -81,7 +81,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 
 #if FLEXIBLE_LINKS
     is_flexible = m.is_flexible;
-    torsions = m.torsions;
+    torsion_data = m.torsion_data;
 
     LJ = m.LJ;
     DH = m.DH;
@@ -380,7 +380,7 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
 
         // apply the move
         for (set<int>::iterator i = branch.begin(); i != branch.end(); i++) {
-            Residues[i].position = Residues[i].new_position + center_wrap_delta;
+            Residues[*i].position = Residues[*i].new_position + center_wrap_delta;
         }
 
         mark_cached_potentials_for_update(ri);
@@ -393,10 +393,10 @@ void Molecule::flex(gsl_rng * rng, const double rotate_step)
 {
     Vector3double raxis = normalised_random_vector_d(rng);
 
-    set<int> & index_set = graph.MC_flex_residues;
+    vector<int> & index_set = graph.MC_flex_residues;
     int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
 
-    set<int> & neighbours = graph.adjacency_map[ri];
+    const vector<int> & neighbours = graph.neighbours(ri);
     int neighbour = neighbours[gsl_rng_uniform_int(rng, neighbours.size())];
 
     flex(raxis, rotate_step, ri, neighbour);
@@ -417,8 +417,8 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             case MC_LOCAL_TRANSLATE:
             {
                 strcat(last_MC_move, "T");
-                set<int> & index_set = graph.MC_local_residues;
-                int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())]
+                vector<int> & index_set = graph.MC_local_residues;
+                int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
 
                 Vector3f v = LOCAL_TRANSLATE_STEP_SCALING_FACTOR * translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
@@ -427,8 +427,8 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
             case MC_LOCAL_CRANKSHAFT: // TODO: remove if crankshaft disabled
             {
                 strcat(last_MC_move, "C");
-                set<int> & index_set = graph.MC_crankshaft_residues;
-                int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())]
+                vector<int> & index_set = graph.MC_crankshaft_residues;
+                int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
 
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 crankshaft(rotate_step, flip, ri);
@@ -638,9 +638,6 @@ Potential Molecule::E(bool include_LJ_and_DH)
 {
     Potential potential;
 
-    Residue & iRes = Residues[i];
-    Residue & jRes = Residues[j];
-
     // We may be using the GPU to calculate the internal LJ and DH, or not calculating it at all
     if (is_flexible && include_LJ_and_DH)
     {
@@ -654,6 +651,9 @@ Potential Molecule::E(bool include_LJ_and_DH)
             for (size_t i = 0; i < residueCount; i++)
             {
                 for (size_t j = i + 1; j < residueCount; j++) {
+                    Residue & iRes = Residues[i];
+                    Residue & jRes = Residues[j];
+    
                     double r(iRes.distance(jRes, bounding_value) + EPS);
                     // apply intra-linker condition to eliminate overlap and closeness
                     if (j - i >= 4) // TODO: merge into for
@@ -689,7 +689,7 @@ Potential Molecule::E(bool include_LJ_and_DH)
     }
 
     for (vector<Torsion>::iterator t = graph.torsions.begin(); t != graph.torsions.end(); t++) {
-        potential.increment_torsion(calculate_torsion(Residues, *t, TorsionalLookupMatrix));
+        potential.increment_torsion(calculate_torsion(Residues, *t, torsion_data));
     }
 
     return potential;

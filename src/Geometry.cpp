@@ -141,7 +141,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     }
 
     for (int ti = 0; ti < torsions.size(); ti++) {
-        Torsion & t = angles[ti];
+        Torsion & t = torsions[ti];
         torsions_for_residue[t.i].insert(ti);
         torsions_for_residue[t.j].insert(ti);
         torsions_for_residue[t.k].insert(ti);
@@ -149,6 +149,25 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     }
 
 
+}
+
+void Graph::copy(Graph g) {
+    vertices = g.vertices;
+    edges = g.edges;
+    adjacency_map = g.adjacency_map;
+    flexibility_map = g.flexibility_map;
+
+    bonds = g.bonds;
+    angles = g.angles;
+    torsions = g.torsions;
+
+    MC_local_residues = g.MC_local_residues;
+    MC_crankshaft_residues = g.MC_crankshaft_residues;
+    MC_flex_residues = g.MC_flex_residues;
+
+    bonds_for_residue = g.bonds_for_residue; 
+    angles_for_residue = g.angles_for_residue;  
+    torsions_for_residue = g.torsions_for_residue;  
 }
 
 set<int> Graph::branch(int i, int j, set<pair<int, int> > visited_edges)
@@ -176,4 +195,13 @@ set<int> Graph::branch(int i, int j, set<pair<int, int> > visited_edges)
     }
 
     return this_branch;
+}
+
+vector<int> Graph::neighbours(int i)
+{
+    set<int> & s_neighbours = adjacency_map[i];
+    vector<int> v_neighbours;
+    
+    std::copy(s_neighbours.begin(), s_neighbours.end(), std::back_inserter(v_neighbours));
+    return v_neighbours;
 }

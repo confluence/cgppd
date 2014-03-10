@@ -18,11 +18,11 @@ void check_potential_equal(double * expected, Potential actual, CppUnit::SourceL
 #define ASSERT_POTENTIAL_EQUALS(expected, actual) check_potential_equal(expected, actual, CPPUNIT_SOURCELINE())
 
 template <typename Type>
-string join(const string sep, set<Type> values)
+string join(const string sep, Type values)
 {
     string s;
 
-    for (typename set<Type>::iterator i = values.begin(); i != values.end(); i++) {
+    for (typename Type::iterator i = values.begin(); i != values.end(); i++) {
         s += sep + string(*i);
     }
 
@@ -32,9 +32,11 @@ string join(const string sep, set<Type> values)
 template <>
 string join(const string sep, set<int> values);
 
+template <>
+string join(const string sep, vector<int> values);
 
 template <typename Type>
-void check_set_equal(set<Type> expected, set<Type> actual, CppUnit::SourceLine sourceLine)
+void check_iterable_equal(Type expected, Type actual, CppUnit::SourceLine sourceLine)
 {
     if (expected != actual) {
         ::CppUnit::Asserter::failNotEqual(join(" ", expected), join(" ", actual), sourceLine);
@@ -42,6 +44,6 @@ void check_set_equal(set<Type> expected, set<Type> actual, CppUnit::SourceLine s
     
     return;
 }
-#define ASSERT_SET_EQUALS(expected, actual) check_set_equal(expected, actual, CPPUNIT_SOURCELINE())
+#define ASSERT_ITERABLE_EQUALS(expected, actual) check_iterable_equal(expected, actual, CPPUNIT_SOURCELINE())
 
 #endif // TEST_H_

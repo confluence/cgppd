@@ -87,7 +87,7 @@ public:
     bool is_flexible;
 
     Graph graph;
-    TorsionalLookupMatrix torsions;
+    TorsionalLookupMatrix torsion_data;
     Potential E(bool include_LJ_and_DH=true);
 
     double LJ; // cached LJ component of this molecule

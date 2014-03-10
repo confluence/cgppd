@@ -3,31 +3,8 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 REFACTOR SEGMENT CODE
-
-* new input:
-    * ability to mark a molecule as entirely flexible - DONE
-    * ability do define a segment by listing individual residues - DONE
-
-* new model:
-    * writing - DONE
-    * still need code for random branch(flex) and random neighbour pair (crankshaft) - DONE, minus integration (random bits go outside, in molecule)
-    * self-contained unit test - DONE
-
-* update rest of code
-    * move molecule-specific init code out of replica and into molecule to make it easier to test. -- DONE
-    * move per-molecule replica code into replica's loadMolecule, which should take moldata (and pass it to molecule's init) -- DONE
-    * set up graph in molecule init (save residue vector on molecule?) -- DONE
-    * update mark_cached_potentials_for_update -- need helper function on graph which returns all bonds, angles and torsions that include a residue (we can build up a map while we generate them) -- DONE
-    * alter potential functions to take array of residues + bond / angle / torsion object -- DONE
-    * eliminate potential caching (premature optimisation)? Not necessary; there's room on the bond/angle/torsion objects for caching. Just remove this from Residue. -- DONE
-    * alter MC functions to select random residues / edges from graph -- DONE
-        * local/crankshaft: random residue from list -- DONE
-        * flex: random residue from list; random neighbour -- DONE
-    * delete link and segment -- DONE
-    * IMPORTANT: we need to deepcopy the graph when we copy a molecule
-    * copy bond, residue, etc. sets to vectors
-    * caching of per-residue bonds, etc.. is totally wrong; fix it. Do it at the point where they are copied into vectors.
-    * update molecule unit test to test all MC moves and potential
+    * check if graph deepcopy works
+    * fix all the unit tests and make sure they are complete
 
 * diubiquitin simulations -- once the segment code is fixed
 
