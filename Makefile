@@ -3,7 +3,7 @@
 INCLUDE=
 LIBS=-L/usr/lib64
 LINKS=-lpthread -lgsl -lgslcblas
-CFLAGS=-fno-omit-frame-pointer -O2
+CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
 COMPILER=g++
 HGVERSION:= $(shell hg parents --template 'hgid: {node|short}')
 DEFINE=

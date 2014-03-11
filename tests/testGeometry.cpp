@@ -33,108 +33,62 @@ void TestGeometry::testInit()
        }
     }
     
-    vector<segdata> segments;
-    
     segdata seg1;
-    seg1.residue_indices.push_back(72);
-    seg1.residue_indices.push_back(73);
-    seg1.residue_indices.push_back(74);
-    seg1.residue_indices.push_back(75);
-    seg1.residue_indices.push_back(123);
+    seg1.residue_indices = {72, 73, 74, 75, 123};
 
     segdata seg2;
-    seg2.residue_indices.push_back(148);
-    seg2.residue_indices.push_back(149);
-    seg2.residue_indices.push_back(150);
-    seg2.residue_indices.push_back(151);
+    seg2.residue_indices = {148, 149, 150, 151};
     
-    segments.push_back(seg1);
-    segments.push_back(seg2);
+    vector<segdata> segments = {seg1, seg2};
 
     graph.init(residues, false, segments);
-
-    // TODO TODO TODO TODO we need to fix this now that the bonds, angles and torsions are stored in maps
     
-    vector<Bond> expected_bonds;
-    expected_bonds.push_back(Bond(72, 73));
-    expected_bonds.push_back(Bond(73, 74));
-    expected_bonds.push_back(Bond(74, 75));
-    expected_bonds.push_back(Bond(75, 123));
-    expected_bonds.push_back(Bond(148, 149));
-    expected_bonds.push_back(Bond(149, 150));
-    expected_bonds.push_back(Bond(150, 151));
+    //--------------------------------------------------------------------------
+    
+    vector<Bond> expected_bonds = { Bond(72, 73), Bond(73, 74), Bond(74, 75), Bond(75, 123), Bond(148, 149), Bond(149, 150), Bond(150, 151) };
 
-    vector<Angle> expected_angles;
-    expected_angles.push_back(Angle(71, 72, 73));
-    expected_angles.push_back(Angle(72, 73, 74));
-    expected_angles.push_back(Angle(73, 74, 75));
-    expected_angles.push_back(Angle(74, 75, 123));
-    expected_angles.push_back(Angle(75, 123, 122));
-    expected_angles.push_back(Angle(75, 123, 124));
-    expected_angles.push_back(Angle(147, 148, 149));
-    expected_angles.push_back(Angle(148, 149, 150));
-    expected_angles.push_back(Angle(149, 150, 151));
+    vector<Angle> expected_angles = { Angle(71, 72, 73), Angle(72, 73, 74), Angle(73, 74, 75), Angle(74, 75, 123), Angle(75, 123, 122), Angle(75, 123, 124), Angle(147, 148, 149), Angle(148, 149, 150), Angle(149, 150, 151) };
 
-    vector<Torsion> expected_torsions;
-    expected_torsions.push_back(Torsion(70, 71, 72, 73));
-    expected_torsions.push_back(Torsion(71, 72, 73, 74));
-    expected_torsions.push_back(Torsion(72, 73, 74, 75));
-    expected_torsions.push_back(Torsion(73, 74, 75, 123));
-    expected_torsions.push_back(Torsion(74, 75, 123, 122));
-    expected_torsions.push_back(Torsion(74, 75, 123, 124));
-    expected_torsions.push_back(Torsion(75, 123, 124, 125));
-    expected_torsions.push_back(Torsion(121, 122, 123, 75));
-    expected_torsions.push_back(Torsion(146, 147, 148, 149));
-    expected_torsions.push_back(Torsion(147, 148, 149, 150));
-    expected_torsions.push_back(Torsion(148, 149, 150, 151));
+    // TODO TODO TODO this is wrong; 75-123-122-121 is missing!
+    vector<Torsion> expected_torsions = { Torsion(70, 71, 72, 73), Torsion(71, 72, 73, 74), Torsion(72, 73, 74, 75), Torsion(73, 74, 75, 123), Torsion(74, 75, 123, 122), Torsion(74, 75, 123, 124), Torsion(75, 123, 124, 125), Torsion(121, 122, 123, 75), Torsion(146, 147, 148, 149), Torsion(147, 148, 149, 150), Torsion(148, 149, 150, 151) };
 
     ASSERT_ITERABLE_EQUALS(expected_bonds, graph.bonds);
     ASSERT_ITERABLE_EQUALS(expected_angles, graph.angles);
     ASSERT_ITERABLE_EQUALS(expected_torsions, graph.torsions);
+    
+    //--------------------------------------------------------------------------
+    
+    vector<int> expected_crankshaft_residues = {73, 74, 75, 149, 150};
+    vector<int> expected_local_residues = {73, 74, 75, 149, 150, 151};
+    vector<int> expected_flex_residues = {72, 73, 74, 75, 123, 148, 149, 150, 151};
 
-//     set<int> expected_residues;
-//     vector<int> v_expected_residues;
-// 
-//     expected_residues.insert(73);
-//     expected_residues.insert(74);
-//     expected_residues.insert(75);
-//     expected_residues.insert(149);
-//     expected_residues.insert(150);
-// 
-//     std::copy(expected_residues.begin(), expected_residues.end(), std::back_inserter(v_expected_residues));
-//     
-//     ASSERT_ITERABLE_EQUALS(v_expected_residues, graph.MC_crankshaft_residues);
-// 
-//     expected_residues.insert(151);
-// 
-//     ASSERT_ITERABLE_EQUALS(v_expected_residues, graph.MC_local_residues);
-// 
-//     expected_residues.insert(72);
-//     expected_residues.insert(123);
-//     expected_residues.insert(148);
-// 
-//     ASSERT_ITERABLE_EQUALS(v_expected_residues, graph.MC_flex_residues);
+    ASSERT_ITERABLE_EQUALS(expected_crankshaft_residues, graph.MC_crankshaft_residues);
+    ASSERT_ITERABLE_EQUALS(expected_local_residues, graph.MC_local_residues);
+    ASSERT_ITERABLE_EQUALS(expected_flex_residues, graph.MC_flex_residues);
+    
+    //--------------------------------------------------------------------------
 
-    set<int> expected_residues_branch_123_122;
-    for (int i = 76; i < 124; i++) {
-        expected_residues_branch_123_122.insert(i);
-    }
-
+    set<int> expected_residues_branch_123_122 = to_set(make_range(76, 123));
+    set<int> expected_residues_branch_75_123 = to_set(make_range(75, 151));
+    set<int> expected_residues_branch_148_149 = to_set(make_range(148, 151));
+    
     ASSERT_ITERABLE_EQUALS(expected_residues_branch_123_122, graph.branch(123, 122));
-
-    set<int> expected_residues_branch_75_123;
-    for (int i = 75; i < 152; i++) {
-        expected_residues_branch_75_123.insert(i);
-    }
-
     ASSERT_ITERABLE_EQUALS(expected_residues_branch_75_123, graph.branch(75, 123));
-
-    set<int> expected_residues_branch_148_149;
-    for (int i = 148; i < 152; i++) {
-        expected_residues_branch_148_149.insert(i);
-    }
-
     ASSERT_ITERABLE_EQUALS(expected_residues_branch_148_149, graph.branch(148, 149));
 
-//     TODO TODO TODO add a test for cached bonds / angles / torsions for each residue
+    //--------------------------------------------------------------------------
+    
+    set<int> expected_bonds_72({0});
+    set<int> expected_bonds_73 = {0, 1};
+    
+    set<int> expected_angles_71 = {0};
+    set<int> expected_angles_73 = {0, 1, 2};
+    set<int> expected_angles_123 = {3, 4, 5};
+    
+    set<int> expected_torsions_70 = {0};
+    set<int> expected_torsions_72 = {0, 1, 10};
+    set<int> expected_torsions_73 = {0, 1, 2, 3};
+//     set<int> expected_torsions_123 = { Torsion(73, 74, 75, 123), Torsion(74, 75, 123, 122), Torsion(74, 75, 123, 124), Torsion(75, 123, 122, 121), Torsion(75, 123, 124, 125) };
+    
+    ASSERT_ITERABLE_EQUALS(expected_bonds_72, graph.bonds_for_residue[72]);
 }

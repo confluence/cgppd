@@ -3,10 +3,13 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 REFACTOR SEGMENT CODE
-    * check if graph deepcopy works
+    * IMPORTANT: at least one torsion is missing from the list of torsions; check to see if this is also a bug in the Python prototype. 
+    * check if graph deepcopy works -- unit test the molecule copy function in general
     * fix all the unit tests and make sure they are complete
+    * maybe switch to Catch as a testing framework
 
 * diubiquitin simulations -- once the segment code is fixed
+    * DON'T FORGET to make a fake side-chain out of alanine
 
 * Fix bad potential constants -- add a compatibility scaling factor for DH comparison to YK's results
 
