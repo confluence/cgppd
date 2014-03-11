@@ -7,7 +7,7 @@
 #include <map>
 #include <utility>
 #include <set>
-#include <tr1/tuple>
+#include <tuple>
 
 // Simple structures describing links between residues in a molecule
 // i, j, etc. are indices in the residue array, which should be the same as indices into the original residue vector
@@ -35,12 +35,12 @@ struct Bond
 
     bool operator<(const Bond &b) const
     {
-        return tr1::make_tuple(i, j) < tr1::make_tuple(b.i, b.j);
+        return make_tuple(i, j) < make_tuple(b.i, b.j);
     }
 
     bool operator==(const Bond &b) const
     {
-        return tr1::make_tuple(i, j) == tr1::make_tuple(b.i, b.j);
+        return make_tuple(i, j) == make_tuple(b.i, b.j);
     }
 
     operator std::string() const {
@@ -75,12 +75,12 @@ struct Angle
 
     bool operator<(const Angle &a) const
     {
-        return tr1::make_tuple(i, j, k) < tr1::make_tuple(a.i, a.j, a.k);
+        return make_tuple(i, j, k) < make_tuple(a.i, a.j, a.k);
     }
 
     bool operator==(const Angle &a) const
     {
-        return tr1::make_tuple(i, j, k) == tr1::make_tuple(a.i, a.j, a.k);
+        return make_tuple(i, j, k) == make_tuple(a.i, a.j, a.k);
     }
 
     operator std::string() const {
@@ -117,12 +117,12 @@ struct Torsion
 
     bool operator<(const Torsion &t) const
     {
-        return tr1::make_tuple(i, j, k, l) < tr1::make_tuple(t.i, t.j, t.k, t.l);
+        return make_tuple(i, j, k, l) < make_tuple(t.i, t.j, t.k, t.l);
     }
 
     bool operator==(const Torsion &t) const
     {
-        return tr1::make_tuple(i, j, k, l) == tr1::make_tuple(t.i, t.j, t.k, t.l);
+        return make_tuple(i, j, k, l) == make_tuple(t.i, t.j, t.k, t.l);
     }
 
     operator std::string() const {

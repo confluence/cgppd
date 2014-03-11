@@ -46,4 +46,7 @@ void check_iterable_equal(Type expected, Type actual, CppUnit::SourceLine source
 }
 #define ASSERT_ITERABLE_EQUALS(expected, actual) check_iterable_equal(expected, actual, CPPUNIT_SOURCELINE())
 
+vector<int> make_range(int begin, int end);
+set<int> to_set(vector<int> v);
+
 #endif // TEST_H_
