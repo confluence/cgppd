@@ -8,10 +8,10 @@ class TestMolecule : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestMolecule);
     CPPUNIT_TEST(testPDBSequence);
-    CPPUNIT_TEST(testPDBCentre);
-    CPPUNIT_TEST(testPositions);
+    CPPUNIT_TEST(testStartingPositions);
     CPPUNIT_TEST(testRotate);
     CPPUNIT_TEST(testTranslate);
+    CPPUNIT_TEST(testCopy);
 //     CPPUNIT_TEST(testPotential);
 #if FLEXIBLE_LINKS
     CPPUNIT_TEST(testSegments);
@@ -32,14 +32,16 @@ private:
     Molecule polyalanine8;
 
     AminoAcids aminoAcidData;
+    
+    vector<Vector3f> ala8_starting_positions;
 
 public:
     void setUp();
     void testPDBSequence();
-    void testPDBCentre();
-    void testPositions();
+    void testStartingPositions();
     void testRotate();
     void testTranslate();
+    void testCopy();
 //     void testPotential();
 #if FLEXIBLE_LINKS
     void testSegments();
@@ -73,64 +75,58 @@ void TestMolecule::setUp()
     ala8_data.all_flexible = true;
     // small bounding value, so we can test wrapping over the boundary
     polyalanine8.init(ala8_data, aminoAcidData, 0, 15.0f);
+    
+    ala8_starting_positions = {
+        Vector3f(-9.29663, -6.96, -0.91625),
+        Vector3f(-7.38663, -3.879, 0.23775),
+        Vector3f(-3.76163, -3.302, -0.76025),
+        Vector3f(-1.79963, -0.311, 0.53375),
+        Vector3f(1.76937, 0.361, -0.59825),
+        Vector3f(3.79137, 3.252, 0.82475),
+        Vector3f(7.29737, 4.029, -0.43125),
+        Vector3f(9.38637, 6.81, 1.10975)
+    };
 }
 
 void TestMolecule::testPDBSequence()
 {
-    const int ubiquitin_size = 76;
-    char ubiquitin_names[ubiquitin_size][4] = {"MET", "GLN", "ILE", "PHE", "VAL", "LYS", "THR", "LEU", "THR", "GLY", "LYS", "THR", "ILE", "THR", "LEU", "GLU", "VAL", "GLU", "PRO", "SER", "ASP", "THR", "ILE", "GLU", "ASN", "VAL", "LYS", "ALA", "LYS", "ILE", "GLN", "ASP", "LYS", "GLU", "GLY", "ILE", "PRO", "PRO", "ASP", "GLN", "GLN", "ARG", "LEU", "ILE", "PHE", "ALA", "GLY", "LYS", "GLN", "LEU", "GLU", "ASP", "GLY", "ARG", "THR", "LEU", "SER", "ASP", "TYR", "ASN", "ILE", "GLN", "LYS", "GLU", "SER", "THR", "LEU", "HIS", "LEU", "VAL", "LEU", "ARG", "LEU", "ARG", "GLY", "GLY"};
+    vector<string> ubiquitin_names = {"MET", "GLN", "ILE", "PHE", "VAL", "LYS", "THR", "LEU", "THR", "GLY", "LYS", "THR", "ILE", "THR", "LEU", "GLU", "VAL", "GLU", "PRO", "SER", "ASP", "THR", "ILE", "GLU", "ASN", "VAL", "LYS", "ALA", "LYS", "ILE", "GLN", "ASP", "LYS", "GLU", "GLY", "ILE", "PRO", "PRO", "ASP", "GLN", "GLN", "ARG", "LEU", "ILE", "PHE", "ALA", "GLY", "LYS", "GLN", "LEU", "GLU", "ASP", "GLY", "ARG", "THR", "LEU", "SER", "ASP", "TYR", "ASN", "ILE", "GLN", "LYS", "GLU", "SER", "THR", "LEU", "HIS", "LEU", "VAL", "LEU", "ARG", "LEU", "ARG", "GLY", "GLY"};
 
-    const int angiotensin_size = 10;
-    char angiotensin_names[angiotensin_size][4] = {"ASP","ARG","VAL","TYR","ILE","HIS","PRO","PHE","HIS","LEU"};
+    vector<string> angiotensin_names = {"ASP","ARG","VAL","TYR","ILE","HIS","PRO","PHE","HIS","LEU"};
 
-    CPPUNIT_ASSERT_EQUAL(ubiquitin_size, ubiquitin.residueCount);
-    CPPUNIT_ASSERT_EQUAL(angiotensin_size, angiotensin.residueCount);
+    CPPUNIT_ASSERT_EQUAL((int)ubiquitin_names.size(), ubiquitin.residueCount);
+    CPPUNIT_ASSERT_EQUAL((int)angiotensin_names.size(), angiotensin.residueCount);
 
-    int expected;
-    int got;
-
-    // TODO: custom assertions
-    for (int i = 0; i < ubiquitin_size; i++)
+    for (int i = 0; i < ubiquitin_names.size(); i++)
     {
-        expected = aminoAcidData.getAminoAcidIndex(ubiquitin_names[i]);
-        got = ubiquitin.Residues[i].aminoAcidIndex;
-        CPPUNIT_ASSERT_EQUAL(expected, got);
+        char name[4];
+        strcpy(name, ubiquitin_names[i].c_str());
+        CPPUNIT_ASSERT_EQUAL(aminoAcidData.getAminoAcidIndex(name), ubiquitin.Residues[i].aminoAcidIndex);
     }
-
-    for (int i = 0; i < angiotensin_size; i++)
+    
+    for (int i = 0; i < angiotensin_names.size(); i++)
     {
-        expected = aminoAcidData.getAminoAcidIndex(angiotensin_names[i]);
-        got = angiotensin.Residues[i].aminoAcidIndex;
-        CPPUNIT_ASSERT_EQUAL(expected, got);
+        char name[4];
+        strcpy(name, angiotensin_names[i].c_str());
+        CPPUNIT_ASSERT_EQUAL(aminoAcidData.getAminoAcidIndex(name), angiotensin.Residues[i].aminoAcidIndex);
     }
 }
 
-void TestMolecule::testPDBCentre()
+void TestMolecule::testStartingPositions()
 {
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(30.442894736842103, 29.00898684210527, 15.5163947368421), ubiquitin.center);
-}
+    // We set the position to zero by default
+    ASSERT_VECTOR3F_EQUALS(Vector3f(0, 0, 0), polyalanine8.center);
+    
+    // TODO: make a test for using a translation by 0 rather than setting the position
+    
+    for (int i = 0; i < 8; i++) {
+        ASSERT_VECTOR3F_EQUALS(ala8_starting_positions[i], polyalanine8.Residues[i].relativePosition);
+    }
 
-void TestMolecule::testPositions()
-{
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(1.458, 0, 0), polyalanine8.Residues[0].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(3.368, 3.081, 1.154), polyalanine8.Residues[1].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(6.993, 3.658, 0.156), polyalanine8.Residues[2].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(8.955, 6.649, 1.45), polyalanine8.Residues[3].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(12.524, 7.321, 0.318), polyalanine8.Residues[4].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(14.546, 10.212, 1.741), polyalanine8.Residues[5].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(18.052, 10.989, 0.485), polyalanine8.Residues[6].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(20.141, 13.77, 2.026), polyalanine8.Residues[7].position);
-// 
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(10.754625, 6.96, 0.91625), polyalanine8.center);
-// 
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(-9.29663, -6.96, -0.91625), polyalanine8.Residues[0].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(-7.38663, -3.879, 0.23775), polyalanine8.Residues[1].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(-3.76163, -3.302, -0.76025), polyalanine8.Residues[2].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(-1.79963, -0.311, 0.53375), polyalanine8.Residues[3].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(1.76937, 0.361, -0.59825), polyalanine8.Residues[4].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(3.79137, 3.252, 0.82475), polyalanine8.Residues[5].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(7.29737, 4.029, -0.43125), polyalanine8.Residues[6].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(9.38637, 6.81, 1.10975), polyalanine8.Residues[7].relativePosition);
+    // These are the same because it's centered on zero
+    for (int i = 0; i < 8; i++) {
+        ASSERT_VECTOR3F_EQUALS(ala8_starting_positions[i], polyalanine8.Residues[i].position);
+    }
 }
 
 void TestMolecule::testRotate()
@@ -138,42 +134,36 @@ void TestMolecule::testRotate()
     // TODO
     // Rotate
     // Check that absolute positions have changed
+    // Check that relative positions have changed
     // Check that centre has not changed
-    // Check that relative positions have not changed
 }
 
 void TestMolecule::testTranslate()
 {
     // Translate
 
-//     Vector3f translation_vector(1, 1, 1);
-//     polyalanine8.translate(translation_vector);
-// 
-//     // Check that absolute positions have changed
-// 
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(2.458, 1, 1), polyalanine8.Residues[0].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(4.368, 4.081, 2.154), polyalanine8.Residues[1].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(7.993, 4.658, 1.156), polyalanine8.Residues[2].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(9.955, 7.649, 2.45), polyalanine8.Residues[3].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(13.524, 8.321, 1.318), polyalanine8.Residues[4].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(15.546, 11.212, 2.741), polyalanine8.Residues[5].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(19.052, 11.989, 1.485), polyalanine8.Residues[6].position);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(21.141, 14.77, 3.026), polyalanine8.Residues[7].position);
-// 
-//     // Check that centre has changed
-// 
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(11.754625, 7.96, 1.91625), polyalanine8.center);
-// 
-//     // Check that relative positions have not changed
-// 
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(-9.29663, -6.96, -0.91625), polyalanine8.Residues[0].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(-7.38663, -3.879, 0.23775), polyalanine8.Residues[1].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(-3.76163, -3.302, -0.76025), polyalanine8.Residues[2].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(-1.79963, -0.311, 0.53375), polyalanine8.Residues[3].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(1.76937, 0.361, -0.59825), polyalanine8.Residues[4].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(3.79137, 3.252, 0.82475), polyalanine8.Residues[5].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(7.29737, 4.029, -0.43125), polyalanine8.Residues[6].relativePosition);
-//     ASSERT_VECTOR3F_EQUALS(Vector3f(9.38637, 6.81, 1.10975), polyalanine8.Residues[7].relativePosition);
+    Vector3f translation_vector(1, 1, 1);
+    polyalanine8.translate(translation_vector);
+
+    // Check that absolute positions have changed
+    
+    for (int i = 0; i < 8; i++) {
+        ASSERT_VECTOR3F_EQUALS(ala8_starting_positions[i] + translation_vector, polyalanine8.Residues[i].position);
+    }
+
+    // Check that centre has changed
+
+    ASSERT_VECTOR3F_EQUALS(Vector3f(1, 1, 1), polyalanine8.center);
+
+    // Check that relative positions have not changed
+    for (int i = 0; i < 8; i++) {
+        ASSERT_VECTOR3F_EQUALS(ala8_starting_positions[i], polyalanine8.Residues[i].relativePosition);
+    }
+}
+
+void TestMolecule::testCopy()
+{
+    // TODO
 }
 
 // void TestMolecule::testPotential()
@@ -211,7 +201,7 @@ void TestMolecule::testSegments()
 
 void TestMolecule::testGeometry()
 {
-    float expected_bond_lengths[9] = {
+    vector<float> expected_bond_lengths = {
         3.821749687194824,
         3.8273043632507324,
         3.8032095432281494,
@@ -223,8 +213,7 @@ void TestMolecule::testGeometry()
         3.8045248985290527
     };
 
-    float expected_angles[9] = {
-        0.0, // padding for simplicity
+    vector<float> expected_angles = {
         123.56746673583984,
         86.7016830444336,
         126.89990234375,
@@ -235,8 +224,7 @@ void TestMolecule::testGeometry()
         97.1257095336914,
     };
 
-    float expected_torsion_angles[9] = {
-        0.0, // padding for simplicity
+    vector<float> expected_torsion_angles = {
         -165.99693298339844,
         26.120737075805664,
         -171.85838317871094,
@@ -244,23 +232,23 @@ void TestMolecule::testGeometry()
         -156.48416137695313,
         4.634008884429932,
         150.31800842285156,
-        0.0 // padding for simplicity
     };
 
     Potential e = angiotensin.E();
     
     // TODO TODO TODO update this
-
-//     for (size_t i = 0; i < angiotensin.linkCount; i++)
-//     {
-//         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_bond_lengths[i], angiotensin.Links[i].pseudo_bond, 0.00001);
-// 
-//         // convert degrees (from VMD) to radians
-//         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_angles[i]/57.29577951308232, angiotensin.Residues[i].pseudo_angle, 0.00001);
-// 
-//         // convert degrees (from VMD) to radians
-//         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, angiotensin.Links[i].pseudo_torsion, 0.00001);
-//     }
+    
+    for (int i = 0; i < expected_bond_lengths.size(); i++) {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_bond_lengths[i], angiotensin.graph.bonds[i].length, 0.00001);
+    }
+    
+    for (int i = 0; i < expected_angles.size(); i++) {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_angles[i]/57.29577951308232, angiotensin.graph.angles[i].theta, 0.00001);
+    }
+    
+    for (int i = 0; i < expected_torsion_angles.size(); i++) {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, angiotensin.graph.torsions[i].phi, 0.00001);
+    }
 }
 
 void TestMolecule::testFlex()
