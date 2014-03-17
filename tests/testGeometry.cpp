@@ -88,7 +88,7 @@ void TestGeometry::testFlexBranch()
 
 void TestGeometry::testFeaturesPerResidue()
 {
-    set<int> expected_bonds_72({0});
+    set<int> expected_bonds_72 = {0};
     set<int> expected_bonds_73 = {0, 1};
     
     set<int> expected_angles_71 = {0};
