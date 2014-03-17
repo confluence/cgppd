@@ -3,7 +3,6 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 REFACTOR SEGMENT CODE
-    * IMPORTANT: at least one torsion is missing from the list of torsions; check to see if this is also a bug in the Python prototype. 
     * check if graph deepcopy works -- unit test the molecule copy function in general
     * fix all the unit tests and make sure they are complete
     * maybe switch to Catch as a testing framework

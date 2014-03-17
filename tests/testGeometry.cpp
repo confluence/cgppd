@@ -49,7 +49,6 @@ void TestGeometry::testInit()
 
     vector<Angle> expected_angles = { Angle(71, 72, 73), Angle(72, 73, 74), Angle(73, 74, 75), Angle(74, 75, 123), Angle(75, 123, 122), Angle(75, 123, 124), Angle(147, 148, 149), Angle(148, 149, 150), Angle(149, 150, 151) };
 
-    // TODO TODO TODO this is wrong; 75-123-122-121 is missing!
     vector<Torsion> expected_torsions = { Torsion(70, 71, 72, 73), Torsion(71, 72, 73, 74), Torsion(72, 73, 74, 75), Torsion(73, 74, 75, 123), Torsion(74, 75, 123, 122), Torsion(74, 75, 123, 124), Torsion(75, 123, 124, 125), Torsion(121, 122, 123, 75), Torsion(146, 147, 148, 149), Torsion(147, 148, 149, 150), Torsion(148, 149, 150, 151) };
 
     ASSERT_ITERABLE_EQUALS(expected_bonds, graph.bonds);
@@ -88,7 +87,17 @@ void TestGeometry::testInit()
     set<int> expected_torsions_70 = {0};
     set<int> expected_torsions_72 = {0, 1, 10};
     set<int> expected_torsions_73 = {0, 1, 2, 3};
-//     set<int> expected_torsions_123 = { Torsion(73, 74, 75, 123), Torsion(74, 75, 123, 122), Torsion(74, 75, 123, 124), Torsion(75, 123, 122, 121), Torsion(75, 123, 124, 125) };
+    set<int> expected_torsions_123 = {3, 4, 5, 6, 7};
     
     ASSERT_ITERABLE_EQUALS(expected_bonds_72, graph.bonds_for_residue[72]);
+    ASSERT_ITERABLE_EQUALS(expected_bonds_72, graph.bonds_for_residue[73]);
+    
+    ASSERT_ITERABLE_EQUALS(expected_angles_71, graph.angles_for_residue[71]);
+    ASSERT_ITERABLE_EQUALS(expected_angles_71, graph.angles_for_residue[73]);
+    ASSERT_ITERABLE_EQUALS(expected_angles_71, graph.angles_for_residue[123]);
+    
+    ASSERT_ITERABLE_EQUALS(expected_torsions_70, graph.torsions_for_residue[70]);
+    ASSERT_ITERABLE_EQUALS(expected_torsions_70, graph.torsions_for_residue[72]);
+    ASSERT_ITERABLE_EQUALS(expected_torsions_70, graph.torsions_for_residue[73]);
+    ASSERT_ITERABLE_EQUALS(expected_torsions_70, graph.torsions_for_residue[123]);
 }
