@@ -35,7 +35,7 @@ public:
     void MC_backup_restore(const Molecule* m);
     void init_saved_molecule(int max_residue_count);
 
-    void recalculate_relative_positions();
+//     void recalculate_relative_positions();
     Vector3f recalculate_center(); // TODO: actually use this
     void setPosition(Vector3f v);
     void translate(Vector3f v);
@@ -62,7 +62,7 @@ public:
 
     void flex(gsl_rng * rng, const double rotate_step);
     void make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step);
-    bool local_move_successful;
+//     bool local_move_successful;
 
     gsl_ran_discrete_t * MC_discrete_table;
 #endif

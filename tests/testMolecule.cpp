@@ -159,7 +159,7 @@ void TestMolecule::testTranslate()
     polyalanine8.translate(translation_vector);
 
     // Check that absolute positions have changed
-    
+
     for (int i = 0; i < 8; i++) {
         ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
     }
@@ -248,9 +248,7 @@ void TestMolecule::testGeometry()
     };
 
     Potential e = angiotensin.E();
-    
-    // TODO TODO TODO update this
-    
+        
     for (int i = 0; i < expected_bond_lengths.size(); i++) {
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_bond_lengths[i], angiotensin.graph.bonds[i].length, 0.00001);
     }
@@ -271,7 +269,34 @@ void TestMolecule::testFlex()
 
 void TestMolecule::testLocalTranslate()
 {
-    // TODO
+    // Translate third residue
+
+    Vector3f translation_vector(1, 1, 1);
+    polyalanine8.translate(translation_vector, 2);
+    
+    // Check that absolute positions have changed
+
+    for (int i = 0; i < 8; i++) {
+        if (i == 2) {
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
+        } else {
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].position);
+        }
+    }
+
+    // Check that centre has changed
+
+    ASSERT_VECTOR3F_EQUALS(Vector3f(0.125, 0.125, 0.125), polyalanine8.center);
+
+    // Check that relative positions have changed
+    for (int i = 0; i < 8; i++) {
+        if (i == 2) {
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector, polyalanine8.Residues[i].relativePosition);
+        } else {
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].relativePosition);
+        }
+    }
+    
 }
 
 void TestMolecule::testCrankshaft()

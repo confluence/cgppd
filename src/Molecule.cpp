@@ -5,7 +5,9 @@ using namespace std;
 // TODO: we probably need a default constructor for dynamic arrays. :/
 Molecule::Molecule() : residueCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)),
 #if FLEXIBLE_LINKS
-LJ(0), DH(0), update_LJ_and_DH(true), local_move_successful(false), is_flexible(false),
+LJ(0), DH(0), update_LJ_and_DH(true),
+// local_move_successful(false), 
+is_flexible(false),
 #endif // FLEXIBLE_LINKS
 volume(0.0f)
 {
@@ -147,14 +149,14 @@ void Molecule::translate(const Vector3f v)
     }
 }
 
-void Molecule::recalculate_relative_positions()
-{
-    // TODO: ugh, no, don't do this.
-    for (size_t i=0; i<residueCount; i++)
-    {
-        Residues[i].relativePosition = Residues[i].position - center;
-    }
-}
+// void Molecule::recalculate_relative_positions()
+// {
+//     // TODO: ugh, no, don't do this.
+//     for (size_t i=0; i<residueCount; i++)
+//     {
+//         Residues[i].relativePosition = Residues[i].position - center;
+//     }
+// }
 
 Vector3f Molecule::recalculate_center()
 {
@@ -307,18 +309,21 @@ void Molecule::translate(Vector3f v, const int ri)
 
         // translate one residue
         LOG(DEBUG_LOCAL, "Residue: %d Old: (%f, %f, %f)\t", ri, Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
-        Residues[ri].position += v;
+        Residues[ri].relativePosition += v;
+        Residues[ri].position = Residues[ri].relativePosition + center;
+        
         LOG(DEBUG_LOCAL, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
         mark_cached_potentials_for_update(ri);
-        local_move_successful = true;
+//         local_move_successful = true;
+        calculate_length(); // TODO: shouldn't we also calculate the volume?
     }
 }
 
 void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
 {
     // calculate axis from neighbouring residues
-    Vector3double raxis(Residues[ri + 1].position - Residues[ri - 1].position);
+    Vector3double raxis(Residues[ri + 1].relativePosition - Residues[ri - 1].relativePosition);
 
     // normalise axis
     raxis.normalizeInPlace();
@@ -334,11 +339,11 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
     q.normalize();
 
     // apply rotation to residue
-    Vector3f relative_position = Residues[ri].position - Residues[ri - 1].position;
+    Vector3f relative_position = Residues[ri].relativePosition - Residues[ri - 1].relativePosition;
     relative_position = q.rotateVector(relative_position);
-    Residues[ri].new_position = relative_position + Residues[ri - 1].position;
+    Residues[ri].new_position = relative_position + Residues[ri - 1].relativePosition;
 
-    new_center = recalculate_center(Residues[ri].new_position - Residues[ri].position);
+    new_center = recalculate_center(Residues[ri].new_position - Residues[ri].relativePosition);
 
     // apply boundary conditions, possibly rejecting the move
     if (test_boundary_conditions())
@@ -347,11 +352,13 @@ void Molecule::crankshaft(double angle, const bool flip_angle, const int ri)
 
         // apply the move
         LOG(DEBUG_LOCAL, "Residue: %d Old: (%f, %f, %f)\t", ri, Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
-        Residues[ri].position = Residues[ri].new_position + center_wrap_delta;
+        Residues[ri].relativePosition = Residues[ri].new_position + center_wrap_delta;
+        Residues[ri].position = Residues[ri].relativePosition + center;
         LOG(DEBUG_LOCAL, "New: (%f, %f, %f)\n", Residues[ri].position.x, Residues[ri].position.y, Residues[ri].position.z);
 
         mark_cached_potentials_for_update(ri);
-        local_move_successful = true;
+//         local_move_successful = true;
+        calculate_length(); // TODO: shouldn't we also calculate the volume?
     }
 }
 
@@ -366,10 +373,10 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
     Vector3f accumulated_difference(0,0,0);
 
     for (set<int>::iterator i = branch.begin(); i != branch.end(); i++) {
-        Vector3f relative_position = Residues[*i].position - Residues[ri].position;
+        Vector3f relative_position = Residues[*i].relativePosition - Residues[ri].relativePosition;
         relative_position = q.rotateVector(relative_position);
-        Residues[*i].new_position = relative_position + Residues[ri].position;
-        accumulated_difference += Residues[*i].new_position - Residues[*i].position;
+        Residues[*i].new_position = relative_position + Residues[ri].relativePosition;
+        accumulated_difference += Residues[*i].new_position - Residues[*i].relativePosition;
     }
 
     // apply boundary conditions, possibly rejecting the move
@@ -380,11 +387,12 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
 
         // apply the move
         for (set<int>::iterator i = branch.begin(); i != branch.end(); i++) {
-            Residues[*i].position = Residues[*i].new_position + center_wrap_delta;
+            Residues[*i].relativePosition = Residues[*i].new_position + center_wrap_delta;
+            Residues[*i].position = Residues[*i].relativePosition + center;
         }
 
         mark_cached_potentials_for_update(ri);
-        recalculate_relative_positions();
+//         recalculate_relative_positions();
         calculate_length();
     }
 }
@@ -405,7 +413,7 @@ void Molecule::flex(gsl_rng * rng, const double rotate_step)
 void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
 
-    local_move_successful = false;
+//     local_move_successful = false;
 
     for (size_t i = 0; i < NUM_LOCAL_MOVES; i++) {
         //TODO: if linker too short for crankshaft, only return translate?
@@ -440,11 +448,11 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
     }
 
     // recalculate positions of residues relative to centre
-    if (local_move_successful)
-    {
-        recalculate_relative_positions();
-        calculate_length();
-    }
+//     if (local_move_successful)
+//     {
+//         recalculate_relative_positions();
+//         calculate_length();
+//     }
 }
 #endif // FLEXIBLE_LINKS
 
