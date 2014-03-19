@@ -34,6 +34,7 @@ public:
         return Vector3f(x,y,z);
     };
     Vector3f operator += (Vector3f v);
+    Vector3f operator -= (Vector3f v);
     Vector3f set(Vector3f v) {
         x = v.x;
         y = v.y;

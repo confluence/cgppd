@@ -286,14 +286,14 @@ void TestMolecule::testLocalTranslate()
 
     // Check that centre has changed
 
-    ASSERT_VECTOR3F_EQUALS(Vector3f(0.125, 0.125, 0.125), polyalanine8.center);
+    ASSERT_VECTOR3F_EQUALS(translation_vector/8.0, polyalanine8.center);
 
     // Check that relative positions have changed
     for (int i = 0; i < 8; i++) {
         if (i == 2) {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector, polyalanine8.Residues[i].relativePosition);
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
         } else {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].relativePosition);
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i] - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
         }
     }
     
@@ -301,7 +301,19 @@ void TestMolecule::testLocalTranslate()
 
 void TestMolecule::testCrankshaft()
 {
-    // TODO
+    // TODO TODO TODO Check that this is right in the code.
+    Vector3f old_ij = polyalanine8.Residues[2].position - polyalanine8.Residues[1].position;
+    Vector3f old_jk = polyalanine8.Residues[3].position - polyalanine8.Residues[2].position;
+
+    polyalanine8.crankshaft(M_PIl, false, 2);
+    
+    Vector3f new_ij = polyalanine8.Residues[2].position - polyalanine8.Residues[1].position;
+    Vector3f new_jk = polyalanine8.Residues[3].position - polyalanine8.Residues[2].position;
+    
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(old_ij.magnitude(), new_ij.magnitude(), 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(old_jk.magnitude(), new_jk.magnitude(), 0.00001);
+
+    // TODO check that it has actually been flipped by 180 degrees (how?)
 }
 
 #endif // FLEXIBLE_LINKS
