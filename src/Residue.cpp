@@ -44,6 +44,7 @@ double Residue::distance(const Residue& r, const float bounding_value)
     return distance(r.position, bounding_value);
 }
 
+// TODO: if we never use this, we should remove it
 void Residue::set_rotation(Quaternion q, Vector3f origin)
 {
     Vector3f rel_pos = position - origin;

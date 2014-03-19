@@ -35,7 +35,7 @@ public:
     void MC_backup_restore(const Molecule* m);
     void init_saved_molecule(int max_residue_count);
 
-//     void recalculate_relative_positions();
+    void recalculate_relative_positions();
     Vector3f recalculate_center(); // TODO: actually use this
     void setPosition(Vector3f v);
     void translate(Vector3f v);
@@ -46,8 +46,11 @@ public:
 
     Vector3f normalised_random_vector_f(gsl_rng * rng);
     Vector3double normalised_random_vector_d(gsl_rng * rng);
-    bool test_boundary_conditions();
-    void wrap_if_necessary();
+    bool test_boundary_conditions(); // TODO: eliminate this; move flags outside
+    void wrap_if_necessary(); // TODO: eliminate this
+
+    bool centre_outside_boundary(Vector3f c);
+    Vector3f wrapped_centre(Vector3f c);
 
     void rotate(gsl_rng * rng, const double rotate_step);
     void translate(gsl_rng * rng, const double translate_step);
@@ -62,7 +65,6 @@ public:
 
     void flex(gsl_rng * rng, const double rotate_step);
     void make_local_moves(gsl_rng * rng, const double rotate_step, const double translate_step);
-//     bool local_move_successful;
 
     gsl_ran_discrete_t * MC_discrete_table;
 #endif
@@ -98,9 +100,9 @@ public:
     Quaternion rotation; // TODO remove
 
     Vector3f center;
-    Vector3f new_center;
-    Vector3f new_center_wrapped;
-    Vector3f center_wrap_delta;
+    Vector3f new_center; // TODO TODO TODO remove this ater refactor
+    Vector3f new_center_wrapped; // TODO TODO TODO remove this ater refactor
+    Vector3f center_wrap_delta; // TODO TODO TODO remove this ater refactor
 
     int index;
     float volume;
