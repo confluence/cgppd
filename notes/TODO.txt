@@ -5,11 +5,8 @@ RIGHT NOW
 REFACTOR SEGMENT CODE
     * check if graph deepcopy works -- unit test the molecule copy function in general
     * fix all the unit tests and make sure they are complete
-    * make sure absolute and relative positions are updated in one direction only (i.e. relative --> absolute)
-        * this doesn't actually make any sense for the local moves, which change the center.
-        * remove all the stupid temporary attributes
-    * fix the boundary code; it's incomprehensible
-        * combine boundary test and wrapping; expand into periodic / sphere options in each MC move function
+        * remove all the stupid temporary attributes and old boundary code
+        * additional tests for wrapping
     * maybe switch to Catch as a testing framework
 
 * diubiquitin simulations -- once the segment code is fixed
