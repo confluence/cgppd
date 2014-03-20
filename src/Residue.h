@@ -18,7 +18,6 @@ public:
 
     Vector3f position; // used for collisions
     Vector3f relativePosition; // vs center
-    Vector3f new_position; // placeholder for provisional position TODO TODO TODO remove this once refactoring is done
 
     bool isCrowder;
 

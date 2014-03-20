@@ -264,7 +264,33 @@ void TestMolecule::testGeometry()
 
 void TestMolecule::testFlex()
 {
-    // TODO
+    // Rotate branch starting with edge 4->5 180 degrees about axis passing through residue 4 and parallel to the x axis
+    Vector3f rotation_vector(1, 0, 0);
+    polyalanine8.flex(rotation_vector, M_PIl, 3, 4);
+    
+    Vector3f rotation_centre = polyalanine8.Residues[3].position;
+    
+    for (int i = 0; i < 4; i++) {
+        ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].position);
+    }
+
+    Vector3f v;
+    
+    // rotated residues should have y and z flipped relative to residue 4
+    for (int i = 4; i < 8; i++) {
+        ASSERT_VECTOR3F_EQUALS(Vector3f(ala8_start[i].x, - ala8_start[i].y + 2 * (rotation_centre.y), - ala8_start[i].z + 2 * (rotation_centre.z)), polyalanine8.Residues[i].position);
+        v += polyalanine8.Residues[i].position - ala8_start[i];
+    }
+    
+    // check that centre is updated
+    
+    ASSERT_VECTOR3F_EQUALS(v/8, polyalanine8.center);
+    
+    // check that all the relative positions are correct
+    
+    for (int i = 0; i < 8; i++) {
+        ASSERT_VECTOR3F_EQUALS(polyalanine8.Residues[i].position - polyalanine8.center, polyalanine8.Residues[i].relativePosition);
+    }
 }
 
 void TestMolecule::testLocalTranslate()
@@ -301,19 +327,64 @@ void TestMolecule::testLocalTranslate()
 
 void TestMolecule::testCrankshaft()
 {
-    // TODO TODO TODO Check that this is right in the code.
-    Vector3f old_ij = polyalanine8.Residues[2].position - polyalanine8.Residues[1].position;
-    Vector3f old_jk = polyalanine8.Residues[3].position - polyalanine8.Residues[2].position;
+    Vector3f old_i = polyalanine8.Residues[1].position;
+    Vector3f old_j = polyalanine8.Residues[2].position;
+    Vector3f old_k = polyalanine8.Residues[3].position;
+    
+    Vector3f old_ij = old_j - old_i;
+    Vector3f old_jk = old_k - old_j;
 
     polyalanine8.crankshaft(M_PIl, false, 2);
+
+    Vector3f new_i = polyalanine8.Residues[1].position;
+    Vector3f new_j = polyalanine8.Residues[2].position;
+    Vector3f new_k = polyalanine8.Residues[3].position;
     
-    Vector3f new_ij = polyalanine8.Residues[2].position - polyalanine8.Residues[1].position;
-    Vector3f new_jk = polyalanine8.Residues[3].position - polyalanine8.Residues[2].position;
+    Vector3f new_ij = new_j - new_i;
+    Vector3f new_jk = new_k - new_j;
     
+    // check that all absolute positions are the same except for j
+    
+    Vector3f translation_vector = new_j - old_j;
+    
+    CPPUNIT_ASSERT(translation_vector.magnitude());
+    
+    for (int i = 0; i < 8; i++) {
+        if (i == 2) {
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
+        } else {
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].position);
+        }
+    }
+    
+    // Check that centre has changed
+    ASSERT_VECTOR3F_EQUALS(translation_vector/8.0, polyalanine8.center);
+
+    // Check that relative positions have changed
+    for (int i = 0; i < 8; i++) {
+        if (i == 2) {
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
+        } else {
+            ASSERT_VECTOR3F_EQUALS(ala8_start[i] - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
+        }
+    }
+    
+    // check that ij and jk are still the same length
+
     CPPUNIT_ASSERT_DOUBLES_EQUAL(old_ij.magnitude(), new_ij.magnitude(), 0.00001);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(old_jk.magnitude(), new_jk.magnitude(), 0.00001);
-
-    // TODO check that it has actually been flipped by 180 degrees (how?)
+    
+    // check that j has actually been flipped by 180 degrees:
+    // since old j != new j, this must be true if i, j, k and new j are all in the same plane
+    // which is true if the volume of the tetrahedron they form is zero
+    
+    Vector3f & a = new_i;
+    Vector3f & b = old_j;
+    Vector3f & c = new_k;
+    Vector3f & d = new_j;
+    
+    // omit absolute value and division by 6
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, (a - d).dot((b - d).cross(c - d)), 0.00001);
 }
 
 #endif // FLEXIBLE_LINKS
