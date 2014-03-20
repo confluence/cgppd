@@ -115,6 +115,12 @@ Vector3f Vector3f::operator - (const Vector3f v)
     return Vector3f(x-v.x, y-v.y, z-v.z);
 };
 
+ostream& operator<<(ostream& os, const Vector3f v)
+{
+    os << "Vector3f(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return os;
+};
+
 Vector3f Vector3f::project(Vector3f a)
 {
     double amag = a.magnitude();

@@ -11,6 +11,7 @@ class TestMolecule : public CppUnit::TestFixture
     CPPUNIT_TEST(testStartingPositions);
     CPPUNIT_TEST(testRotate);
     CPPUNIT_TEST(testTranslate);
+    CPPUNIT_TEST(testWrap);
     CPPUNIT_TEST(testCopy);
 //     CPPUNIT_TEST(testPotential);
 #if FLEXIBLE_LINKS
@@ -41,6 +42,7 @@ public:
     void testStartingPositions();
     void testRotate();
     void testTranslate();
+    void testWrap();
     void testCopy();
 //     void testPotential();
 #if FLEXIBLE_LINKS
@@ -172,6 +174,24 @@ void TestMolecule::testTranslate()
     for (int i = 0; i < 8; i++) {
         ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].relativePosition);
     }
+}
+
+void TestMolecule::testWrap()
+{
+    polyalanine8.translate(Vector3f(16, 0, 0));
+    
+    // check that we wrapped right around
+    
+    ASSERT_VECTOR3F_EQUALS(Vector3f(1, 0, 0), polyalanine8.center);
+    
+    for (int i = 0; i < 8; i++) {
+        ASSERT_VECTOR3F_EQUALS(ala8_start[i] + Vector3f(1, 0, 0), polyalanine8.Residues[i].position);
+    }
+    
+#if FLEXIBLE_LINKS
+
+#endif
+    
 }
 
 void TestMolecule::testCopy()

@@ -51,6 +51,7 @@ public:
     Vector3f operator / (const float s);
     Vector3f operator + (const Vector3f v);
     Vector3f operator - (const Vector3f v);
+    friend ostream& operator<<(ostream& os, const Vector3f v);
     Vector3f project(const Vector3f destination);
     float dot(const Vector3f v);
     Vector3f dotV(Vector3f v);
