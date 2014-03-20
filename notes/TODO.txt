@@ -5,7 +5,6 @@ RIGHT NOW
 REFACTOR SEGMENT CODE
     * check if graph deepcopy works -- unit test the molecule copy function in general
     * fix all the unit tests and make sure they are complete
-        * remove all the stupid temporary attributes and old boundary code
         * additional tests for wrapping
     * maybe switch to Catch as a testing framework
 
