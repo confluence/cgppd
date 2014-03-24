@@ -9,11 +9,19 @@ import argparse
 E0 = -2.27
 LAMBDA = 0.159
 XI = 10.0
-LJ_CONVERSION_FACTOR = 0.3507221006079
-BTU_to_J = 0.948
-E_CHARGE = 1.602176487 # what about the e-19?
-KBT_TO_KCALMOL = 1.0 / (294.0 * 8.314472 / 4184.0)
+E_CHARGE = 1.602176487e-19
 EPS = 1e-38
+
+T_ROOM = 298.0
+RGAS = 8.3144621
+KCAL = 4184.0
+N_A = 6.02214129e23
+EPS_0 = 8.85418782e-12
+ANG = 1e-10
+D_WATER = 80.0
+
+RT_TO_KCALMOL = (T_ROOM * RGAS / KCAL) # conversion from RT units to kcal/mol
+DH_CONVERSION_FACTOR = (E_CHARGE**2 * N_A / (4.0 * np.pi * EPS_0 * KCAL * ANG * D_WATER)) # as CCELEC in CHARMM
 
 K_SPRING = 378.0
 R0 = 3.81
@@ -181,10 +189,10 @@ class Potential(object):
                 else: # r >= r0ij
                     LJ = -4 * Eij * ((sigmaij / r)**12 - (sigmaij / r)**6)
 
-                self.components["LJ"] += LJ * LJ_CONVERSION_FACTOR * KBT_TO_KCALMOL
+                self.components["LJ"] += LJ * RT_TO_KCALMOL
 
                 DH = self.charge[ri.amino_acid] * self.charge[rj.amino_acid] * np.exp(-r / XI) / r
-                self.components["DH"] += DH * BTU_to_J * E_CHARGE * E_CHARGE * KBT_TO_KCALMOL
+                self.components["DH"] += DH * DH_CONVERSION_FACTOR
 
                 # TODO: why are the unit conversions what they are?
                 # TODO: WTF happened to the 4piD?
