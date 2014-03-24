@@ -6,6 +6,8 @@ REFACTOR SEGMENT CODE
     * check if graph deepcopy works -- unit test the molecule copy function in general
     * fix all the unit tests and make sure they are complete
         * additional tests for wrapping
+        * redo all the potential tests -- fix the constants in the Python script and compare to results from cgppd
+        * add Kim's original results to the unit test. Check that in compatibility mode we can match the results reasonably closely.
     * maybe switch to Catch as a testing framework
 
 * diubiquitin simulations -- once the segment code is fixed
@@ -119,6 +121,9 @@ LATER / MAYBE
 CLEANUP
 
 * Remove completely unused sections of code? Look at the CUDA code. etc.; see what is actually connected up. Are we ever going to use CUDA MC?
+* Remove dependence on cutil, which is not supposed to be used in production.
+    * Need timers and a way to check CUDA errors?
+    * Possibly read the cutil source code and reimplement these?
 
 OPTIMISE / TEST
 
