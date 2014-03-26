@@ -83,14 +83,14 @@
 // #endif // USING_CUDA
 //
 // #if !LJ_REPULSIVE && !LJ_OFF
-//     double expected_flexible_potential[6] = {300.864756, 0.337112, 0.180426, 1.555213, 3.495782, 306.433290};
+//     Potential expected_flexible_potential(300.864756, 0.337112, 0.180426, 1.555213, 3.495782);
 // #elif LJ_OFF
-//     double expected_flexible_potential[6] = {0.0, 0.337112, 0.180426, 1.555213, 3.495782, 5.568534};
+//     Potential expected_flexible_potential(0.0, 0.337112, 0.180426, 1.555213, 3.495782);
 // #elif LJ_REPULSIVE
-//     double expected_flexible_potential[6] = {617.860549, 0.337112, 0.180426, 1.555213, 3.495782, 623.429083}; // check value
+//     Potential expected_flexible_potential(617.860549, 0.337112, 0.180426, 1.555213, 3.495782); // check value
 // # endif // !LJ_REPULSIVE && !LJ_OFF
 //
-//     ASSERT_POTENTIAL_EQUALS(expected_flexible_potential, child_replica.E());
+//     ASSERT_POTENTIALS_EQUAL(expected_flexible_potential, child_replica.E());
 // #if USING_CUDA
 //     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential[5], child_replica.EonDevice(), 0.001);
 // #endif // USING_CUDA
@@ -101,14 +101,14 @@
 // #endif // USING_CUDA
 //
 // #if !LJ_REPULSIVE && !LJ_OFF
-//     double expected_rigid_potential[6] = {-0.080765, -0.212940, 0.000000, -0.000000, 0.000000, -0.293705};
+//     Potential expected_rigid_potential(-0.080765, -0.212940, 0.000000, -0.000000, 0.000000);
 // #elif LJ_OFF
-//     double expected_rigid_potential[6] = {0.0, -0.212940, 0.000000, -0.000000, 0.000000, -0.212940};
+//     Potential expected_rigid_potential(0.0, -0.212940, 0.000000, -0.000000, 0.000000);
 // #elif LJ_REPULSIVE
-//     double expected_rigid_potential[6] = {-0.279042, -0.212940, 0.000000, -0.000000, 0.000000, -0.491982}; // check value
+//     Potential expected_rigid_potential(-0.279042, -0.212940, 0.000000, -0.000000, 0.000000); // check value
 // # endif // !LJ_REPULSIVE && !LJ_OFF
 //
-//     ASSERT_POTENTIAL_EQUALS(expected_rigid_potential, child_replica.E());
+//     ASSERT_POTENTIALS_EQUAL(expected_rigid_potential, child_replica.E());
 // #if USING_CUDA
 //     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_rigid_potential[5], child_replica.EonDevice(), 0.001);
 // #endif // USING_CUDA

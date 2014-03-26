@@ -61,6 +61,12 @@ Vector3f Vector3f::normalize()
     return magnitude != 0 ? Vector3f(x,y,z)/magnitude : Vector3f(x,y,z);
 };
 
+
+bool Vector3f::almost_equal(const Vector3f v, const float eps)
+{
+    return (fabs(x - v.x) < eps && fabs(y - v.y) < eps && fabs(z - v.z) < eps);
+}
+
 Vector3f operator * (const float s, const Vector3f v)
 {
     return Vector3f(v.x*s, v.y*s, v.z*s);
