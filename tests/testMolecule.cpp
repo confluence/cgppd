@@ -119,17 +119,17 @@ void TestMolecule::testPDBSequence()
 void TestMolecule::testStartingPositions()
 {
     // We set the position to zero by default
-    ASSERT_VECTOR3F_EQUALS(Vector3f(0, 0, 0), polyalanine8.center);
+    ASSERT_VECTOR3FS_EQUAL(Vector3f(0, 0, 0), polyalanine8.center);
     
     // TODO: make a test for using a translation by 0 rather than setting the position
     
     for (int i = 0; i < 8; i++) {
-        ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].relativePosition);
+        ASSERT_VECTOR3FS_EQUAL(ala8_start[i], polyalanine8.Residues[i].relativePosition);
     }
 
     // These are the same because it's centered on zero
     for (int i = 0; i < 8; i++) {
-        ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].position);
+        ASSERT_VECTOR3FS_EQUAL(ala8_start[i], polyalanine8.Residues[i].position);
     }
 }
 
@@ -142,17 +142,17 @@ void TestMolecule::testRotate()
     // Check that absolute positions have changed -- x coordinate should be the same; y and z should be flipped
     for (int i = 0; i < polyalanine8.residueCount; i++) {
         Vector3f expected_position = Vector3f(ala8_start[i].x, -ala8_start[i].y, -ala8_start[i].z);
-        ASSERT_VECTOR3F_EQUALS(expected_position, polyalanine8.Residues[i].position);
+        ASSERT_VECTOR3FS_EQUAL(expected_position, polyalanine8.Residues[i].position);
     }
     
     // Check that relative positions have changed -- should be the same
     for (int i = 0; i < polyalanine8.residueCount; i++) {
         Vector3f expected_position = Vector3f(ala8_start[i].x, -ala8_start[i].y, -ala8_start[i].z);
-        ASSERT_VECTOR3F_EQUALS(expected_position, polyalanine8.Residues[i].relativePosition);
+        ASSERT_VECTOR3FS_EQUAL(expected_position, polyalanine8.Residues[i].relativePosition);
     }
 
     // Check that centre has not changed
-    ASSERT_VECTOR3F_EQUALS(Vector3f(0, 0, 0), polyalanine8.center);
+    ASSERT_VECTOR3FS_EQUAL(Vector3f(0, 0, 0), polyalanine8.center);
 }
 
 void TestMolecule::testTranslate()
@@ -165,16 +165,16 @@ void TestMolecule::testTranslate()
     // Check that absolute positions have changed
 
     for (int i = 0; i < 8; i++) {
-        ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
+        ASSERT_VECTOR3FS_EQUAL(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
     }
 
     // Check that centre has changed
 
-    ASSERT_VECTOR3F_EQUALS(Vector3f(1, 1, 1), polyalanine8.center);
+    ASSERT_VECTOR3FS_EQUAL(Vector3f(1, 1, 1), polyalanine8.center);
 
     // Check that relative positions have not changed
     for (int i = 0; i < 8; i++) {
-        ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].relativePosition);
+        ASSERT_VECTOR3FS_EQUAL(ala8_start[i], polyalanine8.Residues[i].relativePosition);
     }
 }
 
@@ -183,16 +183,16 @@ void TestMolecule::testWrap()
     polyalanine8.translate(Vector3f(16, 0, 0));
     
     // check that we wrapped right around
-    ASSERT_VECTOR3F_EQUALS(Vector3f(1, 0, 0), polyalanine8.center);
+    ASSERT_VECTOR3FS_EQUAL(Vector3f(1, 0, 0), polyalanine8.center);
     
     // check that absolute positions are wrapped
     for (int i = 0; i < 8; i++) {
-        ASSERT_VECTOR3F_EQUALS(ala8_start[i] + Vector3f(1, 0, 0), polyalanine8.Residues[i].position);
+        ASSERT_VECTOR3FS_EQUAL(ala8_start[i] + Vector3f(1, 0, 0), polyalanine8.Residues[i].position);
     }
 
     // Check that relative positions have not changed
     for (int i = 0; i < 8; i++) {
-        ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].relativePosition);
+        ASSERT_VECTOR3FS_EQUAL(ala8_start[i], polyalanine8.Residues[i].relativePosition);
     }
 }
 
@@ -206,11 +206,11 @@ void TestMolecule::testCopy()
 //     Potential potential_ala = polyalanine8.E(true); // with internal LJ and DH
 //     Potential potential_ang = angiotensin.E(true); // with internal LJ and DH
 // #if !LJ_REPULSIVE && !LJ_OFF
-//     double expected_ala_potential[6] = {0.945580, 0.000000, 0.045626, 1.272977, 10.872785, 13.136967};
-//     ASSERT_POTENTIAL_EQUALS(expected_ala_potential, potential_ala);
+//     Potential expected_ala_potential(0.945580, 0.000000, 0.045626, 1.272977, 10.872785);
+//     ASSERT_POTENTIALS_EQUAL(expected_ala_potential, potential_ala);
 // 
-//     double expected_ang_potential[6] = {-0.253939, 0.052889, 0.642773, 4.887786, 15.871156, 21.200665};
-//     ASSERT_POTENTIAL_EQUALS(expected_ang_potential, potential_ang);
+//     Potential expected_ang_potential(-0.253939, 0.052889, 0.642773, 4.887786, 15.871156, 21.200665);
+//     ASSERT_POTENTIALS_EQUAL(expected_ang_potential, potential_ang);
 // #elif LJ_OFF
 //     CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, potential_ala.total_LJ(), 0.00001);
 //     CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, potential_ang.total_LJ(), 0.00001);
@@ -293,25 +293,25 @@ void TestMolecule::testFlex()
     Vector3f rotation_centre = polyalanine8.Residues[3].position;
     
     for (int i = 0; i < 4; i++) {
-        ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].position);
+        ASSERT_VECTOR3FS_EQUAL(ala8_start[i], polyalanine8.Residues[i].position);
     }
 
     Vector3f v;
     
     // rotated residues should have y and z flipped relative to residue 4
     for (int i = 4; i < 8; i++) {
-        ASSERT_VECTOR3F_EQUALS(Vector3f(ala8_start[i].x, - ala8_start[i].y + 2 * (rotation_centre.y), - ala8_start[i].z + 2 * (rotation_centre.z)), polyalanine8.Residues[i].position);
+        ASSERT_VECTOR3FS_EQUAL(Vector3f(ala8_start[i].x, - ala8_start[i].y + 2 * (rotation_centre.y), - ala8_start[i].z + 2 * (rotation_centre.z)), polyalanine8.Residues[i].position);
         v += polyalanine8.Residues[i].position - ala8_start[i];
     }
     
     // check that centre is updated
     
-    ASSERT_VECTOR3F_EQUALS(v/8, polyalanine8.center);
+    ASSERT_VECTOR3FS_EQUAL(v/8, polyalanine8.center);
     
     // check that all the relative positions are correct
     
     for (int i = 0; i < 8; i++) {
-        ASSERT_VECTOR3F_EQUALS(polyalanine8.Residues[i].position - polyalanine8.center, polyalanine8.Residues[i].relativePosition);
+        ASSERT_VECTOR3FS_EQUAL(polyalanine8.Residues[i].position - polyalanine8.center, polyalanine8.Residues[i].relativePosition);
     }
 }
 
@@ -326,22 +326,22 @@ void TestMolecule::testLocalTranslate()
 
     for (int i = 0; i < 8; i++) {
         if (i == 2) {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
+            ASSERT_VECTOR3FS_EQUAL(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
         } else {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].position);
+            ASSERT_VECTOR3FS_EQUAL(ala8_start[i], polyalanine8.Residues[i].position);
         }
     }
 
     // Check that centre has changed
 
-    ASSERT_VECTOR3F_EQUALS(translation_vector/8.0, polyalanine8.center);
+    ASSERT_VECTOR3FS_EQUAL(translation_vector/8.0, polyalanine8.center);
 
     // Check that relative positions have changed
     for (int i = 0; i < 8; i++) {
         if (i == 2) {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
+            ASSERT_VECTOR3FS_EQUAL(ala8_start[i] + translation_vector - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
         } else {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i] - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
+            ASSERT_VECTOR3FS_EQUAL(ala8_start[i] - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
         }
     }
     
@@ -373,21 +373,21 @@ void TestMolecule::testCrankshaft()
     
     for (int i = 0; i < 8; i++) {
         if (i == 2) {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
+            ASSERT_VECTOR3FS_EQUAL(ala8_start[i] + translation_vector, polyalanine8.Residues[i].position);
         } else {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i], polyalanine8.Residues[i].position);
+            ASSERT_VECTOR3FS_EQUAL(ala8_start[i], polyalanine8.Residues[i].position);
         }
     }
     
     // Check that centre has changed
-    ASSERT_VECTOR3F_EQUALS(translation_vector/8.0, polyalanine8.center);
+    ASSERT_VECTOR3FS_EQUAL(translation_vector/8.0, polyalanine8.center);
 
     // Check that relative positions have changed
     for (int i = 0; i < 8; i++) {
         if (i == 2) {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i] + translation_vector - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
+            ASSERT_VECTOR3FS_EQUAL(ala8_start[i] + translation_vector - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
         } else {
-            ASSERT_VECTOR3F_EQUALS(ala8_start[i] - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
+            ASSERT_VECTOR3FS_EQUAL(ala8_start[i] - translation_vector/8.0, polyalanine8.Residues[i].relativePosition);
         }
     }
     
@@ -421,23 +421,23 @@ void TestMolecule::testWrapLocal()
     polyalanine8.translate(Vector3f(8, 0, 0), 7);
     
     // check that the centre has wrapped
-    ASSERT_VECTOR3F_EQUALS(Vector3f(14.99 + 1 - 15, 0, 0), polyalanine8.center);
+    ASSERT_VECTOR3FS_EQUAL(Vector3f(14.99 + 1 - 15, 0, 0), polyalanine8.center);
 
     // check that absolute positions have wrapped
     
     for (int i = 0; i < 7; i++) {
-        ASSERT_VECTOR3F_EQUALS(Vector3f(ala8_start[i].x + 14.99 - 15, ala8_start[i].y, ala8_start[i].z), polyalanine8.Residues[i].position);
+        ASSERT_VECTOR3FS_EQUAL(Vector3f(ala8_start[i].x + 14.99 - 15, ala8_start[i].y, ala8_start[i].z), polyalanine8.Residues[i].position);
     }
     
-    ASSERT_VECTOR3F_EQUALS(Vector3f(ala8_start[7].x + 14.99 + 8 - 15, ala8_start[7].y, ala8_start[7].z), polyalanine8.Residues[7].position);
+    ASSERT_VECTOR3FS_EQUAL(Vector3f(ala8_start[7].x + 14.99 + 8 - 15, ala8_start[7].y, ala8_start[7].z), polyalanine8.Residues[7].position);
     
     // check that relative positions have been updated, and reflect only a move of the last residue by (8,0,0)
     
     for (int i = 0; i < 7; i++) {
-        ASSERT_VECTOR3F_EQUALS(Vector3f(ala8_start[i].x - 1, ala8_start[i].y, ala8_start[i].z), polyalanine8.Residues[i].relativePosition);
+        ASSERT_VECTOR3FS_EQUAL(Vector3f(ala8_start[i].x - 1, ala8_start[i].y, ala8_start[i].z), polyalanine8.Residues[i].relativePosition);
     }
     
-    ASSERT_VECTOR3F_EQUALS(Vector3f(ala8_start[7].x - 1 + 8, ala8_start[7].y, ala8_start[7].z), polyalanine8.Residues[7].relativePosition);
+    ASSERT_VECTOR3FS_EQUAL(Vector3f(ala8_start[7].x - 1 + 8, ala8_start[7].y, ala8_start[7].z), polyalanine8.Residues[7].relativePosition);
 }
 #endif // FLEXIBLE_LINKS
 

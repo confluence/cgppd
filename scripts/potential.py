@@ -237,7 +237,7 @@ class Potential(object):
         self.components["total"] = sum(self.components.values())
 
     def __str__(self):
-        return "\n".join("%s: %f" % (k, self.components[k]) for k in ("LJ", "DH", "bond", "angle", "torsion", "total"))
+        return ", ".join("%s: %f" % (k, self.components[k]) for k in ("total", "LJ", "DH", "bond", "angle", "torsion"))
 
 
 if __name__ == "__main__":

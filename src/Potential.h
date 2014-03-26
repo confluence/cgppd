@@ -45,7 +45,20 @@ public:
 #endif // FLEXIBLE_LINKS
 
     Potential();
+    Potential(const double LJ, const double DH, const double bond=0.0f, const double angle=0.0f, const double torsion=0.0f);
     ~Potential();
+    
+    bool operator == (const Potential p) {
+#if FLEXIBLE_LINKS
+        return (LJ == p.LJ) && (DH == p.DH) && (bond == p.bond) && (angle == p.angle) && (torsion = p.torsion);
+#else
+        return (LJ == p.LJ) && (DH == p.DH);
+#endif // FLEXIBLE_LINKS
+    };
+    
+    bool almost_equal(const Potential p, const float eps);
+
+    friend ostream& operator<<(ostream& os, const Potential p);
 
     /* Increment components individually*/
     void increment_LJ(const double LJ);
@@ -66,20 +79,16 @@ public:
     void increment(const Potential p);
 
     /* Component totals (for unit tests) */
-    double total_LJ();
-    double total_DH();
+    double total_LJ () const;
+    double total_DH () const;
 #if FLEXIBLE_LINKS
-    double total_bond();
-    double total_angle();
-    double total_torsion();
+    double total_bond () const;
+    double total_angle () const;
+    double total_torsion () const;
 #endif // FLEXIBLE_LINKS
 
     /* Output final total */
-    double total();
-
-    /* Log */
-    void to_string(char * destination);
-    void print_log(const bool level, const char * prefix);
+    double total () const;
 };
 
 #endif /*POTENTIAL_H_*/

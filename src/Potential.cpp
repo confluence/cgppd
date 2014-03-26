@@ -115,30 +115,31 @@ double calculate_torsion(Residue * residues, Torsion &torsion, TorsionalLookupMa
 }
 #endif // FLEXIBLE_LINKS
 
-Potential::Potential()
-{
-    LJ = 0.0f;
-    DH = 0.0f;
-
+Potential::Potential() : 
 #if FLEXIBLE_LINKS
-    LJ_subtotal = 0.0f;
-    DH_subtotal = 0.0f;
-    bond = 0.0f;
-    /* NB: angle potential is a sum of logs -- we multiply the components and take the log at the end. */
-    angle = 1.0f;
-    torsion = 0.0f;
+/* NB: angle potential is a sum of logs -- we multiply the components and take the log at the end. */
+LJ_subtotal(0.0f), DH_subtotal(0.0f), bond(0.0f), angle(1.0f), torsion(0.0f),
 #endif // FLEXIBLE_LINKS
-
 #if COMPENSATE_KERNEL_SUM
-    c_lj = 0.0f;
-    c_dh = 0.0f;
+c_lj(0.0f), c_dh(0.0f),
 #if FLEXIBLE_LINKS
-    c_lj_subtotal = 0.0f;
-    c_dh_subtotal = 0.0f;
-    c_bond = 0.0f;
-    c_torsion = 0.0f;
+c_lj_subtotal(0.0f), c_dh_subtotal(0.0f), c_bond(0.0f), c_torsion(0.0f),
 #endif // FLEXIBLE_LINKS
 #endif // COMPENSATE_KERNEL_SUM
+LJ(0.0f), DH(0.0f)
+{
+}
+
+Potential::Potential(const double LJ, const double DH, const double bond, const double angle, const double torsion) : Potential()
+{
+    // Reverse constant factors to store raw totals
+    this->LJ = LJ/RT_to_kcalmol;
+    this->DH = DH/DH_CONVERSION_FACTOR;
+#if FLEXIBLE_LINKS
+    this->bond = bond/(0.5 * K_spring);
+    this->angle = exp(angle/-GammaAngleReciprocal);
+    this->torsion = torsion;
+#endif // FLEXIBLE_LINKS
 }
 
 Potential::~Potential()
@@ -244,34 +245,34 @@ void Potential::increment(const Potential p)
 #endif // FLEXIBLE_LINKS
 }
 
-double Potential::total_LJ()
+double Potential::total_LJ () const
 {
     return LJ * RT_to_kcalmol;
 }
 
-double Potential::total_DH()
+double Potential::total_DH () const
 {
     return DH * DH_CONVERSION_FACTOR;
 }
 
 #if FLEXIBLE_LINKS
-double Potential::total_bond()
+double Potential::total_bond () const
 {
     return bond * 0.5 * K_spring;
 }
 
-double Potential::total_angle()
+double Potential::total_angle () const
 {
     return log(angle) * -GammaAngleReciprocal;
 }
 
-double Potential::total_torsion()
+double Potential::total_torsion () const
 {
     return torsion;
 }
 #endif // FLEXIBLE_LINKS
 
-double Potential::total()
+double Potential::total () const
 {
 #if FLEXIBLE_LINKS
     return DH * DH_CONVERSION_FACTOR + LJ * RT_to_kcalmol + bond * 0.5 * K_spring + log(angle) * -GammaAngleReciprocal + torsion;
@@ -280,18 +281,21 @@ double Potential::total()
 #endif // FLEXIBLE_LINKS
 }
 
-void Potential::to_string(char * destination)
+bool Potential::almost_equal(const Potential p, const float eps)
 {
 #if FLEXIBLE_LINKS
-    sprintf(destination, "LJ: %f DH: %f bond: %f angle: %f torsion: %f TOTAL: %f\n", total_LJ(), total_DH(), total_bond(), total_angle(), total_torsion(), total());
+    return (fabs(LJ - p.LJ) < eps && fabs(DH - p.DH) < eps && fabs(bond - p.bond) < eps && fabs(angle - p.angle) < eps && fabs(torsion - p.torsion) < eps);
 #else // if not FLEXIBLE_LINKS
-    sprintf(destination, "LJ: %f DH: %f TOTAL: %f\n", total_LJ(), total_DH(), total());
+    return (fabs(LJ - p.LJ) < eps && fabs(DH - p.DH) < eps);
 #endif // FLEXIBLE_LINKS
 }
 
-void Potential::print_log(const bool level, const char * prefix)
+ostream& operator<<(ostream& os, const Potential p)
 {
-    char potential_string[256];
-    to_string(potential_string);
-    LOG(level, "%s: %s\n", prefix, potential_string);
-}
+#if FLEXIBLE_LINKS
+    os << "Potential(total=" << p.total() << ", LJ=" << p.total_LJ() << ", DH=" << p.total_DH() << ", bond=" << p.total_bond() << ", angle=" << p.total_angle() << ", torsion=" << p.total_torsion() << ")";
+#else // if not FLEXIBLE_LINKS
+    os << "Potential(total=" << p.total() << ", LJ=" << p.total_LJ() << ", DH=" << p.total_DH() << ")";
+#endif // FLEXIBLE_LINKS
+    return os;
+};

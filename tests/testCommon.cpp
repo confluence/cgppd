@@ -2,52 +2,32 @@
 
 void check_vector3f_equal(Vector3f expected, Vector3f actual, CppUnit::SourceLine sourceLine)
 {
-    float eps(0.00001);
-    if (fabs(expected.x - actual.x) < eps && fabs(expected.y - actual.y) < eps && fabs(expected.z - actual.z) < eps)
-    {
+    if (expected.almost_equal(actual, 0.00001)) {
         return;
     }
-
-    char expected_char[256];
-    sprintf(expected_char, "vector3f(%f, %f, %f)", expected.x, expected.y, expected.z);
-    string expected_str(expected_char);
-
-    char actual_char[256];
-    sprintf(actual_char, "vector3f(%f, %f, %f)", actual.x, actual.y, actual.z);
-    string actual_str(actual_char);
-
-    ::CppUnit::Asserter::failNotEqual(expected_str, actual_str, sourceLine);
+    
+    ostringstream s_expected;
+    ostringstream s_actual;
+    
+    s_expected << expected;
+    s_actual << actual;
+    
+    ::CppUnit::Asserter::failNotEqual(s_expected.str(), s_actual.str(), sourceLine);
 }
 
-void check_potential_equal(double * expected, Potential actual, CppUnit::SourceLine sourceLine)
+void check_potential_equal(Potential expected, Potential actual, CppUnit::SourceLine sourceLine)
 {
-    float eps(0.00001);
-
-    if (fabs(expected[0] - actual.total_LJ()) < eps &&
-        fabs(expected[1] - actual.total_DH()) < eps &&
-#if FLEXIBLE_LINKS
-        fabs(expected[2] - actual.total_bond()) < eps &&
-        fabs(expected[3] - actual.total_angle()) < eps &&
-        fabs(expected[4] - actual.total_torsion()) < eps &&
-#endif // FLEXIBLE_LINKS
-        fabs(expected[5] - actual.total()) < eps)
-    {
+    if (expected.almost_equal(actual, 0.00001)) {
         return;
     }
-
-    char expected_char[256];
-#if FLEXIBLE_LINKS
-    sprintf(expected_char, "LJ: %f DH: %f bond: %f angle: %f torsion: %f TOTAL: %f", expected[0], expected[1], expected[2], expected[3], expected[4], expected[5]);
-#else
-    sprintf(expected_char, "LJ: %f DH: %f TOTAL: %f", expected[0], expected[1], expected[5]);
-#endif // FLEXIBLE_LINKS
-    string expected_str(expected_char);
-
-    char actual_char[256];
-    actual.to_string(actual_char);
-    string actual_str(actual_char);
-
-    ::CppUnit::Asserter::failNotEqual(expected_str, actual_str, sourceLine);
+    
+    ostringstream s_expected;
+    ostringstream s_actual;
+    
+    s_expected << expected;
+    s_actual << actual;
+    
+    ::CppUnit::Asserter::failNotEqual(s_expected.str(), s_actual.str(), sourceLine);
 }
 
 template <>

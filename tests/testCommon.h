@@ -2,6 +2,7 @@
 #define TEST_H_
 
 #include <set>
+#include <sstream>
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -12,10 +13,10 @@
 #include <Potential.h>
 
 void check_vector3f_equal(Vector3f expected, Vector3f actual, CppUnit::SourceLine sourceLine);
-#define ASSERT_VECTOR3F_EQUALS(expected, actual) check_vector3f_equal(expected, actual, CPPUNIT_SOURCELINE())
+#define ASSERT_VECTOR3FS_EQUAL(expected, actual) check_vector3f_equal(expected, actual, CPPUNIT_SOURCELINE())
 
-void check_potential_equal(double * expected, Potential actual, CppUnit::SourceLine sourceLine);
-#define ASSERT_POTENTIAL_EQUALS(expected, actual) check_potential_equal(expected, actual, CPPUNIT_SOURCELINE())
+void check_potential_equal(Potential expected, Potential actual, CppUnit::SourceLine sourceLine);
+#define ASSERT_POTENTIALS_EQUAL(expected, actual) check_potential_equal(expected, actual, CPPUNIT_SOURCELINE())
 
 template <typename Type>
 string join(const string sep, Type values)
