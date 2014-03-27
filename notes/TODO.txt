@@ -4,11 +4,7 @@ RIGHT NOW
 
 REFACTOR SEGMENT CODE
     * check if graph deepcopy works -- unit test the molecule copy function in general
-    * fix all the unit tests and make sure they are complete
-        * additional tests for wrapping
-        * redo all the potential tests -- fix the constants in the Python script and compare to results from cgppd
-        * add Kim's original results to the unit test. Check that in compatibility mode we can match the results reasonably closely.
-    * maybe switch to Catch as a testing framework
+    * update the python potential implementation
 
 * diubiquitin simulations -- once the segment code is fixed
     * DON'T FORGET to make a fake side-chain out of alanine

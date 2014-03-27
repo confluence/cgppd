@@ -25,11 +25,6 @@
     #define RT_to_kcalmol       (T_room * Rgas / kcal) // conversion from RT units to kcal/mol
     #define DH_CONVERSION_FACTOR    (pow(E_charge, 2.0f) * N_A / (4.0f * float(M_PIl) * eps0 * kcal * Ang * D_water)) // as CCELEC in CHARMM
 
-    // UNCOMMENT THESE TWO LINES FOR CHARMM COMPATIBILITY (for comparisons to reference conformations)
-    // TODO TODO TODO remove these from here and add them to the reference conformation unit test, which is really the only place they're needed.
-//     #define RT_to_kcalmol       0.6f // estimate used in patched CHARMM and by Young Kim
-//     #define DH_CONVERSION_FACTOR 332.0716f / D_water // CHARMM's CCELEC TODO change to normal CCELEC with constant fudge factor to account for (we assume) truncated constants
-
     // TODO: probably move these to the definitions file; they're implementation details. Maybe move some theoretical stuff from there to here.
     #define AA_COUNT        20
     #define AA_COUNTf       float(AA_COUNT)
@@ -73,9 +68,6 @@
     #if LJ_REPULSIVE
         #undef e0
         #define e0  0.0001f // k_b T
-        // This is probably unnecessary, in which case it should be reverted.
-//         #undef LJ_SIGMA_SCALING_FACTOR
-//         #define LJ_SIGMA_SCALING_FACTOR 0.25f
     #endif
 
     #if LJ_OFF

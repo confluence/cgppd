@@ -175,7 +175,7 @@
         void GlutDisplay();
     #endif
 
-    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 1
+    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 0
     #define PRINT_STARTING_PDB 1
 
 #endif /*DEFINITIONS_H_*/

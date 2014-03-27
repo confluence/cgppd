@@ -293,9 +293,9 @@ bool Potential::almost_equal(const Potential p, const float eps)
 ostream& operator<<(ostream& os, const Potential p)
 {
 #if FLEXIBLE_LINKS
-    os << "Potential(total=" << p.total() << ", LJ=" << p.total_LJ() << ", DH=" << p.total_DH() << ", bond=" << p.total_bond() << ", angle=" << p.total_angle() << ", torsion=" << p.total_torsion() << ")";
+    os << fixed << setprecision(6) << "Potential(total=" << p.total() << ", LJ=" << p.total_LJ() << ", DH=" << p.total_DH() << ", bond=" << p.total_bond() << ", angle=" << p.total_angle() << ", torsion=" << p.total_torsion() << ")";
 #else // if not FLEXIBLE_LINKS
-    os << "Potential(total=" << p.total() << ", LJ=" << p.total_LJ() << ", DH=" << p.total_DH() << ")";
+    os << fixed << setprecision(6) << "Potential(total=" << p.total() << ", LJ=" << p.total_LJ() << ", DH=" << p.total_DH() << ")";
 #endif // FLEXIBLE_LINKS
     return os;
 };

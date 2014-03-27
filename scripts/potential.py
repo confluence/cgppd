@@ -6,6 +6,8 @@ from collections import defaultdict
 import numpy as np
 import argparse
 
+from segment_mockup import Graph
+
 E0 = -2.27
 LAMBDA = 0.159
 XI = 10.0
@@ -58,13 +60,15 @@ class Residue(object):
 
 
 class Protein(object):
-    def __init__(self, ):
+    def __init__(self):
         self.residues = []
         self.segments = [] # flexible segments
 
     def append_residue(self, residue):
         residue.protein = self
         self.residues.append(residue)
+        
+    # TODO TODO TODO flexible links are no longer parsed from the PDB file.
 
     def find_segments(self):
         segment = None
@@ -203,6 +207,10 @@ class Potential(object):
                     for r1, r2 in zip(s[:-1], s[1:]):
                         r = np.linalg.norm(r1.position - r2.position)
                         self.components["bond"] += K_SPRING * (r - R0)**2 / 2.0
+                        
+                        
+                    # TODO TODO TODO we need to overhaul this to work with the new geometry
+                    # Import geometry from the segment mockup script.
 
                     # add previous and next residue if they exist (ask Rob if we should add one more for the torsion)
                     # if so, make this less hacky
@@ -248,7 +256,13 @@ if __name__ == "__main__":
     parser.add_argument("files", help="Input PDB files", nargs="+")
     parser.add_argument("-i", "--internal", help="Calculate internal molecule potential", action="store_true")
     parser.add_argument("-b", "--boundary", help="Periodic boundary", type=float, default=None)
+    parser.add_argument("-l", "--lj", help="Type of LJ potential", type=str, default="normal", choices=['normal', 'repulsive', 'off'])
     args = parser.parse_args()
+    
+    if args.lj == "repulsive":
+        E0 = 0.0001
+    elif args.lj == "off":
+        LAMBDA = 0
 
     potential = Potential.from_filelist(args.aminoacids, args.potential, args.torsions, *args.files)
     potential.calculate(args.internal, args.boundary)

@@ -156,48 +156,48 @@ class Graph(object):
     
     def random_neighbour_pair(self, i):
         return set(random.sample(list(self.neighbours(i)), 2))
+    
+if __name__ == "__main__":
+    residues = []
+    segments = [(72, 73, 74, 75, 123), (72 + 76, 73 + 76, 74 + 76, 75 + 76)] # indices (starting from zero)
 
+    # Create diubiquitin
 
-residues = []
-segments = [(72, 73, 74, 75, 123), (72 + 76, 73 + 76, 74 + 76, 75 + 76)] # indices (starting from zero)
+    for i in range(76):
+        residues.append(Residue(i, "A"))
 
-# Create diubiquitin
+    for i in range(76):
+        residues.append(Residue(i + 76, "B"))
 
-for i in range(76):
-    residues.append(Residue(i, "A"))
+    # create graph
 
-for i in range(76):
-    residues.append(Residue(i + 76, "B"))
+    graph = Graph()
+    graph.parse(residues, False, segments)
 
-# create graph
+    # see if we did it right
 
-graph = Graph()
-graph.parse(residues, False, segments)
+    pretty_print(graph.bonds)
+    pretty_print(graph.angles)
+    pretty_print(graph.torsions)
 
-# see if we did it right
+    pretty_print(graph.mc_local_residues)
+    pretty_print(graph.mc_crankshaft_residues)
+    pretty_print(graph.mc_flex_residues)
 
-pretty_print(graph.bonds)
-pretty_print(graph.angles)
-pretty_print(graph.torsions)
+    print "branch starting from (123, 122)"
+    pretty_print(graph.branch((123, 122)))
 
-pretty_print(graph.mc_local_residues)
-pretty_print(graph.mc_crankshaft_residues)
-pretty_print(graph.mc_flex_residues)
+    print "branch starting from (75, 123)"
+    pretty_print(graph.branch((75, 123)))
 
-print "branch starting from (123, 122)"
-pretty_print(graph.branch((123, 122)))
+    print "branch starting from (148, 149)"
+    pretty_print(graph.branch((148, 149)))
 
-print "branch starting from (75, 123)"
-pretty_print(graph.branch((75, 123)))
+    print "random pairs of neighbours for 123 (not that we can crankshaft 123)"
+    pretty_print(graph.random_neighbour_pair(123))
+    pretty_print(graph.random_neighbour_pair(123))
+    pretty_print(graph.random_neighbour_pair(123))
+    pretty_print(graph.random_neighbour_pair(123))
 
-print "branch starting from (148, 149)"
-pretty_print(graph.branch((148, 149)))
-
-print "random pairs of neighbours for 123 (not that we can crankshaft 123)"
-pretty_print(graph.random_neighbour_pair(123))
-pretty_print(graph.random_neighbour_pair(123))
-pretty_print(graph.random_neighbour_pair(123))
-pretty_print(graph.random_neighbour_pair(123))
-
-print "random pair of neighbours for 74 (should always be the same)"
-pretty_print(graph.random_neighbour_pair(74))
+    print "random pair of neighbours for 74 (should always be the same)"
+    pretty_print(graph.random_neighbour_pair(74))
