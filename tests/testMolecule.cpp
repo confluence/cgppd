@@ -13,7 +13,7 @@ class TestMolecule : public CppUnit::TestFixture
     CPPUNIT_TEST(testTranslate);
     CPPUNIT_TEST(testWrap);
     CPPUNIT_TEST(testCopy);
-//     CPPUNIT_TEST(testPotential);
+    CPPUNIT_TEST(testPotential);
 #if FLEXIBLE_LINKS
     CPPUNIT_TEST(testSegments);
     CPPUNIT_TEST(testGeometry);
@@ -45,7 +45,7 @@ public:
     void testTranslate();
     void testWrap();
     void testCopy();
-//     void testPotential();
+    void testPotential();
 #if FLEXIBLE_LINKS
     void testSegments();
     void testGeometry();
@@ -201,21 +201,26 @@ void TestMolecule::testCopy()
     // TODO
 }
 
-// void TestMolecule::testPotential()
-// {
-//     Potential potential_ala = polyalanine8.E(true); // with internal LJ and DH
-//     Potential potential_ang = angiotensin.E(true); // with internal LJ and DH
-// #if !LJ_REPULSIVE && !LJ_OFF
-//     Potential expected_ala_potential(0.945580, 0.000000, 0.045626, 1.272977, 10.872785);
-//     ASSERT_POTENTIALS_EQUAL(expected_ala_potential, potential_ala);
-// 
-//     Potential expected_ang_potential(-0.253939, 0.052889, 0.642773, 4.887786, 15.871156, 21.200665);
-//     ASSERT_POTENTIALS_EQUAL(expected_ang_potential, potential_ang);
-// #elif LJ_OFF
-//     CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, potential_ala.total_LJ(), 0.00001);
-//     CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, potential_ang.total_LJ(), 0.00001);
-// #endif // !LJ_REPULSIVE && !LJ_OFF
-// }
+void TestMolecule::testPotential()
+{
+    Potential actual_ala = polyalanine8.E(true); // with internal LJ and DH
+    Potential actual_ang = angiotensin.E(true); // with internal LJ and DH
+#if !LJ_REPULSIVE && !LJ_OFF
+    double ala_LJ = 0.932791;
+    double ang_LJ = -0.250504;
+#elif LJ_REPULSIVE
+    double ala_LJ = 5.638410;
+    double ang_LJ = -0.628958;
+#elif LJ_OFF
+    double ala_LJ = 0;
+    double ang_LJ = 0;
+#endif // !LJ_REPULSIVE && !LJ_OFF
+    Potential expected_ala = Potential(ala_LJ, 0.000000, 0.045626, 1.272977, 10.872785);
+    Potential expected_ang = Potential(ang_LJ, 0.052706, 0.642775, 4.887787, 15.871157);
+
+    ASSERT_POTENTIALS_EQUAL(expected_ala, actual_ala);
+    ASSERT_POTENTIALS_EQUAL(expected_ang, actual_ang);
+}
 
 #if FLEXIBLE_LINKS
 void TestMolecule::testSegments()

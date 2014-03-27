@@ -7,6 +7,7 @@
 #include "Geometry.h"
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 /* Potential component calculations */
 double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData);
