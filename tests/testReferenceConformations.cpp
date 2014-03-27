@@ -102,6 +102,7 @@ void TestReferenceConformations::tearDown()
 void TestReferenceConformations::testExactResults()
 {
     // This test checks that nothing changes unexpectedly in our implementation of the potential calculation.
+    // It also checks that the GPU, CPU and NC functions produce the same totals.
     // This should be tested more thoroughly (including the bonded components) in the Molecule and Replica unit tests.
 
     vector<Potential> expected_exact_results = {
@@ -156,6 +157,9 @@ void TestReferenceConformations::testVsKimResults()
     double max_e_DH(0);
     double max_e_total(0);
     
+    LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "\nComparison to Kim's results\n");
+    LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "Relative errors:\n");
+    
     for (int i = 0; i < 10; i++) {
         const double & kim_LJ = kim_results[i].total_LJ();
         const double & kim_DH = kim_results[i].total_DH();
@@ -171,8 +175,8 @@ void TestReferenceConformations::testVsKimResults()
         double e_DH = fabs(kim_DH - DH)/fabs(kim_DH);
         double e_total = fabs(kim_total - total)/fabs(kim_total);
         
-        cout << "Error " << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total << endl;
-        
+        LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "%d: LJ: %f DH: %f total: %f\n", i + 1, e_LJ, e_DH, e_total);
+
         mean_e_LJ += e_LJ/10;
         mean_e_DH += e_DH/10;
         mean_e_total += e_total/10;
@@ -182,16 +186,87 @@ void TestReferenceConformations::testVsKimResults()
         max_e_total = max(max_e_total, e_total);
     }
     
-    cout << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total: " << mean_e_total << endl;
-    cout << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total: " << max_e_total << endl;
+    LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "Mean error: LJ: %f DH: %f total %f\n", mean_e_LJ, mean_e_DH, mean_e_total);
+    LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "Max error: LJ: %f DH: %f total %f\n", max_e_LJ, max_e_DH, max_e_total);
     
-    // Apart from the LJ in conformation 6, we seem to be doing quite well. We should probably investigate that more closely.
+    // Apart from the LJ in conformations 1 and 6, we seem to be doing quite well. We should probably investigate that more closely.
     
-    // TODO TODO TODO add the actual test, and clean up the printing so that it only happens if the flag is set. Is there a better way to do this?
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.001505, mean_e_LJ, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.000078, mean_e_DH, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.001073, mean_e_total, 0.00001);
     
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.002866, max_e_LJ, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.000250, max_e_DH, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.002202, max_e_total, 0.00001);
 }
 
 void TestReferenceConformations::testVsCharmmResults()
-{
-    // TODO TODO TODO do this comparison too?
+{   
+    // This test compares our implementation to R. Best's CHARMM patch.
+    
+    double LJ_fudge_factor(1.0153); // we have no idea
+    double DH_fudge_factor(1.0037); // CHARMM uses a less accurate CCELEC constant. That doesn't account for most of this, though.
+
+    vector<Potential> charmm_results = {
+        Potential(-0.081, -0.213),
+        Potential(-1.322, 0.266),
+        Potential(-9.095, -1.182),
+        Potential(-5.903, -1.678),
+        Potential(-0.000021, -0.000058),
+        Potential(-4.810, -0.752),
+        Potential(-4.213, -1.267),
+        Potential(-9.266, -1.446),
+        Potential(-7.951, -1.949),
+        Potential(-7.459, -1.069)
+    };
+    
+    double mean_e_LJ(0);
+    double mean_e_DH(0);
+    double mean_e_total(0);
+    
+    double max_e_LJ(0);
+    double max_e_DH(0);
+    double max_e_total(0);
+    
+    LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "\nComparison to CHARMM results\n");
+    LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "Relative errors:\n");
+    
+    for (int i = 0; i < 10; i++) {
+        const double & charmm_LJ = charmm_results[i].total_LJ();
+        const double & charmm_DH = charmm_results[i].total_DH();
+        const double & charmm_total = charmm_results[i].total();
+        
+        double LJ = cpu[i].total_LJ() * LJ_fudge_factor;
+        double DH = cpu[i].total_DH() * DH_fudge_factor;
+        double total = LJ + DH;
+        
+        // relative error, as described in Tunbridge 2011, p.113
+        
+        double e_LJ = fabs(charmm_LJ - LJ)/fabs(charmm_LJ);
+        double e_DH = fabs(charmm_DH - DH)/fabs(charmm_DH);
+        double e_total = fabs(charmm_total - total)/fabs(charmm_total);
+        
+        LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "%d: LJ: %f DH: %f total: %f\n", i + 1, e_LJ, e_DH, e_total);
+
+        mean_e_LJ += e_LJ/10;
+        mean_e_DH += e_DH/10;
+        mean_e_total += e_total/10;
+        
+        max_e_LJ = max(max_e_LJ, e_LJ);
+        max_e_DH = max(max_e_DH, e_DH);
+        max_e_total = max(max_e_total, e_total);
+    }
+    
+    LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "Mean error: LJ: %f DH: %f total %f\n", mean_e_LJ, mean_e_DH, mean_e_total);
+    LOG(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, "Max error: LJ: %f DH: %f total %f\n", max_e_LJ, max_e_DH, max_e_total);
+    
+    // This is less good, but also less important than the distance from the original results.
+        
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.002838, mean_e_LJ, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.000455, mean_e_DH, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.001722, mean_e_total, 0.00001);
+    
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.008679, max_e_LJ, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.001795, max_e_DH, 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.005833, max_e_total, 0.00001);
 }
