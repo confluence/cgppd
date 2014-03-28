@@ -14,7 +14,7 @@ class TestSimulation : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(TestSimulation);
     CPPUNIT_TEST(testGetArgs);
     CPPUNIT_TEST(testLoadArgsFromFile);
-//     CPPUNIT_TEST(testPrintArgs);
+    CPPUNIT_TEST(testREMC);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -24,7 +24,7 @@ public:
     void setUp();
     void testGetArgs();
     void testLoadArgsFromFile();
-//     void testPrintArgs();
+    void testREMC();
     void tearDown();
 };
 
@@ -131,6 +131,25 @@ void TestSimulation::testLoadArgsFromFile()
     CPPUNIT_ASSERT_EQUAL(75, ubq_data.segments[0].residue_indices[3]);
 }
 
+void TestSimulation::testREMC()
+{
+    // This test ensures that the synchronous and asynchronous CUDA options produce the same results.
+    
+    // TODO:
+    // create a new simulation with a simple test config file (reference conformation 1 with flexible ubq tail)
+    // use arguments to override output directory and make the simulation short
+
+    // seed the simulation range with a constant
+    // seed each replica range with a constant
+
+    // run the simulation
+
+    // compare output directory to reference directory with diff
+    // everything should match except information about compilation inside PDB files; name of directory  
+    
+}
+
 void TestSimulation::tearDown()
 {
+    // TODO: delete test output directory
 }
