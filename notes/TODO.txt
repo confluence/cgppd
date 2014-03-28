@@ -2,130 +2,93 @@
 RIGHT NOW
 --------------------------------------------------------------------------------
 
-REFACTOR SEGMENT CODE
+REFACTORING / TESTS
     * check if graph deepcopy works -- unit test the molecule copy function in general
-    * update the python potential implementation
+    * clean up crappy Potential internals now that there are unit tests
+    * verify that sync and async versions produce the same results -- MC test in simulation unit test
+    * before we do that, clean up output files as much as possible
+        * put a separate ABOUT file with compilation options in the directory instead of appending suffixes and putting crap in the PDB files
+        * stop outputting rotation / translation (no longer relevant)
+            * but only if compiled with flexible linkers?
 
+SIMULATIONS
 * diubiquitin simulations -- once the segment code is fixed
     * DON'T FORGET to make a fake side-chain out of alanine
 
-* Fix bad potential constants -- add a compatibility scaling factor for DH comparison to YK's results
-
-* verify that async version produces sensible results
-
+THESIS
 * write foundations chapter
+* keep writing
 
 --------------------------------------------------------------------------------
 NOW
 --------------------------------------------------------------------------------
 
-OPTIMISATION
-
-* why not precalculate the LJ coefficients which are independent from r?
-    * We could definitely at least store Eij instead of eij.
-    * How much extra storage / memory transfer overhead would be required for 3 coefficients (3EijSigij, 2Eij and 2^(1/6)Sigij)?
-    * Maybe do it and test it? float3 table instead of float.
-
-VALIDATION
-
-* should we try crankshaft moves with more residues, and see if this improves the repulsive LJ results?
-
-CLEANUP / BUGFIX
-
-* remove unused code for e.g. old kernels and MC on the GPU
-* use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
-* potential test for repulsive LJ -- add options for no LJ / repulsive LJ to python script
-* fix chain processing
-* remove printing of old cruft about translation/rotation
-* 300k replica -- how is it found if there isn't one?!
-* paircount needs to be updated for flexible linkers
-* make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
-
-OTHER
-
-* redo Ian's tail/no tail simulations with flexible tail; replicate post-processing used in original thesis
-
-BENCHMARKING
-
-* do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
-* how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
-
 MODEL CORRECTNESS
-
 * potential is now much (?) bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct? Also including the potential from inside proteins should raise the total (right)?
     * analyse potential breakdown (from CPU-only version)
-
+* Why is the LJ so huge for reference conformation 1 when internal potential is calculated? (assuming that two residues are really close together)
 * Are any conversions required for the linker components?
 
-* Is the flex move actually a valid extension of the model? Does the polymer test demonstrate that?
-    * Kolinski & Skolnick 1994 (I) suggests a similar move for protein folding simulations.
-* Kolinski & Skolnick and Liang & Wong both suggest a broader class of crankshaft moves which rotate more than one residue at a time
-    * Liang & Wong use "crankshaft" for a two-bead rotation and call a one-bead rotation a "three-bead flip"
-    * Kolinski & Skolnick discuss rotations of 1, 2 and 3 beads at a time
-
-* Should we include the last *two* rigid residues when calculating the torsion? There's still one degree of freedom.
-    * make sure all this works correctly across chain boundary
+CLEANUP / BUGFIX
+* is it *actually* worth summing vector components separately? Probably not, and we don't do it everywhere anyway.
+* remove unused code for e.g. old kernels and MC on the GPU
+* use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
+* fix chain processing
+    * use chain names if they exist
+    * fix old PDB files with chain id in the wrong place (WTF)
+* remove printing of old cruft about translation/rotation
+* 300k replica -- how is it found if there isn't one?!
+* make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 
 --------------------------------------------------------------------------------
 SOON
 --------------------------------------------------------------------------------
 
-MUTATIONS/WRAPPING
-
-* Write unit tests for all the mutations. Seriously, we need those.
-
-* Refactor all the wrapping stuff, because it's terrible
-    * Split two boundary types
-        * at the start, calculate new center and reject the move if boundary is spherical and center is too large
-        * then do everything
-        * at the *end*, if the boundary is periodic, calculate the wrapped center and wrap the molecule if necessary
-            * but this can still result in residues being moved twice in e.g. flex move
-            * does that really matter?
-            * Make an effort always to update the relative position and then the absolute position -- eliminate recalculate_relative_positions
-            * If we do that, moving twice for wrapping won't be a problem -- just calculate the absolute position once after wrapping!
+OPTIMISATION
+* why not precalculate the LJ coefficients which are independent from r?
+    * We could definitely at least store Eij instead of eij.
+    * How much extra storage / memory transfer overhead would be required for 3 coefficients (3EijSigij, 2Eij and 2^(1/6)Sigij)?
+    * Maybe do it and test it? float3 table instead of float.
 
 TEST
-
 * stuff that's disabled
     * Kahan sums -- sort of tested; no difference apparent
 
 OPTIONS
-
 * add possibility to individually enable / disable all the MC mutations?
     * would be useful to disable whole-molecule translation / rotation for individual molecule tests
     * and to disable flex moves if rigid domains should be static relative to each other
 
-REFACTOR
+VALIDATION
+* should we try crankshaft moves with more residues, and see if this improves the repulsive LJ results?
 
-* Linkers, etc. don't actually *need* to be arrays. Just keep them as vectors.
+REFACTOR
 * is it really necessary to use custom vector3f and vector3d types?
 * is it really necessary to use size_t for iterators instead of int?
-
 * Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
-
 * MOLECULE: constructor / destructor
     * reserveResidueSpace not consistently used?
-    * maybe use init from pdb function with rotation / translation params?
-    * make Molecule::rotate call Molecule::setRotation, etc.?
 * AMINO ACIDS
     * clean up read from file
+
+SIMULATIONS
+* redo Ian's tail/no tail simulations with flexible tail; replicate post-processing used in original thesis
+
+BENCHMARKING
+* do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
+* how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
 
 --------------------------------------------------------------------------------
 LATER / MAYBE
 --------------------------------------------------------------------------------
 
 CLEANUP
-
-* Remove completely unused sections of code? Look at the CUDA code. etc.; see what is actually connected up. Are we ever going to use CUDA MC?
 * Remove dependence on cutil, which is not supposed to be used in production.
     * Need timers and a way to check CUDA errors?
     * Possibly read the cutil source code and reimplement these?
 
 OPTIMISE / TEST
-
 * is caching of internal potential subtotals important? Probably still useful for CPU LJ/DH code.
-* is it *actually* worth summing vector components separately?
 
 ADD
-
 * Multiple GPUs?  Does that work?  It should just work.
