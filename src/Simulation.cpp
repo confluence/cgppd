@@ -770,6 +770,8 @@ void Simulation::getFileArg(int argc, char **argv)
     };
 
     int opt_index = 0;
+    
+    optind = 1; // we need to reset this here too, so that unit tests don't segfault. Yay, global variables!
 
     while (1)
     {

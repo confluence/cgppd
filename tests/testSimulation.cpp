@@ -36,14 +36,10 @@ void TestSimulation::setUp()
 
 void TestSimulation::testGetArgs()
 {
-#define LEN_TEST_ARGV 27
     Simulation s;
-    const char * c_argv[LEN_TEST_ARGV] = {"my_programname", "-f", "my_filename", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-o", "my_suffix", "-b", "23", "-n", "23", "-x", "23", "-d", "23"};
-    char * argv[LEN_TEST_ARGV];
-    for(int i = 0; i < LEN_TEST_ARGV; i++) {
-        argv[i] = strdup(c_argv[i]);
-    }
-    int argc(LEN_TEST_ARGV);
+    
+    char * argv[] = {"my_programname", "-f", "my_filename", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-o", "my_suffix", "-b", "23", "-n", "23", "-x", "23", "-d", "23", NULL};
+    int argc(27);
 
     s.getFileArg(argc, argv);
     s.getArgs(argc, argv);
@@ -138,15 +134,30 @@ void TestSimulation::testREMC()
     // TODO:
     // create a new simulation with a simple test config file (reference conformation 1 with flexible ubq tail)
     // use arguments to override output directory and make the simulation short
-
+    
+    Simulation s;
+    
+    char * argv[] = {"program_name_goes_here", "-f", "tests/remctest", "-o", "remctest", NULL};
+    
+    int argc(5);
+    s.init(argc, argv, 0);
+    
     // seed the simulation range with a constant
     // seed each replica range with a constant
+    
+    gsl_rng_set(s.REMCRng, 0);
+    
+    for (int i = 0; i < s.parameters.replicas; i++) {
+        gsl_rng_set(s.replica[i].rng, i);
+    }
 
     // run the simulation
+    
+    s.run();
 
     // compare output directory to reference directory with diff
     // everything should match except information about compilation inside PDB files; name of directory  
-    
+
 }
 
 void TestSimulation::tearDown()

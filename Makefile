@@ -55,6 +55,8 @@ endif
 TEST_INCLUDE=${INCLUDE} -I/usr/include/cppunit/ -Isrc -Itests
 TEST_LINKS=${LINKS} -lcppunit
 TEST_SOURCES:=$(shell find tests/ -regex '.*\.\(cpp\|h\)')
+# suppress warnings about conversion from string constant to char * when constructing argv in tests
+TEST_FLAGS=-Wno-write-strings
 
 ifeq ($(DEBUG),yes)
 CFLAGS+=-g
@@ -88,7 +90,7 @@ endif
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
 
 test: ${OBJFILES} ${TEST_SOURCES}
-	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
+	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} ${LIBS} -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
 
 obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
 	@echo Making CUDA files.
