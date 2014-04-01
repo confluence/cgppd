@@ -91,7 +91,7 @@ void Simulation::init(int argc, char **argv, int pid)
 #if USING_CUDA
     float * deviceLJpTmp;
 #if CUDA_STREAMS
-    cudaStream_t streams[0];
+    cudaStream_t streams[1]; // TODO TODO TODO changed this from [0] to [1]; assuming own bug; check this later
     setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData, streams, 1);
     initialReplica.setup_CUDA(deviceLJpTmp, streams, 0);
 #else

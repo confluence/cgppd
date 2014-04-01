@@ -57,7 +57,7 @@
     #define WARN_BOUNDARY 1
 
     #define DEBUG_PARSING 0
-    #define DEBUG_MC 0
+    #define DEBUG_MC 1
     #define DEBUG_LENGTH 0
     #define INFO_POTENTIAL 0
     #define DEBUG_POTENTIAL 0
@@ -122,11 +122,8 @@
     #endif
 
     #if USING_CUDA
-        #define PERFORM_GPU_AND_CPU_E  0  // do both cpu and gpu sums for comparison
-
         #define GPU_COUNT          		1
         #define USING_TILE_KERNEL  		1
-        #define CUDA_E      	  		1	// use cuda to do the energy summations (vs cpu if not included)
         #define PARALLEL_SUM			0
 
         #define SHARED_MEM				0
