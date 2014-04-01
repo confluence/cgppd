@@ -24,6 +24,9 @@ private:
     Potential cpu[10];
     Potential cpu_nc[10];
 #if USING_CUDA
+#if CUDA_STREAMS
+    cudaStream_t streams[10];
+#endif
     double gpu[10];
     double gpu_nc[10];
 #endif
@@ -44,8 +47,13 @@ void TestReferenceConformations::setUp()
 {
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
     testboxdim = 1000.0f;
+
 #if USING_CUDA
+#if CUDA_STREAMS
+    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData, streams, 10);
+#else
     setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData);
+#endif // CUDA_STREAMS
 #endif // USING_CUDA
     
     for (int i = 0; i < 10; i++)
@@ -75,7 +83,11 @@ void TestReferenceConformations::setUp()
 #endif
 
 #if USING_CUDA
+#if CUDA_STREAMS
+        replicas[i].setup_CUDA(ljp_t, streams, i);
+#else
         replicas[i].setup_CUDA(ljp_t);
+#endif
 #endif
 
         cpu[i] = replicas[i].E();
@@ -90,12 +102,16 @@ void TestReferenceConformations::setUp()
 void TestReferenceConformations::tearDown()
 {
 #if USING_CUDA
-    teardown_CUDA(ljp_t);
-
     for (int i = 0; i < 10; i++)
     {
-        replicas[i].FreeDevice();
+        replicas[i].teardown_CUDA();
     }
+
+#if CUDA_STREAMS
+    teardown_CUDA(ljp_t, streams, 1);
+#else
+    teardown_CUDA(ljp_t);
+#endif // CUDA_STREAMS
 #endif // USING_CUDA
 }
 

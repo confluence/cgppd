@@ -137,10 +137,11 @@ void TestSimulation::testREMC()
     
     Simulation s;
     
-    char * argv[] = {"program_name_goes_here", "-f", "tests/remctest", "-o", "remctest", NULL};
+    char * argv[] = {"program_name_goes_here", "-f", "tests/remctestfile", "-o", "remctest", NULL};
     
     int argc(5);
-    s.init(argc, argv, 0);
+    int pid = int( getpid() );
+    s.init(argc, argv, pid);
     
     // seed the simulation range with a constant
     // seed each replica range with a constant
@@ -153,10 +154,13 @@ void TestSimulation::testREMC()
 
     // run the simulation
     
+    // TODO TODO TODO make the logging work better and add a completely silent mode for unit tests
     s.run();
 
-    // compare output directory to reference directory with diff
-    // everything should match except information about compilation inside PDB files; name of directory  
+    // compare output directory to reference directory with diff?
+    // the sync / async output may be too different
+    
+    // compare accept / reject statistics?
 
 }
 

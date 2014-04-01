@@ -305,15 +305,10 @@ void Replica::MCSearch(int steps, int mcstep)
 
         LOG(DEBUG_MC, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 
-#if CUDA_E
+#if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
         newPotential = EonDevice();  // sequential cuda call
-#if PERFORM_GPU_AND_CPU_E
-        float cpu_e(E().total());
-        float err = abs(cpu_e - newPotential) / abs(cpu_e);
-        printf("%24.20f %24.20f %24.20f\n", cpu_e, float(newPotential), err);
-#endif
 #else // only CPU calls
         newPotential = E().total();
 #endif
@@ -339,7 +334,7 @@ void Replica::MCSearch(int steps, int mcstep)
             reject++;
             molecules[moleculeNo].MC_backup_restore(&savedMolecule);
             LOG(DEBUG_MC, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
-#if CUDA_E
+#if USING_CUDA
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
         }
@@ -609,16 +604,13 @@ void Replica::MCSearchEvaluate()
 void Replica::MCSearchAcceptReject()
 {
     newPotential = SumGridResults();
+    LOG(DEBUG_MC, "\nASYNC: unbonded total: %f\n", newPotential);
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
-        newPotential += internal_molecule_E(true).total();
+        double bonded_potential = internal_molecule_E(false).total();
+        LOG(DEBUG_MC, "ASYNC: bonded total: %f\n", bonded_potential);
+        newPotential += bonded_potential;
     }
-#endif
-
-#if PERFORM_GPU_AND_CPU_E
-    float cpu_e(E().total());
-    float err = abs(cpu_e-newPotential)/abs(cpu_e);
-    printf("%24.20f %24.20f %24.20f\n",cpu_e,float(newPotential),err);
 #endif
 
     float delta = (newPotential - potential);
@@ -854,9 +846,12 @@ double Replica::EonDevice()
     CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
 #endif
     //TODO add new timer for this
+    LOG(DEBUG_MC, "\nSYNC: unbonded total: %f\n", result);
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
-        result += internal_molecule_E(false).total(); // TODO: change this to false once we calculate internal LJ and DH on the GPU
+        double bonded_potential = internal_molecule_E(false).total();
+        LOG(DEBUG_MC, "SYNC: bonded total: %f\n", bonded_potential);
+        result += bonded_potential;
     }
 #endif
     return result;

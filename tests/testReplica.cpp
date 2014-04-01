@@ -18,6 +18,7 @@ private:
     Replica initial_replica;
     Replica replica;
     float * ljp_t;
+    cudaStream_t streams[1];
     float testboxdim;
 
 public:
@@ -30,16 +31,20 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TestReplica);
 
 void TestReplica::setUp()
 {
+    // GLOBAL STUFF
+
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
     testboxdim = 118.4f;
 
 #if USING_CUDA
 #if CUDA_STREAMS
-    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData, &initial_replica.cudaStream, 1);
+    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData, streams, 1);
 #else
     setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData);
 #endif // CUDA_STREAMS
 #endif // USING_CUDA
+    
+    // PARAMETERS
 
     argdata parameters;
     parameters.bound = testboxdim;
@@ -61,16 +66,30 @@ void TestReplica::setUp()
     
     parameters.mdata.push_back(m1);
     parameters.mdata.push_back(m2);
+    
+    // INITIAL REPLICA
 
     initial_replica.init_first_replica(parameters, aminoAcidData, 2);
     initial_replica.label = 1;
+    
+    // ONE CHILD REPLICA
+    
+    replica.init_child_replica(initial_replica, 1, 300.0f, 0.2f, 0.5f, parameters);
+#if USING_CUDA
+#if CUDA_STREAMS
+    replica.setup_CUDA(ljp_t, streams, 0);
+#else
+    replica.setup_CUDA(ljp_t);
+#endif // CUDA_STREAMS
+#endif // USING_CUDA
 }
 
 void TestReplica::tearDown()
 {
 #if USING_CUDA
+    replica.teardown_CUDA();
 #if CUDA_STREAMS
-    teardown_CUDA(ljp_t, &initial_replica.cudaStream, 1);
+    teardown_CUDA(ljp_t, streams, 1);
 #else
     teardown_CUDA(ljp_t);
 #endif // CUDA_STREAMS
@@ -80,17 +99,6 @@ void TestReplica::tearDown()
 
 void TestReplica::testCPUandGPUPotential()
 {
-    Replica replica;
-    argdata parameters;
-    replica.init_child_replica(initial_replica, 1, 300.0f, 0.2f, 0.5f, parameters);
-#if USING_CUDA
-#if CUDA_STREAMS
-    replica.setup_CUDA(ljp_t, &initial_replica.cudaStream, 0);
-#else
-    replica.setup_CUDA(ljp_t);
-#endif // CUDA_STREAMS
-#endif // USING_CUDA
-
     // TODO: why is the internal LJ so huge?
 #if !LJ_REPULSIVE && !LJ_OFF
     double flex_lj(296.795363);
@@ -126,9 +134,5 @@ void TestReplica::testCPUandGPUPotential()
 #if USING_CUDA
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_rigid_potential.total(), replica.EonDevice(), 0.001);
 #endif // USING_CUDA
-
-#if USING_CUDA
-    replica.teardown_CUDA();
-#endif
 }
 

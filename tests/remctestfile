@@ -1,0 +1,22 @@
+gpus 1
+streams 1
+threads 1
+mcsteps 100
+resteps 2
+replicas 5
+samplefrequency 10
+sampleafter 0
+boundary  160.7
+temperaturemax 420
+temperaturemin 240
+prefix remctest
+
+files
+
+p(45,45,45) r(0,1,0,3.142) data/application/ubq.pdb ubiquitin
+p(85,85,85) r(1,0,0,-3.142) data/application/uim.pdb UIM1
+
+segments
+
+ubiquitin 73 74 75 76
+UIM1 all

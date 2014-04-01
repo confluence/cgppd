@@ -4,12 +4,17 @@ RIGHT NOW
 
 REFACTORING / TESTS
     * check if graph deepcopy works -- unit test the molecule copy function in general
+    * potential weirdness in ubq/uim test
+        * delta gets huge when UIM is flexible because of bonded potential
+        * huge unbonded value (LJ?) for ubq when internal pairs are calculated
+    * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
+
     * clean up crappy Potential internals now that there are unit tests
-    * verify that sync and async versions produce the same results -- MC test in simulation unit test
-    * before we do that, clean up output files as much as possible
+    * clean up output files as much as possible
         * put a separate ABOUT file with compilation options in the directory instead of appending suffixes and putting crap in the PDB files
         * stop outputting rotation / translation (no longer relevant)
             * but only if compiled with flexible linkers?
+    * take out the initial replica potential calculation -- that's what unit tests are for.
 
 SIMULATIONS
 * diubiquitin simulations -- once the segment code is fixed
