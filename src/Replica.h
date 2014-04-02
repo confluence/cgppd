@@ -170,15 +170,15 @@ public:
     float4 *host_rotationVector;  // vector(x,y,z)|amount(w)
     float4 *host_reverseRotationVector;
 
-    bool rotateOnDevice(int moleculeID, Vector3f vector, float amount);
-    bool translateOnDevice(int moleculeID, Vector3f translation);
+    bool rotateOnDevice(int moleculeId, Vector3f vector, float amount);
+    bool translateOnDevice(int moleculeId, Vector3f translation);
     bool lastMutationWasATranslate;
     int lastMutatedMolecule;
     void cudaRollbackMutation();
 #endif
 
     void ReplicaDataToDevice();	// copy the replica to the device
-    void MoleculeDataToDevice(int MoleculeID); // update a molecule on the device
+    void MoleculeDataToDevice(int moleculeId); // update a molecule on the device
     double EonDevice();
     double EonDeviceNC();
     void EonDeviceAsync();

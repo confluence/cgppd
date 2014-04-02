@@ -4,11 +4,15 @@ RIGHT NOW
 
 REFACTORING / TESTS
     * current homemade logging sucks. Replace with google-glog.
+    * check if everything in the threads is still threadsafe. Have we actually run the code with multiple threads?
     * check if graph deepcopy works -- unit test the molecule copy function in general
         * check that really soon, to make sure that the bonded potential isn't slowly growing because the geometric features in the graph are being duplicated, or something. That would be bad.
     * potential weirdness in ubq/uim test
         * delta gets huge when UIM is flexible because of bonded potential
         * huge unbonded value (LJ?) for ubq when internal pairs are calculated
+            * because non-adjacent residues within the rigid domain can be very close to each other.
+            * we could ignore pairs within the same domain, but that would make the GPU implementation more difficult because it would have to know about rigid domains.
+            * should we do it anyway? Instead of using moleculeId to determine internal calculation we could use segmentID.
     * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
     * valgrind is really upset about a lot of the stl container stuff.
 

@@ -111,9 +111,10 @@ void TestReplica::testCPUandGPUPotential()
 #elif LJ_REPULSIVE
     double flex_lj(609.503791);
 # endif // !LJ_REPULSIVE && !LJ_OFF
-    
+    cout << "+++++++++++++++ FLEX POTENTIAL STARTS HERE" << endl;
     Potential expected_flexible_potential(flex_lj, 0.335944, 0.180426, 1.555213, 5.420859);
     ASSERT_POTENTIALS_EQUAL(expected_flexible_potential, replica.E());
+    cout << "+++++++++++++++ FLEX POTENTIAL ENDS HERE" << endl;
 
 #if USING_CUDA
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential.total(), replica.EonDevice(), 0.001);

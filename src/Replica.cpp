@@ -760,11 +760,11 @@ void Replica::ReplicaDataToDevice()
 }
 
 // update a molecule on the device
-void Replica::MoleculeDataToDevice(int MoleculeID)
+void Replica::MoleculeDataToDevice(int moleculeId)
 {
     if (!replicaIsOnDevice)
     {
-        cout << "ERROR: Replica::MoleculeDataToDevice("<< MoleculeID << ") called without initialising device data."<< endl;
+        cout << "ERROR: Replica::MoleculeDataToDevice("<< moleculeId << ") called without initialising device data."<< endl;
         ReplicaDataToDevice();
     }
 #if INCLUDE_TIMERS
@@ -779,15 +779,15 @@ void Replica::MoleculeDataToDevice(int MoleculeID)
     3. copy to device at location found in 1
     */
 
-    int residueIndex = host_moleculeStartPositions[MoleculeID];
+    int residueIndex = host_moleculeStartPositions[moleculeId];
     int memoryPosition = residueIndex;
-    int moleculeSize = molecules[MoleculeID].residueCount;
-    for (int rc=0; rc<molecules[MoleculeID].residueCount; rc++)
+    int moleculeSize = molecules[moleculeId].residueCount;
+    for (int rc=0; rc<molecules[moleculeId].residueCount; rc++)
     {
-        host_float4_residuePositions[residueIndex].x = molecules[MoleculeID].Residues[rc].position.x;
-        host_float4_residuePositions[residueIndex].y = molecules[MoleculeID].Residues[rc].position.y;
-        host_float4_residuePositions[residueIndex].z = molecules[MoleculeID].Residues[rc].position.z;
-        host_float4_residuePositions[residueIndex].w = float(MoleculeID);  // residue belongs to this molecule id
+        host_float4_residuePositions[residueIndex].x = molecules[moleculeId].Residues[rc].position.x;
+        host_float4_residuePositions[residueIndex].y = molecules[moleculeId].Residues[rc].position.y;
+        host_float4_residuePositions[residueIndex].z = molecules[moleculeId].Residues[rc].position.z;
+        host_float4_residuePositions[residueIndex].w = float(moleculeId);  // residue belongs to this molecule id
 
         //TODO: I don't think the new meta stuff will ever change. If tests need to override it, they can re-run ReplicaDataToDevice
 
@@ -915,7 +915,7 @@ void Replica::FreeDevice()
 
 #if CUDA_MC
 // rotate the molecule on device about a vector and amount
-bool Replica::rotateOnDevice(int moleculeID, Vector3f rvector, float amount)
+bool Replica::rotateOnDevice(int moleculeId, Vector3f rvector, float amount)
 {
     //device_rotationVector;  // vector(x,y,z)|amount(w)
 
@@ -925,7 +925,7 @@ bool Replica::rotateOnDevice(int moleculeID, Vector3f rvector, float amount)
     host_rotationVector->w = amount;
     CUDA_memcpy_to_device_async(device_rotationVector,&host_rotationVector,sizeof(float4),cudaStream);
 
-    CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeID], &device_moleculeLengths[moleculeID], molecules[moleculeID].length, device_rotationVector, &device_moleculeCenters[moleculeID], cudaStream);
+    CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeId], &device_moleculeLengths[moleculeId], molecules[moleculeId].length, device_rotationVector, &device_moleculeCenters[moleculeId], cudaStream);
 
     // create the undo vector while its busy
     host_reverseRotationVector->x = rvector.x;
@@ -938,7 +938,7 @@ bool Replica::rotateOnDevice(int moleculeID, Vector3f rvector, float amount)
     return true;
 }
 
-bool Replica::translateOnDevice(int moleculeID, Vector3f translation)
+bool Replica::translateOnDevice(int moleculeId, Vector3f translation)
 {
     // send the vector to the device
     host_translationVector->x = translation.x;
@@ -948,7 +948,7 @@ bool Replica::translateOnDevice(int moleculeID, Vector3f translation)
 
 //  CUDA_translateMolecule (float4 *residuePositions, int *startPosition, int *moleculeLength, int moleculeLength, int *moleculeId, float4* translation, cudaStream_t stream)
 
-    CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeID], &device_moleculeLengths[moleculeID], molecules[moleculeID].length, device_translationVector, &device_moleculeCenters[moleculeID], cudaStream);
+    CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeId], &device_moleculeLengths[moleculeId], molecules[moleculeId].length, device_translationVector, &device_moleculeCenters[moleculeId], cudaStream);
 
     // create the undo vector while its busy
     host_reverseTranslationVector->x = -translation.x;
