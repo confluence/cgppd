@@ -17,9 +17,13 @@ private:
     AminoAcids aminoAcidData;
     Replica initial_replica;
     Replica replica;
-    float * ljp_t;
+    float bounding_value;
+#if USING_CUDA
+#if CUDA_STREAMS
     cudaStream_t streams[1];
-    float testboxdim;
+#endif // CUDA_STREAMS
+    float * ljp_t;
+#endif // USING_CUDA
 
 public:
     void setUp();
@@ -34,20 +38,20 @@ void TestReplica::setUp()
     // GLOBAL STUFF
 
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
-    testboxdim = 118.4f;
 
+    bounding_value = 118.4f;
 #if USING_CUDA
 #if CUDA_STREAMS
-    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData, streams, 1);
+    setup_CUDA(0, bounding_value, ljp_t, &aminoAcidData, streams, 1);
 #else
-    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData);
+    setup_CUDA(0, bounding_value, ljp_t, &aminoAcidData);
 #endif // CUDA_STREAMS
 #endif // USING_CUDA
     
     // PARAMETERS
 
     argdata parameters;
-    parameters.bound = testboxdim;
+    parameters.bound = bounding_value;
 #if USING_CUDA
     parameters.auto_blockdim = false;
 #endif

@@ -19,14 +19,14 @@ class TestReferenceConformations : public CppUnit::TestFixture
 private:
     AminoAcids aminoAcidData;
     Replica replicas[10];
-    float * ljp_t;
-    float testboxdim;
+    float bounding_value;
     Potential cpu[10];
     Potential cpu_nc[10];
 #if USING_CUDA
 #if CUDA_STREAMS
     cudaStream_t streams[10];
 #endif
+    float * ljp_t;
     double gpu[10];
     double gpu_nc[10];
 #endif
@@ -46,20 +46,20 @@ CPPUNIT_TEST_SUITE_REGISTRATION(TestReferenceConformations);
 void TestReferenceConformations::setUp()
 {
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
-    testboxdim = 1000.0f;
+    bounding_value = 1000.0f;
 
 #if USING_CUDA
 #if CUDA_STREAMS
-    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData, streams, 10);
+    setup_CUDA(0, bounding_value, ljp_t, &aminoAcidData, streams, 10);
 #else
-    setup_CUDA(0, testboxdim, ljp_t, &aminoAcidData);
+    setup_CUDA(0, bounding_value, ljp_t, &aminoAcidData);
 #endif // CUDA_STREAMS
 #endif // USING_CUDA
     
     for (int i = 0; i < 10; i++)
     {
         argdata parameters;
-        parameters.bound = testboxdim;
+        parameters.bound = bounding_value;
 #if USING_CUDA
         parameters.auto_blockdim = false;
 #endif
