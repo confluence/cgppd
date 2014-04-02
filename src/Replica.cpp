@@ -303,7 +303,7 @@ void Replica::MCSearch(int steps, int mcstep)
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-        LOG(DEBUG_MC, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
+        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
@@ -319,28 +319,28 @@ void Replica::MCSearch(int steps, int mcstep)
         {
             potential = newPotential;
             accept++;
-            LOG(DEBUG_MC, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
+            LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
         }
         // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
         else if (gsl_rng_uniform(rng) < exp(-(delta*kcal)/(Rgas*temperature)))
         {
             potential = newPotential;
             acceptA++;
-            LOG(DEBUG_MC, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta * kcal/(Rgas*temperature)));
+            LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta * kcal/(Rgas*temperature)));
         }
         //reject
         else
         {
             reject++;
             molecules[moleculeNo].MC_backup_restore(&savedMolecule);
-            LOG(DEBUG_MC, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
+            LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
 #if USING_CUDA
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
         }
 
-        LOG(DEBUG_LENGTH, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
-        LOG(DEBUG_MC, "\n");
+        LOG(DEBUG, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
+        LOG(DEBUG, "\n");
     }
 }
 
@@ -591,7 +591,7 @@ void Replica::MCSearchMutate()
     // save the current state so we can roll back if it was not a good mutation.
     savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
     molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
-    LOG(DEBUG_MC, "Replica %d\tMolecule %d:\t%s\t", label, moleculeNo, molecules[moleculeNo].last_MC_move);
+    LOG(DEBUG, "Replica %d\tMolecule %d:\t%s\t", label, moleculeNo, molecules[moleculeNo].last_MC_move);
 
     lastMutationIndex = moleculeNo;
 }
@@ -604,11 +604,11 @@ void Replica::MCSearchEvaluate()
 void Replica::MCSearchAcceptReject()
 {
     newPotential = SumGridResults();
-    LOG(DEBUG_MC, "\nASYNC: unbonded total: %f\n", newPotential);
+    LOG(DEBUG, "\nASYNC: unbonded total: %f\n", newPotential);
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
         double bonded_potential = internal_molecule_E(false).total();
-        LOG(DEBUG_MC, "ASYNC: bonded total: %f\n", bonded_potential);
+        LOG(DEBUG, "ASYNC: bonded total: %f\n", bonded_potential);
         newPotential += bonded_potential;
     }
 #endif
@@ -618,21 +618,21 @@ void Replica::MCSearchAcceptReject()
     {
         potential = newPotential;
         accept++;
-        LOG(DEBUG_MC, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
+        LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
     }
     // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
     else if (gsl_rng_uniform(rng) < exp(-delta*kcal/(Rgas*temperature)))
     {
         potential = newPotential;
         acceptA++;
-        LOG(DEBUG_MC, "* Replace: delta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*kcal/(Rgas*temperature)));
+        LOG(DEBUG, "* Replace: delta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*kcal/(Rgas*temperature)));
     }
     else
     // if the change is bad then discard it.
     {
         reject++;
         molecules[lastMutationIndex].MC_backup_restore(&savedMolecule);
-        LOG(DEBUG_MC, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
+        LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
 
@@ -650,7 +650,7 @@ void Replica::ReplicaDataToDevice()
 
     paddedSize = int(ceil(float(residueCount)/float(blockSize)))*blockSize; // reserve a blocksize multiple because it allows for efficient summation
     dataSetSize = paddedSize;
-    LOG(DEBUG_CUDA, "block size: %d, padded size: %d\n", blockSize, paddedSize);
+    LOG(DEBUG, "block size: %d, padded size: %d\n", blockSize, paddedSize);
 
 #if CUDA_STREAMS
     cudaMallocHost((void**)&host_float4_residuePositions,sizeof(float4)*paddedSize);
@@ -846,11 +846,11 @@ double Replica::EonDevice()
     CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
 #endif
     //TODO add new timer for this
-    LOG(DEBUG_MC, "\nSYNC: unbonded total: %f\n", result);
+    LOG(DEBUG, "\nSYNC: unbonded total: %f\n", result);
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
         double bonded_potential = internal_molecule_E(false).total();
-        LOG(DEBUG_MC, "SYNC: bonded total: %f\n", bonded_potential);
+        LOG(DEBUG, "SYNC: bonded total: %f\n", bonded_potential);
         result += bonded_potential;
     }
 #endif
