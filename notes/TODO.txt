@@ -13,6 +13,12 @@ REFACTORING / TESTS
             * because non-adjacent residues within the rigid domain can be very close to each other.
             * we could ignore pairs within the same domain, but that would make the GPU implementation more difficult because it would have to know about rigid domains.
             * should we do it anyway? Instead of using moleculeId to determine internal calculation we could use segmentID.
+            * Instead of moleculeID, send through a segment value which is a bitmask where flexible segments are negative powers of 2 and rigid segments are positive powers of two (a residue on a boundary can be in two segments at once). Then we can determine both whether two residues are in the same segment and whether that segment is flexible.
+            * We should check adjacency either way; not just if the residues are in the same segment.
+            * but will this screw with our alternate usages of the residue ID field? Probably not, but think about this carefully.
+            * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
+            * E_TiledKernelNC does not appear to have been updated with the new logic. So why is it producing the correct result?
+            * Because we aren't testing the NC code in the flexible replica test. We should fix that.
     * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
     * valgrind is really upset about a lot of the stl container stuff.
 
