@@ -3,13 +3,17 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 REFACTORING / TESTS
+    * current homemade logging sucks. Replace with google-glog.
     * check if graph deepcopy works -- unit test the molecule copy function in general
+        * check that really soon, to make sure that the bonded potential isn't slowly growing because the geometric features in the graph are being duplicated, or something. That would be bad.
     * potential weirdness in ubq/uim test
         * delta gets huge when UIM is flexible because of bonded potential
         * huge unbonded value (LJ?) for ubq when internal pairs are calculated
     * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
+    * valgrind is really upset about a lot of the stl container stuff.
 
     * clean up crappy Potential internals now that there are unit tests
+    * unit test for parsing various input files (amino acids, torsions, etc..)
     * clean up output files as much as possible
         * put a separate ABOUT file with compilation options in the directory instead of appending suffixes and putting crap in the PDB files
         * stop outputting rotation / translation (no longer relevant)
@@ -37,7 +41,7 @@ MODEL CORRECTNESS
 CLEANUP / BUGFIX
 * is it *actually* worth summing vector components separately? Probably not, and we don't do it everywhere anyway.
 * remove unused code for e.g. old kernels and MC on the GPU
-* use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled.
+* use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled?
 * fix chain processing
     * use chain names if they exist
     * fix old PDB files with chain id in the wrong place (WTF)
