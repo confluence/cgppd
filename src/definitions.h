@@ -53,19 +53,6 @@
     #define WARN   1
     #define INFO    1
     #define DEBUG   1
-    
-    #define WARN_BOUNDARY 1
-
-    #define DEBUG_PARSING 0
-    #define DEBUG_MC 1
-    #define DEBUG_LENGTH 0
-    #define INFO_POTENTIAL 0
-    #define DEBUG_POTENTIAL 0
-    #define DEBUG_LOCAL 0
-    #define DEBUG_FLEX 0
-    #define DEBUG_LJ 0
-    #define DEBUG_CUDA 0
-    #define DEBUG_FLEX_MC 0
 
     #define LOG(level, ...) \
             do { if (level) printf(__VA_ARGS__); } while (0)
