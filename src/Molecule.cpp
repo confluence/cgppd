@@ -29,10 +29,10 @@ void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bou
     torsion_data.loadData(TORSIONALPAIRDATA, a);
 #endif // FLEXIBLE_LINKS
 
-    vector<Residue> vResidues = initFromPDB(mol.pdbfilename);
-
     this->index = index;
     this->bounding_value = bounding_value;
+
+    vector<Residue> vResidues = initFromPDB(mol.pdbfilename);
 
     calculateVolume();
     calculate_length();
@@ -565,7 +565,7 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
                 R.resSeq = resSeq;
                 //R.sasa = 1.0f;
                 //R.vanderWaalRadius = float(AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius);
-                R.moleculeID = index;
+                R.moleculeId = index;
                 vResidues.push_back(R);
             }
         }

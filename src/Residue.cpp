@@ -1,6 +1,6 @@
 #include "Residue.h"
 
-Residue::Residue()
+Residue::Residue() : aminoAcidIndex(0.0), electrostaticCharge(0.0), vanderWaalRadius(0.0), isCrowder(false), chainId(' '), resSeq(-1), moleculeId(-1)
 {
     aminoAcidIndex = int(PADDER_IDENTIFIER);
 }
@@ -20,6 +20,7 @@ Residue::Residue(const Residue & r)
     isCrowder = r.isCrowder;
     chainId = r.chainId;
     resSeq = r.resSeq;
+    moleculeId = r.moleculeId;
 }
 
 double Residue::distance(const Vector3f p, const float bounding_value)

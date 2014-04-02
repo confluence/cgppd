@@ -26,7 +26,7 @@ public:
     //float sasa; // surface accessable to solvent area
     char chainId;
     int resSeq;
-    int moleculeID;
+    int moleculeId;
     //AminoAcid aa;
 
     double distance(const Vector3f p, const float bounding_value=0.0f);
