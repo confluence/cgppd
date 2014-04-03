@@ -17,8 +17,7 @@ REFACTORING / TESTS
             * We should check adjacency either way; not just if the residues are in the same segment.
             * but will this screw with our alternate usages of the residue ID field? Probably not, but think about this carefully.
             * Argh! BUT we can only do this if we first check if they are not in the same molecule.
-                * Can we repurpose another float for this? I don't think we can.
-                * Can we adjust the segment mask to include a molecule ID?
+                * Can we repurpose another float for this? We could turn the residue ID into a molecule ID / residue ID mask of some kind? Fractional parts for molecules? Would this make checks more expensive? How costly is accessing the fractional part of a float?
             * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
             * E_TiledKernelNC does not appear to have been updated with the new logic. So why is it producing the correct result?
             * Because we aren't testing the NC code in the flexible replica test. We should fix that.
