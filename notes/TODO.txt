@@ -23,6 +23,9 @@ REFACTORING / TESTS
                 * pairs in different molecules should always be calculated
                 * pairs within the same molecule which are neighbours in the same segment are ignored
                 * pairs within the same molecule which are neighbours in the whole molecule are ignored
+            * PROBLEM: segment_residue_ID comparisons aren't valid unless we know the segment is the same.
+            * Get around this by optionally calculating segment LJ/DH on the CPU? This is the default use case; we'd just set a flag to restore the current behaviour for the polymer tests.
+
             * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
             * E_TiledKernelNC was not updated with the new logic. Not detected because we're not testing it with a flexible molecule. Fix that in the replica test.
 
