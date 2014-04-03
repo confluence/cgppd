@@ -28,6 +28,8 @@ REFACTORING / TESTS
             * FIX: construct a global segment_ID for all the flexible segments in a molecule (we check that these pairs are within a molecule). Gaps of, say, 10, between segments.
                 * it is theoretically possible for a residue to be in two segments if they form a t-junction. (3 or more not possible?) In one direction, the residue will be adjacent to its segment neighbours on the backbone. Favour the other direction when constructing the id. Leave a gap in the other direction?
                 * ANOTHER PROBLEM: residues connected across a non-adjacent bond are effectively adjacent, but this plan currently has no way to detect that. This can't be fixed by calculating the segment potential on the CPU; it's an issue with cross-domain potential.
+                * What about further restricting the potential to calculate on the GPU to inter-rigid-domain? Do intra-segment and domain-segment on the CPU. Segment x domain won't be that large, and we can do arbitrarily complex selection of pairs on the CPU.
+                * Higher-level idea: create a mask of allowed pairs on the CPU; pass to GPU. Check everything in one place. This would probably be an expensive table, though.
             * TO DESIGN: how to determine what rigid domain a molecule is in
                 * some kind of search through the graph, similar to the branch search
                 * make a list of residues which are not in a flexible linker
