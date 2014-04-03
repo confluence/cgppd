@@ -5,23 +5,27 @@ RIGHT NOW
 REFACTORING / TESTS
     * current homemade logging sucks. Replace with google-glog.
     * check if everything in the threads is still threadsafe. Have we actually run the code with multiple threads?
+    * check if the bonded component is growing weirdly when uim is flexible
     * check if graph deepcopy works -- unit test the molecule copy function in general
         * check that really soon, to make sure that the bonded potential isn't slowly growing because the geometric features in the graph are being duplicated, or something. That would be bad.
-    * potential weirdness in ubq/uim test
-        * delta gets huge when UIM is flexible because of bonded potential
-        * huge unbonded value (LJ?) for ubq when internal pairs are calculated
-            * because non-adjacent residues within the rigid domain can be very close to each other.
-            * we could ignore pairs within the same domain, but that would make the GPU implementation more difficult because it would have to know about rigid domains.
-            * should we do it anyway? Instead of using moleculeId to determine internal calculation we could use segmentID.
-            * Instead of moleculeID, send through a segment value which is a bitmask where flexible segments are negative powers of 2 and rigid segments are positive powers of two (a residue on a boundary can be in two segments at once). Then we can determine both whether two residues are in the same segment and whether that segment is flexible.
-            * We should check adjacency either way; not just if the residues are in the same segment.
-            * but will this screw with our alternate usages of the residue ID field? Probably not, but think about this carefully.
-            * Argh! BUT we can only do this if we first check if they are not in the same molecule.
-                * Can we repurpose another float for this? We could turn the residue ID into a molecule ID / residue ID mask of some kind? Fractional parts for molecules? Would this make checks more expensive? How costly is accessing the fractional part of a float?
-                * OVERCOMPLICATING? Pretty sure the residue IDs are relative to individual molecules, not whole replica, and if they're not, they should be. So residues in different molecules shouldn't be "adjacent". Unless the first molecule is very small. Will residue x always come before residue y? If they're processed in a triangle, we could check that i < j to check if they're in the same molecule.
+    * check if magnitude of bonded components is correct
+        * actually, do we have any results for the bonded components from Kim?
+        * could the tiny discrepancy from Kim's results be due to additional nonbonded components from inside segments? (There would be no inter-domain contribution because Kim & Hummer's model doesn't have a flex move).
+
+    * Need to refactor bonded potential so that pairs within the same rigid domain are ignored. This avoids needless calculation and also LJ spikes from non-adjacent residues which are close together.
+        * New plan:
+            * One float stores segment_residue_ID.rigid_domain_ID; the other stores residue_ID.molecule_ID
+            * Split them up with modff
+            * for domain and molecule, only equality is important (and "not in a rigid domain" = zero)
+            * if (i.domain == j.domain AND i.domain) OR (i.molecule == j.molecule AND (neighbours(i.segment_residue_id, j.segment_residue_id) OR neighbours(i.residue_id, j.residue_id))): do nothing
+            * so:
+                * pairs inside the same rigid domain are ignored
+                * pairs in different molecules should always be calculated
+                * pairs within the same molecule which are neighbours in the same segment are ignored
+                * pairs within the same molecule which are neighbours in the whole molecule are ignored
             * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
-            * E_TiledKernelNC does not appear to have been updated with the new logic. So why is it producing the correct result?
-            * Because we aren't testing the NC code in the flexible replica test. We should fix that.
+            * E_TiledKernelNC was not updated with the new logic. Not detected because we're not testing it with a flexible molecule. Fix that in the replica test.
+
     * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
     * valgrind is really upset about a lot of the stl container stuff.
 
