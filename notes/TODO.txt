@@ -16,6 +16,9 @@ REFACTORING / TESTS
             * Instead of moleculeID, send through a segment value which is a bitmask where flexible segments are negative powers of 2 and rigid segments are positive powers of two (a residue on a boundary can be in two segments at once). Then we can determine both whether two residues are in the same segment and whether that segment is flexible.
             * We should check adjacency either way; not just if the residues are in the same segment.
             * but will this screw with our alternate usages of the residue ID field? Probably not, but think about this carefully.
+            * Argh! BUT we can only do this if we first check if they are not in the same molecule.
+                * Can we repurpose another float for this? I don't think we can.
+                * Can we adjust the segment mask to include a molecule ID?
             * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
             * E_TiledKernelNC does not appear to have been updated with the new logic. So why is it producing the correct result?
             * Because we aren't testing the NC code in the flexible replica test. We should fix that.
