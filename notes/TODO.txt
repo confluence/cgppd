@@ -26,6 +26,7 @@ REFACTORING / TESTS
             * PROBLEM: segment_residue_ID comparisons aren't valid unless we know the segment is the same.
             * Get around this by optionally calculating segment LJ/DH on the CPU? This is the default use case; we'd just set a flag to restore the current behaviour for the polymer tests.
             * FIX: construct a global segment_ID for all the flexible segments in a molecule (we check that these pairs are within a molecule). Gaps of, say, 10, between segments.
+                * it is theoretically possible for a residue to be in two segments if they form a t-junction. (3 or more not possible?) In one direction, the residue will be adjacent to its segment neighbours on the backbone. Favour the other direction when constructing the id. Leave a gap in the other direction?
             * TO DESIGN: how to determine what rigid domain a molecule is in
                 * some kind of search through the graph, similar to the branch search
                 * make a list of residues which are not in a flexible linker
