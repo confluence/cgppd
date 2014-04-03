@@ -35,8 +35,9 @@ REFACTORING / TESTS
                     * we do all the fancy internal stuff involving linkers on the CPU
                     * we leave an option to do what we're doing now, so that we can do the linker tests on the GPU
 
-
                 * Higher-level idea: create a mask of allowed pairs on the CPU; pass to GPU. Check everything in one place. This would probably be an expensive table, though.
+                    * we can, and should, do this on the CPU in order to calculate the internal E involving linkers (see above)
+                    * create a list of pairs to use for LJ/DH in the beginning (analogous to allowed residues for MC, etc.)
 
             * TO DESIGN: how to determine what rigid domain a molecule is in
                 * some kind of search through the graph, similar to the branch search
