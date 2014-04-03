@@ -23,18 +23,26 @@ REFACTORING / TESTS
                 * pairs in different molecules should always be calculated
                 * pairs within the same molecule which are neighbours in the same segment are ignored
                 * pairs within the same molecule which are neighbours in the whole molecule are ignored
+
             * PROBLEM: segment_residue_ID comparisons aren't valid unless we know the segment is the same.
             * Get around this by optionally calculating segment LJ/DH on the CPU? This is the default use case; we'd just set a flag to restore the current behaviour for the polymer tests.
             * FIX: construct a global segment_ID for all the flexible segments in a molecule (we check that these pairs are within a molecule). Gaps of, say, 10, between segments.
                 * it is theoretically possible for a residue to be in two segments if they form a t-junction. (3 or more not possible?) In one direction, the residue will be adjacent to its segment neighbours on the backbone. Favour the other direction when constructing the id. Leave a gap in the other direction?
                 * ANOTHER PROBLEM: residues connected across a non-adjacent bond are effectively adjacent, but this plan currently has no way to detect that. This can't be fixed by calculating the segment potential on the CPU; it's an issue with cross-domain potential.
                 * What about further restricting the potential to calculate on the GPU to inter-rigid-domain? Do intra-segment and domain-segment on the CPU. Segment x domain won't be that large, and we can do arbitrarily complex selection of pairs on the CPU.
+                * if (i.molecule == j.molecule) AND ( NOT(i.domain AND j.domain) OR (i.domain == j.domain) ) do nothing
+                    * now we just store domain instead of residue ID
+                    * we do all the fancy internal stuff involving linkers on the CPU
+                    * we leave an option to do what we're doing now, so that we can do the linker tests on the GPU
+
+
                 * Higher-level idea: create a mask of allowed pairs on the CPU; pass to GPU. Check everything in one place. This would probably be an expensive table, though.
+
             * TO DESIGN: how to determine what rigid domain a molecule is in
                 * some kind of search through the graph, similar to the branch search
                 * make a list of residues which are not in a flexible linker
                 * start from the first residue; search the graph for neighbours along rigid paths; remove those residues from the list; add to first domain
-                * take the next residue left in the list, etc.. until the list is empty
+                * take the next residue left in the list, etc., until the list is empty
 
             * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
             * E_TiledKernelNC was not updated with the new logic. Not detected because we're not testing it with a flexible molecule. Fix that in the replica test.
