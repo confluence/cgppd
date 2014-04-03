@@ -18,6 +18,7 @@ REFACTORING / TESTS
             * but will this screw with our alternate usages of the residue ID field? Probably not, but think about this carefully.
             * Argh! BUT we can only do this if we first check if they are not in the same molecule.
                 * Can we repurpose another float for this? We could turn the residue ID into a molecule ID / residue ID mask of some kind? Fractional parts for molecules? Would this make checks more expensive? How costly is accessing the fractional part of a float?
+                * OVERCOMPLICATING? Pretty sure the residue IDs are relative to individual molecules, not whole replica, and if they're not, they should be. So residues in different molecules shouldn't be "adjacent". Unless the first molecule is very small. Will residue x always come before residue y? If they're processed in a triangle, we could check that i < j to check if they're in the same molecule.
             * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
             * E_TiledKernelNC does not appear to have been updated with the new logic. So why is it producing the correct result?
             * Because we aren't testing the NC code in the flexible replica test. We should fix that.
