@@ -27,6 +27,10 @@ REFACTORING / TESTS
             * Get around this by optionally calculating segment LJ/DH on the CPU? This is the default use case; we'd just set a flag to restore the current behaviour for the polymer tests.
             * FIX: construct a global segment_ID for all the flexible segments in a molecule (we check that these pairs are within a molecule). Gaps of, say, 10, between segments.
             * TO DESIGN: how to determine what rigid domain a molecule is in
+                * some kind of search through the graph, similar to the branch search
+                * make a list of residues which are not in a flexible linker
+                * start from the first residue; search the graph for neighbours along rigid paths; remove those residues from the list; add to first domain
+                * take the next residue left in the list, etc.. until the list is empty
 
             * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
             * E_TiledKernelNC was not updated with the new logic. Not detected because we're not testing it with a flexible molecule. Fix that in the replica test.
