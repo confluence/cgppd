@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import random
+import sys
 
 # This is a Python mockup of the refactored C++ flexible linker geometry code
 
@@ -63,9 +64,8 @@ class Graph(object):
         self.mc_crankshaft_residues = set()
         self.mc_flex_residues = set()
         
-        self.unbonded_residue_pairs = set()
         self.rigid_domains = []
-
+        self.segment_bonds = {}
 
     def add_edge(self, i, j, flexible):
         if i not in self.adjacency_map:
@@ -78,6 +78,11 @@ class Graph(object):
 
         self.flexibility_map[(i, j)] = flexible
         self.flexibility_map[(j, i)] = flexible
+        
+        if abs(i - j) > 1:
+            self.segment_bonds[i] = j
+            self.segment_bonds[j] = i
+            
 
     def vertices(self):
         return self.adjacency_map.keys()
@@ -133,6 +138,7 @@ class Graph(object):
 
             if all(self.flexible(i, j) for j in neighbours):
                 self.mc_local_residues.add(residues[i]) # local translation is allowed
+
                 if len(neighbours) > 1:
                     self.mc_crankshaft_residues.add(residues[i]) # crankshaft is allowed
 

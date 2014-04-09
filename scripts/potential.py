@@ -56,6 +56,8 @@ class Residue(object):
         self.amino_acid = amino_acid
         self.position = np.array((x, y, z))
         self.chain = chain
+        self.rigid_domain = None
+        self.segment_bond = None
 
 
 class Protein(object):
@@ -76,6 +78,14 @@ class Protein(object):
     def make_graph(self):
         self.graph.parse(self.residues, self.all_flexible, self.segments)
 
+        for d, indices in enumerate(self.graph.rigid_domains):
+            for i in indices:
+                self.residues[i].rigid_domain = d
+                
+        for i, j in self.graph.segment_bonds.iteritems():
+           self.residues[i].segment_bond = j 
+            
+
 
 class Potential(object):
     def __init__(self, proteins, charge, radius, pair_potentials, torsions):
@@ -94,14 +104,15 @@ class Potential(object):
         return sum(d**2 for d in diffs)**0.5
 
     @classmethod
-    def from_filelist(cls, aminoacidfilename, potentialfilename, torsionfilename, segments, all_flexible, *pdbfilenames):
+    def from_filelist(cls, args):
+
         charge = {}
         radius = {}
         pair_potentials = defaultdict(dict)
         torsions = defaultdict(dict)
         proteins = []
 
-        with open(aminoacidfilename, 'r') as aa_file:
+        with open(args.aminoacids, 'r') as aa_file:
             acids = AMINOACID.findall(aa_file.read())
 
         for a, r, c in acids:
@@ -109,7 +120,7 @@ class Potential(object):
             radius[amino_acid] = float(r)
             charge[amino_acid] = float(c)
 
-        with open(potentialfilename, 'r') as pp_file:
+        with open(args.potential, 'r') as pp_file:
             lines = [l for l in pp_file if not COMMENT.search(l)]
 
         amino_acids = [a.upper() for a in lines[0].strip().split()]
@@ -124,7 +135,7 @@ class Potential(object):
                 pair_potentials[acid_i][acid_j] = potential_value
                 pair_potentials[acid_j][acid_i] = potential_value
 
-        with open(torsionfilename, 'r') as t_file:
+        with open(args.torsions, 'r') as t_file:
             lines = [l for l in t_file if not COMMENT.search(l)]
 
         for l in lines:
@@ -133,7 +144,7 @@ class Potential(object):
                 torsions[aa1][aa2] = {}
             torsions[aa1][aa2][int(n)] = {"V": float(v), "sigma": np.radians(float(sigma))}
 
-        for filename in pdbfilenames:
+        for filename in args.files:
             with open(filename) as pdbfile:
                 protein = None
 
@@ -149,35 +160,51 @@ class Potential(object):
                         protein.append_residue(Residue(amino_acid, float(x), float(y), float(z), chain))
 
                     elif line.startswith("TER"):
-                        proteins.append(protein)
-                        protein = None
+                        if args.split_chains:
+                            proteins.append(protein)
+                            protein = None
 
                 if protein:
                     proteins.append(protein)
 
-        for mi in all_flexible:
+        for mi in args.all_flexible:
             proteins[mi].all_flexible = True
             
-        for mi, r in segments.iteritems():
-            proteins[mi].append_segment(r)
+        for s in args.segments:
+            m, r = s.split(':')
+            m = int(m)
+            r = [int(i) for i in r.split(',')]
+            proteins[m].append_segment(r)
             
         for p in proteins:
             p.make_graph()
 
         return cls(proteins, charge, radius, pair_potentials, torsions)
 
-    def calculate(self, include_internal, bounding_value=None):
+    def calculate(self, args):
+        def debug(message):
+            if args.debug_potential:
+                print message
         residues = [r for p in self.proteins for r in p.residues]
+
+        debug("UNBONDED")
 
         for i, ri in enumerate(residues):
             for rj in residues[i + 1:]:
-                if ri.protein == rj.protein and (not include_internal or not ri.protein.segments):
-                    continue
+                if ri.protein == rj.protein:
+                    if not args.internal or not ri.protein.segments:
+                        continue
 
-                if ri.protein == rj.protein and np.abs(ri.label - rj.label) < 4:
-                    continue
+                    if abs(ri.label - rj.label) < 4:
+                        continue
+                    
+                    if args.exclude_rigid_domains and ri.rigid_domain is not None and ri.rigid_domain == rj.rigid_domain:
+                        continue
+                    
+                    if ri.segment_bond == rj.label:
+                        continue
 
-                r = self.distance(rj.position, ri.position, bounding_value) + EPS
+                r = self.distance(rj.position, ri.position, args.boundary) + EPS
                 Eij = LAMBDA * (self.pair_potentials[ri.amino_acid][rj.amino_acid] - E0)
                 sigmaij = (self.radius[ri.amino_acid] + self.radius[rj.amino_acid])/2.0
                 r0ij = 2**(1/6.0) * sigmaij
@@ -193,8 +220,12 @@ class Potential(object):
 
                 DH = self.charge[ri.amino_acid] * self.charge[rj.amino_acid] * np.exp(-r / XI) / r
                 self.components["DH"] += DH * DH_CONVERSION_FACTOR
+                
+                debug("i: %d\tj: %d\tLJ: %f\tDH: %f" % (ri.label, rj.label, LJ * RT_TO_KCALMOL, DH * DH_CONVERSION_FACTOR))
 
-        if include_internal:
+        if args.internal:
+            debug("BONDED")
+
             for p in self.proteins:
 
                 for b in p.graph.bonds:
@@ -202,8 +233,14 @@ class Potential(object):
                     r2 = p.residues[b.j]
                     
                     r = np.linalg.norm(r1.position - r2.position)
+                    
+                    debug(r)
+                    
+                    bond_e =  K_SPRING * (r - R0)**2 / 2.0
 
-                    self.components["bond"] += K_SPRING * (r - R0)**2 / 2.0
+                    self.components["bond"] += bond_e
+                    
+                    debug("bond %d-%d: %g" % (b.i, b.j, bond_e))
                     
                 for a in p.graph.angles:
                     r1 = p.residues[a.i]
@@ -214,8 +251,12 @@ class Potential(object):
                     ba = r1.position - r2.position
                     bc = r3.position - r2.position
                     theta = np.arccos(np.dot(ba, bc) / np.linalg.norm(ba) / np.linalg.norm(bc))
+                    
+                    angle_e = np.log(np.exp(-GAMMA_ANGLE * (K_ALPHA * (theta - THETA_ALPHA)**2 + EPSILON_ALPHA)) + np.exp(-GAMMA_ANGLE * K_BETA * (theta - THETA_BETA)**2)) / - GAMMA_ANGLE
 
-                    self.components["angle"] += np.log(np.exp(-GAMMA_ANGLE * (K_ALPHA * (theta - THETA_ALPHA)**2 + EPSILON_ALPHA)) + np.exp(-GAMMA_ANGLE * K_BETA * (theta - THETA_BETA)**2)) / - GAMMA_ANGLE
+                    self.components["angle"] += angle_e
+                    
+                    debug("angle %d-%d-%d: %g" % (a.i, a.j, a.k, angle_e))
                     
                 for t in p.graph.torsions:
                     r1 = p.residues[t.i]
@@ -231,8 +272,12 @@ class Potential(object):
 
                     aa1 = r2.amino_acid
                     aa2 = r3.amino_acid
+                    
+                    torsion_e = sum((1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5))
 
-                    self.components["torsion"] += sum((1 + np.cos(n * phi - self.torsions[aa1][aa2][n]["sigma"])) * self.torsions[aa1][aa2][n]["V"] for n in range(1, 5))
+                    self.components["torsion"] += torsion_e
+                    
+                    debug("torsion %d-%d-%d-%d: %g" % (t.i, t.j, t.k, t.l, torsion_e))
 
         self.components["total"] = 0
         self.components["total"] = sum(self.components.values())
@@ -250,22 +295,18 @@ if __name__ == "__main__":
     parser.add_argument("-s" "--segment", help="Flexible segment (format: 'mi:ri,rj,rk,(...),rz')", action="append", dest="segments", default=[])
     parser.add_argument("-f" "--all-flexible", help="Molecule is all flexible", type=int, action="append", dest="all_flexible", default=[])
     parser.add_argument("-i", "--internal", help="Calculate internal molecule potential", action="store_true")
+    parser.add_argument("-r", "--exclude-rigid-domains", help="Ignore unbonded potential between residue pairs within the same rigid domain", action="store_true")
+    parser.add_argument("-c", "--split-chains", help="Treat each chain as a separate protein, even if they are in the same PDB file", action="store_true")
+    parser.add_argument("-d", "--debug-potential", help="Print details about the potential calculation", action="store_true")
     parser.add_argument("-b", "--boundary", help="Periodic boundary", type=float, default=None)
     parser.add_argument("-l", "--lj", help="Type of LJ potential", type=str, default="normal", choices=['normal', 'repulsive', 'off'])
     args = parser.parse_args()
-    
-    segments = {}
-    for s in args.segments:
-        m, r = s.split(':')
-        m = int(m)
-        r = [int(i) for i in r.split(',')]
-        segments[m] = r
     
     if args.lj == "repulsive":
         E0 = 0.0001
     elif args.lj == "off":
         LAMBDA = 0
 
-    potential = Potential.from_filelist(args.aminoacids, args.potential, args.torsions, segments, args.all_flexible, *args.files)
-    potential.calculate(args.internal, args.boundary)
+    potential = Potential.from_filelist(args)
+    potential.calculate(args)
     print potential
