@@ -9,7 +9,11 @@ FIXING THE POTENTIAL
         * excluding indirect neighbours is harder, but we could calculate that component on the CPU and *subtract* it from the total.
             * get the neighbours of each endpoint of each bond within a certain distance; pair them off if they aren't already backbone neighbours
     * We have two floats for packing all the available data into. It's integer data, so we can use each float for two values (preferably provided one is small and only used for an equality test with itself), and extract each fractional part with modff
-        * current plan: molecule id, domain id, residue id, bond id (possibly segment bond partner)
+		* PROBLEM: adjacency test is only valid within the same chain, so we also need chain IDs.
+		* solution: eliminate molecule ID (keep the old way if linkers are turned off); add *global* ids for domains, chains and bonds?
+		* new plan: chain uid, domain uid (starting from 1?), residue id (relative to molecule or chain; doesn't matter), bond uid
+		* no linkers: if i.molecule_id == j.molecule_id, do nothing
+		* linkers: if i.domain_uid == j.domain_uid (and it exists) OR i.chain_uid == j.chain_uid AND i.residue_id close to j.residue_id OR i.bond_uid == j.bond_uid, do nothing
 
 OLDER CUDA POTENTIAL ISSUES
     * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
