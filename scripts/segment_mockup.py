@@ -62,6 +62,9 @@ class Graph(object):
         self.mc_local_residues = set()
         self.mc_crankshaft_residues = set()
         self.mc_flex_residues = set()
+        
+        self.unbonded_residue_pairs = set()
+        self.rigid_domains = []
 
 
     def add_edge(self, i, j, flexible):
@@ -135,16 +138,44 @@ class Graph(object):
 
             if any(self.flexible(i, j) for j in neighbours):
                 self.mc_flex_residues.add(residues[i]) # flex move about this residue is allowed
+                
+        # create set of rigid domains
+        
+        vertices_to_process = list(self.vertices())
+        
+        while vertices_to_process:
+            i = vertices_to_process[0]
+            domain = self.rigid_domain_around(i)
+            
+            for v in domain:
+                vertices_to_process.remove(v)
+                
+            if len(domain) > 1:
+                self.rigid_domains.append(domain)
+
+    def rigid_domain_around(self, vertex, visited_edges=None):
+        if visited_edges is None:
+            visited_edges = set()
+            
+        i = vertex
+        domain = set([i])
+        
+        out_vertices = set(j for j in self.neighbours(i) if not self.flexible(i, j) and (j, i) not in visited_edges)
+        
+        for j in out_vertices:
+            domain |= self.rigid_domain_around(j, visited_edges | set([(i, j)]))
+        
+        return domain
 
     def branch(self, edge, visited_edges=None):
         if visited_edges is None:
             visited_edges = set()
 
         i, j = edge
-        out_edges = set((j, k) for k in self.neighbours(j) if k != i and (j, k) not in visited_edges)
-        
         branch = set(edge)
 
+        out_edges = set((j, k) for k in self.neighbours(j) if k != i and (j, k) not in visited_edges)
+        
         for out_edge in out_edges:
             branch |= self.branch(out_edge, visited_edges | set([edge]))
 
@@ -201,3 +232,10 @@ if __name__ == "__main__":
 
     print "random pair of neighbours for 74 (should always be the same)"
     pretty_print(graph.random_neighbour_pair(74))
+
+    print "number of rigid domains"
+    print len(graph.rigid_domains)
+    
+    for i, d in enumerate(graph.rigid_domains):
+        print "domain %d" % i
+        pretty_print(d)
