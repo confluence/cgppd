@@ -12,6 +12,14 @@ FIXING THE POTENTIAL
 		* PROBLEM: adjacency test is only valid within the same chain, so we also need chain IDs.
 		* solution: eliminate molecule ID (keep the old way if linkers are turned off); add *global* ids for domains, chains and bonds?
 		* new plan: chain uid, domain uid (starting from 1?), residue id (relative to molecule or chain; doesn't matter), bond uid
+            * residue.chain, because residues will only be compared if the chain is the same, so can use whole float without dropping fractional part
+            * domain.bond
+            * check to make sure that PADDING_IDENTIFIER and CROWDER_IDENTIFIER and RIGID_IDENTIFIER are still OK.
+            * Oh, dear. What if RIGID_IDENTIFIER is set? Then we need the molecule ID, but don't have it. How badly do we need this feature?
+                * the entire molecule will be a single rigid domain
+                * in fact, this will probably be covered for free by the domain code, so the special rigid stuff can be ditched
+                * except maybe setting a molecule to be rigid
+                * override the domain part of the precalculated meta_w float when setting meta.w
 		* no linkers: if i.molecule_id == j.molecule_id, do nothing
 		* linkers: if i.domain_uid == j.domain_uid (and it exists) OR i.chain_uid == j.chain_uid AND i.residue_id close to j.residue_id OR i.bond_uid == j.bond_uid, do nothing
 

@@ -697,6 +697,7 @@ void Replica::ReplicaDataToDevice()
             }
             else if (!molecules[m].is_flexible || calculate_rigid_potential_only)
             {
+                // TODO TODO TODO we won't be able to use this anymore after the GPU refactor, but we should be able to override the domain part of the precalculated meta_w float for this residue
                 // This molecule is rigid, or we are treating it as rigid anyway for test purposes
                 host_float4_residueMeta[arrayIndex].w = RIGID_IDENTIFIER;
             }
