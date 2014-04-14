@@ -82,8 +82,9 @@ class Protein(object):
             for i in indices:
                 self.residues[i].rigid_domain = d
                 
-        for i, j in self.graph.segment_bonds.iteritems():
-           self.residues[i].segment_bond = j 
+        for b in self.graph.segment_bonds:
+           self.residues[b.i].segment_bond = b.j
+           self.residues[b.j].segment_bond = b.i
             
 
 
@@ -192,16 +193,24 @@ class Potential(object):
         for i, ri in enumerate(residues):
             for rj in residues[i + 1:]:
                 if ri.protein == rj.protein:
+                    # ignore this pair if we're not calculating internal E at all or this specific molecule is rigid
                     if not args.internal or not ri.protein.segments:
                         continue
 
-                    if abs(ri.label - rj.label) < 4:
+                    # ignore this pair if residues are close to each other on the backbone of the same chain
+                    if ri.chain == rj.chain and abs(ri.label - rj.label) < 4:
                         continue
                     
-                    if args.exclude_rigid_domains and ri.rigid_domain is not None and ri.rigid_domain == rj.rigid_domain:
+                    # ignore this pair if residues are in the same rigid domain
+                    if ri.rigid_domain is not None and ri.rigid_domain == rj.rigid_domain:
                         continue
                     
+                    # ignore this pair if residues are bonded to each other
                     if ri.segment_bond == rj.label:
+                        continue
+                    
+                    # ignore this pair if residues are close to each other because of a bond
+                    if (ri.label, rj.label) in p.graph.indirect_neighbours:
                         continue
 
                 r = self.distance(rj.position, ri.position, args.boundary) + EPS
@@ -295,7 +304,6 @@ if __name__ == "__main__":
     parser.add_argument("-s" "--segment", help="Flexible segment (format: 'mi:ri,rj,rk,(...),rz')", action="append", dest="segments", default=[])
     parser.add_argument("-f" "--all-flexible", help="Molecule is all flexible", type=int, action="append", dest="all_flexible", default=[])
     parser.add_argument("-i", "--internal", help="Calculate internal molecule potential", action="store_true")
-    parser.add_argument("-r", "--exclude-rigid-domains", help="Ignore unbonded potential between residue pairs within the same rigid domain", action="store_true")
     parser.add_argument("-c", "--split-chains", help="Treat each chain as a separate protein, even if they are in the same PDB file", action="store_true")
     parser.add_argument("-d", "--debug-potential", help="Print details about the potential calculation", action="store_true")
     parser.add_argument("-b", "--boundary", help="Periodic boundary", type=float, default=None)
