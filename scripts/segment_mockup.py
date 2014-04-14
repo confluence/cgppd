@@ -2,6 +2,7 @@
 
 import random
 import sys
+from collections import defaultdict
 
 # This is a Python mockup of the refactored C++ flexible linker geometry code
 
@@ -64,8 +65,13 @@ class Graph(object):
         self.mc_crankshaft_residues = set()
         self.mc_flex_residues = set()
         
+        self.bonds_for_residue = defaultdict(set)
+        self.angles_for_residue = defaultdict(set)
+        self.torsions_for_residue = defaultdict(set)
+        
         self.rigid_domains = []
-        self.segment_bonds = {}
+        self.segment_bonds = []
+        self.indirect_neighbours = set()
 
     def add_edge(self, i, j, flexible):
         if i not in self.adjacency_map:
@@ -78,11 +84,6 @@ class Graph(object):
 
         self.flexibility_map[(i, j)] = flexible
         self.flexibility_map[(j, i)] = flexible
-        
-        if abs(i - j) > 1:
-            self.segment_bonds[i] = j
-            self.segment_bonds[j] = i
-            
 
     def vertices(self):
         return self.adjacency_map.keys()
@@ -145,6 +146,24 @@ class Graph(object):
             if any(self.flexible(i, j) for j in neighbours):
                 self.mc_flex_residues.add(residues[i]) # flex move about this residue is allowed
                 
+                
+        # create set of bonds, angles and torsions for each residue
+        
+        for b in self.bonds:
+            self.bonds_for_residue[b.i].add(b)
+            self.bonds_for_residue[b.j].add(b)
+
+        for a in self.angles:
+            self.angles_for_residue[a.i].add(a)
+            self.angles_for_residue[a.j].add(a)
+            self.angles_for_residue[a.k].add(a)
+
+        for t in self.torsions:
+            self.torsions_for_residue[t.i].add(t)
+            self.torsions_for_residue[t.j].add(t)
+            self.torsions_for_residue[t.k].add(t)
+            self.torsions_for_residue[t.l].add(t)
+                
         # create set of rigid domains
         
         vertices_to_process = list(self.vertices())
@@ -158,6 +177,24 @@ class Graph(object):
                 
             if len(domain) > 1:
                 self.rigid_domains.append(domain)
+                
+        # find set of segment bonds
+        
+        for b in self.bonds:
+            if b.j - b.i > 1: # not neighbours on the backbone
+                self.segment_bonds.append(b)
+                
+        # find set of indirect neighbour pairs to subtract from unbonded total
+        
+        for b in self.segment_bonds:
+            torsions_around_bond = self.torsions_for_residue[b.i].intersection(self.torsions_for_residue[b.j]) # all torsions containing both i and j
+
+            for t in torsions_around_bond:
+                self.indirect_neighbours.add((t.i, t.l))
+                if (t.i, t.j) == (b.i, b.j) or (t.j, t.i) == (b.i, b.j):
+                    self.indirect_neighbours.add((t.i, t.k))
+                if (t.k, t.l) == (b.i, b.j) or (t.l, t.k) == (b.i, b.j):
+                    self.indirect_neighbours.add((t.j, t.l))
 
     def rigid_domain_around(self, vertex, visited_edges=None):
         if visited_edges is None:
@@ -172,14 +209,14 @@ class Graph(object):
             domain |= self.rigid_domain_around(j, visited_edges | set([(i, j)]))
         
         return domain
-
+    
     def branch(self, edge, visited_edges=None):
         if visited_edges is None:
             visited_edges = set()
 
         i, j = edge
         branch = set(edge)
-
+        
         out_edges = set((j, k) for k in self.neighbours(j) if k != i and (j, k) not in visited_edges)
         
         for out_edge in out_edges:
@@ -245,3 +282,9 @@ if __name__ == "__main__":
     for i, d in enumerate(graph.rigid_domains):
         print "domain %d" % i
         pretty_print(d)
+        
+    print "segment bonds"
+    pretty_print(graph.segment_bonds)
+    
+    print "indirect neighbour pairs"
+    pretty_print(graph.indirect_neighbours)
