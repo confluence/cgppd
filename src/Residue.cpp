@@ -1,6 +1,6 @@
 #include "Residue.h"
 
-Residue::Residue() : aminoAcidIndex(0.0), electrostaticCharge(0.0), vanderWaalRadius(0.0), isCrowder(false), chainId(' '), resSeq(-1), moleculeId(-1)
+Residue::Residue() : aminoAcidIndex(0.0), electrostaticCharge(0.0), vanderWaalRadius(0.0), chainId(' '), resSeq(-1), moleculeId(-1)
 {
     aminoAcidIndex = int(PADDER_IDENTIFIER);
 }
@@ -16,8 +16,6 @@ Residue::Residue(const Residue & r)
     vanderWaalRadius = r.vanderWaalRadius;
     position = r.position;
     relativePosition = r.relativePosition;
-    //sasa = r.sasa;
-    isCrowder = r.isCrowder;
     chainId = r.chainId;
     resSeq = r.resSeq;
     moleculeId = r.moleculeId;
