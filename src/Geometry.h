@@ -8,6 +8,7 @@
 #include <utility>
 #include <set>
 #include <tuple>
+#include <algorithm>
 
 // Simple structures describing links between residues in a molecule
 // i, j, etc. are indices in the residue array, which should be the same as indices into the original residue vector
@@ -148,9 +149,13 @@ public:
     void copy(Graph g);
 
     // OUTPUT -- calculate these once during init
+    
+    // These have to be vectors because we index them from *_for_residue
     vector<Bond> bonds;
     vector<Angle> angles;
     vector<Torsion> torsions;
+
+    // These have to be vectors because we index them when we pick them randomly
 
     vector<int> MC_local_residues; // residue array indices
     vector<int> MC_crankshaft_residues; // residue array indices
@@ -159,9 +164,14 @@ public:
     map<int, set<int> > bonds_for_residue;  // bond vector indices
     map<int, set<int> > angles_for_residue;  // angle vector indices
     map<int, set<int> > torsions_for_residue;  // torsion vector indices
+    
+    set<set<int> > rigid_domains;
+    set<int> segment_bonds; // bond indexes; these bonds connect residues which are not adjacent on the backbone
+    set<pair<int, int> > indirect_neighbours; // pairs of residues to be excluded (or subtracted) from potential sum because they are close neighbours on opposite sides of a segment bond
 
-    vector<int> neighbours(int i);
+    vector<int> neighbours(int i); // this has to be a vector because we pick a random neighbour
     set<int> branch(int i, int j, set<pair<int, int> > visited_edges=set<pair<int, int> >());
+    set<int> rigid_domain_around(int i, set<pair<int, int> > visited_edges=set<pair<int, int> >());
 };
 
 #endif

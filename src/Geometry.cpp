@@ -147,11 +147,69 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
         torsions_for_residue[t.k].insert(ti);
         torsions_for_residue[t.l].insert(ti);
     }
+    
+    // Detect rigid domains
+    
+    // TODO TODO TODO: make sure this doesn't edit the vertices
+    set<int> vertices_to_process(vertices);
+    
+    while (vertices_to_process.size()) {
+        set<int>::iterator i = vertices_to_process.begin();
+        set<int> domain = rigid_domain_around(*i);
+        
+        for (set<int>::iterator v = domain.begin(); v != domain.end(); v++) {
+            vertices_to_process.erase(*v); // should erase by key value 
+        }
+        
+        if (domain.size() > 1) {
+            rigid_domains.insert(domain);
+        }
+    }
+    
+    // Find segment bonds
+    
+    for (int bi = 0; bi < bonds.size(); bi++) {
+        Bond & b = bonds[bi];
+        if (residues[b.i].chainId != residues[b.j].chainId || abs(b.i - b.j) >= 4) {
+            segment_bonds.insert(bi);
+        }
+    }
+    
+    // Find indirect neighbours
+    
+    for (set<int>::iterator bi = segment_bonds.begin(); bi != segment_bonds.end(); bi++) {
+        Bond & b = bonds[*bi];
 
-
+        const set<int> & t_i = torsions_for_residue[b.i];
+        const set<int> & t_j = torsions_for_residue[b.j];
+        set<int> torsions_around_bond;
+        set_intersection(t_i.begin(), t_i.end(), t_j.begin(), t_j.end(), std::inserter(torsions_around_bond, torsions_around_bond.begin()));
+        
+        set<pair<int, int> > proposed;
+        
+        for (set<int>::iterator ti = torsions_around_bond.begin(); ti != torsions_around_bond.end(); ti++) {
+            Torsion & t = torsions[*ti];
+            
+            proposed.insert(make_pair(t.i, t.l));
+            
+            if ((t.i, t.j) == (b.i, b.j) || (t.j, t.i) == (b.i, b.j)) {
+                proposed.insert(make_pair(t.i, t.k));
+            }
+            if ((t.k, t.l) == (b.i, b.j) || (t.l, t.k) == (b.i, b.j)) {
+                proposed.insert(make_pair(t.j, t.l));
+            }
+        }
+        
+        for (set<pair<int, int> >::iterator p = proposed.begin(); p != proposed.end(); p++) {
+            if (residues[p->first].chainId != residues[p->second].chainId || abs(p->first - p->second) >= 4) {
+                indirect_neighbours.insert(*p);
+            }
+        }
+    }
 }
 
 void Graph::copy(Graph g) {
+    // TODO: do nested structures have to be deep-copied? This data is all read-only, so it doesn't need to be editable.
     vertices = g.vertices;
     edges = g.edges;
     adjacency_map = g.adjacency_map;
@@ -167,7 +225,11 @@ void Graph::copy(Graph g) {
 
     bonds_for_residue = g.bonds_for_residue; 
     angles_for_residue = g.angles_for_residue;  
-    torsions_for_residue = g.torsions_for_residue;  
+    torsions_for_residue = g.torsions_for_residue;
+    
+    rigid_domains = g.rigid_domains;
+    segment_bonds = g.segment_bonds;
+    indirect_neighbours = g.indirect_neighbours;
 }
 
 set<int> Graph::branch(int i, int j, set<pair<int, int> > visited_edges)
@@ -204,4 +266,30 @@ vector<int> Graph::neighbours(int i)
     
     std::copy(s_neighbours.begin(), s_neighbours.end(), std::back_inserter(v_neighbours));
     return v_neighbours;
+}
+
+set<int> Graph::rigid_domain_around(int i, set<pair<int, int> > visited_edges)
+{
+    set<int> out_vertices;
+    set<int> & neighbours = adjacency_map[i];
+
+    for (set<int>::iterator j = neighbours.begin(); j != neighbours.end(); j++) {
+        pair<int, int> ji = make_pair(*j, i);
+        if (!is_flexible(i, *j) && !visited_edges.count(ji)) {
+            out_vertices.insert(*j);
+        }
+    }
+        
+    set<int> domain;
+    domain.insert(i);
+
+    for (set<int>::iterator j = out_vertices.begin(); j != out_vertices.end(); j++) {
+        set<pair<int, int> > new_visited_edges = visited_edges;
+        new_visited_edges.insert(make_pair(i, *j));
+        
+        const set<int> & out_domain = rigid_domain_around(*j, new_visited_edges);
+        domain.insert(out_domain.begin(), out_domain.end());
+    }
+    
+    return domain;
 }
