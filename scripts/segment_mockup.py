@@ -181,20 +181,25 @@ class Graph(object):
         # find set of segment bonds
         
         for b in self.bonds:
-            if b.j - b.i > 1: # not neighbours on the backbone
+            if residues[b.i].chain != residues[b.j].chain or b.j - b.i > 1 : # not neighbours on the backbone
                 self.segment_bonds.append(b)
                 
         # find set of indirect neighbour pairs to subtract from unbonded total
         
         for b in self.segment_bonds:
             torsions_around_bond = self.torsions_for_residue[b.i].intersection(self.torsions_for_residue[b.j]) # all torsions containing both i and j
+            
+            def add_indirect_neighbour(n):
+                i, j = n
+                if (residues[i].chain != residues[j].chain or abs(i - j) >= 4): # check that residues are not also direct neighbours
+                    self.indirect_neighbours.add(n)
 
             for t in torsions_around_bond:
-                self.indirect_neighbours.add((t.i, t.l))
+                add_indirect_neighbour((t.i, t.l))
                 if (t.i, t.j) == (b.i, b.j) or (t.j, t.i) == (b.i, b.j):
-                    self.indirect_neighbours.add((t.i, t.k))
+                    add_indirect_neighbour((t.i, t.k))
                 if (t.k, t.l) == (b.i, b.j) or (t.l, t.k) == (b.i, b.j):
-                    self.indirect_neighbours.add((t.j, t.l))
+                    add_indirect_neighbour((t.j, t.l))
 
     def rigid_domain_around(self, vertex, visited_edges=None):
         if visited_edges is None:
