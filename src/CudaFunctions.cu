@@ -459,13 +459,13 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                     int ijX(rint( AA_COUNT*yresiduem.x + meta.x));
                     //do the texture fetch first
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
-                    float Eij(lambda*(tex1Dfetch(LJTexture,ijX) - e0));
+                    float Eij(LJ_lambda*(tex1Dfetch(LJTexture,ijX) - e0));
 #elif LJ_LOOKUP_METHOD == SHARED_MEM
-                    float Eij(lambda*(sharedLJ[ijX] - e0));
+                    float Eij(LJ_lambda*(sharedLJ[ijX] - e0));
 #elif LJ_LOOKUP_METHOD == CONST_MEM
-                    float Eij(lambda*(const_LJPotentialData[ijX] - e0));
+                    float Eij(LJ_lambda*(const_LJPotentialData[ijX] - e0));
 #else  // __global__ or __constant__
-                    float Eij(lambda*(LJPotentialData[ijX] - e0));
+                    float Eij(LJ_lambda*(LJPotentialData[ijX] - e0));
 #endif
 
                     DH = dhPotential(yresiduem.y,meta.y,r);
@@ -606,7 +606,7 @@ __global__ void E_MoleculeKernel(float4 * residuePositionsA, float4 * residueMet
                 int ijX(rint( AA_COUNT*A_meta.x + B_Meta[positionOfMeta + i].x));
                 float r(length(A_pos,B_Positions[positionOfPosition + i]) + EPS);  // add eps so that r is never 0, can happen in a collision
                 // get contacts for short range, do long while it loads
-                float Eij(lambda*(tex1Dfetch(LJTexture,ijX) - e0));
+                float Eij(LJ_lambda*(tex1Dfetch(LJTexture,ijX) - e0));
                 // do long range
                 float DH(dhPotential(A_meta.y,B_Meta[positionOfMeta + i].y,r));
                 dh_subtotal += DH;
@@ -815,13 +815,13 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
 // #endif
                 //do the texture fetch first
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
-                float Eij(lambda*(tex1Dfetch(LJTexture,ijX) - e0));
+                float Eij(LJ_lambda*(tex1Dfetch(LJTexture,ijX) - e0));
 #elif LJ_LOOKUP_METHOD == SHARED_MEM
-                float Eij(lambda*(sharedLJ[ijX] - e0));
+                float Eij(LJ_lambda*(sharedLJ[ijX] - e0));
 #elif LJ_LOOKUP_METHOD == CONST_MEM
-                float Eij(lambda*(const_LJPotentialData[ijX] - e0));
+                float Eij(LJ_lambda*(const_LJPotentialData[ijX] - e0));
 #else  // __global__ or __constant__
-                float Eij(lambda*(LJPotentialData[ijX] - e0));
+                float Eij(LJ_lambda*(LJPotentialData[ijX] - e0));
 #endif
 
 // #if METADATA_MEMORY == TEXTURE_MEM
