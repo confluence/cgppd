@@ -10,8 +10,8 @@ double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &
      * Sigmaij is the average atomic radius of residues i and j.
      */
 
-    // Eij = lambda(eij - e0)
-    double Eij(lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
+    // Eij = LJ_lambda(eij - e0)
+    double Eij(LJ_lambda * (AminoAcidsData.LJpotentials[ri.aminoAcidIndex][rj.aminoAcidIndex] - e0));
 
     // sigmaij = (sigmai + sigmaj) / 2
     double sigmaij(0.5f * (ri.vanderWaalRadius + rj.vanderWaalRadius));

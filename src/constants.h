@@ -17,7 +17,7 @@
 
     #define LJPDSOURCE          "data/pair_potentials_MJ1996" // contact potentials from MJ1996 model; see [K&H 2008]
     #define e0                  -2.27f          // RT units: experimental fitted value for MJ1996 model, see [K&H 2008]
-    #define lambda              0.159f          // scalar: experimental fitted value for MJ1996 model, see [K&H 2008]
+    #define LJ_lambda              0.159f          // scalar: experimental fitted value for MJ1996 model, see [K&H 2008]
 
     #define Xi                      10.0f // Debye screening length (in angstroms)
     #define eps0                    8.85418782e-12f  // permittivity of free space (in farads / metre)
@@ -71,8 +71,8 @@
     #endif
 
     #if LJ_OFF
-        #undef lambda
-        #define lambda 0.0f // not efficient, but takes care of both GPU and CPU calculation
+        #undef LJ_lambda
+        #define LJ_lambda 0.0f // not efficient, but takes care of both GPU and CPU calculation
     #endif
 
 #endif
