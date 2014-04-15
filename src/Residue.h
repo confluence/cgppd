@@ -19,15 +19,21 @@ public:
     Vector3f position; // used for collisions
     Vector3f relativePosition; // vs center
 
-    bool isCrowder;
-
-    // upper and lower refer to the numerical index of the residues in the chain, ie: upper = current+1, lower = current-1
-
-    //float sasa; // surface accessable to solvent area
     char chainId;
     int resSeq;
-    int moleculeId;
-    //AminoAcid aa;
+    int moleculeId; // TODO: this is probably unused
+    
+    // global identifiers for chain and optionally rigid domain and segment bond
+    int chain_UID;
+    int rigid_domain_UID;
+    int segment_bond_UID;
+    
+#if USING_CUDA
+    // cached values to be copied to the GPU
+    // these store a pregenerated combination of chain uid, residue id, rigid domain id and bond id
+    float pos_w; // domain.bond
+    float meta_w; // residue.chain
+#endif
 
     double distance(const Vector3f p, const float bounding_value=0.0f);
     double distance(const Residue& r, const float bounding_value=0.0f);
