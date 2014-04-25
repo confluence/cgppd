@@ -56,7 +56,7 @@ public:
     // the search method that mutates the replicas molecules.
     void MCSearch(int steps, int mcstep);
 
-    int loadMolecule(const moldata mdata);
+    void loadMolecule(const moldata mdata);
 
     void saveAsSinglePDB(const char *filename, const char *title, bool skip_crowders=true);
 

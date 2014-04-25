@@ -162,7 +162,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
         }
         
         if (domain.size() > 1) {
-            rigid_domains.insert(domain);
+            rigid_domains.push_back(domain);
         }
     }
     
@@ -171,13 +171,13 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     for (int bi = 0; bi < bonds.size(); bi++) {
         Bond & b = bonds[bi];
         if (residues[b.i].chainId != residues[b.j].chainId || abs(b.i - b.j) >= 4) {
-            segment_bonds.insert(bi);
+            segment_bonds.push_back(bi);
         }
     }
     
     // Find indirect neighbours
     
-    for (set<int>::iterator bi = segment_bonds.begin(); bi != segment_bonds.end(); bi++) {
+    for (vector<int>::iterator bi = segment_bonds.begin(); bi != segment_bonds.end(); bi++) {
         Bond & b = bonds[*bi];
 
         const set<int> & t_i = torsions_for_residue[b.i];
@@ -206,30 +206,6 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
             }
         }
     }
-}
-
-void Graph::copy(Graph g) {
-    // TODO: do nested structures have to be deep-copied? This data is all read-only, so it doesn't need to be editable.
-    vertices = g.vertices;
-    edges = g.edges;
-    adjacency_map = g.adjacency_map;
-    flexibility_map = g.flexibility_map;
-
-    bonds = g.bonds;
-    angles = g.angles;
-    torsions = g.torsions;
-
-    MC_local_residues = g.MC_local_residues;
-    MC_crankshaft_residues = g.MC_crankshaft_residues;
-    MC_flex_residues = g.MC_flex_residues;
-
-    bonds_for_residue = g.bonds_for_residue; 
-    angles_for_residue = g.angles_for_residue;  
-    torsions_for_residue = g.torsions_for_residue;
-    
-    rigid_domains = g.rigid_domains;
-    segment_bonds = g.segment_bonds;
-    indirect_neighbours = g.indirect_neighbours;
 }
 
 set<int> Graph::branch(int i, int j, set<pair<int, int> > visited_edges)
@@ -292,4 +268,55 @@ set<int> Graph::rigid_domain_around(int i, set<pair<int, int> > visited_edges)
     }
     
     return domain;
+}
+
+void Graph::assign_geometry_uids(Molecule & m, int & chain_offset, int & domain_offset, int & bond_offset)
+{
+    // Assign the replica-wide uids
+    
+    // TODO TODO TODO remember to start them all at 1; zero means none (because negative floats have other meanings on the GPU)
+    
+    for (int c = 0; c < m.chainCount; c++) {
+        chain_uid[c] = chain_offset;
+        chain_offset++;
+    }
+    
+    for (int d = 0; d < rigid_domains.size(); d++) {
+        domain_uid[d] = domain_offset;
+        domain_offset++;
+    }
+
+    for (int b = 0; b < segment_bonds.size(); b++) {
+        bond_uid[b] = bond_offset;
+        bond_offset++;
+    }
+
+    // Assign domain UIDs to residues
+    
+    for (int d = 0; d < rigid_domains.size(); d++) {
+        set<int> & domain = rigid_domains[d];
+        for (set<int>::iterator i = domain.begin(); i != domain.end(); i++) {
+            Residue & r = m.Residues[*i];
+            r.rigid_domain_UID = domain_uid[d];
+        }
+    }
+        
+    // Assign bond UIDs to residues
+    
+    for (int b = 0; b < segment_bonds.size(); b++) {
+        Bond & sb = bonds[segment_bonds[b]];
+        m.Residues[sb.i].segment_bond_UID = bond_uid[b];
+        m.Residues[sb.j].segment_bond_UID = bond_uid[b];
+    }
+        
+    // Assign chain UIDs to residues, and pack float values to be transferred to the GPU, if necessary
+    
+    for (int i = 0; i < m.residueCount; i++) {
+        Residue & r = m.Residues[i];
+        r.chain_UID = chain_uid[r.chain_int_id];
+        
+#if USING_CUDA
+        r.pack_GPU_floats();
+#endif
+    }
 }

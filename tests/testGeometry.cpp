@@ -10,6 +10,7 @@ class TestGeometry : public CppUnit::TestFixture
     CPPUNIT_TEST(testMCResidues);
     CPPUNIT_TEST(testFlexBranch);
     CPPUNIT_TEST(testFeaturesPerResidue);
+    CPPUNIT_TEST(testFeaturesForPotential);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -21,6 +22,7 @@ public:
     void testMCResidues();
     void testFlexBranch();
     void testFeaturesPerResidue();
+    void testFeaturesForPotential();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestGeometry);
@@ -111,4 +113,11 @@ void TestGeometry::testFeaturesPerResidue()
     ASSERT_ITERABLE_EQUALS(expected_torsions_72, graph.torsions_for_residue[72]);
     ASSERT_ITERABLE_EQUALS(expected_torsions_73, graph.torsions_for_residue[73]);
     ASSERT_ITERABLE_EQUALS(expected_torsions_123, graph.torsions_for_residue[123]);
+}
+
+void TestGeometry::testFeaturesForPotential()
+{
+    // TODO test segment bonds
+    // TODO test rigid_domain_around
+    // TODO test rigid domains
 }

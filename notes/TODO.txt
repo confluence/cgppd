@@ -23,6 +23,12 @@ FIXING THE POTENTIAL
 		* no linkers: if i.molecule_id == j.molecule_id, do nothing
 		* linkers: if i.domain_uid == j.domain_uid (and it exists) OR i.chain_uid == j.chain_uid AND i.residue_id close to j.residue_id OR i.bond_uid == j.bond_uid, do nothing
 
+        * LEFT TO DO:
+            * unit tests for finding rigid domains, etc..
+            * CPU implementation of potential
+            * GPU implementation of potential
+            * Fixing unit tests for the new potential
+
 OLDER CUDA POTENTIAL ISSUES
     * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
     * E_TiledKernelNC was not updated with the new logic. Not detected because we're not testing it with a flexible molecule. Fix that in the replica test.
@@ -31,7 +37,7 @@ OTHER REFACTORING / TESTS
     * current homemade logging sucks. Replace with google-glog.
     * check if everything in the threads is still threadsafe. Have we actually run the code with multiple threads?
     * check if the bonded component is growing weirdly when uim is flexible
-    * check if graph deepcopy works -- unit test the molecule copy function in general
+    * check if sharing of graph by all molecule copies works (it should; just like it works for amino acid data)
         * check that really soon, to make sure that the bonded potential isn't slowly growing because the geometric features in the graph are being duplicated, or something. That would be bad.
     * check if magnitude of bonded components is correct
         * actually, do we have any results for the bonded components from Kim?

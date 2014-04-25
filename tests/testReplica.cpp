@@ -11,6 +11,7 @@ class TestReplica : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(TestReplica);
     CPPUNIT_TEST(testCPUandGPUPotential);
+    CPPUNIT_TEST(testPotentialGeometry);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -28,6 +29,7 @@ private:
 public:
     void setUp();
     void testCPUandGPUPotential();
+    void testPotentialGeometry();
     void tearDown();
 };
 
@@ -141,3 +143,11 @@ void TestReplica::testCPUandGPUPotential()
 #endif // USING_CUDA
 }
 
+
+
+void TestReplica::testPotentialGeometry()
+{
+    // TODO Test assignment of UIDs to chains, rigid domains and segment bonds
+    // TODO Test application of UIDs to residues
+    // TODO Test packing of residue floats for GPU
+}

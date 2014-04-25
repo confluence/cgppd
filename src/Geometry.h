@@ -143,10 +143,8 @@ class Graph
     void add_edge(int i, int j, bool flexible);
     bool is_flexible(int i, int j);
 public:
-
     // INPUT
-    void init(vector<Residue> residues, bool all_flexible, vector<segdata> segments);
-    void copy(Graph g);
+    void init(vector<Residue> residues, bool all_flexible, vector<segdata> segments, int num_chains);
 
     // OUTPUT -- calculate these once during init
     
@@ -165,13 +163,22 @@ public:
     map<int, set<int> > angles_for_residue;  // angle vector indices
     map<int, set<int> > torsions_for_residue;  // torsion vector indices
     
-    set<set<int> > rigid_domains;
-    set<int> segment_bonds; // bond indexes; these bonds connect residues which are not adjacent on the backbone
+    // These have to be vectors because their indices are mapped to UIDs
+    vector<set<int> > rigid_domains;
+    vector<int> segment_bonds; // bond indexes; these bonds connect residues which are not adjacent on the backbone
+    
     set<pair<int, int> > indirect_neighbours; // pairs of residues to be excluded (or subtracted) from potential sum because they are close neighbours on opposite sides of a segment bond
 
     vector<int> neighbours(int i); // this has to be a vector because we pick a random neighbour
     set<int> branch(int i, int j, set<pair<int, int> > visited_edges=set<pair<int, int> >());
     set<int> rigid_domain_around(int i, set<pair<int, int> > visited_edges=set<pair<int, int> >());
+    
+    // These are replica-wide unique identifiers for chains, domains and segment bonds
+    map<int, int> chain_uid; // chains aren't stored in the graph, but we can put this map here for consistency
+    map<int, int> domain_uid;
+    map<int, int> bond_uid;
+    
+    void assign_uids(Molecule & m, int & chain_offset, int & domain_offset, int & bond_offset);
 };
 
 #endif
