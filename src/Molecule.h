@@ -26,7 +26,6 @@ public:
     Molecule();
     ~Molecule();
 
-    // TODO: write a proper init function
     void init(const moldata mol, AminoAcids &a, int index, const float bounding_value);
     vector<Residue> initFromPDB(const char* pdbfilename);
     void copy(const Molecule& m, Residue * contiguous_residue_offset);

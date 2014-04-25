@@ -24,15 +24,36 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
 
     for (size_t s = 0; s < parameters.mdata.size(); s++)
     {
-        int mi = loadMolecule(parameters.mdata[s]);
+        loadMolecule(parameters.mdata[s]);
     }
+    
+    // ASSIGN UIDS (mostly needed for CUDA)
+    
+    int chain_offset = 1;
+    int domain_offset = 1;
+    int bond_offset = 1;
 
+    for (int m = 0; m < moleculeCount; m++) {
+        Molecule & mol =  molecules[m];
+        mol.graph.assign_uids(mol, chain_offset, domain_offset, bond_offset);
+    }
+    
+    // COUNT PAIRS FOR NONBONDED POTENTIAL
+    
     paircount = residueCount * (residueCount - 1) / 2; // start with the handshake algorithm
     for (size_t m = 0; m < moleculeCount; m++) {
+        Molecule & mol =  molecules[m];
 #if FLEXIBLE_LINKS
-        paircount -= 3 * molecules[m].residueCount; // exclude residues 3 or fewer apart in each molecule
+        paircount -= 3 * mol.residueCount; // exclude residues 3 or fewer apart on the backbone in each molecule
+        paircount -= mol.graph.segment_bonds.size(); // exclude pairs which form a bond (e.g. between chains)
+        paircount -= mol.graph.indirect_neighbours.size(); // exclude residues 3 or fewer apart along paths leading through bonds
+        // exclude all pairs within the same rigid domain
+        for (int d = 0; d < mol.graph.rigid_domains.size(); d++) {
+            int d_size = mol.graph.rigid_domains[d].size();
+            paircount -= d_size * (d_size - 1) / 2;
+        }
 #else
-        paircount -= molecules[m].residueCount * (molecules[m].residueCount - 1) / 2; // exclude all residues within the same molecule
+        paircount -= mol.residueCount * (mol.residueCount - 1) / 2; // exclude all pairs within the same molecule
 #endif
     }
 
@@ -226,7 +247,7 @@ void Replica::reserveContiguousMoleculeArray(int size)
     molecules = new Molecule[size];
 }
 
-int Replica::loadMolecule(const moldata mol)
+void Replica::loadMolecule(const moldata mol)
 {
     if (moleculeCount+1 > moleculeArraySize) //need a new array
     {
@@ -254,7 +275,6 @@ int Replica::loadMolecule(const moldata mol)
     }
 
     moleculeCount++;
-    return moleculeCount - 1;
 }
 
 // TODO: all of this needs to be done once for the whole simulation

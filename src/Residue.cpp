@@ -21,6 +21,27 @@ Residue::Residue(const Residue & r)
     moleculeId = r.moleculeId;
 }
 
+#if USING_CUDA
+void Residue::pack_GPU_floats()
+{
+    // pos.w = DOMAIN_UID.BOND_UID
+    // meta.w = RESIDUE_ID.CHAIN_UID
+    
+    // Because we can only compare residue IDs within the same chain, we can use meta.w for the comparison without stripping off the fractional part (which will be the same).
+    // We do have to extract both parts of pos.w
+
+   float bond_fraction(0);
+   if (segment_bond_UID) {
+       bond_fraction = pow(2.0, -segment_bond_UID);
+   }
+
+   float chain_fraction(pow(2.0, -chain_UID)); // chain_UID is never zero; they start at 1 and every residue has one
+   
+   pos_w = (float)rigid_domain_UID + bond_fraction;
+   meta_w = (float)label + chain_fraction;
+}
+#endif
+
 double Residue::distance(const Vector3f p, const float bounding_value)
 {
     float Xab(position.x - p.x);

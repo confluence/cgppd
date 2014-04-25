@@ -20,6 +20,7 @@ public:
     Vector3f relativePosition; // vs center
 
     char chainId;
+    int chain_int_id;
     int resSeq;
     int moleculeId; // TODO: this is probably unused
     
@@ -33,6 +34,8 @@ public:
     // these store a pregenerated combination of chain uid, residue id, rigid domain id and bond id
     float pos_w; // domain.bond
     float meta_w; // residue.chain
+    
+    void pack_GPU_floats();
 #endif
 
     double distance(const Vector3f p, const float bounding_value=0.0f);

@@ -3,7 +3,7 @@
 using namespace std;
 
 // TODO: we probably need a default constructor for dynamic arrays. :/
-Molecule::Molecule() : residueCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)),
+Molecule::Molecule() : residueCount(0), chainCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)),
 #if FLEXIBLE_LINKS
 LJ(0), DH(0), update_LJ_and_DH(true), is_flexible(false),
 #endif // FLEXIBLE_LINKS
@@ -56,6 +56,7 @@ void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bou
     }
 
     graph.init(vResidues, mol.all_flexible, mol.segments);
+
     if (mol.all_flexible || mol.segments.size()) {
         is_flexible = true;
     }
@@ -67,7 +68,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
     memcpy(contiguous_residue_offset, m.Residues, m.residueCount*sizeof(Residue));
     Residues = contiguous_residue_offset;
     residueCount = m.residueCount;
-    graph.copy(m.graph); // TODO TODO TODO check that this is actually a deep copy
+    graph = m.graph; // TODO TODO TODO make sure this is OK. It should be fine for all molecule copies to use the same graph; it's read-only once constructed.
     bounding_value = m.bounding_value;
     AminoAcidsData = m.AminoAcidsData;
     center = m.center;
@@ -504,7 +505,6 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
 {
     vector<Residue> vResidues;
 
-    chainCount = 1; // there must be at least one
     strcpy(filename, pdbfilename);
     // TODO: we only store this for printing.  Put it at the end?
 
@@ -562,6 +562,7 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
                 R.position = Vector3f(x,y,z);
                 R.relativePosition = Vector3f(0,0,0);
                 R.chainId = chainID;
+                R.chain_int_id = chainCount; // TODO: test this
                 R.resSeq = resSeq;
                 //R.sasa = 1.0f;
                 //R.vanderWaalRadius = float(AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius);
@@ -579,6 +580,11 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
         }
     }
     input.close();
+    
+    if (vResidues.size() && !chainCount) {
+        LOG(WARN, "Warning: check file %s for missing TER. Automatically setting number of chains to 1.", pdbfilename);
+        chainCount++;
+    }
 
     // copy the residues into an array
     residueCount = vResidues.size();
