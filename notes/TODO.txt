@@ -24,7 +24,7 @@ FIXING THE POTENTIAL
 		* linkers: if i.domain_uid == j.domain_uid (and it exists) OR i.chain_uid == j.chain_uid AND i.residue_id close to j.residue_id OR i.bond_uid == j.bond_uid, do nothing
 
         * LEFT TO DO:
-            * unit tests for finding rigid domains, etc..
+            * unit test for assigning uids to residues
             * CPU implementation of potential
             * GPU implementation of potential
             * Fixing unit tests for the new potential
