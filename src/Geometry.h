@@ -133,6 +133,38 @@ struct Torsion
     }
 };
 
+struct Pair
+{
+    // residue indices
+    int i;
+    int j;
+
+    Pair(): i(0), j(0) {}
+    Pair(int i, int j)
+    {
+        this->i = i;
+        this->j = j;
+    }
+
+    bool operator<(const Pair &p) const
+    {
+        return make_tuple(i, j) < make_tuple(p.i, p.j);
+    }
+
+    bool operator==(const Pair &p) const
+    {
+        return make_tuple(i, j) == make_tuple(p.i, p.j);
+    }
+
+    operator std::string() const {
+        char str_char[256];
+        sprintf(str_char, "Pair(%d, %d)", i, j);
+        return string(str_char);
+    }
+    
+    // TODO: maybe add potential caching to this too?
+};
+
 class Graph
 {
     set<int> vertices;
@@ -147,6 +179,8 @@ public:
     void init(vector<Residue> residues, bool all_flexible, vector<segdata> segments, int num_chains);
 
     // OUTPUT -- calculate these once during init
+
+    int num_chains;
     
     // These have to be vectors because we index them from *_for_residue
     vector<Bond> bonds;
@@ -167,7 +201,7 @@ public:
     vector<set<int> > rigid_domains;
     vector<int> segment_bonds; // bond indexes; these bonds connect residues which are not adjacent on the backbone
     
-    set<pair<int, int> > indirect_neighbours; // pairs of residues to be excluded (or subtracted) from potential sum because they are close neighbours on opposite sides of a segment bond
+    set<Pair> indirect_neighbours; // pairs of residues to be excluded (or subtracted) from potential sum because they are close neighbours on opposite sides of a segment bond
 
     vector<int> neighbours(int i); // this has to be a vector because we pick a random neighbour
     set<int> branch(int i, int j, set<pair<int, int> > visited_edges=set<pair<int, int> >());
@@ -178,7 +212,7 @@ public:
     map<int, int> domain_uid;
     map<int, int> bond_uid;
     
-    void assign_uids(Molecule & m, int & chain_offset, int & domain_offset, int & bond_offset);
+    void assign_uids(Residue * residues, int & chain_offset, int & domain_offset, int & bond_offset);
 };
 
 #endif

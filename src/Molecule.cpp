@@ -55,7 +55,7 @@ void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bou
         setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
     }
 
-    graph.init(vResidues, mol.all_flexible, mol.segments);
+    graph.init(vResidues, mol.all_flexible, mol.segments, chainCount);
 
     if (mol.all_flexible || mol.segments.size()) {
         is_flexible = true;

@@ -23,8 +23,10 @@ bool Graph::is_flexible(int i, int j)
     return flexibility_map[make_pair(i, j)];
 }
 
-void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> segments)
+void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> segments, int num_chains)
 {
+    this->num_chains = num_chains;
+    
     // import residue chains
     for (int i = 0; i < residues.size() - 1; i++) {
         int j = i + 1;
@@ -185,24 +187,28 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
         set<int> torsions_around_bond;
         set_intersection(t_i.begin(), t_i.end(), t_j.begin(), t_j.end(), std::inserter(torsions_around_bond, torsions_around_bond.begin()));
         
-        set<pair<int, int> > proposed;
+        set<Pair> proposed;
         
         for (set<int>::iterator ti = torsions_around_bond.begin(); ti != torsions_around_bond.end(); ti++) {
             Torsion & t = torsions[*ti];
             
-            proposed.insert(make_pair(t.i, t.l));
+            proposed.insert(Pair(t.i, t.l));
             
             if ((t.i, t.j) == (b.i, b.j) || (t.j, t.i) == (b.i, b.j)) {
-                proposed.insert(make_pair(t.i, t.k));
+                proposed.insert(Pair(t.i, t.k));
             }
             if ((t.k, t.l) == (b.i, b.j) || (t.l, t.k) == (b.i, b.j)) {
-                proposed.insert(make_pair(t.j, t.l));
+                proposed.insert(Pair(t.j, t.l));
             }
         }
         
-        for (set<pair<int, int> >::iterator p = proposed.begin(); p != proposed.end(); p++) {
-            if (residues[p->first].chainId != residues[p->second].chainId || abs(p->first - p->second) >= 4) {
-                indirect_neighbours.insert(*p);
+        for (set<Pair>::iterator p = proposed.begin(); p != proposed.end(); p++) {
+            if (residues[p->i].chainId != residues[p->j].chainId || abs(p->i - p->j) >= 4) {
+                if (p->i < p->j) {
+                    indirect_neighbours.insert(*p);
+                } else {
+                    indirect_neighbours.insert(Pair(p->j, p->i));
+                }
             }
         }
     }
@@ -270,13 +276,13 @@ set<int> Graph::rigid_domain_around(int i, set<pair<int, int> > visited_edges)
     return domain;
 }
 
-void Graph::assign_geometry_uids(Molecule & m, int & chain_offset, int & domain_offset, int & bond_offset)
+void Graph::assign_uids(Residue * residues, int & chain_offset, int & domain_offset, int & bond_offset)
 {
     // Assign the replica-wide uids
     
     // TODO TODO TODO remember to start them all at 1; zero means none (because negative floats have other meanings on the GPU)
     
-    for (int c = 0; c < m.chainCount; c++) {
+    for (int c = 0; c < num_chains; c++) {
         chain_uid[c] = chain_offset;
         chain_offset++;
     }
@@ -296,7 +302,7 @@ void Graph::assign_geometry_uids(Molecule & m, int & chain_offset, int & domain_
     for (int d = 0; d < rigid_domains.size(); d++) {
         set<int> & domain = rigid_domains[d];
         for (set<int>::iterator i = domain.begin(); i != domain.end(); i++) {
-            Residue & r = m.Residues[*i];
+            Residue & r = residues[*i];
             r.rigid_domain_UID = domain_uid[d];
         }
     }
@@ -305,14 +311,14 @@ void Graph::assign_geometry_uids(Molecule & m, int & chain_offset, int & domain_
     
     for (int b = 0; b < segment_bonds.size(); b++) {
         Bond & sb = bonds[segment_bonds[b]];
-        m.Residues[sb.i].segment_bond_UID = bond_uid[b];
-        m.Residues[sb.j].segment_bond_UID = bond_uid[b];
+        residues[sb.i].segment_bond_UID = bond_uid[b];
+        residues[sb.j].segment_bond_UID = bond_uid[b];
     }
         
     // Assign chain UIDs to residues, and pack float values to be transferred to the GPU, if necessary
     
-    for (int i = 0; i < m.residueCount; i++) {
-        Residue & r = m.Residues[i];
+    for (int i = 0; i < vertices.size(); i++) {
+        Residue & r = residues[i];
         r.chain_UID = chain_uid[r.chain_int_id];
         
 #if USING_CUDA
