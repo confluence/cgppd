@@ -35,7 +35,7 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
 
     for (int m = 0; m < moleculeCount; m++) {
         Molecule & mol =  molecules[m];
-        mol.graph.assign_uids(mol, chain_offset, domain_offset, bond_offset);
+        mol.graph.assign_uids(mol.Residues, chain_offset, domain_offset, bond_offset);
     }
     
     // COUNT PAIRS FOR NONBONDED POTENTIAL

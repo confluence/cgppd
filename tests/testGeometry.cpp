@@ -50,7 +50,7 @@ void TestGeometry::setUp()
     
     vector<segdata> segments = {seg1, seg2};
 
-    graph.init(residues, false, segments);
+    graph.init(residues, false, segments, 2);
 }
 
 void TestGeometry::testGeometricFeatures()
@@ -117,7 +117,33 @@ void TestGeometry::testFeaturesPerResidue()
 
 void TestGeometry::testFeaturesForPotential()
 {
-    // TODO test segment bonds
-    // TODO test rigid_domain_around
-    // TODO test rigid domains
+    // test segment bonds
+    
+    vector<int> expected_segment_bonds = {3}; // index of Bond(75, 123)
+    ASSERT_ITERABLE_EQUALS(expected_segment_bonds, graph.segment_bonds);
+    
+    // test indirect neighbours
+    
+    set<Pair> expected_indirect_neighbours = {{73, 123}, {74, 123}, {74, 122}, {74, 124}, {75, 122}, {75, 121}, {75, 124}, {75, 125}};
+    ASSERT_ITERABLE_EQUALS(expected_indirect_neighbours, graph.indirect_neighbours);
+    
+    // test rigid_domain_around
+    
+    set<int> first_domain = to_set(make_range(0, 72));
+    set<int> second_domain = to_set(make_range(76, 148));
+    
+    ASSERT_ITERABLE_EQUALS(first_domain, graph.rigid_domain_around(0));
+    ASSERT_ITERABLE_EQUALS(first_domain, graph.rigid_domain_around(50));
+    ASSERT_ITERABLE_EQUALS(first_domain, graph.rigid_domain_around(72));
+    
+    ASSERT_ITERABLE_EQUALS(second_domain, graph.rigid_domain_around(76));
+    ASSERT_ITERABLE_EQUALS(second_domain, graph.rigid_domain_around(100));
+    ASSERT_ITERABLE_EQUALS(second_domain, graph.rigid_domain_around(123));
+    ASSERT_ITERABLE_EQUALS(second_domain, graph.rigid_domain_around(148));
+    
+    // test rigid domains
+    
+    CPPUNIT_ASSERT_EQUAL(2, (int)graph.rigid_domains.size());
+    ASSERT_ITERABLE_EQUALS(first_domain, graph.rigid_domains[0]);
+    ASSERT_ITERABLE_EQUALS(second_domain, graph.rigid_domains[1]);
 }
