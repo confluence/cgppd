@@ -143,11 +143,66 @@ void TestReplica::testCPUandGPUPotential()
 #endif // USING_CUDA
 }
 
-
-
 void TestReplica::testPotentialGeometry()
 {
-    // TODO Test assignment of UIDs to chains, rigid domains and segment bonds
-    // TODO Test application of UIDs to residues
-    // TODO Test packing of residue floats for GPU
+    Molecule & m1 = replica.molecules[0];
+    Molecule & m2 = replica.molecules[1];
+    
+    // Test counting of chains, rigid domains and segment bonds
+    
+    CPPUNIT_ASSERT_EQUAL(1, (int)m1.graph.rigid_domains.size());
+    CPPUNIT_ASSERT_EQUAL(0, (int)m1.graph.segment_bonds.size());
+    CPPUNIT_ASSERT_EQUAL(1, m1.graph.num_chains);
+    
+    CPPUNIT_ASSERT_EQUAL(1, (int)m2.graph.rigid_domains.size());
+    CPPUNIT_ASSERT_EQUAL(0, (int)m2.graph.segment_bonds.size());
+    CPPUNIT_ASSERT_EQUAL(1, m2.graph.num_chains);
+    
+    // Test assignment of UIDs to chains, rigid domains and segment bonds
+    
+    CPPUNIT_ASSERT_EQUAL(1, (int)m1.graph.domain_uid.size());
+    CPPUNIT_ASSERT_EQUAL(0, (int)m1.graph.bond_uid.size());
+    CPPUNIT_ASSERT_EQUAL(1, (int)m1.graph.chain_uid.size());
+    
+    CPPUNIT_ASSERT_EQUAL(1, (int)m2.graph.domain_uid.size());
+    CPPUNIT_ASSERT_EQUAL(0, (int)m2.graph.bond_uid.size());
+    CPPUNIT_ASSERT_EQUAL(1, (int)m2.graph.chain_uid.size());
+    
+    CPPUNIT_ASSERT_EQUAL(1, m1.graph.domain_uid[0]);
+    CPPUNIT_ASSERT_EQUAL(2, m2.graph.domain_uid[0]);
+    
+    CPPUNIT_ASSERT_EQUAL(1, m1.graph.chain_uid[0]);
+    CPPUNIT_ASSERT_EQUAL(2, m2.graph.chain_uid[0]);
+    
+    // Test application of UIDs to residues and packing of residue floats for GPU
+    
+    for (int i = 0; i < 24; i++) {
+        CPPUNIT_ASSERT_EQUAL(1, m1.Residues[i].rigid_domain_UID);
+        CPPUNIT_ASSERT_EQUAL(1, m1.Residues[i].chain_UID);
+        CPPUNIT_ASSERT_EQUAL(0, m1.Residues[i].segment_bond_UID);
+#if USING_CUDA
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0f, m1.Residues[i].pos_w, 0.001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.5f, m1.Residues[i].meta_w, 0.001);
+#endif
+    }
+    
+    for (int i = 0; i < 73; i++) {
+        CPPUNIT_ASSERT_EQUAL(2, m2.Residues[i].rigid_domain_UID);
+        CPPUNIT_ASSERT_EQUAL(2, m2.Residues[i].chain_UID);
+        CPPUNIT_ASSERT_EQUAL(0, m2.Residues[i].segment_bond_UID);
+#if USING_CUDA
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(2.0f, m2.Residues[i].pos_w, 0.001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.25f, m2.Residues[i].meta_w, 0.001);
+#endif
+    }
+    
+    for (int i = 73; i < 76; i++) {
+        CPPUNIT_ASSERT_EQUAL(0, m2.Residues[i].rigid_domain_UID);
+        CPPUNIT_ASSERT_EQUAL(2, m2.Residues[i].chain_UID);
+        CPPUNIT_ASSERT_EQUAL(0, m2.Residues[i].segment_bond_UID);
+#if USING_CUDA
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0f, m2.Residues[i].pos_w, 0.001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.25f, m2.Residues[i].meta_w, 0.001);
+#endif
+    }
 }

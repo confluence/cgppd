@@ -547,17 +547,11 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
                 sscanf(line + 46, "%f", &z);
                 sscanf(line + 54, "%f", &occupancy);
 
-                LOG(DEBUG, "residue: %s; chain: %c; sequence no.: %d; position: (%f, %f, %f); occupancy: %f\n", resName, chainID, resSeq, x, y, z, occupancy);
-
                 Residue R;
 
                 R.aminoAcidIndex = AminoAcidsData.getAminoAcidIndex(resName);
-                R.electrostaticCharge = float(AminoAcidsData.get(R.aminoAcidIndex).electrostaticCharge);// * E_charge;
-                R.vanderWaalRadius = AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius;// * E_charge;
-                if (R.vanderWaalRadius != AminoAcidsData.get(R.aminoAcidIndex).vanderWaalRadius)
-                {
-                    cout << R.aminoAcidIndex << " differing vdw radii" << endl;
-                }
+                R.electrostaticCharge = float(AminoAcidsData.get(R.aminoAcidIndex).electrostaticCharge); // TODO already a float; remove
+                R.vanderWaalRadius = AminoAcidsData.data[R.aminoAcidIndex].vanderWaalRadius; // TODO use get method consistently or remove it
 
                 R.position = Vector3f(x,y,z);
                 R.relativePosition = Vector3f(0,0,0);
@@ -582,7 +576,7 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
     input.close();
     
     if (vResidues.size() && !chainCount) {
-        LOG(WARN, "Warning: check file %s for missing TER. Automatically setting number of chains to 1.", pdbfilename);
+        LOG(WARN, "Warning: check file %s for missing TER. Automatically setting number of chains to 1.\n", pdbfilename);
         chainCount++;
     }
 

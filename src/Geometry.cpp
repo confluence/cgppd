@@ -279,9 +279,7 @@ set<int> Graph::rigid_domain_around(int i, set<pair<int, int> > visited_edges)
 void Graph::assign_uids(Residue * residues, int & chain_offset, int & domain_offset, int & bond_offset)
 {
     // Assign the replica-wide uids
-    
-    // TODO TODO TODO remember to start them all at 1; zero means none (because negative floats have other meanings on the GPU)
-    
+        
     for (int c = 0; c < num_chains; c++) {
         chain_uid[c] = chain_offset;
         chain_offset++;
