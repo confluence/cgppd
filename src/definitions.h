@@ -52,7 +52,7 @@
     #define ERROR   1
     #define WARN   1
     #define INFO    1
-    #define DEBUG   1
+    #define DEBUG   0
 
     #define LOG(level, ...) \
             do { if (level) printf(__VA_ARGS__); } while (0)
