@@ -206,7 +206,7 @@ public:
     vector<int> neighbours(int i); // this has to be a vector because we pick a random neighbour
     set<int> branch(int i, int j, set<pair<int, int> > visited_edges=set<pair<int, int> >());
     set<int> rigid_domain_around(int i, set<pair<int, int> > visited_edges=set<pair<int, int> >());
-    
+
     // These are replica-wide unique identifiers for chains, domains and segment bonds
     map<int, int> chain_uid; // chains aren't stored in the graph, but we can put this map here for consistency
     map<int, int> domain_uid;
