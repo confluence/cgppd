@@ -46,6 +46,7 @@ OTHER REFACTORING / TESTS
     * valgrind is really upset about a lot of the stl container stuff.
 
     * clean up crappy Potential internals now that there are unit tests
+    * clean up potential for inside the molecule -- incorporate everything into a single loop in the replica
     * unit test for parsing various input files (amino acids, torsions, etc..)
     * clean up output files as much as possible
         * put a separate ABOUT file with compilation options in the directory instead of appending suffixes and putting crap in the PDB files

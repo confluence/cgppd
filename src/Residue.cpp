@@ -84,3 +84,18 @@ void Residue::set_rotation_about_center(Quaternion q, Vector3f center)
     // TODO: is adding component-wise an important optimisation?
     position = center + relativePosition;
 }
+
+bool Residue::chain_neighbour_of(Residue other)
+{
+    return chain_UID == other.chain_UID && abs(resSeq - other.resSeq) < 4;
+}
+
+bool Residue::same_rigid_domain_as(Residue other)
+{
+    return rigid_domain_UID && rigid_domain_UID == other.rigid_domain_UID;
+}
+
+bool Residue::bonded_to(Residue other)
+{
+    return segment_bond_UID && segment_bond_UID == other.segment_bond_UID;
+}
