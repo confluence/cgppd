@@ -5,7 +5,7 @@ using namespace std;
 // TODO: we probably need a default constructor for dynamic arrays. :/
 Molecule::Molecule() : residueCount(0), chainCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)),
 #if FLEXIBLE_LINKS
-LJ(0), DH(0), update_LJ_and_DH(true), is_flexible(false),
+is_flexible(false),
 #endif // FLEXIBLE_LINKS
 volume(0.0f)
 {
@@ -24,19 +24,27 @@ Molecule::~Molecule()
 
 void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bounding_value)
 {
+    cout << "At the beginning of molecule init, chainCount is " << chainCount << endl;
     AminoAcidsData = a;
+
+    cout << "After setting amino acids, chainCount is " << chainCount << endl;
+
 #if FLEXIBLE_LINKS
     torsion_data.loadData(TORSIONALPAIRDATA, a);
 #endif // FLEXIBLE_LINKS
+    
+    cout << "After loading torsion data, chainCount is " << chainCount << endl;
 
     this->index = index;
     this->bounding_value = bounding_value;
+    
+    cout << "Just before init from pdb, chainCount is " << chainCount << endl;
 
     vector<Residue> vResidues = initFromPDB(mol.pdbfilename);
 
     calculateVolume();
     calculate_length();
-
+    
     if (mol.translate) {
         if (mol.px || mol.py || mol.pz) {
             translate(Vector3f(mol.px, mol.py, mol.pz));
@@ -55,6 +63,7 @@ void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bou
         setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
     }
 
+    cout << "molecule " << filename << " graph INIT with chainCount " << chainCount << endl;
     graph.init(vResidues, mol.all_flexible, mol.segments, chainCount);
 
     if (mol.all_flexible || mol.segments.size()) {
@@ -83,10 +92,6 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 #if FLEXIBLE_LINKS
     is_flexible = m.is_flexible;
     torsion_data = m.torsion_data;
-
-    LJ = m.LJ;
-    DH = m.DH;
-    update_LJ_and_DH = m.update_LJ_and_DH;
 #endif // FLEXIBLE_LINKS
 }
 
@@ -103,13 +108,6 @@ void Molecule::MC_backup_restore(const Molecule* m)
     center = m->center;
     rotation = m->rotation;
     length = m->length;
-
-#if FLEXIBLE_LINKS
-    // we need to save / restore all the cached potentials
-    LJ = m->LJ;
-    DH = m->DH;
-    update_LJ_and_DH = m->update_LJ_and_DH;
-#endif // FLEXIBLE_LINKS
 }
 
 void Molecule::init_saved_molecule(int max_residue_count)
@@ -267,10 +265,6 @@ Vector3f Molecule::recalculate_center(Vector3f difference)
 
 void Molecule::mark_cached_potentials_for_update(const int ri)
 {
-    // For any move, update the LJ and DH for the entire molecule
-
-    update_LJ_and_DH = true;
-
     // depending on the move, these may not all have to be recalculated, but it's not really worth checking
 
     set<int> & ri_bonds = graph.bonds_for_residue[ri];
@@ -503,6 +497,7 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
 
 vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
 {
+    cout << "inside initFromPDB; chainCount is " << chainCount << endl;
     vector<Residue> vResidues;
 
     strcpy(filename, pdbfilename);
@@ -630,7 +625,7 @@ void Molecule::calculate_length()
 
 #if FLEXIBLE_LINKS
 
-// TODO: add comments
+
 
 Potential Molecule::E(bool include_LJ_and_DH)
 {
@@ -640,67 +635,36 @@ Potential Molecule::E(bool include_LJ_and_DH)
     if (is_flexible) { // TODO TODO TODO are we still doing this?
         if (include_LJ_and_DH) {
             // We're calculating the LJ and DH on the CPU
-            
             // LJ and DH between all residue pairs within molecule
-            if (update_LJ_and_DH) {
-                // TODO: we don't need this anymore. Eliminate it.
-                potential.reset_LJ_subtotal();
-                potential.reset_DH_subtotal();
 
-                for (size_t i = 0; i < residueCount; i++) {
-                    for (size_t j = i + 1; j < residueCount; j++) {
-        
-                        /* ignore pairs which are:
-                            - in the same rigid domain
-                            - close neighbours on the backbone in the same chain
-                            - bonded to each other
-                            - close neighbours across a bond */
+            for (size_t i = 0; i < residueCount; i++) {
+                for (size_t j = i + 1; j < residueCount; j++) {
+    
+                    /* ignore pairs which are:
+                        - in the same rigid domain
+                        - close neighbours on the backbone in the same chain
+                        - bonded to each other
+                        - close neighbours across a bond */
 
-                        if (!Residues[i].same_rigid_domain_as(Residues[j]) && !Residues[i].chain_neighbour_of(Residues[j]) && !Residues[i].bonded_to(Residues[j]) && !graph.indirect_neighbours.count(Pair(i, j))) {
-                            double r(Residues[i].distance(Residues[j], bounding_value) + EPS);
-                            /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                            potential.increment_LJ_subtotal(calculate_LJ(Residues[i], Residues[j], r, AminoAcidsData));
-                            /* Calculate electrostatic potential for each residue pair; increment molecule total. */
-                            potential.increment_DH_subtotal(calculate_DH(Residues[i], Residues[j], r));
-                        }
+                    if (!Residues[i].same_rigid_domain_as(Residues[j]) && !Residues[i].chain_neighbour_of(Residues[j]) && !Residues[i].bonded_to(Residues[j]) && !graph.indirect_neighbours.count(Pair(i, j))) {
+                        double r(Residues[i].distance(Residues[j], bounding_value) + EPS);
+                        /* Calculate LJ-type potential for each residue pair; increment molecule total. */
+                        potential.increment_LJ(calculate_LJ(Residues[i], Residues[j], r, AminoAcidsData));
+                        /* Calculate electrostatic potential for each residue pair; increment molecule total. */
+                        potential.increment_DH(calculate_DH(Residues[i], Residues[j], r));
                     }
                 }
-
-                /* Cache new values on the molecule */
-                LJ = potential.LJ_subtotal;
-                DH = potential.DH_subtotal;
-
-                update_LJ_and_DH = false;
             }
         } else {
-            if (update_LJ_and_DH) {
-                // TODO: we don't need this anymore. Eliminate it.
-                potential.reset_LJ_subtotal();
-                potential.reset_DH_subtotal();
-
-                // We calculated the LJ and DH on the GPU; here we need to *subtract* the indirect neighbour total, which is too complex to do on the GPU for now
-                for (set<Pair>::iterator p = graph.indirect_neighbours.begin(); p != graph.indirect_neighbours.end(); p++) {
-                    double r(Residues[p->i].distance(Residues[p->j], bounding_value) + EPS);
-                    /* Calculate LJ-type potential for each residue pair; DECREMENT molecule total. */
-                    potential.increment_LJ_subtotal(-calculate_LJ(Residues[p->i], Residues[p->j], r, AminoAcidsData));
-                    /* Calculate electrostatic potential for each residue pair; DECREMENT molecule total. */
-                    potential.increment_DH_subtotal(-calculate_DH(Residues[p->i], Residues[p->j], r));
-                }
-
-                /* Cache new values on the molecule */
-                LJ = potential.LJ_subtotal;
-                DH = potential.DH_subtotal;
-
-                update_LJ_and_DH = false;
-            } else {
-                cout << "cached values for LJ: " << LJ << " DH: " << DH << endl; 
+            // We calculated the LJ and DH on the GPU; here we need to *subtract* the indirect neighbour total, which is too complex to do on the GPU for now
+            for (set<Pair>::iterator p = graph.indirect_neighbours.begin(); p != graph.indirect_neighbours.end(); p++) {
+                double r(Residues[p->i].distance(Residues[p->j], bounding_value) + EPS);
+                /* Calculate LJ-type potential for each residue pair; DECREMENT molecule total. */
+                potential.increment_LJ(-calculate_LJ(Residues[p->i], Residues[p->j], r, AminoAcidsData));
+                /* Calculate electrostatic potential for each residue pair; DECREMENT molecule total. */
+                potential.increment_DH(-calculate_DH(Residues[p->i], Residues[p->j], r));
             }
         }
-
-        /* Add molecule totals to potential totals */
-        /* TODO: what impact do side calculations like this have on kahan sum accuracy? */
-        potential.increment_LJ(LJ);
-        potential.increment_DH(DH);
 
         for (vector<Bond>::iterator b = graph.bonds.begin(); b != graph.bonds.end(); b++) {
             potential.increment_bond(calculate_bond(Residues, *b, bounding_value));

@@ -88,13 +88,11 @@ public:
 
     Graph graph;
     TorsionalLookupMatrix torsion_data;
-    Potential E(bool include_LJ_and_DH=true);
 
-    double LJ; // cached LJ component of this molecule
-    double DH; // cached DH component of this molecule
-    bool update_LJ_and_DH; // LJ and DH values need to be updated
+    Potential E(bool include_LJ_and_DH=true); // TODO TODO TODO refactor
+
 #endif
-    size_t chainCount;
+    int chainCount;
     Quaternion rotation; // TODO remove
 
     Vector3f center;

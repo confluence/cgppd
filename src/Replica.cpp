@@ -18,14 +18,19 @@ Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), tempera
 
 void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid_data, const int initial_molecule_array_size) // constructor for initial replica
 {
+    cout << "BEGINNING OF init_first_replica" << endl;
     aminoAcids = amino_acid_data;
     boundingValue = parameters.bound;
     reserveContiguousMoleculeArray(initial_molecule_array_size);
+    
+    cout << "after amino acids, bounding value, molecule array" << endl;
 
     for (size_t s = 0; s < parameters.mdata.size(); s++)
     {
         loadMolecule(parameters.mdata[s]);
     }
+    
+    cout << "after loading molecule" << endl;
     
     // ASSIGN UIDS (mostly needed for CUDA)
     
@@ -34,9 +39,10 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     int bond_offset = 1;
 
     for (int m = 0; m < moleculeCount; m++) {
-        Molecule & mol =  molecules[m];
-        mol.graph.assign_uids(mol.Residues, chain_offset, domain_offset, bond_offset);
+        molecules[m].graph.assign_uids(molecules[m].Residues, chain_offset, domain_offset, bond_offset);
     }
+    
+    cout << "after uid assignment" << endl;
     
     // COUNT PAIRS FOR NONBONDED POTENTIAL
     
@@ -56,6 +62,8 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
         paircount -= mol.residueCount * (mol.residueCount - 1) / 2; // exclude all pairs within the same molecule
 #endif
     }
+    
+    cout << "after paircount" << endl;
 
 #if USING_CUDA
     if (parameters.auto_blockdim)
@@ -68,6 +76,8 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
         setBlockSize(parameters.cuda_blockSize);
     }
 #endif
+    
+    cout << "after cuda" << endl;
 
     LOG(parameters.verbosity > 1, "\tLoaded: %d residues in %d molecules:\n", residueCount, moleculeCount);
     for (int i = 0; i < moleculeCount; i++)
@@ -75,6 +85,7 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
         molecules[i].log_info(i, parameters.verbosity);
     }
     LOG(parameters.verbosity > 1, "\tCounted : %d complex residues and %d residue interaction pairs.\n", nonCrowderResidues, paircount);
+    cout << "END OF init_first_replica" << endl;
 }
 
 void Replica::init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters)
@@ -249,6 +260,7 @@ void Replica::reserveContiguousMoleculeArray(int size)
 
 void Replica::loadMolecule(const moldata mol)
 {
+    cout << "before array resizing, molecule's chain count is " << molecules[moleculeCount].chainCount << endl;
     if (moleculeCount+1 > moleculeArraySize) //need a new array
     {
         moleculeArraySize += 3;
@@ -263,6 +275,7 @@ void Replica::loadMolecule(const moldata mol)
         memcpy(molecules, new_molecules, sizeof(Molecule)*moleculeCount);
         delete [] new_molecules;
     }
+    cout << "after array resizing, molecule's chain count is " << molecules[moleculeCount].chainCount << endl;
 
     molecules[moleculeCount].init(mol, aminoAcids, moleculeCount, boundingValue);
 

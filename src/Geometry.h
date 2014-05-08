@@ -175,6 +175,8 @@ class Graph
     void add_edge(int i, int j, bool flexible);
     bool is_flexible(int i, int j);
 public:
+    Graph();
+    ~Graph();
     // INPUT
     void init(vector<Residue> residues, bool all_flexible, vector<segdata> segments, int num_chains);
 

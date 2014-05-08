@@ -822,9 +822,7 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
             
             float xchain = modff(meta.w, &xresid);
             float ychain = modff(yresiduem.w, &yresid);
-            
-            printf("TEST!");
-            
+                        
             if (pos.w == PADDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER || (xdomain && xdomain == ydomain) || (xbond && xbond == ybond) || (xchain == ychain && fabs(xresid - yresid) < 4))
 #else
              // same molecule or padder or crowder
