@@ -417,7 +417,8 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
             // pos.x = residue X coordinate
             // pos.y = residue Y coordinate
             // pos.z = residue Z coordinate
-            // pos.w = PADDER_IDENTIFIER or molecule id
+            // FLEXIBLE: pos.w = PADDER_IDENTIFIER or DOMAIN_UID.BOND_UID
+            // RIGID: pos.w = PADDER_IDENTIFIER or molecule id
 
 #if METADATA_MEMORY == TEXTURE_MEM
             float4 meta = tex1Dfetch(residueMetaTex,(bx*blockDim.x+i));
@@ -427,12 +428,32 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
             // meta.x = aminoacid index
             // meta.y = charge
             // meta.z = vdw radius
-            // meta.w = CROWDER_IDENTIFIER or RIGID_IDENTIFIER or residue id
+            // FLEXIBLE: meta.w = CROWDER_IDENTIFIER or RESIDUE_ID.CHAIN_UID
+            // RIGID: meta.w = CROWDER_IDENTIFIER or unused
+#if FLEXIBLE_LINKS
+            // padder or same rigid domain or same bond or residues close on the backbone
+            // currently ignoring case where residues are close because of a bond; subtracting this component on the CPU instead
+            
+            // we unpack the floats
 
-            if ((yresiduep.w == pos.w && (meta.w == RIGID_IDENTIFIER || fabs(yresiduem.w - meta.w) < 4)) || pos.w == PADDER_IDENTIFIER)		// (same molecule && (rigid molecule || neighbouring residues)) || padding residue
+            float xdomain(0.0f);
+            float ydomain(0.0f);
+
+            float xbond = modff(pos.w, &xdomain);
+            float ybond = modff(yresiduep.w, &ydomain);
+            
+            float xresid(0.0f);
+            float yresid(0.0f);
+            
+            float xchain = modff(meta.w, &xresid);
+            float ychain = modff(yresiduem.w, &yresid);
+            
+            if (pos.w == PADDER_IDENTIFIER || (xdomain && xdomain == ydomain) || (xbond && xbond == ybond) || (xchain == ychain && fabs(xresid - yresid) < 4))
+#else
+             // same molecule or padder
+            if (yresiduep.w == pos.w || pos.w == PADDER_IDENTIFIER)
+#endif
             {
-                // Xpos.w == Ypos.w means that they are the same molecule
-                // if either is -2 then its a padding residue and must be ignored
                 // DO NOTHING
             }
             else
@@ -783,14 +804,33 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
 #elif METADATA_MEMORY == SHARED_MEM
             float4 meta = X_tile_residueMeta[positionOfMeta + i];
 #endif
+            
+#if FLEXIBLE_LINKS
+            // padder or crowder or same rigid domain or same bond or residues close on the backbone
+            // currently ignoring case where residues are close because of a bond; subtracting this component on the CPU instead
+            
+            // we unpack the floats
 
-            if (yresiduep.w == pos.w || pos.w < 0.0f || meta.w == CROWDER_IDENTIFIER)		// same molecule || padding residue || crowder
-// #else
-//             if (yresiduep.w == X_tile_residuePositions[positionOfPosition + i].w || X_tile_residuePositions[positionOfPosition + i].w < 0.0f || X_tile_residueMeta[positionOfMeta + i].w == CROWDER_IDENTIFIER )		// same molecule || padding residue || crowder
-// #endif
+            float xdomain(0.0f);
+            float ydomain(0.0f);
+
+            float xbond = modff(pos.w, &xdomain);
+            float ybond = modff(yresiduep.w, &ydomain);
+            
+            float xresid(0.0f);
+            float yresid(0.0f);
+            
+            float xchain = modff(meta.w, &xresid);
+            float ychain = modff(yresiduem.w, &yresid);
+            
+            printf("TEST!");
+            
+            if (pos.w == PADDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER || (xdomain && xdomain == ydomain) || (xbond && xbond == ybond) || (xchain == ychain && fabs(xresid - yresid) < 4))
+#else
+             // same molecule or padder or crowder
+            if (yresiduep.w == pos.w || pos.w == PADDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER)
+#endif  
             {
-                // Xpos.w == Ypos.w means that they are the same molecule
-                // if either is -2 then its a padding residue and must be ignored
                 // DO NOTHING
             }
             else

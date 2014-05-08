@@ -703,10 +703,22 @@ void Replica::ReplicaDataToDevice()
 
         for (int rc=0; rc<molecules[m].residueCount; rc++)
         {
+            // POS
             host_float4_residuePositions[arrayIndex].x = molecules[m].Residues[rc].position.x;
             host_float4_residuePositions[arrayIndex].y = molecules[m].Residues[rc].position.y;
             host_float4_residuePositions[arrayIndex].z = molecules[m].Residues[rc].position.z;
-            host_float4_residuePositions[arrayIndex].w = mf;  // residue belongs to this molecule id
+#if FLEXIBLE_LINKS
+            host_float4_residuePositions[arrayIndex].w = molecules[m].Residues[rc].pos_w; // DOMAIN_UID.BOND_UID
+            if (calculate_rigid_potential_only) {
+                // override the domain part, to put all residues in one molecule in the same rigid domain
+                host_float4_residuePositions[arrayIndex].w -= int(host_float4_residuePositions[arrayIndex].w); // subtract the current integer part
+                host_float4_residuePositions[arrayIndex].w += mf + 1.0f; // add the molecule ID + 1 (zero means "not in a rigid domain")
+            }
+#else
+            host_float4_residuePositions[arrayIndex].w = mf;  // we only care if the residues are in the same molecule
+#endif
+            
+            // META
             host_float4_residueMeta[arrayIndex].x = molecules[m].Residues[rc].aminoAcidIndex;
             host_float4_residueMeta[arrayIndex].y = molecules[m].Residues[rc].electrostaticCharge;
             host_float4_residueMeta[arrayIndex].z = molecules[m].Residues[rc].vanderWaalRadius;
@@ -715,16 +727,13 @@ void Replica::ReplicaDataToDevice()
                 // This molecule is a crowder
                 host_float4_residueMeta[arrayIndex].w = CROWDER_IDENTIFIER;
             }
-            else if (!molecules[m].is_flexible || calculate_rigid_potential_only)
-            {
-                // TODO TODO TODO we won't be able to use this anymore after the GPU refactor, but we should be able to override the domain part of the precalculated meta_w float for this residue
-                // This molecule is rigid, or we are treating it as rigid anyway for test purposes
-                host_float4_residueMeta[arrayIndex].w = RIGID_IDENTIFIER;
-            }
             else
             {
-                // This is a flexible molecule; we need the residue IDs to calculate internal LJ and DH
-                host_float4_residueMeta[arrayIndex].w = float(rc);
+#if FLEXIBLE_LINKS
+                host_float4_residueMeta[arrayIndex].w = molecules[m].Residues[rc].meta_w; // RESIDUE_ID.CHAIN_UID
+#else
+                host_float4_residueMeta[arrayIndex].w = 0.0f; // we don't use this 
+#endif
             }
 
             arrayIndex++;

@@ -105,20 +105,19 @@ void TestReplica::tearDown()
 
 void TestReplica::testCPUandGPUPotential()
 {
-    // TODO: why is the internal LJ so huge?
 #if !LJ_REPULSIVE && !LJ_OFF
-    double flex_lj(296.795363);
+    double flex_lj(-0.068205);
 #elif LJ_OFF
     double flex_lj(0);
 #elif LJ_REPULSIVE
-    double flex_lj(609.503791);
+    double flex_lj(-0.527692);
 # endif // !LJ_REPULSIVE && !LJ_OFF
-    cout << "+++++++++++++++ FLEX POTENTIAL STARTS HERE" << endl;
-    Potential expected_flexible_potential(flex_lj, 0.335944, 0.180426, 1.555213, 5.420859);
+    Potential expected_flexible_potential(flex_lj, -0.240383, 0.180426, 1.555213, 5.420859);
+    cout << "CPU E" << endl;
     ASSERT_POTENTIALS_EQUAL(expected_flexible_potential, replica.E());
-    cout << "+++++++++++++++ FLEX POTENTIAL ENDS HERE" << endl;
 
 #if USING_CUDA
+    cout << "GPU E" << endl;
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential.total(), replica.EonDevice(), 0.001);
 #endif // USING_CUDA
 
@@ -136,9 +135,11 @@ void TestReplica::testCPUandGPUPotential()
 # endif // !LJ_REPULSIVE && !LJ_OFF
 
     Potential expected_rigid_potential(rigid_lj, -0.212202, 0.000000, -0.000000, 0.000000);
+    cout << "CPU E" << endl;
     ASSERT_POTENTIALS_EQUAL(expected_rigid_potential, replica.E());
 
 #if USING_CUDA
+    cout << "GPU E" << endl;
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_rigid_potential.total(), replica.EonDevice(), 0.001);
 #endif // USING_CUDA
 }
