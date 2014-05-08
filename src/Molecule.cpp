@@ -255,27 +255,6 @@ Vector3f Molecule::recalculate_center(Vector3f difference)
     return ((center * residueCount) + difference) / residueCount;
 }
 
-void Molecule::mark_cached_potentials_for_update(const int ri)
-{
-    // depending on the move, these may not all have to be recalculated, but it's not really worth checking
-
-    set<int> & ri_bonds = graph.bonds_for_residue[ri];
-    set<int> & ri_angles = graph.angles_for_residue[ri];
-    set<int> & ri_torsions = graph.torsions_for_residue[ri];
-
-    for (set<int>::iterator b = ri_bonds.begin(); b != ri_bonds.end(); b++) {
-        graph.bonds[*b].update_potential = true;
-    }
-
-    for (set<int>::iterator a = ri_angles.begin(); a != ri_angles.end(); a++) {
-        graph.angles[*a].update_potential = true;
-    }
-
-    for (set<int>::iterator t = ri_torsions.begin(); t != ri_torsions.end(); t++) {
-        graph.torsions[*t].update_potential = true;
-    }
-}
-
 void Molecule::translate(Vector3f v, const int ri)
 {
     Vector3f v_fraction = v / residueCount;
@@ -298,7 +277,6 @@ void Molecule::translate(Vector3f v, const int ri)
         Residues[i].relativePosition -= v_fraction;
     }
 
-    mark_cached_potentials_for_update(ri);
     calculate_length();
 
 #if BOUNDING_METHOD == PERIODIC_BOUNDARY
@@ -376,7 +354,6 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
         Residues[i].relativePosition -= v_fraction;
     }
     
-    mark_cached_potentials_for_update(ri);
     calculate_length();
     
     #if BOUNDING_METHOD == PERIODIC_BOUNDARY
