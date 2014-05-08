@@ -55,7 +55,6 @@ public:
 
 #if FLEXIBLE_LINKS
     Vector3f recalculate_center(Vector3f difference);
-    void mark_cached_potentials_for_update(const int ri);
 
     void translate(Vector3f v, const int ri);
     void crankshaft(double angle, const bool flip_angle, const int ri);

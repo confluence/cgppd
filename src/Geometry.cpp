@@ -134,29 +134,6 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     std::copy(s_MC_local_residues.begin(), s_MC_local_residues.end(), std::back_inserter(MC_local_residues));
     std::copy(s_MC_crankshaft_residues.begin(), s_MC_crankshaft_residues.end(), std::back_inserter(MC_crankshaft_residues));
     std::copy(s_MC_flex_residues.begin(), s_MC_flex_residues.end(), std::back_inserter(MC_flex_residues));
-
-    // Cache bonds, etc. for each residue
-
-    for (int bi = 0; bi < bonds.size(); bi++) {
-        Bond & b = bonds[bi];
-        bonds_for_residue[b.i].insert(bi);
-        bonds_for_residue[b.j].insert(bi);
-    }
-
-    for (int ai = 0; ai < angles.size(); ai++) {
-        Angle & a = angles[ai];
-        angles_for_residue[a.i].insert(ai);
-        angles_for_residue[a.j].insert(ai);
-        angles_for_residue[a.k].insert(ai);
-    }
-
-    for (int ti = 0; ti < torsions.size(); ti++) {
-        Torsion & t = torsions[ti];
-        torsions_for_residue[t.i].insert(ti);
-        torsions_for_residue[t.j].insert(ti);
-        torsions_for_residue[t.k].insert(ti);
-        torsions_for_residue[t.l].insert(ti);
-    }
     
     // Detect rigid domains
     
@@ -166,11 +143,11 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     while (vertices_to_process.size()) {
         set<int>::iterator i = vertices_to_process.begin();
         set<int> domain = rigid_domain_around(*i);
-        
+
         for (set<int>::iterator v = domain.begin(); v != domain.end(); v++) {
             vertices_to_process.erase(*v); // should erase by key value 
         }
-        
+
         if (domain.size() > 1) {
             rigid_domains.push_back(domain);
         }
@@ -178,44 +155,42 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     
     // Find segment bonds
     
-    for (int bi = 0; bi < bonds.size(); bi++) {
-        Bond & b = bonds[bi];
-        if (residues[b.i].chainId != residues[b.j].chainId || abs(b.i - b.j) >= 4) {
-            segment_bonds.push_back(bi);
+    for (vector<Bond>::iterator b = bonds.begin(); b != bonds.end(); b++) {
+        if (residues[b->i].chainId != residues[b->j].chainId || abs(b->i - b->j) >= 4) {
+            segment_bonds.push_back(Pair(b->i, b->j));
         }
     }
     
     // Find indirect neighbours
     
-    for (vector<int>::iterator bi = segment_bonds.begin(); bi != segment_bonds.end(); bi++) {
-        Bond & b = bonds[*bi];
+    for (vector<Pair>::iterator p = segment_bonds.begin(); p != segment_bonds.end(); p++) {
+        set<Torsion> torsions_around_bond;
 
-        const set<int> & t_i = torsions_for_residue[b.i];
-        const set<int> & t_j = torsions_for_residue[b.j];
-        set<int> torsions_around_bond;
-        set_intersection(t_i.begin(), t_i.end(), t_j.begin(), t_j.end(), std::inserter(torsions_around_bond, torsions_around_bond.begin()));
-        
-        set<Pair> proposed;
-        
-        for (set<int>::iterator ti = torsions_around_bond.begin(); ti != torsions_around_bond.end(); ti++) {
-            Torsion & t = torsions[*ti];
-            
-            proposed.insert(Pair(t.i, t.l));
-            
-            if ((t.i, t.j) == (b.i, b.j) || (t.j, t.i) == (b.i, b.j)) {
-                proposed.insert(Pair(t.i, t.k));
-            }
-            if ((t.k, t.l) == (b.i, b.j) || (t.l, t.k) == (b.i, b.j)) {
-                proposed.insert(Pair(t.j, t.l));
+        for (vector<Torsion>::iterator t = torsions.begin(); t != torsions.end(); t++) {
+            if (t->contains(*p)) {
+                torsions_around_bond.insert(*t);
             }
         }
-        
-        for (set<Pair>::iterator p = proposed.begin(); p != proposed.end(); p++) {
-            if (residues[p->i].chainId != residues[p->j].chainId || abs(p->i - p->j) >= 4) {
-                if (p->i < p->j) {
-                    indirect_neighbours.insert(*p);
+
+        set<Pair> proposed;
+
+        for (set<Torsion>::iterator t = torsions_around_bond.begin(); t != torsions_around_bond.end(); t++) {
+            proposed.insert(Pair(t->i, t->l));
+
+            if ((t->i, t->j) == (p->i, p->j) || (t->j, t->i) == (p->i, p->j)) {
+                proposed.insert(Pair(t->i, t->k));
+            }
+            if ((t->k, t->l) == (p->i, p->j) || (t->l, t->k) == (p->i, p->j)) {
+                proposed.insert(Pair(t->j, t->l));
+            }
+        }
+
+        for (set<Pair>::iterator pr = proposed.begin(); pr != proposed.end(); pr++) {
+            if (residues[pr->i].chainId != residues[pr->j].chainId || abs(pr->i - pr->j) >= 4) {
+                if (pr->i < pr->j) {
+                    indirect_neighbours.insert(*pr);
                 } else {
-                    indirect_neighbours.insert(Pair(p->j, p->i));
+                    indirect_neighbours.insert(Pair(pr->j, pr->i));
                 }
             }
         }
@@ -316,7 +291,7 @@ void Graph::assign_uids(Residue * residues, int & chain_offset, int & domain_off
     // Assign bond UIDs to residues
     
     for (int b = 0; b < segment_bonds.size(); b++) {
-        Bond & sb = bonds[segment_bonds[b]];
+        Pair & sb = segment_bonds[b];
         residues[sb.i].segment_bond_UID = bond_uid[b];
         residues[sb.j].segment_bond_UID = bond_uid[b];
     }

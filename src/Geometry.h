@@ -13,6 +13,36 @@
 // Simple structures describing links between residues in a molecule
 // i, j, etc. are indices in the residue array, which should be the same as indices into the original residue vector
 
+struct Pair
+{
+    // residue indices
+    int i;
+    int j;
+
+    Pair(): i(0), j(0) {}
+    Pair(int i, int j)
+    {
+        this->i = i;
+        this->j = j;
+    }
+
+    bool operator<(const Pair &p) const
+    {
+        return make_tuple(i, j) < make_tuple(p.i, p.j);
+    }
+
+    bool operator==(const Pair &p) const
+    {
+        return make_tuple(i, j) == make_tuple(p.i, p.j);
+    }
+
+    operator std::string() const {
+        char str_char[256];
+        sprintf(str_char, "Pair(%d, %d)", i, j);
+        return string(str_char);
+    }
+};
+
 struct Bond
 {
     // residue indices
@@ -22,16 +52,14 @@ struct Bond
     // cache for tests
     double length;
     double potential;
-    bool update_potential;
 
-    Bond(): i(0), j(0), length(0.0f), potential(0.0f), update_potential(true) {}
-    Bond(int i, int j, double length=0.0f, double potential=0.0f, bool update_potential=true)
+    Bond(): i(0), j(0), length(0.0f), potential(0.0f) {}
+    Bond(int i, int j, double length=0.0f, double potential=0.0f)
     {
         this->i = i;
         this->j = j;
         this->length = length;
         this->potential = potential;
-        this->update_potential = update_potential;
     }
 
     bool operator<(const Bond &b) const
@@ -61,17 +89,15 @@ struct Angle
     // cache for tests
     double theta;
     double potential;
-    bool update_potential;
 
-    Angle(): i(0), j(0), k(0), theta(0.0f), potential(0.0f), update_potential(true) {}
-    Angle(int i, int j, int k, double theta=0.0f, double potential=0.0f, bool update_potential=true)
+    Angle(): i(0), j(0), k(0), theta(0.0f), potential(0.0f) {}
+    Angle(int i, int j, int k, double theta=0.0f, double potential=0.0f)
     {
         this->i = i;
         this->j = j;
         this->k = k;
         this->theta = theta;
         this->potential = potential;
-        this->update_potential = update_potential;
     }
 
     bool operator<(const Angle &a) const
@@ -102,10 +128,9 @@ struct Torsion
     // cache for tests
     double phi;
     double potential;
-    bool update_potential;
 
-    Torsion(): i(0), j(0), k(0), l(0), phi(0.0f), potential(0.0f), update_potential(true) {}
-    Torsion(int i, int j, int k, int l, double phi=0.0f, double potential=0.0f, bool update_potential=true)
+    Torsion(): i(0), j(0), k(0), l(0), phi(0.0f), potential(0.0f) {}
+    Torsion(int i, int j, int k, int l, double phi=0.0f, double potential=0.0f)
     {
         this->i = i;
         this->j = j;
@@ -113,7 +138,6 @@ struct Torsion
         this->l = l;
         this->phi = phi;
         this->potential = potential;
-        this->update_potential = update_potential;
     }
 
     bool operator<(const Torsion &t) const
@@ -131,38 +155,14 @@ struct Torsion
         sprintf(str_char, "Torsion(%d, %d, %d, %d)", i, j, k, l);
         return string(str_char);
     }
-};
 
-struct Pair
-{
-    // residue indices
-    int i;
-    int j;
-
-    Pair(): i(0), j(0) {}
-    Pair(int i, int j)
-    {
-        this->i = i;
-        this->j = j;
+    bool contains(const int &ri) {
+        return ri == i || ri == j || ri == k || ri == l;
     }
 
-    bool operator<(const Pair &p) const
-    {
-        return make_tuple(i, j) < make_tuple(p.i, p.j);
+    bool contains(const Pair &p) { // TODO replace with a Pair
+        return contains(p.i) && contains(p.j);
     }
-
-    bool operator==(const Pair &p) const
-    {
-        return make_tuple(i, j) == make_tuple(p.i, p.j);
-    }
-
-    operator std::string() const {
-        char str_char[256];
-        sprintf(str_char, "Pair(%d, %d)", i, j);
-        return string(str_char);
-    }
-    
-    // TODO: maybe add potential caching to this too?
 };
 
 class Graph
@@ -184,7 +184,7 @@ public:
 
     int num_chains;
     
-    // These have to be vectors because we index them from *_for_residue
+    // These have to be vectors because we modify the values from the potential calculation functions
     vector<Bond> bonds;
     vector<Angle> angles;
     vector<Torsion> torsions;
@@ -195,14 +195,10 @@ public:
     vector<int> MC_crankshaft_residues; // residue array indices
     vector<int> MC_flex_residues; // residue array indices
 
-    map<int, set<int> > bonds_for_residue;  // bond vector indices
-    map<int, set<int> > angles_for_residue;  // angle vector indices
-    map<int, set<int> > torsions_for_residue;  // torsion vector indices
-    
     // These have to be vectors because their indices are mapped to UIDs
     vector<set<int> > rigid_domains;
-    vector<int> segment_bonds; // bond indexes; these bonds connect residues which are not adjacent on the backbone
-    
+    vector<Pair> segment_bonds; // bond indexes; these bonds connect residues which are not adjacent on the backbone
+
     set<Pair> indirect_neighbours; // pairs of residues to be excluded (or subtracted) from potential sum because they are close neighbours on opposite sides of a segment bond
 
     vector<int> neighbours(int i); // this has to be a vector because we pick a random neighbour

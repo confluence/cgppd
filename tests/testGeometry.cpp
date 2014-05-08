@@ -9,7 +9,6 @@ class TestGeometry : public CppUnit::TestFixture
     CPPUNIT_TEST(testGeometricFeatures);
     CPPUNIT_TEST(testMCResidues);
     CPPUNIT_TEST(testFlexBranch);
-    CPPUNIT_TEST(testFeaturesPerResidue);
     CPPUNIT_TEST(testFeaturesForPotential);
     CPPUNIT_TEST_SUITE_END();
 
@@ -21,7 +20,6 @@ public:
     void testGeometricFeatures();
     void testMCResidues();
     void testFlexBranch();
-    void testFeaturesPerResidue();
     void testFeaturesForPotential();
 };
 
@@ -88,38 +86,11 @@ void TestGeometry::testFlexBranch()
     ASSERT_ITERABLE_EQUALS(expected_residues_branch_148_149, graph.branch(148, 149));
 }
 
-void TestGeometry::testFeaturesPerResidue()
-{
-    set<int> expected_bonds_72 = {0};
-    set<int> expected_bonds_73 = {0, 1};
-    
-    set<int> expected_angles_71 = {0};
-    set<int> expected_angles_73 = {0, 1, 2};
-    set<int> expected_angles_123 = {3, 4, 5};
-    
-    set<int> expected_torsions_70 = {0};
-    set<int> expected_torsions_72 = {0, 1, 2};
-    set<int> expected_torsions_73 = {0, 1, 2, 3};
-    set<int> expected_torsions_123 = {3, 4, 5, 6, 7};
-    
-    ASSERT_ITERABLE_EQUALS(expected_bonds_72, graph.bonds_for_residue[72]);
-    ASSERT_ITERABLE_EQUALS(expected_bonds_73, graph.bonds_for_residue[73]);
-    
-    ASSERT_ITERABLE_EQUALS(expected_angles_71, graph.angles_for_residue[71]);
-    ASSERT_ITERABLE_EQUALS(expected_angles_73, graph.angles_for_residue[73]);
-    ASSERT_ITERABLE_EQUALS(expected_angles_123, graph.angles_for_residue[123]);
-    
-    ASSERT_ITERABLE_EQUALS(expected_torsions_70, graph.torsions_for_residue[70]);
-    ASSERT_ITERABLE_EQUALS(expected_torsions_72, graph.torsions_for_residue[72]);
-    ASSERT_ITERABLE_EQUALS(expected_torsions_73, graph.torsions_for_residue[73]);
-    ASSERT_ITERABLE_EQUALS(expected_torsions_123, graph.torsions_for_residue[123]);
-}
-
 void TestGeometry::testFeaturesForPotential()
 {
     // test segment bonds
     
-    vector<int> expected_segment_bonds = {3}; // index of Bond(75, 123)
+    vector<Pair> expected_segment_bonds = {{75, 123}};
     ASSERT_ITERABLE_EQUALS(expected_segment_bonds, graph.segment_bonds);
     
     // test indirect neighbours
