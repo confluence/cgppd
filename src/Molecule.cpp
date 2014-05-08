@@ -647,24 +647,21 @@ Potential Molecule::E(bool include_LJ_and_DH)
                 potential.reset_LJ_subtotal();
                 potential.reset_DH_subtotal();
 
-                for (size_t i = 0; i < residueCount; i++)
-                {
+                for (size_t i = 0; i < residueCount; i++) {
                     for (size_t j = i + 1; j < residueCount; j++) {
-                        Residue & iRes = Residues[i];
-                        Residue & jRes = Residues[j];
         
                         /* ignore pairs which are:
                             - in the same rigid domain
                             - close neighbours on the backbone in the same chain
                             - bonded to each other
                             - close neighbours across a bond */
-                        if (!iRes.same_rigid_domain_as(jRes) && !iRes.chain_neighbour_of(jRes) && !iRes.bonded_to(jRes) && !graph.indirect_neighbours.count(Pair(i, j)))
-                        {
-                            double r(iRes.distance(jRes, bounding_value) + EPS);
+
+                        if (!Residues[i].same_rigid_domain_as(Residues[j]) && !Residues[i].chain_neighbour_of(Residues[j]) && !Residues[i].bonded_to(Residues[j]) && !graph.indirect_neighbours.count(Pair(i, j))) {
+                            double r(Residues[i].distance(Residues[j], bounding_value) + EPS);
                             /* Calculate LJ-type potential for each residue pair; increment molecule total. */
-                            potential.increment_LJ_subtotal(calculate_LJ(iRes, jRes, r, AminoAcidsData));
+                            potential.increment_LJ_subtotal(calculate_LJ(Residues[i], Residues[j], r, AminoAcidsData));
                             /* Calculate electrostatic potential for each residue pair; increment molecule total. */
-                            potential.increment_DH_subtotal(calculate_DH(iRes, jRes, r));
+                            potential.increment_DH_subtotal(calculate_DH(Residues[i], Residues[j], r));
                         }
                     }
                 }
@@ -677,16 +674,17 @@ Potential Molecule::E(bool include_LJ_and_DH)
             }
         } else {
             if (update_LJ_and_DH) {
+                // TODO: we don't need this anymore. Eliminate it.
+                potential.reset_LJ_subtotal();
+                potential.reset_DH_subtotal();
+
                 // We calculated the LJ and DH on the GPU; here we need to *subtract* the indirect neighbour total, which is too complex to do on the GPU for now
                 for (set<Pair>::iterator p = graph.indirect_neighbours.begin(); p != graph.indirect_neighbours.end(); p++) {
-                    Residue & iRes = Residues[p->i];
-                    Residue & jRes = Residues[p->j];
-                    
-                    double r(iRes.distance(jRes, bounding_value) + EPS);
+                    double r(Residues[p->i].distance(Residues[p->j], bounding_value) + EPS);
                     /* Calculate LJ-type potential for each residue pair; DECREMENT molecule total. */
-                    potential.increment_LJ_subtotal(-calculate_LJ(iRes, jRes, r, AminoAcidsData));
+                    potential.increment_LJ_subtotal(-calculate_LJ(Residues[p->i], Residues[p->j], r, AminoAcidsData));
                     /* Calculate electrostatic potential for each residue pair; DECREMENT molecule total. */
-                    potential.increment_DH_subtotal(-calculate_DH(iRes, jRes, r));
+                    potential.increment_DH_subtotal(-calculate_DH(Residues[p->i], Residues[p->j], r));
                 }
 
                 /* Cache new values on the molecule */
@@ -694,6 +692,8 @@ Potential Molecule::E(bool include_LJ_and_DH)
                 DH = potential.DH_subtotal;
 
                 update_LJ_and_DH = false;
+            } else {
+                cout << "cached values for LJ: " << LJ << " DH: " << DH << endl; 
             }
         }
 

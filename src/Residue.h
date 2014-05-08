@@ -45,9 +45,9 @@ public:
     void set_rotation_about_center(Quaternion q, Vector3f center);
     
     // These are properties of a pair of residues within the same molecule which cause them to be excluded from the unbonded potential total
-    bool chain_neighbour_of(Residue other);
-    bool same_rigid_domain_as(Residue other);
-    bool bonded_to(Residue other);
+    bool chain_neighbour_of(Residue &other);
+    bool same_rigid_domain_as(Residue &other);
+    bool bonded_to(Residue &other);
 };
 
 #endif

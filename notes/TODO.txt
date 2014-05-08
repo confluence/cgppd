@@ -24,9 +24,7 @@ FIXING THE POTENTIAL
 		* linkers: if i.domain_uid == j.domain_uid (and it exists) OR i.chain_uid == j.chain_uid AND i.residue_id close to j.residue_id OR i.bond_uid == j.bond_uid, do nothing
 
         * LEFT TO DO:
-            * CPU implementation of potential
-            * GPU implementation of potential
-            * Fixing unit tests for the new potential
+            * GPU slightly off, possibly because internal E is being calculated, cached and not recalculated
 
 OLDER CUDA POTENTIAL ISSUES
     * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
