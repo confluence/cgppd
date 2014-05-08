@@ -121,12 +121,12 @@ double calculate_torsion(Residue * residues, Torsion &torsion, TorsionalLookupMa
 Potential::Potential() : 
 #if FLEXIBLE_LINKS
 /* NB: angle potential is a sum of logs -- we multiply the components and take the log at the end. */
-LJ_subtotal(0.0f), DH_subtotal(0.0f), bond(0.0f), angle(1.0f), torsion(0.0f),
+bond(0.0f), angle(1.0f), torsion(0.0f),
 #endif // FLEXIBLE_LINKS
 #if COMPENSATE_KERNEL_SUM
 c_lj(0.0f), c_dh(0.0f),
 #if FLEXIBLE_LINKS
-c_lj_subtotal(0.0f), c_dh_subtotal(0.0f), c_bond(0.0f), c_torsion(0.0f),
+c_bond(0.0f), c_torsion(0.0f),
 #endif // FLEXIBLE_LINKS
 #endif // COMPENSATE_KERNEL_SUM
 LJ(0.0f), DH(0.0f)
@@ -178,39 +178,6 @@ void Potential::increment_DH(const double DH)
 }
 
 #if FLEXIBLE_LINKS
-void Potential::reset_LJ_subtotal()
-{
-    LJ_subtotal = 0.0f;
-#if COMPENSATE_KERNEL_SUM
-    c_lj_subtotal = 0.0f;
-#endif // COMPENSATE_KERNEL_SUM
-}
-
-void Potential::reset_DH_subtotal()
-{
-    DH_subtotal = 0.0f;
-#if COMPENSATE_KERNEL_SUM
-    c_dh_subtotal = 0.0f;
-#endif // COMPENSATE_KERNEL_SUM
-}
-
-void Potential::increment_LJ_subtotal(const double LJ)
-{
-#if COMPENSATE_KERNEL_SUM
-    kahan_sum(this->LJ_subtotal, LJ, c_lj_subtotal);
-#else // if not COMPENSATE_KERNEL_SUM
-    this->LJ_subtotal += LJ;
-#endif // COMPENSATE_KERNEL_SUM
-}
-
-void Potential::increment_DH_subtotal(const double DH)
-{
-#if COMPENSATE_KERNEL_SUM
-    kahan_sum(this->DH_subtotal, DH, c_dh_subtotal);
-#else // if not COMPENSATE_KERNEL_SUM
-    this->DH_subtotal += DH;
-#endif // COMPENSATE_KERNEL_SUM
-}
 
 void Potential::increment_bond(const double bond)
 {
@@ -234,9 +201,10 @@ void Potential::increment_torsion(const double torsion)
     this->torsion += torsion;
 #endif // COMPENSATE_KERNEL_SUM
 }
+
 #endif // FLEXIBLE_LINKS
 
-void Potential::increment(const Potential p)
+void Potential::increment(const Potential p) // TODO: replace this with an addition operator
 {
     increment_LJ(p.LJ);
     increment_DH(p.DH);

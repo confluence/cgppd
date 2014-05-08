@@ -1,5 +1,13 @@
 #include "Geometry.h"
 
+Graph::Graph() : num_chains(0)
+{
+}
+
+Graph::~Graph()
+{
+}
+
 void Graph::add_edge(int i, int j, bool flexible)
 {
     vertices.insert(i);
@@ -25,7 +33,15 @@ bool Graph::is_flexible(int i, int j)
 
 void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> segments, int num_chains)
 {
+    cout << "in graph init with num chains " << num_chains << endl;
+    cout << "before, num_chains is" << this->num_chains << endl;
     this->num_chains = num_chains;
+    cout << "after, num_chains is " << this->num_chains << endl;
+    
+    if (num_chains > 10) {
+        cout << "SOMETHING IS PORKED; ABORTING" << endl;
+        exit(0);
+    }
     
     // import residue chains
     for (int i = 0; i < residues.size() - 1; i++) {
@@ -278,7 +294,10 @@ set<int> Graph::rigid_domain_around(int i, set<pair<int, int> > visited_edges)
 
 void Graph::assign_uids(Residue * residues, int & chain_offset, int & domain_offset, int & bond_offset)
 {
+    cout << "BEGINNING OF assign_uids" << endl;
     // Assign the replica-wide uids
+    
+    cout << "num_chains is " << num_chains << endl;
         
     for (int c = 0; c < num_chains; c++) {
         chain_uid[c] = chain_offset;
@@ -294,6 +313,8 @@ void Graph::assign_uids(Residue * residues, int & chain_offset, int & domain_off
         bond_uid[b] = bond_offset;
         bond_offset++;
     }
+    
+    cout << "after numbering" << endl;
 
     // Assign domain UIDs to residues
     
@@ -304,6 +325,8 @@ void Graph::assign_uids(Residue * residues, int & chain_offset, int & domain_off
             r.rigid_domain_UID = domain_uid[d];
         }
     }
+
+    cout << "after adding domain uids to residues" << endl;
         
     // Assign bond UIDs to residues
     
@@ -312,15 +335,18 @@ void Graph::assign_uids(Residue * residues, int & chain_offset, int & domain_off
         residues[sb.i].segment_bond_UID = bond_uid[b];
         residues[sb.j].segment_bond_UID = bond_uid[b];
     }
+    
+    cout << "after adding bond uids to residues" << endl;
         
     // Assign chain UIDs to residues, and pack float values to be transferred to the GPU, if necessary
     
     for (int i = 0; i < vertices.size(); i++) {
-        Residue & r = residues[i];
-        r.chain_UID = chain_uid[r.chain_int_id];
+        residues[i].chain_UID = chain_uid[residues[i].chain_int_id];
         
 #if USING_CUDA
-        r.pack_GPU_floats();
+        residues[i].pack_GPU_floats();
 #endif
     }
+    
+    cout << "after adding chain uids to residues" << endl;
 }

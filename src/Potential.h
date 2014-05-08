@@ -25,8 +25,6 @@ private:
     double c_lj;
     double c_dh;
 #if FLEXIBLE_LINKS
-    double c_lj_subtotal;
-    double c_dh_subtotal;
     double c_bond;
     double c_torsion;
 #endif // FLEXIBLE_LINKS
@@ -37,9 +35,6 @@ public:
     double DH;
 
 #if FLEXIBLE_LINKS
-    double LJ_subtotal;
-    double DH_subtotal;
-
     double bond;
     double angle;
     double torsion;
@@ -66,11 +61,6 @@ public:
     void increment_DH(const double DH);
 
 #if FLEXIBLE_LINKS
-    void reset_LJ_subtotal();
-    void reset_DH_subtotal();
-    void increment_LJ_subtotal(const double LJ);
-    void increment_DH_subtotal(const double DH);
-
     void increment_bond(const double bond);
     void increment_angle(const double angle);
     void increment_torsion(const double torsion);
