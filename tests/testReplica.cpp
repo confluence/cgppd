@@ -39,12 +39,8 @@ void TestReplica::setUp()
 {
     // GLOBAL STUFF
     
-    cout << "BEGINNING OF SETUP" << endl;
-
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
     
-    cout << "AFTER AMINO ACID INIT" << endl;
-
     bounding_value = 118.4f;
 #if USING_CUDA
 #if CUDA_STREAMS
@@ -53,9 +49,7 @@ void TestReplica::setUp()
     setup_CUDA(0, bounding_value, ljp_t, &aminoAcidData);
 #endif // CUDA_STREAMS
 #endif // USING_CUDA
-    
-    cout << "AFTER CUDA INIT" << endl;
-    
+
     // PARAMETERS
 
     argdata parameters;
@@ -78,21 +72,16 @@ void TestReplica::setUp()
     
     parameters.mdata.push_back(m1);
     parameters.mdata.push_back(m2);
-    
-    cout << "AFTER PARAMETER SETUP" << endl;
-    
+
     // INITIAL REPLICA
 
     initial_replica.init_first_replica(parameters, aminoAcidData, 2);
     initial_replica.label = 1;
-    
-    cout << "AFTER INITIAL REPLICA" << endl;
-    
+
     // ONE CHILD REPLICA
     
     replica.init_child_replica(initial_replica, 1, 300.0f, 0.2f, 0.5f, parameters);
     
-    cout << "AFTER CHILD REPLICA" << endl;
 #if USING_CUDA
 #if CUDA_STREAMS
     replica.setup_CUDA(ljp_t, streams, 0);
@@ -100,8 +89,6 @@ void TestReplica::setUp()
     replica.setup_CUDA(ljp_t);
 #endif // CUDA_STREAMS
 #endif // USING_CUDA
-    cout << "AFTER REPLICA CUDA INIT" << endl;
-    cout << "END OF SETUP" << endl;
 }
 
 void TestReplica::tearDown()
@@ -119,7 +106,6 @@ void TestReplica::tearDown()
 
 void TestReplica::testCPUandGPUPotential()
 {
-    cout << "BEGINNING OF TEST" << endl;
 #if !LJ_REPULSIVE && !LJ_OFF
     double flex_lj(-0.068205);
 #elif LJ_OFF
@@ -128,11 +114,9 @@ void TestReplica::testCPUandGPUPotential()
     double flex_lj(-0.527692);
 # endif // !LJ_REPULSIVE && !LJ_OFF
     Potential expected_flexible_potential(flex_lj, -0.240383, 0.180426, 1.555213, 5.420859);
-    cout << "CPU E" << endl;
     ASSERT_POTENTIALS_EQUAL(expected_flexible_potential, replica.E());
 
 #if USING_CUDA
-    cout << "GPU E" << endl;
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential.total(), replica.EonDevice(), 0.001);
 #endif // USING_CUDA
 
@@ -150,11 +134,9 @@ void TestReplica::testCPUandGPUPotential()
 # endif // !LJ_REPULSIVE && !LJ_OFF
 
     Potential expected_rigid_potential(rigid_lj, -0.212202, 0.000000, -0.000000, 0.000000);
-    cout << "CPU E" << endl;
     ASSERT_POTENTIALS_EQUAL(expected_rigid_potential, replica.E());
 
 #if USING_CUDA
-    cout << "GPU E" << endl;
     CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_rigid_potential.total(), replica.EonDevice(), 0.001);
 #endif // USING_CUDA
 }

@@ -8,14 +8,14 @@ TorsionalLookupMatrix::~TorsionalLookupMatrix()
 {
 }
 
-double TorsionalLookupMatrix::getV(int ai, int aj,int n)
+double TorsionalLookupMatrix::getV(int ai, int aj, int n)
 {
-    return V[ai][aj][n];
+    return V[ai][aj][n - 1];
 }
 
-double TorsionalLookupMatrix::getSigma(int ai, int aj,int n)
+double TorsionalLookupMatrix::getSigma(int ai, int aj, int n)
 {
-    return Sigma[ai][aj][n];
+    return Sigma[ai][aj][n - 1];
 }
 
 bool TorsionalLookupMatrix::loadData(const char* filename, AminoAcids &aminoAcids)
@@ -33,7 +33,7 @@ bool TorsionalLookupMatrix::loadData(const char* filename, AminoAcids &aminoAcid
     char acid1[5] = {0};
     double v;
     double sigma;
-    int  n;
+    int n;
 
     while (!input.eof())
     {
@@ -44,8 +44,8 @@ bool TorsionalLookupMatrix::loadData(const char* filename, AminoAcids &aminoAcid
             sscanf(line,"%3s %3s %lf %d %lf", acid0, acid1, &v, &n, &sigma);
             int a0 = aminoAcids.getAminoAcidIndex(acid0);
             int a1 = aminoAcids.getAminoAcidIndex(acid1);
-            V[a0][a1][n] = v;
-            Sigma[a0][a1][n] = sigma/57.29577951308232; // convert to radians
+            V[a0][a1][n - 1] = v;
+            Sigma[a0][a1][n - 1] = sigma/57.29577951308232; // convert to radians
         }
     }
     input.close();
