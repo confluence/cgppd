@@ -24,21 +24,14 @@ Molecule::~Molecule()
 
 void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bounding_value)
 {
-    cout << "At the beginning of molecule init, chainCount is " << chainCount << endl;
     AminoAcidsData = a;
-
-    cout << "After setting amino acids, chainCount is " << chainCount << endl;
 
 #if FLEXIBLE_LINKS
     torsion_data.loadData(TORSIONALPAIRDATA, a);
 #endif // FLEXIBLE_LINKS
-    
-    cout << "After loading torsion data, chainCount is " << chainCount << endl;
 
     this->index = index;
     this->bounding_value = bounding_value;
-    
-    cout << "Just before init from pdb, chainCount is " << chainCount << endl;
 
     vector<Residue> vResidues = initFromPDB(mol.pdbfilename);
 
@@ -63,7 +56,6 @@ void Molecule::init(const moldata mol, AminoAcids &a, int index, const float bou
         setMoleculeRoleIdentifier(CROWDER_IDENTIFIER);
     }
 
-    cout << "molecule " << filename << " graph INIT with chainCount " << chainCount << endl;
     graph.init(vResidues, mol.all_flexible, mol.segments, chainCount);
 
     if (mol.all_flexible || mol.segments.size()) {
@@ -497,7 +489,6 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
 
 vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
 {
-    cout << "inside initFromPDB; chainCount is " << chainCount << endl;
     vector<Residue> vResidues;
 
     strcpy(filename, pdbfilename);
