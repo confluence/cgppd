@@ -117,7 +117,7 @@ void TestReplica::testCPUandGPUPotential()
     ASSERT_POTENTIALS_EQUAL(expected_flexible_potential, replica.E());
 
 #if USING_CUDA
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential.total(), replica.EonDevice(), 0.001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential.total(), replica.EonDevice(), 0.00001);
 #endif // USING_CUDA
 
     replica.calculate_rigid_potential_only = true;
@@ -137,7 +137,7 @@ void TestReplica::testCPUandGPUPotential()
     ASSERT_POTENTIALS_EQUAL(expected_rigid_potential, replica.E());
 
 #if USING_CUDA
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_rigid_potential.total(), replica.EonDevice(), 0.001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_rigid_potential.total(), replica.EonDevice(), 0.00001);
 #endif // USING_CUDA
 }
 
@@ -179,8 +179,8 @@ void TestReplica::testPotentialGeometry()
         CPPUNIT_ASSERT_EQUAL(1, m1.Residues[i].chain_UID);
         CPPUNIT_ASSERT_EQUAL(0, m1.Residues[i].segment_bond_UID);
 #if USING_CUDA
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0f, m1.Residues[i].pos_w, 0.001);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.5f, m1.Residues[i].meta_w, 0.001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0f, m1.Residues[i].pos_w, 0.00001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.5f, m1.Residues[i].meta_w, 0.00001);
 #endif
     }
     
@@ -189,8 +189,8 @@ void TestReplica::testPotentialGeometry()
         CPPUNIT_ASSERT_EQUAL(2, m2.Residues[i].chain_UID);
         CPPUNIT_ASSERT_EQUAL(0, m2.Residues[i].segment_bond_UID);
 #if USING_CUDA
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(2.0f, m2.Residues[i].pos_w, 0.001);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.25f, m2.Residues[i].meta_w, 0.001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(2.0f, m2.Residues[i].pos_w, 0.00001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.25f, m2.Residues[i].meta_w, 0.00001);
 #endif
     }
     
@@ -199,8 +199,8 @@ void TestReplica::testPotentialGeometry()
         CPPUNIT_ASSERT_EQUAL(2, m2.Residues[i].chain_UID);
         CPPUNIT_ASSERT_EQUAL(0, m2.Residues[i].segment_bond_UID);
 #if USING_CUDA
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0f, m2.Residues[i].pos_w, 0.001);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.25f, m2.Residues[i].meta_w, 0.001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0f, m2.Residues[i].pos_w, 0.00001);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(float(i + 1) + 0.25f, m2.Residues[i].meta_w, 0.00001);
 #endif
     }
 }

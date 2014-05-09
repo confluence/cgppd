@@ -75,50 +75,14 @@ void Simulation::init(int argc, char **argv, int pid)
 
     // TODO: remove magic number; make initial array size a constant
     initialReplica.init_first_replica(parameters, aminoAcidData, 30);
+    
 
-    LOG(parameters.verbosity, "Performing potential test...\n");
+//     LOG(parameters.verbosity, "Performing potential test...\n");
 #if INCLUDE_TIMERS
     initialReplica.initTimers();
 #endif
-
-    float p = initialReplica.E().total(); // TODO TODO TODO: this may cache a CPU value for internal E which is subsequently added when the potential is performed on the GPU
-    float pnc = initialReplica.E(&initialReplica.molecules[0], &initialReplica.molecules[1]).total();
-    // TODO: important: for reasons which are temporarily unclear to me, we need to set this initial potential and copy it to the child replicas, otherwise the GL display doesn't move. o_O
-    initialReplica.potential = p;
-
-    LOG(parameters.verbosity > 1, "\tCPU initial energy value: %12.8f (%12.8f) kcal/mol\n", p, pnc);
-
-#if USING_CUDA
-    float * deviceLJpTmp;
-#if CUDA_STREAMS
-    cudaStream_t streams[1]; // TODO TODO TODO changed this from [0] to [1]; assuming own bug; check this later
-    setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData, streams, 1);
-    initialReplica.setup_CUDA(deviceLJpTmp, streams, 0);
-#else
-    setup_CUDA(0, parameters.bound, deviceLJpTmp, &aminoAcidData);
-    initialReplica.setup_CUDA(deviceLJpTmp);
-#endif // CUDA_STREAMS
-
-    double GPUE = initialReplica.EonDevice();
-    double GPUE_NC = initialReplica.EonDeviceNC();
-    initialReplica.potential = GPUE;
-
-    LOG(parameters.verbosity > 1, "\tGPU initial energy value: %12.8f (%12.8f) kcal/mol\n", GPUE, GPUE_NC);
-    LOG(parameters.verbosity > 1, "\tAbsolute error:           %12.8f (%12.8f) kcal/mol\n", abs(GPUE-p), abs(GPUE_NC-pnc));
-    LOG(parameters.verbosity > 1, "\tRelative error:           %12.8f (%12.8f) kcal/mol\n", abs(p-GPUE)/abs(p), abs(pnc-GPUE_NC)/abs(pnc));
-
-    if (abs(p - GPUE) / abs(p) > 0.01)
-    {
-        LOG(WARN,"\tWARNING: Inconsistency between GPU and CPU result. Check simulation!\n");
-    }
-
-    initialReplica.teardown_CUDA();
-#if CUDA_STREAMS
-    teardown_CUDA(deviceLJpTmp, streams, 1);
-#else
-    teardown_CUDA(deviceLJpTmp);
-#endif // CUDA_STREAMS
-#endif // USING_CUDA
+    
+    initialReplica.potential = initialReplica.E().total();
 
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
     {
@@ -173,6 +137,7 @@ void Simulation::init(int argc, char **argv, int pid)
 
     // note which replica is the 300K replica
     // TODO: verify that there really is always a 300k replica
+    
     _300kReplica = &replica[position_of_temperature[300.0f]];
 
     // Thread stuff

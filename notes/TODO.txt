@@ -2,36 +2,10 @@
 RIGHT NOW
 --------------------------------------------------------------------------------
 
-FIXING THE POTENTIAL
-    * We need to exclude pairs inside rigid domains. This is easy to do on the CPU and GPU.
-    * We need to exclude close neighbours which are neighbours via a bond, not on the backbone, This is hard on the GPU.
-        * excluding the bond partners directly is not that hard
-        * excluding indirect neighbours is harder, but we could calculate that component on the CPU and *subtract* it from the total.
-            * get the neighbours of each endpoint of each bond within a certain distance; pair them off if they aren't already backbone neighbours
-    * We have two floats for packing all the available data into. It's integer data, so we can use each float for two values (preferably provided one is small and only used for an equality test with itself), and extract each fractional part with modff
-		* PROBLEM: adjacency test is only valid within the same chain, so we also need chain IDs.
-		* solution: eliminate molecule ID (keep the old way if linkers are turned off); add *global* ids for domains, chains and bonds?
-		* new plan: chain uid, domain uid (starting from 1?), residue id (relative to molecule or chain; doesn't matter), bond uid
-            * residue.chain, because residues will only be compared if the chain is the same, so can use whole float without dropping fractional part
-            * domain.bond
-            * check to make sure that PADDING_IDENTIFIER and CROWDER_IDENTIFIER and RIGID_IDENTIFIER are still OK.
-            * Oh, dear. What if RIGID_IDENTIFIER is set? Then we need the molecule ID, but don't have it. How badly do we need this feature?
-                * the entire molecule will be a single rigid domain
-                * in fact, this will probably be covered for free by the domain code, so the special rigid stuff can be ditched
-                * except maybe setting a molecule to be rigid
-                * override the domain part of the precalculated meta_w float when setting meta.w
-		* no linkers: if i.molecule_id == j.molecule_id, do nothing
-		* linkers: if i.domain_uid == j.domain_uid (and it exists) OR i.chain_uid == j.chain_uid AND i.residue_id close to j.residue_id OR i.bond_uid == j.bond_uid, do nothing
-
-        * LEFT TO DO:
-            * Back on campus, check if the GPU results are still off; possibly clean up molecule E function more if necessary.
-
-OLDER CUDA POTENTIAL ISSUES
-    * in the CUDA code, there is a check for pos.w < 0.0f instead of pos.w == PADDER_IDENTIFIER. Fix that. The segment value should always be positive, though.
-    * E_TiledKernelNC was not updated with the new logic. Not detected because we're not testing it with a flexible molecule. Fix that in the replica test.
-
 OTHER REFACTORING / TESTS
-    * current homemade logging sucks. Replace with google-glog.
+    * more extensive potential unit tests (rigid, flexible, flexible+rigid, multiple chains, etc.)
+    * take out the initial replica potential calculation -- that's what unit tests are for.
+    * current homemade logging sucks. Replace with google-glog?
     * check if everything in the threads is still threadsafe. Have we actually run the code with multiple threads?
     * check if the bonded component is growing weirdly when uim is flexible
     * check if sharing of graph by all molecule copies works (it should; just like it works for amino acid data)
@@ -43,14 +17,13 @@ OTHER REFACTORING / TESTS
     * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
     * valgrind is really upset about a lot of the stl container stuff.
 
-    * clean up crappy Potential internals now that there are unit tests
     * clean up potential for inside the molecule -- incorporate everything into a single loop in the replica
     * unit test for parsing various input files (amino acids, torsions, etc..)
     * clean up output files as much as possible
         * put a separate ABOUT file with compilation options in the directory instead of appending suffixes and putting crap in the PDB files
         * stop outputting rotation / translation (no longer relevant)
             * but only if compiled with flexible linkers?
-    * take out the initial replica potential calculation -- that's what unit tests are for.
+    * clean up crappy Potential internals now that there are unit tests?
 
 SIMULATIONS
 * diubiquitin simulations -- once the segment code is fixed

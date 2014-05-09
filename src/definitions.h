@@ -41,7 +41,6 @@
 
     #define PADDER_IDENTIFIER	-2.0f	//flag for identifying a padding residue
     #define CROWDER_IDENTIFIER	-1.0f 	//flag for identifying a crowder residue
-    #define RIGID_IDENTIFIER    -3.0f   //flag for identifying a residue in a rigid molecule
     #define PADDER_AATYPE 		20.0f
 
     // code things
