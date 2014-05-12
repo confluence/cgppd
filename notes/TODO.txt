@@ -4,9 +4,8 @@ RIGHT NOW
 
 OTHER REFACTORING / TESTS
     * more extensive potential unit tests (rigid, flexible, flexible+rigid, multiple chains, etc.)
-    * current homemade logging sucks. Replace with google-glog?
-    * check if everything in the threads is still threadsafe. Have we actually run the code with multiple threads?
     * check if the bonded component is growing weirdly when uim is flexible
+    * check if everything in the threads is still threadsafe. Have we actually run the code with multiple threads?
     * check if sharing of graph by all molecule copies works (it should; just like it works for amino acid data)
         * check that really soon, to make sure that the bonded potential isn't slowly growing because the geometric features in the graph are being duplicated, or something. That would be bad.
     * check if magnitude of bonded components is correct
@@ -23,6 +22,7 @@ OTHER REFACTORING / TESTS
         * stop outputting rotation / translation (no longer relevant)
             * but only if compiled with flexible linkers?
     * clean up crappy Potential internals now that there are unit tests?
+    * current homemade logging sucks. Replace with google-glog?
 
 SIMULATIONS
 * diubiquitin simulations -- once the segment code is fixed
