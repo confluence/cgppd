@@ -4,7 +4,6 @@ RIGHT NOW
 
 OTHER REFACTORING / TESTS
     * more extensive potential unit tests (rigid, flexible, flexible+rigid, multiple chains, etc.)
-    * take out the initial replica potential calculation -- that's what unit tests are for.
     * current homemade logging sucks. Replace with google-glog?
     * check if everything in the threads is still threadsafe. Have we actually run the code with multiple threads?
     * check if the bonded component is growing weirdly when uim is flexible
@@ -51,7 +50,6 @@ CLEANUP / BUGFIX
     * use chain names if they exist
     * fix old PDB files with chain id in the wrong place (WTF)
 * remove printing of old cruft about translation/rotation
-* 300k replica -- how is it found if there isn't one?!
 * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 
 --------------------------------------------------------------------------------

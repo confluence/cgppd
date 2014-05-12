@@ -57,6 +57,7 @@ public:
 
     Replica initialReplica;
     Replica replica[REPLICA_COUNT];   // container for all replicas in the simulation
+    float near_300k; // temperature closest to 300k in this simulation
     Replica * _300kReplica;
 
     int waitingThreads;
