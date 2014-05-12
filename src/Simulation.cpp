@@ -1,6 +1,6 @@
 #include "Simulation.h"
 
-Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), exchangeFraction(0), accumulativeExchangeFraction(0), offset(0), steps(0), thread_created(false)
+Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), exchangeFraction(0), accumulativeExchangeFraction(0), offset(0), steps(0), thread_created(false), near_300k(0.0f)
 {
     REMCRng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set (REMCRng, random());
@@ -134,11 +134,19 @@ void Simulation::init(int argc, char **argv, int pid)
         // lookup of which replica has temperature x
         temperature[i] = replica[i].temperature;
     }
-
-    // note which replica is the 300K replica
-    // TODO: verify that there really is always a 300k replica
     
-    _300kReplica = &replica[position_of_temperature[300.0f]];
+    // Find the replica which is closest to 300K
+    
+    near_300k = temperature[0];
+    
+    for (map<float, int>::iterator p = position_of_temperature.begin(); p != position_of_temperature.end(); p++) {
+        if (fabs(p->first - 300.0f) < fabs(near_300k - 300.0f)) {
+            near_300k = p->first;
+        }
+    }
+    
+    // TODO: print out the correct temperature instead of 300K later (save the value on the class).
+    _300kReplica = &replica[position_of_temperature[near_300k]];
 
     // Thread stuff
 
@@ -312,7 +320,7 @@ void Simulation::run()
         }
 #endif
 
-        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ 300K: %f)\n", steps, parameters.REsteps, _300kReplica->accumulativeFractionBound);
+        LOG(ALWAYS, "Replica Exchange step %d of %d complete (Fraction bound @ %fK: %f)\n", steps, parameters.REsteps, near_300k, _300kReplica->accumulativeFractionBound);
 
         exchange_frequency();
     }
