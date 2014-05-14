@@ -816,9 +816,9 @@ void Replica::MoleculeDataToDevice(int moleculeId)
         host_float4_residuePositions[residueIndex].x = molecules[moleculeId].Residues[rc].position.x;
         host_float4_residuePositions[residueIndex].y = molecules[moleculeId].Residues[rc].position.y;
         host_float4_residuePositions[residueIndex].z = molecules[moleculeId].Residues[rc].position.z;
-        host_float4_residuePositions[residueIndex].w = float(moleculeId);  // residue belongs to this molecule id
-
-        //TODO: I don't think the new meta stuff will ever change. If tests need to override it, they can re-run ReplicaDataToDevice
+        
+        // Only the positions change; nothing else should have to be updated.
+        // If a unit test needs to change e.g. calculate_rigid_potential_only while reusing the same replica, it should call ReplicaDataToDevice explicitly afterwards.
 
         residueIndex++;
     }

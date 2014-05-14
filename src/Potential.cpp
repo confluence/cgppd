@@ -31,9 +31,6 @@ double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &
     // NOTE: in kim2008, uij(r) for attractive interactions is written as 4|Eij|( (sigmaij/r)^12 - (sigmaij/r)^6 )
     // Because Eij is negative, 4|Eij| = -4Eij
 
-    LOG(DEBUG && (fabs(LJ) > 1.0), "!!! ");
-    LOG(DEBUG, "M%d R%d / M%d R%d: r = %f LJ = %f\n", ri.moleculeId, ri.resSeq, rj.moleculeId, rj.resSeq, r, LJ);
-
     return LJ;
 }
 
