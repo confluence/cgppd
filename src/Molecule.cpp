@@ -441,7 +441,7 @@ void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const doubl
         }
         case MC_TRANSLATE:
         {
-            strcat(last_MC_move, "Translate");
+            strcat(last_MC_move, "Transl");
             translate(rng, translate_step);
             break;
         }

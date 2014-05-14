@@ -322,7 +322,6 @@ void Replica::MCSearch(int steps, int mcstep)
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
@@ -332,6 +331,8 @@ void Replica::MCSearch(int steps, int mcstep)
         newPotential = E().total();
 #endif
         float delta = newPotential - potential;
+
+        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 
         // accept change if its better.
         if (delta < 0.0f)
@@ -610,7 +611,6 @@ void Replica::MCSearchMutate()
     // save the current state so we can roll back if it was not a good mutation.
     savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
     molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
-    LOG(DEBUG, "Replica %d\tMolecule %d:\t%s\t", label, moleculeNo, molecules[moleculeNo].last_MC_move);
 
     lastMutationIndex = moleculeNo;
 }
@@ -622,17 +622,23 @@ void Replica::MCSearchEvaluate()
 
 void Replica::MCSearchAcceptReject()
 {
+    LOG(DEBUG, "replica %d\tmolecule %d:\t%s\t", label, lastMutationIndex, molecules[lastMutationIndex].last_MC_move);
+
     newPotential = SumGridResults();
-    LOG(DEBUG, "\nASYNC: unbonded total: %f\n", newPotential);
+
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
         double bonded_potential = internal_molecule_E(false).total();
-        LOG(DEBUG, "ASYNC: bonded total: %f\n", bonded_potential);
+        LOG(DEBUG, "new Eu: %f,\tnew Eb: %f\t", newPotential, bonded_potential);
         newPotential += bonded_potential;
     }
 #endif
 
+    LOG(DEBUG, "new E: %f\t", newPotential);
+
     float delta = (newPotential - potential);
+    
+    
     if (delta < 0.0f)
     {
         potential = newPotential;
@@ -644,7 +650,7 @@ void Replica::MCSearchAcceptReject()
     {
         potential = newPotential;
         acceptA++;
-        LOG(DEBUG, "* Replace: delta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*kcal/(Rgas*temperature)));
+        LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*kcal/(Rgas*temperature)));
     }
     else
     // if the change is bad then discard it.

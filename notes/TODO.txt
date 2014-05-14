@@ -3,17 +3,13 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 OTHER REFACTORING / TESTS
-    * more extensive potential unit tests (rigid, flexible, flexible+rigid, multiple chains, etc.)
-    * check if the bonded component is growing weirdly when uim is flexible
+    * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
+    * more extensive potential unit tests: add potential test with all the weird geometry features, i.e. diubiquitin with one molecule and two chains. Maybe two diubiquitin, so we have two molecules with two chains each and can test absolutely everything.
+    * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
     * check if everything in the threads is still threadsafe. Have we actually run the code with multiple threads?
-    * check if sharing of graph by all molecule copies works (it should; just like it works for amino acid data)
-        * check that really soon, to make sure that the bonded potential isn't slowly growing because the geometric features in the graph are being duplicated, or something. That would be bad.
     * check if magnitude of bonded components is correct
         * actually, do we have any results for the bonded components from Kim?
         * could the tiny discrepancy from Kim's results be due to additional nonbonded components from inside segments? (There would be no inter-domain contribution because Kim & Hummer's model doesn't have a flex move).
-
-    * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
-    * valgrind is really upset about a lot of the stl container stuff.
 
     * clean up potential for inside the molecule -- incorporate everything into a single loop in the replica
     * unit test for parsing various input files (amino acids, torsions, etc..)
@@ -39,13 +35,11 @@ NOW
 MODEL CORRECTNESS
 * potential is now much (?) bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct? Also including the potential from inside proteins should raise the total (right)?
     * analyse potential breakdown (from CPU-only version)
-* Why is the LJ so huge for reference conformation 1 when internal potential is calculated? (assuming that two residues are really close together)
 * Are any conversions required for the linker components?
 
 CLEANUP / BUGFIX
-* is it *actually* worth summing vector components separately? Probably not, and we don't do it everywhere anyway.
+* remove probably pointless optimisations like summing vector components separately (since we don't do this everywhere anyway)
 * remove unused code for e.g. old kernels and MC on the GPU
-* use FLEXIBLE_LINKS flag in CUDA code; put back the old version if linkers are not enabled?
 * fix chain processing
     * use chain names if they exist
     * fix old PDB files with chain id in the wrong place (WTF)
@@ -55,12 +49,6 @@ CLEANUP / BUGFIX
 --------------------------------------------------------------------------------
 SOON
 --------------------------------------------------------------------------------
-
-OPTIMISATION
-* why not precalculate the LJ coefficients which are independent from r?
-    * We could definitely at least store Eij instead of eij.
-    * How much extra storage / memory transfer overhead would be required for 3 coefficients (3EijSigij, 2Eij and 2^(1/6)Sigij)?
-    * Maybe do it and test it? float3 table instead of float.
 
 TEST
 * stuff that's disabled
@@ -94,13 +82,19 @@ BENCHMARKING
 LATER / MAYBE
 --------------------------------------------------------------------------------
 
+OPTIMISATION
+* why not precalculate the LJ coefficients which are independent from r?
+    * We could definitely at least store Eij instead of eij.
+    * How much extra storage / memory transfer overhead would be required for 3 coefficients (3EijSigij, 2Eij and 2^(1/6)Sigij)?
+    * Maybe do it and test it? float3 table instead of float.
+* Maybe leave this for last; possibly just mention it as a future direction instead of doing it
+
 CLEANUP
 * Remove dependence on cutil, which is not supposed to be used in production.
     * Need timers and a way to check CUDA errors?
     * Possibly read the cutil source code and reimplement these?
-
-OPTIMISE / TEST
-* is caching of internal potential subtotals important? Probably still useful for CPU LJ/DH code.
+    * New SDK should have new helper functions
+    * but we need to extract it from the single-file installer somehow
 
 ADD
 * Multiple GPUs?  Does that work?  It should just work.
