@@ -2,7 +2,7 @@ gpus 1
 streams 1
 threads 1
 mcsteps 100
-resteps 2
+resteps 10
 replicas 5
 samplefrequency 10
 sampleafter 0

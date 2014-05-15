@@ -161,6 +161,11 @@ void TestSimulation::testREMC()
     // the sync / async output may be too different
     
     // compare accept / reject statistics?
+    
+    for (int i = 0; i < s.parameters.replicas; i++) {
+        CPPUNIT_ASSERT(s.replica[i].accumulativeAcceptanceRatio > 0.7f);
+        CPPUNIT_ASSERT(s.replica[i].accumulativeAcceptanceRatio < 0.8f);
+    }
 
 }
 

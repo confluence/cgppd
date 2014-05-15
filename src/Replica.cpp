@@ -322,7 +322,7 @@ void Replica::MCSearch(int steps, int mcstep)
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-
+        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
@@ -331,8 +331,6 @@ void Replica::MCSearch(int steps, int mcstep)
         newPotential = E().total();
 #endif
         float delta = newPotential - potential;
-
-        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 
         // accept change if its better.
         if (delta < 0.0f)
@@ -359,8 +357,6 @@ void Replica::MCSearch(int steps, int mcstep)
 #endif
         }
 
-        LOG(DEBUG, "Molecule %d length: %f\n", moleculeNo, molecules[moleculeNo].length);
-        LOG(DEBUG, "\n");
     }
 }
 
@@ -881,14 +877,14 @@ double Replica::EonDevice()
     CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
 #endif
     //TODO add new timer for this
-    LOG(DEBUG, "\nSYNC: unbonded total: %f\n", result);
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
         double bonded_potential = internal_molecule_E(false).total();
-        LOG(DEBUG, "SYNC: bonded total: %f\n", bonded_potential);
+        LOG(DEBUG, "new Eu: %f,\tnew Eb: %f\t", result, bonded_potential);
         result += bonded_potential;
     }
 #endif
+    LOG(DEBUG, "new E: %f\t", result);
     return result;
 }
 
