@@ -183,16 +183,27 @@ Replica::~Replica()
 
 void Replica::exchangeReplicas(Replica &r)
 {
-    swap(label,r.label);
-    swap(temperature,r.temperature);
+	LOG(DEBUG, "Exchanging replicas %d and %d\n", label, r.label);
+    swap(label, r.label);
+    swap(temperature, r.temperature);
 
     // for statistics
-    swap(totalAcceptReject,r.totalAcceptReject);
-    swap(totalAccept,r.totalAccept);
-    swap(boundSamples,r.boundSamples);
-    swap(samplesSinceLastExchange,r.samplesSinceLastExchange);
-    swap(totalBoundSamples,r.totalBoundSamples);
-    swap(totalSamples,r.totalSamples);
+    
+    swap(accept, r.accept);
+    swap(acceptA, r.acceptA);
+    swap(reject, r.reject);
+    
+    swap(totalAcceptReject, r.totalAcceptReject);
+    swap(totalAccept, r.totalAccept);
+    swap(acceptanceRatio, r.acceptanceRatio);
+    swap(accumulativeAcceptanceRatio, r.accumulativeAcceptanceRatio);
+
+    swap(boundSamples, r.boundSamples);
+    swap(samplesSinceLastExchange, r.samplesSinceLastExchange);
+    swap(totalBoundSamples, r.totalBoundSamples);
+    swap(totalSamples, r.totalSamples);
+    swap(fractionBound, r.fractionBound);
+    swap(accumulativeFractionBound, r.accumulativeFractionBound);
 }
 
 void Replica::copy(const Replica &r)
@@ -1071,6 +1082,7 @@ void Replica::acceptance_ratio(FILE * acceptanceRatioFile)
     totalAcceptReject += acceptA + accept + reject;
 
     acceptanceRatio = float(acceptA + accept) / float(acceptA + accept + reject);
+    LOG(DEBUG, "Replica %d acceptance ratio: %f\n", label, acceptanceRatio);
     accumulativeAcceptanceRatio = float(totalAccept) / float(totalAcceptReject);
 
     fprintf(acceptanceRatioFile,"| %6.4f %6.4f ", acceptanceRatio, accumulativeAcceptanceRatio);
