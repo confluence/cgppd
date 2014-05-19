@@ -4,6 +4,8 @@ RIGHT NOW
 
 OTHER REFACTORING / TESTS
     * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
+		* async acceptance rations are lower. Lots of zeros! Something is probably wrong.
+		* why does the acceptance_ratios file change length?! Surely they should all go to 1000 lines? Is there a missing flush?
     * rework diubiquitin creation script to do the molecules the more sensible way around and also add a fake sidechain
     * more extensive potential unit tests: add potential test with all the weird geometry features, i.e. diubiquitin with one molecule and two chains. Maybe two diubiquitin, so we have two molecules with two chains each and can test absolutely everything.
     * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
