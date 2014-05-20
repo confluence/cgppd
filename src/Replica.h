@@ -195,9 +195,9 @@ public:
     float SumGridResults();	//sums the grid returned by the potential kernel
     uint lastMutationIndex;
     //split the functions to allow for latency hiding and overlapping calls
-    void MCSearchMutate();
-    void MCSearchEvaluate();
-    void MCSearchAcceptReject();
+    void MCSearchMutate(int mcstep);
+    void MCSearchEvaluate(int mcstep);
+    void MCSearchAcceptReject(int mcstep);
 #endif
 
 #endif

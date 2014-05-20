@@ -66,7 +66,7 @@ public:
     gsl_ran_discrete_t * MC_discrete_table;
 #endif
 
-    uint get_MC_mutation_type(gsl_rng * rng); // randomly select type of MC move
+    int get_MC_mutation_type(gsl_rng * rng); // randomly select type of MC move
     void make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step);
 
     void setMoleculeRoleIdentifier(float moleculeRoleIdentifier); // this setter is actually useful

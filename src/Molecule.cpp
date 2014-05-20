@@ -95,11 +95,13 @@ void Molecule::log_info(int index, int verbosity)
 void Molecule::MC_backup_restore(const Molecule* m)
 {
     memcpy(Residues, m->Residues, sizeof(Residue) * m->residueCount);
-    residueCount = m->residueCount;
 
     center = m->center;
     rotation = m->rotation;
     length = m->length;
+    volume = m->volume;
+
+    strcpy(last_MC_move, m->last_MC_move);
 }
 
 void Molecule::init_saved_molecule(int max_residue_count)
@@ -410,25 +412,26 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
 }
 #endif // FLEXIBLE_LINKS
 
-uint Molecule::get_MC_mutation_type(gsl_rng * rng)
+int Molecule::get_MC_mutation_type(gsl_rng * rng)
 {
 #if FLEXIBLE_LINKS
     if (is_flexible)
     {
-        return gsl_ran_discrete(rng, MC_discrete_table);
+        return (int) gsl_ran_discrete(rng, MC_discrete_table);
     }
     else
     {
-        return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
+        return (int) gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
     }
 #else // if not FLEXIBLE_LINKS
-    return gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
+    return (int) gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
 #endif // FLEXIBLE_LINKS
 }
 
 void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
-    uint mutationType = get_MC_mutation_type(rng);
+    int mutationType = get_MC_mutation_type(rng);
+    //LOG(DEBUG, "++++++++++++++++++++++ In molecule, random value for MC move: %d\n", mutationType);
     memset(last_MC_move, 0, 256);
 
     switch (mutationType)

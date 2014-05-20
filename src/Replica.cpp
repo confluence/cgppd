@@ -328,12 +328,14 @@ void Replica::MCSearch(int steps, int mcstep)
 {
     for (int step = 0; step < steps; step++)
     {
-        uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
+        int moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
+        LOG(DEBUG, "++++++++++++++++++++++ In step %d replica %d, random value for molecule selection: %d\n", mcstep+step, label, moleculeNo);
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
+        // TODO TODO TODO should this be mcstep + step?!
+        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", mcstep+step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
@@ -612,9 +614,10 @@ float Replica::SumGridResults()
 #if CUDA_STREAMS
 
 // 1/3 of the above function, does the mutation on the gpu asynchronously
-void Replica::MCSearchMutate()
+void Replica::MCSearchMutate(int mcstep)
 {
-    uint moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
+    int moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
+    LOG(DEBUG, "++++++++++++++++++++++ In step %d replica %d, random value for molecule selection: %d\n", mcstep, label, moleculeNo);
     // save the current state so we can roll back if it was not a good mutation.
     savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
     molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
@@ -622,14 +625,14 @@ void Replica::MCSearchMutate()
     lastMutationIndex = moleculeNo;
 }
 
-void Replica::MCSearchEvaluate()
+void Replica::MCSearchEvaluate(int mcstep)
 {
     EonDeviceAsync();
 }
 
-void Replica::MCSearchAcceptReject()
+void Replica::MCSearchAcceptReject(int mcstep)
 {
-    LOG(DEBUG, "replica %d\tmolecule %d:\t%s\t", label, lastMutationIndex, molecules[lastMutationIndex].last_MC_move);
+    LOG(DEBUG, "Step %d:\tReplica %d\tmolecule %d:\t%s\t", mcstep, label, lastMutationIndex, molecules[lastMutationIndex].last_MC_move);
 
     newPotential = SumGridResults();
 
