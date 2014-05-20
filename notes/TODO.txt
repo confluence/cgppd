@@ -7,7 +7,9 @@ OTHER REFACTORING / TESTS
 		* async acceptance rations are lower. Lots of zeros! Something is probably wrong.
 		* why does the acceptance_ratios file change length?! Surely they should all go to 1000 lines? Is there a missing flush?
 		* why *is* the random behaviour different for strams and not streams? The REMC rng in Simulation should not be affected, and each replica has its own rng which should be queried in the same order in both cases.
-			** debug this better
+			** debug this
+        * does it still happen when there is only one replica?
+            ** yes, it does, so this has nothing to do with threads or replica exchange.
     * rework diubiquitin creation script to do the molecules the more sensible way around and also add a fake sidechain
     * more extensive potential unit tests: add potential test with all the weird geometry features, i.e. diubiquitin with one molecule and two chains. Maybe two diubiquitin, so we have two molecules with two chains each and can test absolutely everything.
     * Why are the async sample times different? Different grouping? Why are the intervals irregular? This may be working as intended; will need to compensate in unit test.
