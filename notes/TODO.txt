@@ -12,6 +12,9 @@ OTHER REFACTORING / TESTS
             ** yes, it does, so this has nothing to do with threads or replica exchange.
         * MYSTERY SOLVED: the potential is different. Why is the potential different?
             * In async version, the unbonded potential doesn't change for a long time in the beginning. That can't be right, or just a precision issue.
+            * What does the CPU potential say? Produce a third test version for it and compare.
+            * The CPU potential is very close to the synchronous version, so it looks like async is broken.
+                * It uses the same kernel -- so is the summation of the results the problem?
 
     * It would be really nice for testing if sync/async and linkers/rigid were runtime options instead of preprocessor directives. Is there any reason not to do this?
             
