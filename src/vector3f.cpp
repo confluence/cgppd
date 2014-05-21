@@ -174,6 +174,12 @@ const char * Vector3double::c_str()
     return "";
 }
 
+ostream& operator<<(ostream& os, const Vector3double v)
+{
+    os << "Vector3f(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return os;
+};
+
 RotationalMatrix::RotationalMatrix (Vector3f u, float alpha)
 {
     set (u,alpha);

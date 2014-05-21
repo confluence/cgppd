@@ -124,7 +124,7 @@ public:
         return Vector3double(x,y,z);
     };
     const char * c_str();
-
+    friend ostream& operator<<(ostream& os, const Vector3double v);
 };
 
 

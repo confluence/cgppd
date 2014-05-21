@@ -242,12 +242,15 @@ void Molecule::wrap_if_necessary()
 void Molecule::rotate(gsl_rng * rng, const double rotate_step)
 {
     // no boundary conditions required, because the centre doesn't change
-    rotate(normalised_random_vector_d(rng), rotate_step);
+    Vector3double v = normalised_random_vector_d(rng);
+    LOG(DEBUG, "+++ Random vector for rotation: %f %f %f\n", v.x, v.y, v.z);
+    rotate(v, rotate_step);
 }
 
 void Molecule::translate(gsl_rng * rng, const double translate_step)
 {
     Vector3f v = translate_step * normalised_random_vector_f(rng);
+    LOG(DEBUG, "+++ Random vector for translation: %f %f %f\n", v.x, v.y, v.z);
     translate(v);
 }
 
@@ -369,9 +372,11 @@ void Molecule::flex(gsl_rng * rng, const double rotate_step)
 
     vector<int> & index_set = graph.MC_flex_residues;
     int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
+    LOG(DEBUG, "+++ Random residue index in flex: %d\n", ri);
 
     const vector<int> & neighbours = graph.neighbours(ri);
     int neighbour = neighbours[gsl_rng_uniform_int(rng, neighbours.size())];
+    LOG(DEBUG, "+++ Random neighbour residue index in flex: %d\n", neighbour);
 
     flex(raxis, rotate_step, ri, neighbour);
 }
@@ -381,7 +386,9 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
     for (size_t i = 0; i < NUM_LOCAL_MOVES; i++) {
         //TODO: if linker too short for crankshaft, only return translate?
         //TODO: if crankshaft disabled, only return translate?
-        uint move = gsl_ran_bernoulli(rng, LOCAL_TRANSLATE_BIAS);
+        int move = gsl_ran_bernoulli(rng, LOCAL_TRANSLATE_BIAS);
+
+        LOG(DEBUG, "+++ Random move in make_local_moves: %d\n", move);
 
         switch (move)
         {
@@ -390,6 +397,7 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 strcat(last_MC_move, "T");
                 vector<int> & index_set = graph.MC_local_residues;
                 int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
+                LOG(DEBUG, "+++ Random residue index in local translate: %d\n", ri);
 
                 Vector3f v = LOCAL_TRANSLATE_STEP_SCALING_FACTOR * translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
@@ -400,8 +408,10 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 strcat(last_MC_move, "C");
                 vector<int> & index_set = graph.MC_crankshaft_residues;
                 int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
+                LOG(DEBUG, "+++ Random residue index in crankshaft: %d\n", ri);
 
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
+                LOG(DEBUG, "+++ Random angle flip in crankshaft: %d\n", ri);
                 crankshaft(rotate_step, flip, ri);
                 break;
             }
@@ -431,7 +441,7 @@ int Molecule::get_MC_mutation_type(gsl_rng * rng)
 void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
     int mutationType = get_MC_mutation_type(rng);
-    //LOG(DEBUG, "++++++++++++++++++++++ In molecule, random value for MC move: %d\n", mutationType);
+    LOG(DEBUG, "+++ Random molecule MC move: %d\n", mutationType);
     memset(last_MC_move, 0, 256);
 
     switch (mutationType)
