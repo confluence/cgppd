@@ -345,6 +345,9 @@ void Replica::MCSearch(int steps, int mcstep)
 #endif
         float delta = newPotential - potential;
 
+        double DEBUG_RANDOM_BOLTZMANN(0.0);
+        bool PRINT_DEBUG_RANDOM_BOLTZMANN(false);
+
         // accept change if its better.
         if (delta < 0.0f)
         {
@@ -353,8 +356,9 @@ void Replica::MCSearch(int steps, int mcstep)
             LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
         }
         // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
-        else if (gsl_rng_uniform(rng) < exp(-(delta*kcal)/(Rgas*temperature)))
+        else if ((DEBUG_RANDOM_BOLTZMANN = gsl_rng_uniform(rng)) && DEBUG_RANDOM_BOLTZMANN < exp(-(delta*kcal)/(Rgas*temperature)))
         {
+            PRINT_DEBUG_RANDOM_BOLTZMANN = true;
             potential = newPotential;
             acceptA++;
             LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta * kcal/(Rgas*temperature)));
@@ -370,6 +374,9 @@ void Replica::MCSearch(int steps, int mcstep)
 #endif
         }
 
+        if (PRINT_DEBUG_RANDOM_BOLTZMANN) {
+            LOG(DEBUG, "+++ random value for boltzmann distribution test: %f\n", DEBUG_RANDOM_BOLTZMANN);
+        }
     }
 }
 
@@ -648,6 +655,8 @@ void Replica::MCSearchAcceptReject(int mcstep)
 
     float delta = (newPotential - potential);
     
+    double DEBUG_RANDOM_BOLTZMANN(0.0);
+    bool PRINT_DEBUG_RANDOM_BOLTZMANN(false);
     
     if (delta < 0.0f)
     {
@@ -656,8 +665,9 @@ void Replica::MCSearchAcceptReject(int mcstep)
         LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
     }
     // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
-    else if (gsl_rng_uniform(rng) < exp(-delta*kcal/(Rgas*temperature)))
+    else if ((DEBUG_RANDOM_BOLTZMANN = gsl_rng_uniform(rng)) && DEBUG_RANDOM_BOLTZMANN < exp(-delta*kcal/(Rgas*temperature)))
     {
+        PRINT_DEBUG_RANDOM_BOLTZMANN = true;
         potential = newPotential;
         acceptA++;
         LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*kcal/(Rgas*temperature)));
@@ -669,6 +679,10 @@ void Replica::MCSearchAcceptReject(int mcstep)
         molecules[lastMutationIndex].MC_backup_restore(&savedMolecule);
         LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
+    }
+
+    if (PRINT_DEBUG_RANDOM_BOLTZMANN) {
+        LOG(DEBUG, "+++ random value for boltzmann distribution test: %f\n", DEBUG_RANDOM_BOLTZMANN);
     }
 
 }
