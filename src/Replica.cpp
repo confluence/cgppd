@@ -335,7 +335,7 @@ void Replica::MCSearch(int steps, int mcstep)
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
         // TODO TODO TODO should this be mcstep + step?!
-        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", mcstep+step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
+        LOG(DEBUG, "+++ Step %d:\tReplica %d\tMolecule %d:\t%s\t", mcstep+step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
@@ -639,7 +639,7 @@ void Replica::MCSearchEvaluate(int mcstep)
 
 void Replica::MCSearchAcceptReject(int mcstep)
 {
-    LOG(DEBUG, "Step %d:\tReplica %d\tmolecule %d:\t%s\t", mcstep, label, lastMutationIndex, molecules[lastMutationIndex].last_MC_move);
+    LOG(DEBUG, "+++ Step %d:\tReplica %d\tmolecule %d:\t%s\t", mcstep, label, lastMutationIndex, molecules[lastMutationIndex].last_MC_move);
 
     newPotential = SumGridResults();
 
