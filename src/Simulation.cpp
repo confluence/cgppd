@@ -2,6 +2,7 @@
 
 Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExchanges(0), totalTests(0), exchangeFraction(0), accumulativeExchangeFraction(0), offset(0), steps(0), thread_created(false), near_300k(0.0f)
 {
+    srand(time(NULL));
     REMCRng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set (REMCRng, random());
 
