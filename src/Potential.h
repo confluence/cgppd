@@ -78,9 +78,6 @@ public:
         return *this; 
     }
 
-    /* Increment all components */
-    void increment(const Potential p);
-
     /* Component totals (for unit tests) */
     double total_LJ () const;
     double total_DH () const;
