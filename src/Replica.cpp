@@ -489,8 +489,8 @@ Potential Replica::E(Molecule *a, Molecule *b)
     }
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
-        potential.increment(a->E(true));
-        potential.increment(b->E(true));
+        potential += a->E(true);
+        potential += b->E(true);
     }
 #endif
     return potential;
@@ -507,7 +507,7 @@ Potential Replica::internal_molecule_E(bool include_LJ_and_DH) {
         if (molecules[mI].moleculeRoleIdentifier != CROWDER_IDENTIFIER)
         {
 #endif
-            potential.increment(molecules[mI].E(include_LJ_and_DH));
+            potential += molecules[mI].E(include_LJ_and_DH);
 #if REPULSIVE_CROWDING
         }
 #endif

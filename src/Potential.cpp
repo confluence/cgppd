@@ -184,18 +184,6 @@ void Potential::increment_torsion(const double torsion)
 
 #endif // FLEXIBLE_LINKS
 
-void Potential::increment(const Potential p) // TODO: replace this with an addition operator
-{
-    increment_LJ(p.LJ);
-    increment_DH(p.DH);
-
-#if FLEXIBLE_LINKS
-    increment_bond(p.bond);
-    increment_angle(p.angle);
-    increment_torsion(p.torsion);
-#endif // FLEXIBLE_LINKS
-}
-
 double Potential::total_LJ () const
 {
     return LJ * RT_to_kcalmol;
