@@ -4,7 +4,6 @@ RIGHT NOW
 
 OTHER REFACTORING / TESTS
     * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
-        * both bonded and unbonded potential mostly rises, a lot. Obviously rolling back is not happening.
 		* see if acceptance ratio file length still fluctuates
         * see if everything works with multiple replicas
 
