@@ -83,7 +83,7 @@ void Simulation::init(int argc, char **argv, int pid)
     initialReplica.initTimers();
 #endif
     
-    initialReplica.potential = initialReplica.E().total();
+    initialReplica.potential = initialReplica.E().total() + initialReplica.internal_molecule_E(true).total();
 
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
     {

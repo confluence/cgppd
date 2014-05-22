@@ -53,11 +53,11 @@ void TestGeometry::setUp()
 
 void TestGeometry::testGeometricFeatures()
 {
-    vector<Bond> expected_bonds = { Bond(72, 73), Bond(73, 74), Bond(74, 75), Bond(75, 123), Bond(148, 149), Bond(149, 150), Bond(150, 151) };
+    set<Bond> expected_bonds = { Bond(72, 73), Bond(73, 74), Bond(74, 75), Bond(75, 123), Bond(148, 149), Bond(149, 150), Bond(150, 151) };
 
-    vector<Angle> expected_angles = { Angle(71, 72, 73), Angle(72, 73, 74), Angle(73, 74, 75), Angle(74, 75, 123), Angle(75, 123, 122), Angle(75, 123, 124), Angle(147, 148, 149), Angle(148, 149, 150), Angle(149, 150, 151) };
+    set<Angle> expected_angles = { Angle(71, 72, 73), Angle(72, 73, 74), Angle(73, 74, 75), Angle(74, 75, 123), Angle(75, 123, 122), Angle(75, 123, 124), Angle(147, 148, 149), Angle(148, 149, 150), Angle(149, 150, 151) };
 
-    vector<Torsion> expected_torsions = { Torsion(70, 71, 72, 73), Torsion(71, 72, 73, 74), Torsion(72, 73, 74, 75), Torsion(73, 74, 75, 123), Torsion(74, 75, 123, 122), Torsion(74, 75, 123, 124), Torsion(75, 123, 124, 125), Torsion(121, 122, 123, 75), Torsion(146, 147, 148, 149), Torsion(147, 148, 149, 150), Torsion(148, 149, 150, 151) };
+    set<Torsion> expected_torsions = { Torsion(70, 71, 72, 73), Torsion(71, 72, 73, 74), Torsion(72, 73, 74, 75), Torsion(73, 74, 75, 123), Torsion(74, 75, 123, 122), Torsion(74, 75, 123, 124), Torsion(75, 123, 124, 125), Torsion(121, 122, 123, 75), Torsion(146, 147, 148, 149), Torsion(147, 148, 149, 150), Torsion(148, 149, 150, 151) };
 
     ASSERT_ITERABLE_EQUALS(expected_bonds, graph.bonds);
     ASSERT_ITERABLE_EQUALS(expected_angles, graph.angles);

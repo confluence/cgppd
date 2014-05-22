@@ -114,10 +114,10 @@ void TestReplica::testCPUandGPUPotential()
     double flex_lj(-0.527692);
 # endif // !LJ_REPULSIVE && !LJ_OFF
     Potential expected_flexible_potential(flex_lj, -0.240383, 0.180426, 1.555213, 5.420859);
-    ASSERT_POTENTIALS_EQUAL(expected_flexible_potential, replica.E());
+    ASSERT_POTENTIALS_EQUAL(expected_flexible_potential, replica.E() + replica.internal_molecule_E(true));
 
 #if USING_CUDA
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential.total(), replica.EonDevice(), 0.00001);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_flexible_potential.total(), replica.EonDevice() + replica.internal_molecule_E(false).total(), 0.00001);
 #endif // USING_CUDA
 
     replica.calculate_rigid_potential_only = true;

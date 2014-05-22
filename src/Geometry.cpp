@@ -54,9 +54,6 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     }
 
     // Temporary sets used for construction
-    set<Bond> s_bonds;
-    set<Angle> s_angles;
-    set<Torsion> s_torsions;
 
     set<int> s_MC_local_residues;
     set<int> s_MC_crankshaft_residues;
@@ -67,7 +64,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
         const int & k = e->second;
 
         if (flexibility_map[*e]) {
-            s_bonds.insert(Bond(j, k));
+            bonds.insert(Bond(j, k));
         }
 
         set<int> & neighbours_j = adjacency_map[j];
@@ -80,7 +77,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
                     for (set<int>::iterator l = neighbours_k.begin(); l != neighbours_k.end(); l++) {
                         if (*l != j) {
                             if (is_flexible(*i, j) || is_flexible(j, k) || is_flexible(k, *l)) {
-                                s_torsions.insert(Torsion(*i, j, k, *l));
+                                torsions.insert(Torsion(*i, j, k, *l));
                             }
                         }
                     }
@@ -107,7 +104,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
             for (set<int>::iterator k = neighbours.begin(); k != neighbours.end(); k++) {
                 if (*i < *k) {
                     if (is_flexible(*i, j) || is_flexible(j, *k)) {
-                        s_angles.insert(Angle(*i, j, *k));
+                        angles.insert(Angle(*i, j, *k));
                     }
                 }
             }
@@ -127,9 +124,6 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     }
 
     // Copy the sets to vectors
-    std::copy(s_bonds.begin(), s_bonds.end(), std::back_inserter(bonds));
-    std::copy(s_angles.begin(), s_angles.end(), std::back_inserter(angles));
-    std::copy(s_torsions.begin(), s_torsions.end(), std::back_inserter(torsions));
 
     std::copy(s_MC_local_residues.begin(), s_MC_local_residues.end(), std::back_inserter(MC_local_residues));
     std::copy(s_MC_crankshaft_residues.begin(), s_MC_crankshaft_residues.end(), std::back_inserter(MC_crankshaft_residues));
@@ -155,7 +149,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     
     // Find segment bonds
     
-    for (vector<Bond>::iterator b = bonds.begin(); b != bonds.end(); b++) {
+    for (set<Bond>::iterator b = bonds.begin(); b != bonds.end(); b++) {
         if (residues[b->i].chainId != residues[b->j].chainId || abs(b->i - b->j) >= 4) {
             segment_bonds.push_back(Pair(b->i, b->j));
         }
@@ -166,7 +160,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
     for (vector<Pair>::iterator p = segment_bonds.begin(); p != segment_bonds.end(); p++) {
         set<Torsion> torsions_around_bond;
 
-        for (vector<Torsion>::iterator t = torsions.begin(); t != torsions.end(); t++) {
+        for (set<Torsion>::iterator t = torsions.begin(); t != torsions.end(); t++) {
             if (t->contains(*p)) {
                 torsions_around_bond.insert(*t);
             }

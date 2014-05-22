@@ -183,7 +183,6 @@ Replica::~Replica()
 
 void Replica::exchangeReplicas(Replica &r)
 {
-	LOG(DEBUG, "Exchanging replicas %d and %d\n", label, r.label);
     swap(label, r.label);
     swap(temperature, r.temperature);
 
@@ -329,24 +328,37 @@ void Replica::MCSearch(int steps, int mcstep)
     for (int step = 0; step < steps; step++)
     {
         int moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
-        LOG(DEBUG, "++++++++++++++++++++++ In step %d replica %d, random value for molecule selection: %d\n", mcstep+step, label, moleculeNo);
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-        // TODO TODO TODO should this be mcstep + step?!
-        LOG(DEBUG, "+++ Step %d:\tReplica %d\tMolecule %d:\t%s\t", mcstep+step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
+        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", mcstep+step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
         newPotential = EonDevice();  // sequential cuda call
+#if FLEXIBLE_LINKS
+        if (!calculate_rigid_potential_only) {
+            double bonded_potential = internal_molecule_E(false).total();
+            LOG(DEBUG, "new Eu: %f,\tnew Eb: %f\t", newPotential, bonded_potential);
+            newPotential += bonded_potential;
+        }
+#endif // FLEXIBLE_LINKS
 #else // only CPU calls
-        newPotential = E().total();
-#endif
-        float delta = newPotential - potential;
+        Potential cpu_e = E();
+#if FLEXIBLE_LINKS
+        if (!calculate_rigid_potential_only) {
+            cpu_e += internal_molecule_E(true);
+            LOG(DEBUG, "new Eu: %f,\tnew Eb: %f\t", cpu_e.total_LJ() + cpu_e.total_DH(), cpu_e.total_bond() + cpu_e.total_angle() + cpu_e.total_torsion());
+        }
+#endif // FLEXIBLE_LINKS
+        newPotential = cpu_e.total();
+#endif // not USING_CUDA
 
-        double DEBUG_RANDOM_BOLTZMANN(0.0);
-        bool PRINT_DEBUG_RANDOM_BOLTZMANN(false);
+
+        LOG(DEBUG, "new E: %f\t", newPotential);
+    
+        float delta = newPotential - potential;
 
         // accept change if its better.
         if (delta < 0.0f)
@@ -356,9 +368,8 @@ void Replica::MCSearch(int steps, int mcstep)
             LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
         }
         // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
-        else if ((DEBUG_RANDOM_BOLTZMANN = gsl_rng_uniform(rng)) && DEBUG_RANDOM_BOLTZMANN < exp(-(delta*kcal)/(Rgas*temperature)))
+        else if (gsl_rng_uniform(rng) < exp(-(delta*kcal)/(Rgas*temperature)))
         {
-            PRINT_DEBUG_RANDOM_BOLTZMANN = true;
             potential = newPotential;
             acceptA++;
             LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta * kcal/(Rgas*temperature)));
@@ -367,15 +378,11 @@ void Replica::MCSearch(int steps, int mcstep)
         else
         {
             reject++;
-            molecules[moleculeNo].MC_backup_restore(&savedMolecule);
             LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
+            molecules[moleculeNo].MC_backup_restore(&savedMolecule);
 #if USING_CUDA
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
-        }
-
-        if (PRINT_DEBUG_RANDOM_BOLTZMANN) {
-            LOG(DEBUG, "+++ random value for boltzmann distribution test: %f\n", DEBUG_RANDOM_BOLTZMANN);
         }
     }
 }
@@ -418,11 +425,6 @@ Potential Replica::E()
         }
         else
         {
-#endif
-#if FLEXIBLE_LINKS
-            if (!calculate_rigid_potential_only) {
-                potential.increment(molecules[mI].E(true));
-            }
 #endif
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
             {
@@ -624,7 +626,6 @@ float Replica::SumGridResults()
 void Replica::MCSearchMutate(int mcstep)
 {
     int moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
-    LOG(DEBUG, "++++++++++++++++++++++ In step %d replica %d, random value for molecule selection: %d\n", mcstep, label, moleculeNo);
     // save the current state so we can roll back if it was not a good mutation.
     savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
     molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
@@ -640,7 +641,7 @@ void Replica::MCSearchEvaluate(int mcstep)
 
 void Replica::MCSearchAcceptReject(int mcstep)
 {
-    LOG(DEBUG, "+++ Step %d:\tReplica %d\tmolecule %d:\t%s\t", mcstep, label, lastMutationIndex, molecules[lastMutationIndex].last_MC_move);
+    LOG(DEBUG, "Step %d:\treplica %d\tmolecule %d:\t%s\t", mcstep, label, lastMutationIndex, molecules[lastMutationIndex].last_MC_move);
 
     newPotential = SumGridResults();
 
@@ -656,9 +657,6 @@ void Replica::MCSearchAcceptReject(int mcstep)
 
     float delta = (newPotential - potential);
     
-    double DEBUG_RANDOM_BOLTZMANN(0.0);
-    bool PRINT_DEBUG_RANDOM_BOLTZMANN(false);
-    
     if (delta < 0.0f)
     {
         potential = newPotential;
@@ -666,9 +664,8 @@ void Replica::MCSearchAcceptReject(int mcstep)
         LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
     }
     // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
-    else if ((DEBUG_RANDOM_BOLTZMANN = gsl_rng_uniform(rng)) && DEBUG_RANDOM_BOLTZMANN < exp(-delta*kcal/(Rgas*temperature)))
+    else if (gsl_rng_uniform(rng) < exp(-delta*kcal/(Rgas*temperature)))
     {
-        PRINT_DEBUG_RANDOM_BOLTZMANN = true;
         potential = newPotential;
         acceptA++;
         LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*kcal/(Rgas*temperature)));
@@ -677,15 +674,10 @@ void Replica::MCSearchAcceptReject(int mcstep)
     // if the change is bad then discard it.
     {
         reject++;
-        molecules[lastMutationIndex].MC_backup_restore(&savedMolecule);
         LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
+        molecules[lastMutationIndex].MC_backup_restore(&savedMolecule);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
-
-    if (PRINT_DEBUG_RANDOM_BOLTZMANN) {
-        LOG(DEBUG, "+++ random value for boltzmann distribution test: %f\n", DEBUG_RANDOM_BOLTZMANN);
-    }
-
 }
 #endif  // streams
 
@@ -905,15 +897,7 @@ double Replica::EonDevice()
 #if INCLUDE_TIMERS
     CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
 #endif
-    //TODO add new timer for this
-#if FLEXIBLE_LINKS
-    if (!calculate_rigid_potential_only) {
-        double bonded_potential = internal_molecule_E(false).total();
-        LOG(DEBUG, "new Eu: %f,\tnew Eb: %f\t", result, bonded_potential);
-        result += bonded_potential;
-    }
-#endif
-    LOG(DEBUG, "new E: %f\t", result);
+
     return result;
 }
 
@@ -1100,7 +1084,6 @@ void Replica::acceptance_ratio(FILE * acceptanceRatioFile)
     totalAcceptReject += acceptA + accept + reject;
 
     acceptanceRatio = float(acceptA + accept) / float(acceptA + accept + reject);
-    LOG(DEBUG, "Replica %d acceptance ratio: %f\n", label, acceptanceRatio);
     accumulativeAcceptanceRatio = float(totalAccept) / float(totalAcceptReject);
 
     fprintf(acceptanceRatioFile,"| %6.4f %6.4f ", acceptanceRatio, accumulativeAcceptanceRatio);

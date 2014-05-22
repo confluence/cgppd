@@ -20,11 +20,7 @@ struct Pair
     int j;
 
     Pair(): i(0), j(0) {}
-    Pair(int i, int j)
-    {
-        this->i = i;
-        this->j = j;
-    }
+    Pair(int i, int j): i(i), j(j) {}
 
     bool operator<(const Pair &p) const
     {
@@ -49,18 +45,8 @@ struct Bond
     int i;
     int j;
 
-    // cache for tests
-    double length;
-    double potential;
-
-    Bond(): i(0), j(0), length(0.0f), potential(0.0f) {}
-    Bond(int i, int j, double length=0.0f, double potential=0.0f)
-    {
-        this->i = i;
-        this->j = j;
-        this->length = length;
-        this->potential = potential;
-    }
+    Bond(): i(0), j(0) {}
+    Bond(int i, int j): i(i), j(j) {}
 
     bool operator<(const Bond &b) const
     {
@@ -86,19 +72,8 @@ struct Angle
     int j;
     int k;
 
-    // cache for tests
-    double theta;
-    double potential;
-
-    Angle(): i(0), j(0), k(0), theta(0.0f), potential(0.0f) {}
-    Angle(int i, int j, int k, double theta=0.0f, double potential=0.0f)
-    {
-        this->i = i;
-        this->j = j;
-        this->k = k;
-        this->theta = theta;
-        this->potential = potential;
-    }
+    Angle(): i(0), j(0), k(0) {}
+    Angle(int i, int j, int k): i(i), j(j), k(k) {}
 
     bool operator<(const Angle &a) const
     {
@@ -125,20 +100,8 @@ struct Torsion
     int k;
     int l;
 
-    // cache for tests
-    double phi;
-    double potential;
-
-    Torsion(): i(0), j(0), k(0), l(0), phi(0.0f), potential(0.0f) {}
-    Torsion(int i, int j, int k, int l, double phi=0.0f, double potential=0.0f)
-    {
-        this->i = i;
-        this->j = j;
-        this->k = k;
-        this->l = l;
-        this->phi = phi;
-        this->potential = potential;
-    }
+    Torsion(): i(0), j(0), k(0), l(0) {}
+    Torsion(int i, int j, int k, int l): i(i), j(j), k(k), l(l) {}
 
     bool operator<(const Torsion &t) const
     {
@@ -156,11 +119,11 @@ struct Torsion
         return string(str_char);
     }
 
-    bool contains(const int &ri) {
+    bool contains(const int &ri) const {
         return ri == i || ri == j || ri == k || ri == l;
     }
 
-    bool contains(const Pair &p) { // TODO replace with a Pair
+    bool contains(const Pair &p) const { // TODO replace with a Pair
         return contains(p.i) && contains(p.j);
     }
 };
@@ -184,10 +147,9 @@ public:
 
     int num_chains;
     
-    // These have to be vectors because we modify the values from the potential calculation functions
-    vector<Bond> bonds;
-    vector<Angle> angles;
-    vector<Torsion> torsions;
+    set<Bond> bonds;
+    set<Angle> angles;
+    set<Torsion> torsions;
 
     // These have to be vectors because we index them when we pick them randomly
 

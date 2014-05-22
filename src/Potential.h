@@ -12,9 +12,9 @@
 /* Potential component calculations */
 double calculate_LJ(Residue &ri, Residue &rj, const double r, const AminoAcids &AminoAcidsData);
 double calculate_DH(Residue &ri, Residue &rj, const double r);
-double calculate_bond(Residue * residues, Bond &bond, const float bounding_value);
-double calculate_angle(Residue * residues, Angle &angle);
-double calculate_torsion(Residue * residues, Torsion &torsion, TorsionalLookupMatrix &torsion_data);
+double calculate_bond(Residue * residues, const Bond bond, const float bounding_value);
+double calculate_angle(Residue * residues, const Angle angle);
+double calculate_torsion(Residue * residues, const Torsion torsion, TorsionalLookupMatrix &torsion_data);
 
 class Potential
 {
@@ -66,6 +66,18 @@ public:
     void increment_torsion(const double torsion);
 #endif // FLEXIBLE_LINKS
 
+    Potential& operator+=(const Potential& rhs) 
+    {                          
+        this->increment_LJ(rhs.LJ);
+        this->increment_DH(rhs.DH);
+#if FLEXIBLE_LINKS
+        this->increment_bond(rhs.bond);
+        this->increment_angle(rhs.angle);
+        this->increment_torsion(rhs.torsion);
+#endif // FLEXIBLE_LINKS
+        return *this; 
+    }
+
     /* Increment all components */
     void increment(const Potential p);
 
@@ -81,5 +93,10 @@ public:
     /* Output final total */
     double total () const;
 };
+
+inline Potential operator+(Potential lhs, const Potential& rhs)
+{
+    return lhs += rhs;
+}
 
 #endif /*POTENTIAL_H_*/

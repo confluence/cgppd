@@ -96,6 +96,8 @@ void Molecule::MC_backup_restore(const Molecule* m)
 {
     memcpy(Residues, m->Residues, sizeof(Residue) * m->residueCount);
 
+    residueCount = m->residueCount; // yes, we DO need to copy this, so that this function can be used in both directions.
+
     center = m->center;
     rotation = m->rotation;
     length = m->length;
@@ -243,14 +245,12 @@ void Molecule::rotate(gsl_rng * rng, const double rotate_step)
 {
     // no boundary conditions required, because the centre doesn't change
     Vector3double v = normalised_random_vector_d(rng);
-    LOG(DEBUG, "+++ Random vector for rotation: %f %f %f\n", v.x, v.y, v.z);
     rotate(v, rotate_step);
 }
 
 void Molecule::translate(gsl_rng * rng, const double translate_step)
 {
     Vector3f v = translate_step * normalised_random_vector_f(rng);
-    LOG(DEBUG, "+++ Random vector for translation: %f %f %f\n", v.x, v.y, v.z);
     translate(v);
 }
 
@@ -372,11 +372,9 @@ void Molecule::flex(gsl_rng * rng, const double rotate_step)
 
     vector<int> & index_set = graph.MC_flex_residues;
     int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
-    LOG(DEBUG, "+++ Random residue index in flex: %d\n", ri);
 
     const vector<int> & neighbours = graph.neighbours(ri);
     int neighbour = neighbours[gsl_rng_uniform_int(rng, neighbours.size())];
-    LOG(DEBUG, "+++ Random neighbour residue index in flex: %d\n", neighbour);
 
     flex(raxis, rotate_step, ri, neighbour);
 }
@@ -388,8 +386,6 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
         //TODO: if crankshaft disabled, only return translate?
         int move = gsl_ran_bernoulli(rng, LOCAL_TRANSLATE_BIAS);
 
-        LOG(DEBUG, "+++ Random move in make_local_moves: %d\n", move);
-
         switch (move)
         {
             case MC_LOCAL_TRANSLATE:
@@ -397,7 +393,6 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 strcat(last_MC_move, "T");
                 vector<int> & index_set = graph.MC_local_residues;
                 int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
-                LOG(DEBUG, "+++ Random residue index in local translate: %d\n", ri);
 
                 Vector3f v = LOCAL_TRANSLATE_STEP_SCALING_FACTOR * translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
@@ -408,10 +403,8 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 strcat(last_MC_move, "C");
                 vector<int> & index_set = graph.MC_crankshaft_residues;
                 int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
-                LOG(DEBUG, "+++ Random residue index in crankshaft: %d\n", ri);
 
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
-                LOG(DEBUG, "+++ Random angle flip in crankshaft: %d\n", ri);
                 crankshaft(rotate_step, flip, ri);
                 break;
             }
@@ -441,7 +434,6 @@ int Molecule::get_MC_mutation_type(gsl_rng * rng)
 void Molecule::make_MC_move(gsl_rng * rng, const double rotate_step, const double translate_step)
 {
     int mutationType = get_MC_mutation_type(rng);
-    LOG(DEBUG, "+++ Random molecule MC move: %d\n", mutationType);
     memset(last_MC_move, 0, 256);
 
     switch (mutationType)
@@ -647,15 +639,15 @@ Potential Molecule::E(bool include_LJ_and_DH)
             }
         }
 
-        for (vector<Bond>::iterator b = graph.bonds.begin(); b != graph.bonds.end(); b++) {
+        for (set<Bond>::iterator b = graph.bonds.begin(); b != graph.bonds.end(); b++) {
             potential.increment_bond(calculate_bond(Residues, *b, bounding_value));
         }
 
-        for (vector<Angle>::iterator a = graph.angles.begin(); a != graph.angles.end(); a++) {
+        for (set<Angle>::iterator a = graph.angles.begin(); a != graph.angles.end(); a++) {
             potential.increment_angle(calculate_angle(Residues, *a));
         }
 
-        for (vector<Torsion>::iterator t = graph.torsions.begin(); t != graph.torsions.end(); t++) {
+        for (set<Torsion>::iterator t = graph.torsions.begin(); t != graph.torsions.end(); t++) {
             potential.increment_torsion(calculate_torsion(Residues, *t, torsion_data));
         }
     }

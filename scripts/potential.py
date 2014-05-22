@@ -260,8 +260,10 @@ class Potential(object):
                     ba = r1.position - r2.position
                     bc = r3.position - r2.position
                     theta = np.arccos(np.dot(ba, bc) / np.linalg.norm(ba) / np.linalg.norm(bc))
+                    print "THETA: %f" % theta
                     
                     angle_e = np.log(np.exp(-GAMMA_ANGLE * (K_ALPHA * (theta - THETA_ALPHA)**2 + EPSILON_ALPHA)) + np.exp(-GAMMA_ANGLE * K_BETA * (theta - THETA_BETA)**2)) / - GAMMA_ANGLE
+                    print "ANGLE POTENTIAL: %f" % angle_e
 
                     self.components["angle"] += angle_e
                     
