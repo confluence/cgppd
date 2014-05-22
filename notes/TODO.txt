@@ -13,6 +13,8 @@ OTHER REFACTORING / TESTS
         * Eliminate the MCSearch method and make everything call the async sub-methods
 
     * also rework the cpu potential; include the internal unbonded stuff in the replica code and kill that part of the molecule code; explicitly make the molecule E for bonded potential only.
+
+    * factor the compensated sumamtion out of Potential; add it in in a subclass later (although it's probably not necessary anyway)
             
     * rework diubiquitin creation script to do the molecules the more sensible way around and also add a fake sidechain
     * more extensive potential unit tests: add potential test with all the weird geometry features, i.e. diubiquitin with one molecule and two chains. Maybe two diubiquitin, so we have two molecules with two chains each and can test absolutely everything.

@@ -1052,7 +1052,6 @@ void Replica::sample(SimulationData * data, int current_step, float boundEnergyT
 
     if (bool_recordAllSamples || nonCrowderPotential < boundEnergyThreshHold)
     {
-
         char savename[256];
         memset(savename,0,256);
         sprintf(savename, "output/%s/pdb/sample_%d_%0.1fK_%5.2f.pdb", data->prefix, current_step, temperature, nonCrowderPotential);
