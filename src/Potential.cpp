@@ -42,19 +42,19 @@ double calculate_DH(Residue &ri, Residue &rj, const double r)
 }
 
 #if FLEXIBLE_LINKS
-double calculate_bond(Residue * residues, Bond &bond, const float bounding_value)
+double calculate_bond(Residue * residues, const Bond bond, const float bounding_value)
 {
     Residue & ri = residues[bond.i];
     Residue & rj = residues[bond.j];
     // eqn 9: kim2008
-    double r(rj.distance(ri, bounding_value));
-    bond.length = r;
-    bond.potential = (r - R0) * (r - R0); // in angstroms
+    double r(rj.distance(ri, bounding_value)); // in angstroms
 
-    return bond.potential;
+    double potential = (r - R0) * (r - R0); 
+
+    return potential;
 }
 
-double calculate_angle(Residue * residues, Angle &angle)
+double calculate_angle(Residue * residues, const Angle angle)
 {
     Residue & ri = residues[angle.i];
     Residue & rj = residues[angle.j];
@@ -63,15 +63,14 @@ double calculate_angle(Residue * residues, Angle &angle)
     Vector3f ab = ri.position - rj.position;
     Vector3f cb = rk.position - rj.position;
     double theta = ab.angle(cb);
-    angle.theta = theta;
     // eqn 10: kim2008
-    angle.potential = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
+    double potential = exp(-GammaAngle * (KAlpha * (theta - ThetaAlpha) * (theta - ThetaAlpha) + EpsilonAlpha)) +
                 exp(-GammaAngle * (KBeta *(theta - ThetaBeta) *(theta - ThetaBeta)));
 
-    return angle.potential;
+    return potential;
 }
 
-double calculate_torsion(Residue * residues, Torsion &torsion, TorsionalLookupMatrix &torsion_data)
+double calculate_torsion(Residue * residues, const Torsion torsion, TorsionalLookupMatrix &torsion_data)
 {
     Residue & ri = residues[torsion.i];
     Residue & rj = residues[torsion.j];
@@ -85,18 +84,17 @@ double calculate_torsion(Residue * residues, Torsion &torsion, TorsionalLookupMa
     Vector3f b2xb3 = b2.cross(b3);
     double phi = atan2((b2.magnitude() * b1.dot(b2xb3)), b1.cross(b2).dot(b2xb3));
 
-    torsion.phi = phi;
     // eqn 11: kim2008
     int r1 = rj.aminoAcidIndex;
     int r2 = rk.aminoAcidIndex;
 
 
-    torsion.potential = (1 + cos(phi - torsion_data.getSigma(r1, r2, 1))) * torsion_data.getV(r1, r2, 1) +
+    double potential = (1 + cos(phi - torsion_data.getSigma(r1, r2, 1))) * torsion_data.getV(r1, r2, 1) +
         (1 + cos(2 * phi - torsion_data.getSigma(r1, r2, 2))) * torsion_data.getV(r1, r2, 2) +
         (1 + cos(3 * phi - torsion_data.getSigma(r1, r2, 3))) * torsion_data.getV(r1, r2, 3) +
         (1 + cos(4 * phi - torsion_data.getSigma(r1, r2, 4))) * torsion_data.getV(r1, r2, 4);
 
-    return torsion.potential;
+    return potential;
 }
 #endif // FLEXIBLE_LINKS
 

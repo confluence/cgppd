@@ -16,7 +16,6 @@ class TestMolecule : public CppUnit::TestFixture
     CPPUNIT_TEST(testPotential);
 #if FLEXIBLE_LINKS
     CPPUNIT_TEST(testSegments);
-    CPPUNIT_TEST(testGeometry);
     CPPUNIT_TEST(testFlex);
     CPPUNIT_TEST(testLocalTranslate);
     CPPUNIT_TEST(testCrankshaft);
@@ -48,7 +47,6 @@ public:
     void testPotential();
 #if FLEXIBLE_LINKS
     void testSegments();
-    void testGeometry();
     void testFlex();
     void testLocalTranslate();
     void testCrankshaft();
@@ -237,56 +235,6 @@ void TestMolecule::testSegments()
    CPPUNIT_ASSERT_EQUAL(8, (int)angiotensin.graph.angles.size());
    CPPUNIT_ASSERT_EQUAL(7, (int)angiotensin.graph.torsions.size());
     
-}
-
-void TestMolecule::testGeometry()
-{
-    vector<float> expected_bond_lengths = {
-        3.821749687194824,
-        3.8273043632507324,
-        3.8032095432281494,
-        3.8131093978881836,
-        3.76322865486145,
-        3.8027637004852295,
-        3.7888474464416504,
-        3.8237955570220947,
-        3.8045248985290527
-    };
-
-    vector<float> expected_angles = {
-        123.56746673583984,
-        86.7016830444336,
-        126.89990234375,
-        126.8516845703125,
-        129.04217529296875,
-        84.29325103759766,
-        130.4828338623047,
-        97.1257095336914,
-    };
-
-    vector<float> expected_torsion_angles = {
-        -165.99693298339844,
-        26.120737075805664,
-        -171.85838317871094,
-        -170.0393524169922,
-        -156.48416137695313,
-        4.634008884429932,
-        150.31800842285156,
-    };
-
-    Potential e = angiotensin.E();
-        
-    for (int i = 0; i < expected_bond_lengths.size(); i++) {
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_bond_lengths[i], angiotensin.graph.bonds[i].length, 0.00001);
-    }
-    
-    for (int i = 0; i < expected_angles.size(); i++) {
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_angles[i]/57.29577951308232, angiotensin.graph.angles[i].theta, 0.00001);
-    }
-    
-    for (int i = 0; i < expected_torsion_angles.size(); i++) {
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_torsion_angles[i]/57.29577951308232, angiotensin.graph.torsions[i].phi, 0.00001);
-    }
 }
 
 void TestMolecule::testFlex()
