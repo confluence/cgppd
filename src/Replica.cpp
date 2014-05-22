@@ -634,6 +634,7 @@ void Replica::MCSearchMutate(int mcstep)
 
 void Replica::MCSearchEvaluate(int mcstep)
 {
+    MoleculeDataToDevice(lastMutationIndex);
     EonDeviceAsync();
 }
 
