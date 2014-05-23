@@ -3,7 +3,7 @@ streams 1
 threads 1
 mcsteps 1000
 resteps 100
-replicas 1
+replicas 5
 samplefrequency 10
 sampleafter 0
 boundary  160.7
