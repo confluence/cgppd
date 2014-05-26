@@ -6,6 +6,9 @@ OTHER REFACTORING / TESTS
     * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
 		* see if acceptance ratio file length still fluctuates
         * see if everything works with multiple replicas
+            * the values are diverging
+            * check what happens during replica exchange -- is something not being exchanged correctly?
+            * first apparent divergence in MC move choice happens at step 226, in replica 1: different molecule is selected
 
     * It would be really nice for testing if sync/async and linkers/rigid were runtime options instead of preprocessor directives. Is there any reason not to do this?
         * GPU code:
