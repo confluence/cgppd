@@ -784,7 +784,6 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
 
     __syncthreads();  // very important so that the entire shared mem array is assigned before any threads use it
 
-    //if (yresiduep.w > PADDER_IDENTIFIER && yresiduem.w != CROWDER_IDENTIFIER ) // the residue in question is not a padding element or a crowder
     if (yresiduep.w > PADDER_IDENTIFIER && yresiduem.w != CROWDER_IDENTIFIER ) // the residue in question is not a padding element or a crowder
     {
         float lj_subtotal(0.0f);
@@ -837,20 +836,13 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
                 //m.y = charge
                 //m.z = vdw radius
                 //m.w = crowder if == CROWDER_IDENTIFIER
-// #if POSITIONDATA_MEMORY == TEXTURE_MEM
                 float r(length(yresiduep,pos) + EPS);  // add eps so that r is never 0, can happen in a collision
-// #else
-//                 float r(length(yresiduep,X_tile_residuePositions[positionOfPosition + i]) + EPS);  // add eps so that r is never 0, can happen in a collision
-// #endif
 
                 float LJ(0.0f);
                 float DH(0.0f);
 
-// #if METADATA_MEMORY == TEXTURE_MEM
                 int ijX(rint( AA_COUNT*yresiduem.x + meta.x));
-// #else
-//                 int ijX(rint( AA_COUNT*yresiduem.x + X_tile_residueMeta[positionOfMeta + i].x));
-// #endif
+
                 //do the texture fetch first
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
                 float Eij(LJ_lambda*(tex1Dfetch(LJTexture,ijX) - e0));
@@ -861,27 +853,16 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
 #else  // __global__ or __constant__
                 float Eij(LJ_lambda*(LJPotentialData[ijX] - e0));
 #endif
-
-// #if METADATA_MEMORY == TEXTURE_MEM
                 DH = dhPotential(yresiduem.y,meta.y,r);
-// #else
-//                 DH = dhPotential(yresiduem.y,X_tile_residueMeta[positionOfMeta + i].y,r);
-// #endif
 
                 dh_subtotal += DH;
 
                 // sigmaij is the average atomic radius determined by the van der waals radius in kim2008
-                //float sigmaij = __fmul_rn(__fadd_rn(yresiduem.z,X_tile_residueMeta[i].z), 0.5f);
-// #if METADATA_MEMORY == TEXTURE_MEM
                 float sigmaij((yresiduem.z + meta.z) * 0.5f);
-// #else
-//                 float sigmaij((yresiduem.z + X_tile_residueMeta[positionOfMeta + i].z) * 0.5f);
-// #endif
 
                 float LJtmp(__powf(sigmaij/r,6.0f));
 
                 LJ = -4.0f*Eij*LJtmp*(LJtmp-1.0f);
-                //LJ = __fmul_rn(-4.0f,__fmul_rn(Eij,__fmul_rn(LJtmp,__fadd_rn(LJtmp,-1.0f))));
                 if (Eij>0.0f && r < (sigmaij*r0_constant))
                 {
                     LJ = -LJ + 2.0f*Eij;

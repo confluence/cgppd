@@ -192,7 +192,7 @@ public:
     float *kernelResult;			// as above but on host, sync cudaStream to make them the same
     void ReserveSumSpace();	// space on host and device to allow for the sum of kernel returns
     void FreeSumSpace();		// frees the above
-    float SumGridResults();	//sums the grid returned by the potential kernel
+    double SumGridResults();	//sums the grid returned by the potential kernel
     uint lastMutationIndex;
     //split the functions to allow for latency hiding and overlapping calls
     void MCSearchMutate(int mcstep);
