@@ -332,7 +332,7 @@ void Replica::MCSearch(int steps, int mcstep)
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-        LOG(DEBUG, "Step %d:\tReplica %d\tMolecule %d:\t%s\t", mcstep+step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
+        LOG(DEBUG, "Step %d:\treplica %d\tmolecule %d:\t%s\t", mcstep+step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
@@ -596,9 +596,9 @@ void Replica::FreeSumSpace()
     cutilCheckMsg("Error freeing sum space on device");
 }
 
-float Replica::SumGridResults()
+double Replica::SumGridResults()
 {
-    float potentialSum = 0.0f;
+    double potentialSum = 0.0f;
     cudaStreamSynchronize(cudaStream); // ensure that the results are written back in time.
 
     /*	float c(0.0f); //kahanSum
