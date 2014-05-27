@@ -518,18 +518,24 @@ void *MCthreadableFunction(void *arg)
     int mcstep = 0;
     while (mcstep < data->MCsteps)
     {
+        LOG(DEBUG, "+++ mcstep = %d\n", mcstep);
         //cout << "Starting mc loop at " << mcstep << " steps" << endl;
         // do all MC steps before RE
         for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
         {
+            LOG(DEBUG, "+++ tx = %d\n", tx);
             // to sample at the correct rate split this into another set of loops
             for (int s = 0; s < data->MC_steps_per_RE / data->sampleFrequency; s++)
             {
+                LOG(DEBUG, "+++ s = %d\n", s);
+                LOG(DEBUG, "+++ MCSearch(%d, %d)\n", data->sampleFrequency, mcstep);
                 data->replica[tx + replica_offset].MCSearch(data->sampleFrequency, mcstep);
 
+                LOG(DEBUG, "+++ mcstep + s * data->sampleFrequency = %d\n", mcstep + s * data->sampleFrequency);
                 if (mcstep + s * data->sampleFrequency >= data->sampleStartsAfter)
                 {
                     // if E < -1.1844 kcal/mol then its bound
+                    LOG(DEBUG, "+++ sample for step %d\n", mcstep + s*data->sampleFrequency);
                     data->replica[tx + replica_offset].sample(data, mcstep + s*data->sampleFrequency, BOUND_ENERGY_VALUE);
                 }
             }
@@ -573,13 +579,19 @@ void *MCthreadableFunction(void *arg)
     //int sampleIn = data->sampleStartsAfter+1;
     while (mcstep < data->MCsteps)
     {
+        LOG(DEBUG, "+++ mcstep = %d\n", mcstep);
         // to sample at the correct rate split this into another set of loops
         for (int mcx = 0; mcx < data->MC_steps_per_RE; mcx++) // at each mc step
         {
+            LOG(DEBUG, "+++ mcx = %d\n", mcx);
             for (int index = 0; index < data->replicas_in_this_thread; index += data->replicas_per_stream)
             {
+                LOG(DEBUG, "+++ index = %d\n", index);
                 for (int rps = 0; rps < data->replicas_per_stream; rps++)
                 {
+                    LOG(DEBUG, "+++ rps = %d\n", rps);
+                    LOG(DEBUG, "+++ MCSearchMutate(%d)\n", mcstep);
+                    LOG(DEBUG, "+++ MCSearchEvaluate(%d)\n", mcstep);
                     // batch replicas such that no stream is shared per batch
                     data->replica[replica_offset + index + rps].MCSearchMutate(mcstep);
                     data->replica[replica_offset + index + rps].MCSearchEvaluate(mcstep);
@@ -587,14 +599,19 @@ void *MCthreadableFunction(void *arg)
                 }
                 for (int rps = 0; rps < data->replicas_per_stream; rps++)
                 {
+                    LOG(DEBUG, "+++ rps = %d\n", rps);
+                    LOG(DEBUG, "+++ MCSearchAcceptReject(%d)\n", mcstep);
                     data->replica[replica_offset + index + rps].MCSearchAcceptReject(mcstep);
                 }
 
                 for (int rps = 0; rps < data->replicas_per_stream; rps++)
                 {
+                    LOG(DEBUG, "+++ rps = %d\n", rps);
+                    LOG(DEBUG, "+++ mcstep % data->sampleFrequency = %d\n", mcstep % data->sampleFrequency);
                     //sampleAsync
                     if (mcstep % data->sampleFrequency == 0 && mcstep >= data->sampleStartsAfter) // when enough steps are taken && sampleFrequency steps have passed
                     {
+                        LOG(DEBUG, "+++ sample for step %d\n", mcstep + mcx * data->sampleFrequency);
                         data->replica[replica_offset + index + rps].sample(data, mcstep + mcx * data->sampleFrequency, BOUND_ENERGY_VALUE);
 
                         //if (abs(data->replica[replica_offset+index+rps].temperature-300.0f)<1.0f)
