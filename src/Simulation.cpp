@@ -289,11 +289,8 @@ void Simulation::run()
             int j = position_of_temperature[temperature[tj]];
 
             double delta = (1.0/replica[i].temperature - 1.0/replica[j].temperature) * (replica[i].potential - replica[j].potential) * (4184.0f/Rgas);
-            
-            double DEBUG_RANDOM = gsl_rng_uniform(REMCRng);
-            //LOG(DEBUG, "++++++++++++++++++++++ Random value from REMCRng: %f\n", DEBUG_RANDOM);
 
-            if (DEBUG_RANDOM < min(1.0, exp(delta)))
+            if (gsl_rng_uniform(REMCRng) < min(1.0, exp(delta)))
             {
                 replica[i].exchangeReplicas(replica[j]);
 
