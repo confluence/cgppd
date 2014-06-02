@@ -3,6 +3,10 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 OTHER REFACTORING / TESTS
+    * proper logging -- google-glog?
+        * we either need to install something hacky or rewrite all the logging in stream syntax (probably less terrible)
+        * only 108 lines
+
     * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
 		* samples are now in sync between versions
         * outstanding issue: fix formatting of boundconformations file

@@ -157,15 +157,8 @@ void TestSimulation::testREMC()
     // TODO TODO TODO make the logging work better and add a completely silent mode for unit tests
     s.run();
 
-    // compare output directory to reference directory with diff?
-    // the sync / async output may be too different
+    // compare output directory to reference directory with diff
     
-    // compare accept / reject statistics?
-    
-    for (int i = 0; i < s.parameters.replicas; i++) {
-
-    }
-
 }
 
 void TestSimulation::tearDown()
