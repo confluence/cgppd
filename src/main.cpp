@@ -2,35 +2,38 @@
 
 int main(int argc, char **argv)
 {
-    LOG(ALWAYS, "CGPPD version %s\n", HGVERSION);
-    LOG(ALWAYS, "Compiled with:\n");
+    google::InitGoogleLogging(argv[0]);
+    
+    VLOG(0) << "CGPPD version: " << HGVERSION;
+    VLOG(0) << "Compiled with:";
 
 #ifdef GLVIS
-    LOG(ALWAYS, "\tOpenGL support\n");
+    VLOG(0) << "\tOpenGL support";
 #endif
 
 #if USING_CUDA
-    LOG(ALWAYS, "\tCUDA support\n");
+    VLOG(0) << "\tCUDA support";
 #if CUDA_STREAMS
-    LOG(ALWAYS, "\t\tAsynchronous GPU calls (CUDA capability 1.1+ required)\n");
+    VLOG(0) << "\t\tAsynchronous GPU calls (CUDA capability 1.1+ required)";
 #endif // CUDA_STREAMS
-    LOG(ALWAYS, "\t\tTile Size: %d\n", TILE_DIM);
-    LOG(ALWAYS, "\t\tLJ lookup memory type: ");
+    VLOG(0) << "\t\tTile size: " << TILE_DIM;
+    string mem_type;
 #if LJ_LOOKUP_METHOD == SHARED_MEM
-    LOG(ALWAYS, "Shared\n");
+    mem_type = "Shared";
 #elif LJ_LOOKUP_METHOD == CONST_MEM
-    LOG(ALWAYS, "Constant\n");
+    mem_type = "Constant";
 #elif LJ_LOOKUP_METHOD == GLOBAL_MEM
-    LOG(ALWAYS, "Global\n");
+    mem_type = "Global";
 #elif LJ_LOOKUP_METHOD == TEXTURE_MEM
-    LOG(ALWAYS, "Texture\n");
+    mem_type = "Texture";
 #endif // LJ_LOOKUP_METHOD
+    VLOG(0) << "\t\tLJ lookup memory type: " << mem_type;
 #endif // USING_CUDA
 
-    LOG(COMPENSATE_KERNEL_SUM, "\tKahan summation in kernels\n");
-    LOG(FLEXIBLE_LINKS, "\tFlexible linkers\n");
-    LOG(LJ_REPULSIVE, "\tLennard-Jones potentials always repulsive\n");
-    LOG(LJ_OFF, "\tLennard-Jones potentials off\n");
+    VLOG_IF(0, COMPENSATE_KERNEL_SUM) << "\tKahan summation in kernels";
+    VLOG_IF(0, FLEXIBLE_LINKS) << "\tFlexible linkers";
+    VLOG_IF(0, LJ_REPULSIVE) << "\tLennard-Jones potentials always repulsive";
+    VLOG_IF(0, LJ_OFF) << "\tLennard-Jones potentials off";
 
     int pid = int( getpid() );
 
@@ -63,6 +66,6 @@ int main(int argc, char **argv)
     }
 #endif
 
-    LOG(ALWAYS, "Finished.\n");
+    VLOG(0) << "Finished.";
     return 0;
 }

@@ -612,6 +612,6 @@ void init_glvis(Replica (*replicas)[REPLICA_COUNT], Replica* gl_replica, int arg
 void enter_viewing_mode(Replica* gl_replica)
 {
     GLreplica = gl_replica;
-    LOG(ALWAYS, "Entering free gl viewing mode.\n");
+    VLOG(0) << "Entering free gl viewing mode.";
     glutMainLoop();
 }

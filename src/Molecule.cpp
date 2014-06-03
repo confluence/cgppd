@@ -89,7 +89,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 
 void Molecule::log_info(int index, int verbosity)
 {
-    LOG(verbosity > 1, "\t\t%d %s; %d residues; centre: (%0.3f, %0.3f, %0.3f); volume: %.3f A^3\n", index, filename, residueCount, center.x, center.y, center.z, volume);
+    VLOG(1) << "\t\t" << index << " " << filename << "; " << residueCount << " residues; centre: " << center << "; volume: " << volume << " A^3";
 }
 
 void Molecule::MC_backup_restore(const Molecule* m)
@@ -214,7 +214,7 @@ bool Molecule::centre_outside_boundary(Vector3f c)
     bool outside = c.sumSquares() < bounding_value * bounding_value;
 
     if (outside) {
-        LOG(WARN, "Move rejected because it would move molecule beyond boundary sphere.");
+        DLOG(WARN) << "Move rejected because it would move molecule beyond boundary sphere.";
     }
 
     return outside;
@@ -544,7 +544,7 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
     input.close();
     
     if (vResidues.size() && !chainCount) {
-        LOG(WARN, "Warning: check file %s for missing TER. Automatically setting number of chains to 1.\n", pdbfilename);
+        LOG(WARN) << "Warning: check file " << pdbfilename << " for missing TER. Automatically setting number of chains to 1.";
         chainCount++;
     }
 

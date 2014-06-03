@@ -3,9 +3,12 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 OTHER REFACTORING / TESTS
-    * proper logging -- google-glog?
-        * we either need to install something hacky or rewrite all the logging in stream syntax (probably less terrible)
-        * only 108 lines
+    * proper logging -- google-glog
+        * finish converting all the printfs / couts
+        * Clean up all the inconsistent log / print / cout formatting
+        * get verbose flags to work
+        * should be able to run test with -v -1
+        * we currently have a logfile we're not using
 
     * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
 		* samples are now in sync between versions
@@ -108,6 +111,7 @@ CLEANUP
     * New SDK should have new helper functions
     * but we need to extract it from the single-file installer somehow
 
+* convert all printfs / fprintfs to streams and all char arrays to strings
 * Eliminate extraneous preprocessor directives
 * factor the compensated summation out of Potential; add it in in a subclass later (although it's probably not necessary anyway)
 * Eliminate the MCSearch method and make everything call shared sub-methods
