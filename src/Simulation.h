@@ -16,6 +16,8 @@
 #include <unistd.h>  // include for profiling, TAU cannot find getpid() as it is an externed call
 #include <getopt.h>
 
+#include <glog/logging.h>
+
 #include "definitions.h"
 
 #if USING_CUDA

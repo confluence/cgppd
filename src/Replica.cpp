@@ -60,7 +60,7 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     if (parameters.auto_blockdim)
     {
         (residueCount < 1024) ? setBlockSize(32) : setBlockSize(64);
-        LOG(parameters.verbosity > 1, "\tAutomatically calculated block dimension: %d\n", blockSize);
+        LOG_IF(INFO, parameters.verbosity > 1) << "\tAutomatically calculated block dimension: " << blockSize;
     }
     else
     {
@@ -68,12 +68,12 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     }
 #endif
     
-    LOG(parameters.verbosity > 1, "\tLoaded: %d residues in %d molecules:\n", residueCount, moleculeCount);
+    LOG_IF(INFO, parameters.verbosity > 1) << "\tLoaded: " << residueCount << " residues in " << moleculeCount << " molecules";
     for (int i = 0; i < moleculeCount; i++)
     {
         molecules[i].log_info(i, parameters.verbosity);
     }
-    LOG(parameters.verbosity > 1, "\tCounted : %d complex residues and %d residue interaction pairs.\n", nonCrowderResidues, paircount);
+    LOG_IF(INFO, parameters.verbosity > 1) << "\tCounted : " << nonCrowderResidues << " complex residues and " << paircount << " residue interaction pairs.";
 }
 
 void Replica::init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters)
@@ -249,7 +249,7 @@ void Replica::reserveContiguousMoleculeArray(int size)
 {
     if (moleculeCount != 0)
     {
-        LOG(ERROR, "Cannot reserve molecule size: molecules already exist.");
+        LOG(ERROR) << "Cannot reserve molecule size: molecules already exist.";
         return;
     }
     moleculeArraySize = size;
@@ -327,12 +327,13 @@ void Replica::MCSearch(int steps, int mcstep)
 {
     for (int step = 0; step < steps; step++)
     {
+        string debug_log;
         int moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-        LOG(DEBUG, "Step %d:\treplica %d\tmolecule %d:\t%s\t", mcstep+step, label, moleculeNo, molecules[moleculeNo].last_MC_move);
+        LOG_STRING(INFO, &debug_log) << "Step " << mcstep + step << ":\treplica " << label << "\tmolecule " << moleculeNo << ":\t" << molecules[moleculeNo].last_MC_move << "\t";
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
@@ -340,7 +341,7 @@ void Replica::MCSearch(int steps, int mcstep)
 #if FLEXIBLE_LINKS
         if (!calculate_rigid_potential_only) {
             double bonded_potential = internal_molecule_E(false).total();
-            LOG(DEBUG, "new Eu: %f,\tnew Eb: %f\t", newPotential, bonded_potential);
+            LOG_STRING(INFO, &debug_log) << "new Eu: " << newPotential << ",\tnew Eb: " << bonded_potential << "\t";
             newPotential += bonded_potential;
         }
 #endif // FLEXIBLE_LINKS
@@ -349,14 +350,13 @@ void Replica::MCSearch(int steps, int mcstep)
 #if FLEXIBLE_LINKS
         if (!calculate_rigid_potential_only) {
             cpu_e += internal_molecule_E(true);
-            LOG(DEBUG, "new Eu: %f,\tnew Eb: %f\t", cpu_e.total_LJ() + cpu_e.total_DH(), cpu_e.total_bond() + cpu_e.total_angle() + cpu_e.total_torsion());
+            LOG_STRING(INFO, &debug_log) << "new Eu: " << cpu_e.total_LJ() + cpu_e.total_DH() << ",\tnew Eb: " << cpu_e.total_bond() + cpu_e.total_angle() + cpu_e.total_torsion() << "\t";
         }
 #endif // FLEXIBLE_LINKS
         newPotential = cpu_e.total();
 #endif // not USING_CUDA
 
-
-        LOG(DEBUG, "new E: %f\t", newPotential);
+        LOG_STRING(INFO, &debug_log) << "new E: " << newPotential << "\t";
     
         float delta = newPotential - potential;
 
@@ -365,25 +365,27 @@ void Replica::MCSearch(int steps, int mcstep)
         {
             potential = newPotential;
             accept++;
-            LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
+            LOG_STRING(INFO, &debug_log) << "* Replace:\tdelta E = " << delta << ";\tE = " << potential;
         }
         // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
         else if (gsl_rng_uniform(rng) < exp(-(delta*kcal)/(Rgas*temperature)))
         {
             potential = newPotential;
             acceptA++;
-            LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta * kcal/(Rgas*temperature)));
+            LOG_STRING(INFO, &debug_log) << "**Replace:\tdelta E = " << delta << ";\tE = " << potential << ";\tU < " << exp(-delta * kcal/(Rgas*temperature));
         }
         //reject
         else
         {
             reject++;
-            LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
+            LOG_STRING(INFO, &debug_log) << "- Reject:\tdelta E = " << delta << ";\tE = " << potential;
             molecules[moleculeNo].MC_backup_restore(&savedMolecule);
 #if USING_CUDA
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
         }
+
+        DLOG(INFO) << debug_log;
     }
 }
 
@@ -641,19 +643,20 @@ void Replica::MCSearchEvaluate(int mcstep)
 
 void Replica::MCSearchAcceptReject(int mcstep)
 {
-    LOG(DEBUG, "Step %d:\treplica %d\tmolecule %d:\t%s\t", mcstep, label, lastMutationIndex, molecules[lastMutationIndex].last_MC_move);
+    string debug_log;
+    LOG_STRING(INFO, &debug_log) << "Step " << mcstep << ":\treplica " << label << "\tmolecule " << lastMutationIndex << ":\t" << molecules[lastMutationIndex].last_MC_move << "\t";
 
     newPotential = SumGridResults();
 
 #if FLEXIBLE_LINKS
     if (!calculate_rigid_potential_only) {
         double bonded_potential = internal_molecule_E(false).total();
-        LOG(DEBUG, "new Eu: %f,\tnew Eb: %f\t", newPotential, bonded_potential);
+        LOG_STRING(INFO, &debug_log) << "new Eu: " << newPotential << ",\tnew Eb: " << bonded_potential << "\t";
         newPotential += bonded_potential;
     }
 #endif
 
-    LOG(DEBUG, "new E: %f\t", newPotential);
+    LOG_STRING(INFO, &debug_log) << "new E: " << newPotential << "\t";
 
     float delta = (newPotential - potential);
     
@@ -661,23 +664,25 @@ void Replica::MCSearchAcceptReject(int mcstep)
     {
         potential = newPotential;
         accept++;
-        LOG(DEBUG, "* Replace:\tdelta E = %f;\tE = %f\n", delta, potential);
+        LOG_STRING(INFO, &debug_log) << "* Replace:\tdelta E = " << delta << ";\tE = " << potential;
     }
     // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
     else if (gsl_rng_uniform(rng) < exp(-delta*kcal/(Rgas*temperature)))
     {
         potential = newPotential;
         acceptA++;
-        LOG(DEBUG, "**Replace:\tdelta E = %f;\tE = %f;\tU < %f\n", delta, potential, exp(-delta*kcal/(Rgas*temperature)));
+        LOG_STRING(INFO, &debug_log) << "**Replace:\tdelta E = " << delta << ";\tE = " << potential << ";\tU < " << exp(-delta*kcal/(Rgas*temperature));
     }
     else
     // if the change is bad then discard it.
     {
         reject++;
-        LOG(DEBUG, "- Reject:\tdelta E = %f;\tE = %f\n", delta, potential);
+        LOG_STRING(INFO, &debug_log) << "- Reject:\tdelta E = " << delta << ";\tE = " << potential;
         molecules[lastMutationIndex].MC_backup_restore(&savedMolecule);
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
+    
+    DLOG(INFO) << debug_log;
 }
 #endif  // streams
 
@@ -692,7 +697,7 @@ void Replica::ReplicaDataToDevice()
 
     paddedSize = int(ceil(float(residueCount)/float(blockSize)))*blockSize; // reserve a blocksize multiple because it allows for efficient summation
     dataSetSize = paddedSize;
-    LOG(DEBUG, "block size: %d, padded size: %d\n", blockSize, paddedSize);
+    DLOG(INFO) << "block size: " << blockSize << ", padded size: " << paddedSize;
 
 #if CUDA_STREAMS
     cudaMallocHost((void**)&host_float4_residuePositions,sizeof(float4)*paddedSize);
