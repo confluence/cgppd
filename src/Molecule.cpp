@@ -214,7 +214,7 @@ bool Molecule::centre_outside_boundary(Vector3f c)
     bool outside = c.sumSquares() < bounding_value * bounding_value;
 
     if (outside) {
-        DLOG(WARN) << "Move rejected because it would move molecule beyond boundary sphere.";
+        DLOG(WARNING) << "Move rejected because it would move molecule beyond boundary sphere.";
     }
 
     return outside;
@@ -544,7 +544,7 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
     input.close();
     
     if (vResidues.size() && !chainCount) {
-        LOG(WARN) << "Warning: check file " << pdbfilename << " for missing TER. Automatically setting number of chains to 1.";
+        LOG(WARNING) << "Warning: check file " << pdbfilename << " for missing TER. Automatically setting number of chains to 1.";
         chainCount++;
     }
 

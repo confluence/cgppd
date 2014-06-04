@@ -46,19 +46,6 @@
     // code things
 //     #define VERBOSE_THREAD_LOGGING 1
 
-    //#define ALWAYS   1
-
-    //#define ERROR   1
-    //#define WARN   1
-    //#define INFO    1
-    //#define DEBUG   1
-
-    //#define LOG(level, ...) \
-            //do { if (level) printf(__VA_ARGS__); } while (0)
-
-//     #define DEBUGLOG(fmt, ...) \
-//             do { printf("%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, __VA_ARGS__); } while (0)
-
     #ifdef EnableOPENGL			//set here to override the makefile
         #define GLVIS 1
     #else
