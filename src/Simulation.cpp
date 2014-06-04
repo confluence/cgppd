@@ -828,7 +828,7 @@ void Simulation::getArgs(int argc, char **argv)
                 parameters.viewConditions = true;
                 VLOG(1) << "\tWill show OpenGL preview.";
 #else
-                LOG(WARN) << "\tThis build does not support OpenGL.";
+                LOG(WARNING) << "\tThis build does not support OpenGL.";
 #endif
                 break;
             case 'q':
@@ -885,11 +885,11 @@ void Simulation::getArgs(int argc, char **argv)
                 parameters.auto_blockdim = false;
                 VLOG(1) << "\tParameter blockdim = " << parameters.cuda_blockSize;
 #else
-                LOG(WARN) << "\tThis build does not support CUDA.";
+                LOG(WARNING) << "\tThis build does not support CUDA.";
 #endif
                 break;
             default:
-                LOG(WARN) << "\tUnknown parameter: " << opt;
+                LOG(WARNING) << "\tUnknown parameter: " << opt;
                 printHelp();
                 break;
         }
@@ -963,7 +963,7 @@ void Simulation::loadArgsFromFile()
 
             if (result < 8)
             {
-                LOG(WARN) << "\tUnable to parse molecule: " << line;
+                LOG(WARNING) << "\tUnable to parse molecule: " << line;
             }
 
             else
@@ -1075,7 +1075,7 @@ void Simulation::loadArgsFromFile()
                 }
             }
             else {
-                LOG(WARN) << "\tUnknown parameter: " << key;
+                LOG(WARNING) << "\tUnknown parameter: " << key;
             }
         }
     }
@@ -1089,13 +1089,13 @@ void Simulation::check_and_modify_parameters()
 
     if (parameters.bound <= 0)
     {
-        LOG(WARN) << "\tWARNING: Bounding value too small; setting equal to " << BOUNDING_VALUE << ".";
+        LOG(WARNING) << "\tWARNINGING: Bounding value too small; setting equal to " << BOUNDING_VALUE << ".";
         parameters.bound = BOUNDING_VALUE;
     }
 
     if (parameters.temperatureMax < parameters.temperatureMin)
     {
-        LOG(WARN) << "\tWARNING: Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " and " << parameters.temperatureMax << ".";
+        LOG(WARNING) << "\tWARNINGING: Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " and " << parameters.temperatureMax << ".";
         float tmp = parameters.temperatureMax;
         parameters.temperatureMax = parameters.temperatureMin;
         parameters.temperatureMin = tmp;
@@ -1104,7 +1104,7 @@ void Simulation::check_and_modify_parameters()
     if (parameters.threads > parameters.replicas)
     {
         parameters.threads = parameters.replicas;
-        LOG(WARN) << "\tWARNING: Threads > replicas; setting threads equal to " << parameters.threads << ".";
+        LOG(WARNING) << "\tWARNINGING: Threads > replicas; setting threads equal to " << parameters.threads << ".";
     }
 
     parameters.max_replicas_per_thread = int(ceil(float(parameters.replicas) / float(parameters.threads)));
@@ -1122,7 +1122,7 @@ void Simulation::check_and_modify_parameters()
     if (parameters.gpus > availableGpus)
     {
         parameters.gpus = availableGpus;
-        LOG(WARN) << "\tWARNING: Too many GPUs; setting equal to " << parameters.gpus << ".";
+        LOG(WARNING) << "\tWARNINGING: Too many GPUs; setting equal to " << parameters.gpus << ".";
     }
 #endif
 
@@ -1137,7 +1137,7 @@ void Simulation::check_and_modify_parameters()
             {
                 parameters.streams = parameters.replicas;
             }
-            LOG(WARN) << "\tWARNING: Too many streams; setting equal to " << parameters.streams << ".";
+            LOG(WARNING) << "\tWARNINGING: Too many streams; setting equal to " << parameters.streams << ".";
         }
     }
 

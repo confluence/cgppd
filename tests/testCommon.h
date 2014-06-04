@@ -4,6 +4,8 @@
 #include <set>
 #include <sstream>
 
+#include <glog/logging.h>
+
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/SourceLine.h>

@@ -8,6 +8,8 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
+#include <glog/logging.h>
+
 #include "definitions.h"
 #include "AminoAcids.h"
 #include "vector3f.h"
