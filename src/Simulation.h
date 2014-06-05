@@ -103,8 +103,7 @@ public:
     void init(int argc, char **argv, int pid);
 
     void printHelp();
-    void getFileArg(int argc, char **argv);
-    void getArgs(int argc, char **argv);
+    void getArgs(int argc, char **argv, bool first_pass);
     void loadArgsFromFile();
     void check_and_modify_parameters();
     void writeFileIndex();

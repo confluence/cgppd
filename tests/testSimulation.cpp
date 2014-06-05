@@ -38,11 +38,11 @@ void TestSimulation::testGetArgs()
 {
     Simulation s;
     
-    char * argv[] = {"my_programname", "-f", "my_filename", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-o", "my_suffix", "-b", "23", "-n", "23", "-x", "23", "-d", "23", NULL};
-    int argc(27);
+    char * argv[] = {"my_programname", "-f", "tests/argtestfile", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-b", "23", "-n", "23", "-x", "23", "-d", "23", NULL};
+    int argc(25);
 
-    s.getFileArg(argc, argv);
-    s.getArgs(argc, argv);
+    s.getArgs(argc, argv, true);
+    s.getArgs(argc, argv, false);
 
     CPPUNIT_ASSERT_EQUAL(true, s.parameters.viewConditions);
     CPPUNIT_ASSERT_EQUAL(true, s.parameters.skipsimulation);
@@ -68,10 +68,7 @@ void TestSimulation::testGetArgs()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.temperatureMax, 0);
 
     CPPUNIT_ASSERT(strcmp(s.parameters.prefix, "") == 0);
-    CPPUNIT_ASSERT(strcmp(s.parameters.file, "my_filename") == 0);
-    CPPUNIT_ASSERT(strcmp(s.parameters.logfile, "my_suffix") == 0);
-
-    CPPUNIT_ASSERT_EQUAL(0, s.parameters.verbosity);
+    CPPUNIT_ASSERT(strcmp(s.parameters.file, "tests/argtestfile") == 0);
 }
 
 void TestSimulation::testLoadArgsFromFile()
@@ -107,7 +104,6 @@ void TestSimulation::testLoadArgsFromFile()
 
     CPPUNIT_ASSERT(strcmp(s.parameters.prefix, "") == 0);
     CPPUNIT_ASSERT(strcmp(s.parameters.file, "tests/argtestfile") == 0);
-    CPPUNIT_ASSERT(strcmp(s.parameters.logfile, "") == 0);
 
     CPPUNIT_ASSERT_EQUAL(7, (int)s.parameters.mdata.size());
     CPPUNIT_ASSERT_EQUAL(2, (int)s.parameters.mdata_map.size());
@@ -131,15 +127,11 @@ void TestSimulation::testREMC()
 {
     // This test ensures that the synchronous and asynchronous CUDA options produce the same results.
     
-    // TODO:
-    // create a new simulation with a simple test config file (reference conformation 1 with flexible ubq tail)
-    // use arguments to override output directory and make the simulation short
-    
     Simulation s;
     
-    char * argv[] = {"program_name_goes_here", "-f", "tests/remctestfile", "-o", "remctest", NULL};
+    char * argv[] = {"program_name_goes_here", "-f", "tests/remctestfile", NULL};
     
-    int argc(5);
+    int argc(3);
     int pid = int( getpid() );
     s.init(argc, argv, pid);
     

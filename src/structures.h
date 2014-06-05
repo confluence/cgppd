@@ -96,7 +96,6 @@ struct argdata
     char prefix[256];
     char title[256];
     char file[256];
-    char logfile[256];
     bool inputFile;
 //         TODO: for some reason I wanted to remove this
     int nonCrowders;
@@ -108,7 +107,6 @@ struct argdata
     bool resume;
     vector<moldata> mdata;
     map<string, int> mdata_map;
-    int verbosity;
 
     argdata() :
         nonCrowders(0), viewConditions(false), skipsimulation(false),
@@ -118,12 +116,10 @@ struct argdata
         gpus(1), threads(THREAD_COUNT), streams(STREAM_COUNT), MCsteps(MC_STEPS), REsteps(REMC_STEPS),
         sampleFrequency(SAMPLE_FREQ), sampleStartsAfter(STEPS_BEFORE_SAMPLE), inputFile(false),
         replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP),
-        pid(0), resume(false), checkpointFrequency(CHECKPOINTFREQUENCY), max_replicas_per_thread(0),
-        verbosity(0)
+        pid(0), resume(false), checkpointFrequency(CHECKPOINTFREQUENCY), max_replicas_per_thread(0)
     {
         memset(prefix, 0, 256);
         memset(file, 0, 256);
-        memset(logfile, 0, 256);
         memset(title, 0, 256);
     }
 };

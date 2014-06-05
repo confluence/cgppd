@@ -31,7 +31,7 @@ public:
     void init(const moldata mol, AminoAcids &a, int index, const float bounding_value);
     vector<Residue> initFromPDB(const char* pdbfilename);
     void copy(const Molecule& m, Residue * contiguous_residue_offset);
-    void log_info(int index, int verbosity);
+    void log_info(int index);
 
     void MC_backup_restore(const Molecule* m);
     void init_saved_molecule(int max_residue_count);

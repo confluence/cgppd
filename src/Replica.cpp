@@ -60,7 +60,7 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     if (parameters.auto_blockdim)
     {
         (residueCount < 1024) ? setBlockSize(32) : setBlockSize(64);
-        LOG_IF(INFO, parameters.verbosity > 1) << "\tAutomatically calculated block dimension: " << blockSize;
+        VLOG(1) << "\tAutomatically calculated block dimension: " << blockSize;
     }
     else
     {
@@ -68,12 +68,12 @@ void Replica::init_first_replica(const argdata parameters, AminoAcids amino_acid
     }
 #endif
     
-    LOG_IF(INFO, parameters.verbosity > 1) << "\tLoaded: " << residueCount << " residues in " << moleculeCount << " molecules";
+    VLOG(1) << "\tLoaded: " << residueCount << " residues in " << moleculeCount << " molecules";
     for (int i = 0; i < moleculeCount; i++)
     {
-        molecules[i].log_info(i, parameters.verbosity);
+        molecules[i].log_info(i);
     }
-    LOG_IF(INFO, parameters.verbosity > 1) << "\tCounted : " << nonCrowderResidues << " complex residues and " << paircount << " residue interaction pairs.";
+    VLOG(1) << "\tCounted : " << nonCrowderResidues << " complex residues and " << paircount << " residue interaction pairs.";
 }
 
 void Replica::init_child_replica(const Replica& ir, const int index, const double geometricTemperature, const double geometricRotation, const double geometricTranslate, const argdata parameters)
