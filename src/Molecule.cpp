@@ -87,7 +87,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 #endif // FLEXIBLE_LINKS
 }
 
-void Molecule::log_info(int index, int verbosity)
+void Molecule::log_info(int index)
 {
     VLOG(1) << "\t\t" << index << " " << filename << "; " << residueCount << " residues; centre: " << center << "; volume: " << volume << " A^3";
 }

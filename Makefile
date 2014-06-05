@@ -1,6 +1,6 @@
 ################################################################################
 
-INCLUDE=-I/usr/include/glog/
+INCLUDE=-I/usr/include/glog/ -I/usr/include/gflags/
 LIBS=-L/usr/lib64
 LINKS=-lpthread -lgsl -lgslcblas
 CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
@@ -40,7 +40,7 @@ DEBUG=no
 ifeq ($(CUDA),yes)
 INCLUDE+=-I/$(HOME)/NVIDIA_GPU_Computing_SDK/C/common/inc -I/usr/include/nvidia-current/cuda -I/usr/local/cuda/include
 LIBS+=-L/$(HOME)/NVIDIA_GPU_Computing_SDK/C/lib -L/usr/lib64/nvidia-current -L/usr/local/cuda/lib64
-LINKS+=-lcudart -lcutil -lcuda -lglog
+LINKS+=-lcudart -lcutil -lcuda -lglog -lgflags
 OBJS+=CudaFunctions
 DEFINE+=-DEnableCUDA
 endif

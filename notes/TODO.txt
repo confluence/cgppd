@@ -4,12 +4,11 @@ RIGHT NOW
 
 OTHER REFACTORING / TESTS
     * proper logging -- google-glog
+        * clean up arg parsing:
+            * move if firstpass to just around switch
+        * move vlogs from main to sim init; silence tests; add test flags for turning on comparisons?
         * finish converting all the printfs / couts
         * Clean up all the inconsistent log / print / cout formatting
-        * get verbose flags to work
-            * VLOG(1) currently not showing up?
-            * Can we set different severity levels for stderr and logs? 
-        * we currently have a logfile we're not using - remove it
 
     * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
 		* samples are now in sync between versions

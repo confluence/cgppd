@@ -48,15 +48,461 @@ Simulation::~Simulation()
 #endif
 }
 
+void Simulation::printHelp()
+{
+    cout << "Usage: cgppd -f <filename> [-h] [-p] [-q] [-v] [-t x] [-s x] [-g x] [-m x ] [-a x] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
+    cout << "\t-h|--help: show this dialog" << endl;
+    cout << "\t-f|--file <file>: Input config file" << endl;
+    cout << "\t-p|--preview:        use the open GL preview of this configuration, performs no simulation" << endl;
+    cout << "\t-q|--nosim:       Do everything except the simulation (for use with -p)" << endl;
+    cout << "The following values override those in the config file" << endl;
+    cout << "\t-t|--threads x:  The number of CPU/pthreads to use" << endl;
+    cout << "\t-s|--streams x:  The number of CUDA streams" << endl;
+    cout << "\t-g|--gpus x:     The number of GPUS to use" << endl;
+    cout << "\t-m|--mcsteps x:  How many MC steps to perform per replica " << endl;
+    cout << "\t-a|--sampleafter x:  How many MC steps to perform before beginning sampling" << endl;
+    cout << "\t-e|--resteps x:  How many replica exchanges to perform" << endl;
+    cout << "\t-r|--replicas x: How many replicas" << endl;
+    cout << "\t-o|--output x:   The output prefix for files created by the simulation" << endl;
+    cout << "\t-b|--boundary x:  The bounding box edge length" << endl;
+    cout << "\t-x|--tmax x:    The temperature of the highest replica" << endl;
+    cout << "\t-n|--tmin x:    The temperature of the lowest replica" << endl;
+    cout << "\t-d|--blockdim x: Number of threads per CUDA block" << endl;
+    cout << "\t-v|--v: Verbosity level (glog flag)" << endl;
+
+    exit(0);
+}
+
+void Simulation::getArgs(int argc, char **argv, bool first_pass)
+{
+    const struct option long_options[] =
+    {
+        {"file", required_argument, 0, 'f'},
+        {"help", no_argument, 0, 'h'},
+        {"v", required_argument, 0, 'v'},
+        
+        {"preview", no_argument, 0, 'p'},
+        {"nosim", no_argument, 0, 'q'},
+
+        {"threads", required_argument, 0, 't'},
+        {"streams", required_argument, 0, 's'},
+        {"gpus", required_argument, 0, 'g'},
+        {"mcsteps", required_argument, 0, 'm'},
+        {"sampleafter", required_argument, 0, 'a'},
+        {"resteps", required_argument, 0, 'e'},
+        {"replicas", required_argument, 0, 'r'},
+
+        {"boundary", required_argument, 0, 'b'},
+        {"tmax", required_argument, 0, 'x'},
+        {"tmin", required_argument, 0, 'n'},
+        {"blockdim", required_argument, 0, 'd'},
+
+        {0, 0, 0, 0},
+    };
+
+    const char short_options[] = "hf:pqt:s:g:m:a:e:r:b:x:n:d:v:w:";
+
+    // Reset getopt's awful global variables
+    int opt_index = 0;
+    optind = 1;
+
+    if (first_pass) {
+        while (1)
+        {
+            int opt = getopt_long(argc, argv, short_options, long_options, &opt_index);
+
+            if (opt == -1)
+                break;
+
+            switch(opt)
+            {
+                case 'h':
+                    printHelp();
+                    break;
+                case 'f':
+                    strcpy(parameters.file, optarg);
+                    parameters.inputFile = true;
+                    break;
+                case 'v':
+                    // This is a bit of a hack, but I really don't want to refactor everything to use gflags just for verbose logs.
+                    FLAGS_v = atoi(optarg); 
+                    break;
+                default:
+                    // Ignore all other options in this pass
+                    break;
+            }
+        }
+
+        if (!parameters.inputFile)
+        {
+            LOG(ERROR) << "No configuration file provided.";
+            printHelp();
+        }
+
+        VLOG(1) << "Will read configuration from file: " << parameters.file;
+    } else {
+
+        VLOG(0) << "Parsing commandline parameters...";
+
+        while (1)
+        {
+            int opt = getopt_long(argc, argv, short_options, long_options, &opt_index);
+
+            if (opt == -1)
+                break;
+
+            switch(opt)
+            {
+                case 'h':
+                    printHelp();
+                    break;
+                case 'f':
+                    // we can ignore the file parameter on the second pass
+                    break;
+                case 'v':
+                    // ignore
+                    break;
+                case 'w':
+                    // ignore
+                    break;
+                case 'p':
+    #if GLVIS
+                    parameters.viewConditions = true;
+                    VLOG(1) << "\tWill show OpenGL preview.";
+    #else
+                    LOG(WARNING) << "\tThis build does not support OpenGL.";
+    #endif
+                    break;
+                case 'q':
+                    parameters.skipsimulation = true;
+                    VLOG(1) << "\tWill skip simulation.";
+                    break;
+                case 't':
+                    parameters.threads = atoi(optarg);
+                    VLOG(1) << "\tParameter threads = " << parameters.threads;
+                    break;
+                case 's':
+                    parameters.streams = atoi(optarg);
+                    VLOG(1) << "\tParameter streams = " << parameters.streams;
+                    break;
+                case 'g':
+                    parameters.gpus = atoi(optarg);
+                    VLOG(1) << "\tParameter gpus = " << parameters.gpus;
+                    break;
+                case 'm':
+                    parameters.MCsteps = atoi(optarg);
+                    VLOG(1) << "\tParameter MCsteps = " << parameters.MCsteps;
+                    break;
+                case 'a':
+                    parameters.sampleStartsAfter = atoi(optarg);
+                    VLOG(1) << "\tParameter sampleStartsAfter = " << parameters.sampleStartsAfter;
+                    break;
+                case 'e':
+                    parameters.REsteps = atoi(optarg);
+                    VLOG(1) << "\tParameter REsteps = " << parameters.REsteps;
+                    break;
+                case 'r':
+                    parameters.replicas = atoi(optarg);
+                    VLOG(1) << "\tParameter replicas = " << parameters.replicas;
+                    break;
+                case 'b':
+                    parameters.bound = atof(optarg);
+                    VLOG(1) << "\tParameter bound = " << parameters.bound;
+                    break;
+                case 'x':
+                    parameters.temperatureMax = atof(optarg);
+                    VLOG(1) << "\tParameter temperatureMax = " << parameters.temperatureMax;
+                    break;
+                case 'n':
+                    parameters.temperatureMin = atof(optarg);
+                    VLOG(1) << "\tParameter temperatureMin = " << parameters.temperatureMin;
+                    break;
+                case 'd':
+    #if USING_CUDA
+                    parameters.cuda_blockSize = atoi(optarg);
+                    parameters.auto_blockdim = false;
+                    VLOG(1) << "\tParameter blockdim = " << parameters.cuda_blockSize;
+    #else
+                    LOG(WARNING) << "\tThis build does not support CUDA.";
+    #endif
+                    break;
+                default:
+                    LOG(WARNING) << "\tUnknown parameter: " << opt;
+                    printHelp();
+                    break;
+            }
+        }
+    }
+}
+
+void Simulation::loadArgsFromFile()
+{
+    /* use an input file
+     * files start after the "files" word in a file.
+     * format is: px py pz rx ry rz r filename
+     * meaning: position 3 floats x,y,z, rotation axis floats rx,ry,rz, and amount r float, filename is the rest of the line
+     *
+     * file can define parameters too.
+     * one per line args:
+     * threads 2  (2 threads)
+     * streams 4  (4 streams) etc....
+     * files
+     * p 1 4 7 r 1 0 0 0 pdb data/conf1/1a.pdb
+     * crowders
+     * p 1 8 9 r 1 9 2 0.5 pdb data/conf1/x.pdb
+     *
+     */
+
+    ifstream input(parameters.file);
+
+    if (!input.good())
+    {
+        LOG(ERROR) << "Failed to open file: " << parameters.file;
+        exit(0);
+    }
+
+    VLOG(0) << "Parsing config file " << parameters.file << "...";
+
+    char line[512] = {0};
+
+#define PARAMETER_SECTION 0
+#define MOLECULE_SECTION 1
+#define CROWDER_SECTION 2
+#define SEGMENT_SECTION 3
+
+    int section = PARAMETER_SECTION;
+
+    while (!input.eof())
+    {
+        input.getline(line, 512);
+
+        if (line == NULL || line[0] == '#' || strlen(line)==0)
+        {
+        }
+        else if (strcmp(line, "files") == 0)
+        {
+            section = MOLECULE_SECTION;
+        }
+        else if (strcmp(line, "crowders") == 0)
+        {
+            section = CROWDER_SECTION;
+        }
+        else if (strcmp(line, "segments") == 0)
+        {
+            section = SEGMENT_SECTION;
+        }
+        else if (section == MOLECULE_SECTION || section == CROWDER_SECTION)
+        {
+            moldata m;
+            int result = 0;
+            char pos_flag;
+
+            result = sscanf(line, "%c(%f,%f,%f) r(%f,%f,%f,%f) %s %s", &pos_flag, &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename, m.name);
+            m.translate = (pos_flag == 't');
+
+            if (result < 8)
+            {
+                LOG(WARNING) << "\tUnable to parse molecule: " << line;
+            }
+
+            else
+            {
+                m.crowder = (section == CROWDER_SECTION);
+                // TODO: remove this later?
+                if (section == MOLECULE_SECTION)
+                {
+                    parameters.nonCrowders++;
+                }
+
+                parameters.mdata.push_back(m);
+                // TODO: if the molecule is named, add it to the name map
+                // TODO: check if this comparison is right
+                if (m.name && m.name[0] != '\0')
+                {
+                    parameters.mdata_map[string(m.name)] = parameters.mdata.size() - 1;
+                }
+
+                VLOG(1) << "\tAdded molecule from file " << m.pdbfilename << ".";
+            }
+        }
+        else if (section == SEGMENT_SECTION)
+        {
+            char * molname = strtok(line, " ");            
+            char * word = strtok(NULL, " ");
+                        
+            if (strcmp(word, "all") == 0)
+            {
+                parameters.mdata[parameters.mdata_map[string(molname)]].all_flexible = true;
+            }
+            else
+            {
+                segdata s;
+
+                while (word != NULL)
+                {
+                    s.residue_indices.push_back(atoi(word) - 1);
+                    word = strtok(NULL, " ");
+                }
+                
+                parameters.mdata[parameters.mdata_map[string(molname)]].segments.push_back(s);
+            }
+        }
+        else if (section == PARAMETER_SECTION)
+        {
+            char * key = strtok(line, " ");
+            char * value = strtok(NULL, " ");
+
+            VLOG(1) << "\tParameter " << key << " = " << value;
+
+            if (strcmp(key, "gpus") == 0)
+            {
+                parameters.gpus = atoi(value);
+            }
+            else if (strcmp(key, "streams") == 0)
+            {
+                parameters.streams = atoi(value);
+            }
+            else if (strcmp(key, "threads") == 0)
+            {
+                parameters.threads = atoi(value);
+            }
+            else if (strcmp(key, "mcsteps") == 0)
+            {
+                parameters.MCsteps = atoi(value);
+            }
+            else if (strcmp(key, "resteps") == 0)
+            {
+                parameters.REsteps = atoi(value);
+            }
+            else if (strcmp(key, "temperaturemax") == 0)
+            {
+                parameters.temperatureMax = atof(value);
+            }
+            else if (strcmp(key, "temperaturemin") == 0)
+            {
+                parameters.temperatureMin = atof(value);
+            }
+            else if (strcmp(key, "boundary") == 0)
+            {
+                parameters.bound = atof(value);
+            }
+            else if (strcmp(key, "replicas") == 0)
+            {
+                parameters.replicas = atoi(value);
+            }
+            else if (strcmp(key, "samplefrequency") == 0)
+            {
+                parameters.sampleFrequency = atoi(value);
+            }
+            else if (strcmp(key, "sampleafter") == 0)
+            {
+                parameters.sampleStartsAfter = atoi(value);
+            }
+            else if (strcmp(key, "prefix") == 0)
+            {
+                sprintf(parameters.prefix, "%s_%d", value, parameters.pid);
+            }
+            else if (strcmp(key, "title") == 0)
+            {
+                int length = 0;
+                length += sprintf(parameters.title + length, "%s", value);
+                value = strtok(NULL," ");
+                while (value != NULL)
+                {
+                    length += sprintf(parameters.title + length, " %s", value);
+                    value = strtok(NULL," ");
+                }
+            }
+            else {
+                LOG(WARNING) << "\tUnknown parameter: " << key;
+            }
+        }
+    }
+
+    input.close();
+}
+
+void Simulation::check_and_modify_parameters()
+{
+    VLOG(0) << "Checking parameters for sanity...";
+
+    if (parameters.bound <= 0)
+    {
+        LOG(WARNING) << "\tWARNINGING: Bounding value too small; setting equal to " << BOUNDING_VALUE << ".";
+        parameters.bound = BOUNDING_VALUE;
+    }
+
+    if (parameters.temperatureMax < parameters.temperatureMin)
+    {
+        LOG(WARNING) << "\tWARNINGING: Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " and " << parameters.temperatureMax << ".";
+        float tmp = parameters.temperatureMax;
+        parameters.temperatureMax = parameters.temperatureMin;
+        parameters.temperatureMin = tmp;
+    }
+
+    if (parameters.threads > parameters.replicas)
+    {
+        parameters.threads = parameters.replicas;
+        LOG(WARNING) << "\tWARNINGING: Threads > replicas; setting threads equal to " << parameters.threads << ".";
+    }
+
+    parameters.max_replicas_per_thread = int(ceil(float(parameters.replicas) / float(parameters.threads)));
+    int spaces = parameters.replicas - parameters.max_replicas_per_thread * parameters.threads;
+    int unused_threads = spaces / parameters.max_replicas_per_thread; // integer division
+    if (unused_threads)
+    {
+        LOG(ERROR) << "\tERROR: After assignment of " << parameters.replicas << " replicas to " << parameters.threads << " threads with " << parameters.max_replicas_per_thread << " replicas per thread, " << unused_threads << " threads are left unused. You must either increase the number of replicas or decrease the number of threads. Exiting.";
+        exit(0);
+    }
+
+#if USING_CUDA
+    int availableGpus;
+    cudaGetDeviceCount(&availableGpus);
+    if (parameters.gpus > availableGpus)
+    {
+        parameters.gpus = availableGpus;
+        LOG(WARNING) << "\tWARNINGING: Too many GPUs; setting equal to " << parameters.gpus << ".";
+    }
+#endif
+
+    if (parameters.threads > parameters.streams)
+    {
+        parameters.streams = parameters.threads;
+        if (parameters.streams > 16 * parameters.gpus)
+        {
+            parameters.streams = 16 * parameters.gpus;
+
+            if (parameters.streams > parameters.replicas)
+            {
+                parameters.streams = parameters.replicas;
+            }
+            LOG(WARNING) << "\tWARNINGING: Too many streams; setting equal to " << parameters.streams << ".";
+        }
+    }
+
+    int length = strlen(parameters.prefix);
+#if REPULSIVE_CROWDING
+    length += sprintf(parameters.prefix + length, "_repcrowding");
+#endif
+
+#if LJ_REPULSIVE
+    length += sprintf(parameters.prefix + length, "_repLJ");
+#endif
+
+#if LJ_OFF
+    length += sprintf(parameters.prefix + length, "_LJoff");
+#endif
+}
+
 void Simulation::init(int argc, char **argv, int pid)
 {
     // Get the parameters
 
     parameters.pid = pid;
 
-    getFileArg(argc, argv);
+    getArgs(argc, argv, true);
     loadArgsFromFile();
-    getArgs(argc, argv); // second pass to override any variables if doing performance tests
+    getArgs(argc, argv, false);
 
     // sanity check and calculation of some secondary parameters
     check_and_modify_parameters();
@@ -696,463 +1142,6 @@ void Simulation::closeSamplingFiles()
     closeSamplingFile("boundconformations", &boundConformationsFile);
     closeSamplingFile("acceptance_ratios", &acceptanceRatioFile);
     closeSamplingFile("exchange_freq", &exchangeFrequencyFile);
-}
-
-void Simulation::printHelp()
-{
-    cout << "Usage: cgppd -f <filename> [-h] [-p] [-q] [-v] [-t x] [-s x] [-g x] [-m x ] [-a x] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
-    cout << "\t-h|--help: show this dialog" << endl;
-    cout << "\t-f|--file <file>: Input config file" << endl;
-    cout << "\t-p|--preview:        use the open GL preview of this configuration, performs no simulation" << endl;
-    cout << "\t-q|--nosim:       Do everything except the simulation (for use with -p)" << endl;
-    cout << "The following values override those in the config file" << endl;
-    cout << "\t-t|--threads x:  The number of CPU/pthreads to use" << endl;
-    cout << "\t-s|--streams x:  The number of CUDA Streams" << endl;
-    cout << "\t-g|--gpus x:     The number of GPUS to use" << endl;
-    cout << "\t-m|--mcsteps x:  How many MC steps to perform per replica " << endl;
-    cout << "\t-a|--sampleafter x:  How many MC steps to perform before beginning sampling" << endl;
-    cout << "\t-e|--resteps x:  How many replica exchanges to perform" << endl;
-    cout << "\t-r|--replicas x: How many replicas" << endl;
-    cout << "\t-o|--output x:   The output prefix for files created by the simulation" << endl;
-    cout << "\t-b|--boundary x:  The bounding box edge length" << endl;
-    cout << "\t-x|--tmax x:    The temperature of the highest replica" << endl;
-    cout << "\t-n|--tmin x:    The temperature of the lowest replica" << endl;
-    cout << "\t-d|--blockdim x: Number of threads per CUDA block" << endl;
-    cout << "\t-v|-vv: Increase verbosity" << endl;
-
-    exit(0);
-}
-
-void Simulation::getFileArg(int argc, char **argv)
-{
-    const struct option long_options[] =
-    {
-        {"file", required_argument, 0, 'f'},
-        {"help", no_argument, 0, 'h'},
-        {0, 0, 0, 0},
-    };
-
-    int opt_index = 0;
-    
-    optind = 1; // we need to reset this here too, so that unit tests don't segfault. Yay, global variables!
-
-    while (1)
-    {
-        int opt = getopt_long(argc, argv, "hf:pqt:s:g:m:a:e:r:o:b:x:n:d:v012", long_options, &opt_index);
-
-        if (opt == -1)
-            break;
-
-        switch(opt)
-        {
-            case 'h':
-                printHelp();
-                break;
-            case 'f':
-                strcpy(parameters.file, optarg);
-                parameters.inputFile = true;
-                break;
-            case 'v':
-                parameters.verbosity++;
-                break;
-            default:
-                // Ignore all other options in this pass
-                break;
-        }
-    }
-
-    if (!parameters.inputFile)
-    {
-        LOG(ERROR) << "No configuration file provided.";
-        printHelp();
-    }
-
-    VLOG(1) << "Will read configuration from file: " << parameters.file;
-}
-
-void Simulation::getArgs(int argc, char **argv)
-{
-    sprintf(parameters.logfile, "output/%s/logfile", parameters.prefix);
-
-    const struct option long_options[] =
-    {
-        {"help", no_argument, 0, 'h'},
-        {"preview", no_argument, 0, 'p'},
-        {"nosim", no_argument, 0, 'q'},
-
-        {"threads", required_argument, 0, 't'},
-        {"streams", required_argument, 0, 's'},
-        {"gpus", required_argument, 0, 'g'},
-        {"mcsteps", required_argument, 0, 'm'},
-        {"sampleafter", required_argument, 0, 'a'},
-        {"resteps", required_argument, 0, 'e'},
-        {"replicas", required_argument, 0, 'r'},
-
-        {"output", required_argument, 0, 'o'},
-        {"boundary", required_argument, 0, 'b'},
-        {"tmax", required_argument, 0, 'x'},
-        {"tmin", required_argument, 0, 'n'},
-        {"blockdim", required_argument, 0, 'd'},
-
-        {0, 0, 0, 0},
-    };
-
-    int opt_index = 0;
-
-    // Important! This is a getopt variable which we need to reset if we want to do a second pass over the same options. Which we do.
-    optind = 1;
-
-
-    VLOG(0) << "Parsing commandline parameters...";
-
-    while (1)
-    {
-        int opt = getopt_long(argc, argv, "hf:pqt:s:g:m:a:e:r:o:b:x:n:d:v012", long_options, &opt_index);
-
-        if (opt == -1)
-            break;
-
-        switch(opt)
-        {
-            case 'h':
-                printHelp();
-                break;
-            case 'f':
-                // we can ignore the file parameter on the second pass
-                break;
-            case 'v':
-                // we can ignore the file parameter on the second pass
-                break;
-            case 'p':
-#if GLVIS
-                parameters.viewConditions = true;
-                VLOG(1) << "\tWill show OpenGL preview.";
-#else
-                LOG(WARNING) << "\tThis build does not support OpenGL.";
-#endif
-                break;
-            case 'q':
-                parameters.skipsimulation = true;
-                VLOG(1) << "\tWill skip simulation.";
-                break;
-            case 't':
-                parameters.threads = atoi(optarg);
-                VLOG(1) << "\tParameter threads = " << parameters.threads;
-                break;
-            case 's':
-                parameters.streams = atoi(optarg);
-                VLOG(1) << "\tParameter streams = " << parameters.streams;
-                break;
-            case 'g':
-                parameters.gpus = atoi(optarg);
-                VLOG(1) << "\tParameter gpus = " << parameters.gpus;
-                break;
-            case 'm':
-                parameters.MCsteps = atoi(optarg);
-                VLOG(1) << "\tParameter MCsteps = " << parameters.MCsteps;
-                break;
-            case 'a':
-                parameters.sampleStartsAfter = atoi(optarg);
-                VLOG(1) << "\tParameter sampleStartsAfter = " << parameters.sampleStartsAfter;
-                break;
-            case 'e':
-                parameters.REsteps = atoi(optarg);
-                VLOG(1) << "\tParameter REsteps = " << parameters.REsteps;
-                break;
-            case 'r':
-                parameters.replicas = atoi(optarg);
-                VLOG(1) << "\tParameter replicas = " << parameters.replicas;
-                break;
-            case 'o':
-                strcpy(parameters.logfile, optarg);
-                VLOG(1) << "\tParameter logfile = " << parameters.logfile;
-                break;
-            case 'b':
-                parameters.bound = atof(optarg);
-                VLOG(1) << "\tParameter bound = " << parameters.bound;
-                break;
-            case 'x':
-                parameters.temperatureMax = atof(optarg);
-                VLOG(1) << "\tParameter temperatureMax = " << parameters.temperatureMax;
-                break;
-            case 'n':
-                parameters.temperatureMin = atof(optarg);
-                VLOG(1) << "\tParameter temperatureMin = " << parameters.temperatureMin;
-                break;
-            case 'd':
-#if USING_CUDA
-                parameters.cuda_blockSize = atoi(optarg);
-                parameters.auto_blockdim = false;
-                VLOG(1) << "\tParameter blockdim = " << parameters.cuda_blockSize;
-#else
-                LOG(WARNING) << "\tThis build does not support CUDA.";
-#endif
-                break;
-            default:
-                LOG(WARNING) << "\tUnknown parameter: " << opt;
-                printHelp();
-                break;
-        }
-    }
-}
-
-void Simulation::loadArgsFromFile()
-{
-    /* use an input file
-     * files start after the "files" word in a file.
-     * format is: px py pz rx ry rz r filename
-     * meaning: position 3 floats x,y,z, rotation axis floats rx,ry,rz, and amount r float, filename is the rest of the line
-     *
-     * file can define parameters too.
-     * one per line args:
-     * threads 2  (2 threads)
-     * streams 4  (4 streams) etc....
-     * files
-     * p 1 4 7 r 1 0 0 0 pdb data/conf1/1a.pdb
-     * crowders
-     * p 1 8 9 r 1 9 2 0.5 pdb data/conf1/x.pdb
-     *
-     */
-
-    ifstream input(parameters.file);
-
-    if (!input.good())
-    {
-        LOG(ERROR) << "Failed to open file: " << parameters.file;
-        exit(0);
-    }
-
-    VLOG(0) << "Parsing config file " << parameters.file << "...";
-
-    char line[512] = {0};
-
-#define PARAMETER_SECTION 0
-#define MOLECULE_SECTION 1
-#define CROWDER_SECTION 2
-#define SEGMENT_SECTION 3
-
-    int section = PARAMETER_SECTION;
-
-    while (!input.eof())
-    {
-        input.getline(line, 512);
-
-        if (line == NULL || line[0] == '#' || strlen(line)==0)
-        {
-        }
-        else if (strcmp(line, "files") == 0)
-        {
-            section = MOLECULE_SECTION;
-        }
-        else if (strcmp(line, "crowders") == 0)
-        {
-            section = CROWDER_SECTION;
-        }
-        else if (strcmp(line, "segments") == 0)
-        {
-            section = SEGMENT_SECTION;
-        }
-        else if (section == MOLECULE_SECTION || section == CROWDER_SECTION)
-        {
-            moldata m;
-            int result = 0;
-            char pos_flag;
-
-            result = sscanf(line, "%c(%f,%f,%f) r(%f,%f,%f,%f) %s %s", &pos_flag, &m.px, &m.py, &m.pz, &m.rx, &m.ry, &m.rz, &m.ra, m.pdbfilename, m.name);
-            m.translate = (pos_flag == 't');
-
-            if (result < 8)
-            {
-                LOG(WARNING) << "\tUnable to parse molecule: " << line;
-            }
-
-            else
-            {
-                m.crowder = (section == CROWDER_SECTION);
-                // TODO: remove this later?
-                if (section == MOLECULE_SECTION)
-                {
-                    parameters.nonCrowders++;
-                }
-
-                parameters.mdata.push_back(m);
-                // TODO: if the molecule is named, add it to the name map
-                // TODO: check if this comparison is right
-                if (m.name && m.name[0] != '\0')
-                {
-                    parameters.mdata_map[string(m.name)] = parameters.mdata.size() - 1;
-                }
-
-                VLOG(1) << "\tAdded molecule from file " << m.pdbfilename << ".";
-            }
-        }
-        else if (section == SEGMENT_SECTION)
-        {
-            char * molname = strtok(line, " ");            
-            char * word = strtok(NULL, " ");
-                        
-            if (strcmp(word, "all") == 0)
-            {
-                parameters.mdata[parameters.mdata_map[string(molname)]].all_flexible = true;
-            }
-            else
-            {
-                segdata s;
-
-                while (word != NULL)
-                {
-                    s.residue_indices.push_back(atoi(word) - 1);
-                    word = strtok(NULL, " ");
-                }
-                
-                parameters.mdata[parameters.mdata_map[string(molname)]].segments.push_back(s);
-            }
-        }
-        else if (section == PARAMETER_SECTION)
-        {
-            char * key = strtok(line, " ");
-            char * value = strtok(NULL, " ");
-
-            VLOG(1) << "\tParameter " << key << " = " << value;
-
-            if (strcmp(key, "gpus") == 0)
-            {
-                parameters.gpus = atoi(value);
-            }
-            else if (strcmp(key, "streams") == 0)
-            {
-                parameters.streams = atoi(value);
-            }
-            else if (strcmp(key, "threads") == 0)
-            {
-                parameters.threads = atoi(value);
-            }
-            else if (strcmp(key, "mcsteps") == 0)
-            {
-                parameters.MCsteps = atoi(value);
-            }
-            else if (strcmp(key, "resteps") == 0)
-            {
-                parameters.REsteps = atoi(value);
-            }
-            else if (strcmp(key, "temperaturemax") == 0)
-            {
-                parameters.temperatureMax = atof(value);
-            }
-            else if (strcmp(key, "temperaturemin") == 0)
-            {
-                parameters.temperatureMin = atof(value);
-            }
-            else if (strcmp(key, "boundary") == 0)
-            {
-                parameters.bound = atof(value);
-            }
-            else if (strcmp(key, "replicas") == 0)
-            {
-                parameters.replicas = atoi(value);
-            }
-            else if (strcmp(key, "samplefrequency") == 0)
-            {
-                parameters.sampleFrequency = atoi(value);
-            }
-            else if (strcmp(key, "sampleafter") == 0)
-            {
-                parameters.sampleStartsAfter = atoi(value);
-            }
-            else if (strcmp(key, "prefix") == 0)
-            {
-                sprintf(parameters.prefix, "%s_%d", value, parameters.pid);
-            }
-            else if (strcmp(key, "title") == 0)
-            {
-                int length = 0;
-                length += sprintf(parameters.title + length, "%s", value);
-                value = strtok(NULL," ");
-                while (value != NULL)
-                {
-                    length += sprintf(parameters.title + length, " %s", value);
-                    value = strtok(NULL," ");
-                }
-            }
-            else {
-                LOG(WARNING) << "\tUnknown parameter: " << key;
-            }
-        }
-    }
-
-    input.close();
-}
-
-void Simulation::check_and_modify_parameters()
-{
-    VLOG(0) << "Checking parameters for sanity...";
-
-    if (parameters.bound <= 0)
-    {
-        LOG(WARNING) << "\tWARNINGING: Bounding value too small; setting equal to " << BOUNDING_VALUE << ".";
-        parameters.bound = BOUNDING_VALUE;
-    }
-
-    if (parameters.temperatureMax < parameters.temperatureMin)
-    {
-        LOG(WARNING) << "\tWARNINGING: Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " and " << parameters.temperatureMax << ".";
-        float tmp = parameters.temperatureMax;
-        parameters.temperatureMax = parameters.temperatureMin;
-        parameters.temperatureMin = tmp;
-    }
-
-    if (parameters.threads > parameters.replicas)
-    {
-        parameters.threads = parameters.replicas;
-        LOG(WARNING) << "\tWARNINGING: Threads > replicas; setting threads equal to " << parameters.threads << ".";
-    }
-
-    parameters.max_replicas_per_thread = int(ceil(float(parameters.replicas) / float(parameters.threads)));
-    int spaces = parameters.replicas - parameters.max_replicas_per_thread * parameters.threads;
-    int unused_threads = spaces / parameters.max_replicas_per_thread; // integer division
-    if (unused_threads)
-    {
-        LOG(ERROR) << "\tERROR: After assignment of " << parameters.replicas << " replicas to " << parameters.threads << " threads with " << parameters.max_replicas_per_thread << " replicas per thread, " << unused_threads << " threads are left unused. You must either increase the number of replicas or decrease the number of threads. Exiting.";
-        exit(0);
-    }
-
-#if USING_CUDA
-    int availableGpus;
-    cudaGetDeviceCount(&availableGpus);
-    if (parameters.gpus > availableGpus)
-    {
-        parameters.gpus = availableGpus;
-        LOG(WARNING) << "\tWARNINGING: Too many GPUs; setting equal to " << parameters.gpus << ".";
-    }
-#endif
-
-    if (parameters.threads > parameters.streams)
-    {
-        parameters.streams = parameters.threads;
-        if (parameters.streams > 16 * parameters.gpus)
-        {
-            parameters.streams = 16 * parameters.gpus;
-
-            if (parameters.streams > parameters.replicas)
-            {
-                parameters.streams = parameters.replicas;
-            }
-            LOG(WARNING) << "\tWARNINGING: Too many streams; setting equal to " << parameters.streams << ".";
-        }
-    }
-
-    int length = strlen(parameters.prefix);
-#if REPULSIVE_CROWDING
-    length += sprintf(parameters.prefix + length, "_repcrowding");
-#endif
-
-#if LJ_REPULSIVE
-    length += sprintf(parameters.prefix + length, "_repLJ");
-#endif
-
-#if LJ_OFF
-    length += sprintf(parameters.prefix + length, "_LJoff");
-#endif
 }
 
 void Simulation::writeFileIndex()
