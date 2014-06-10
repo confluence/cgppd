@@ -3,7 +3,9 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 OTHER REFACTORING / TESTS
-    * proper logging -- google-glog
+    * proper logging
+        * switch from google-glog to easylogging (check the licence); it has a very similar api but is a lot more configurable and is header-only
+        * https://github.com/easylogging/easyloggingpp
         * clean up arg parsing:
             * move if firstpass to just around switch
         * move vlogs from main to sim init; silence tests; add test flags for turning on comparisons?
