@@ -108,7 +108,7 @@ public:
     char name[256];
     char last_MC_move[256];
 
-    Vector3f translation; // TODO remove
+    Vector3f translation; // TODO remove TODO is this just a copy of the centre, or does it ignore wrapping?
 };
 
 #endif /*MOLECULE_H_*/

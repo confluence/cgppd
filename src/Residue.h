@@ -13,8 +13,8 @@ public:
     Residue(const Residue& r);
     ~Residue();
     int aminoAcidIndex;  // stores the index of the amino acid for lookup
-    float electrostaticCharge;
-    float vanderWaalRadius;
+    float electrostaticCharge; // TODO: we could look this up in AminoAcids
+    float vanderWaalRadius; // TODO: we could look this up in AminoAcids
 
     Vector3f position; // used for collisions
     Vector3f relativePosition; // vs center

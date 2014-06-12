@@ -18,12 +18,17 @@ OTHER REFACTORING / TESTS
     * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
 		* samples are now in sync between versions
         * outstanding issue: fix formatting of boundconformations file
+            * only one value per replica; put pdb file on the same line
         * move information about compilation options, etc. out of PDB files and into an info file in the directory
         * what is fileindex used for? It seems pretty useless. It's not even used in postprocessing.
         * info file should describe exactly how the code was compiled and what config parameters were used.
         * If we do proper logging, the log should go in there.
         * stop outputting rotation / translation (no longer relevant)
             * but only if compiled with flexible linkers?
+
+    * put methods on residue that look stuff up in AminoAcidData?
+        * remove copies of vdv radius and charge?
+        * either pass AminoAcidData to methods on Residue or pass residues to methods on AminoAcidData. The latter fits better with what is there now.
 
     * rework the cpu potential
         * include the internal unbonded stuff in the replica code
