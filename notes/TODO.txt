@@ -9,6 +9,7 @@ OTHER REFACTORING / TESTS
             * make a lib subdirectory (not version-controlled)
             * maybe move the necessary cutil stuff into it
             * maybe switch unit tests to catch https://github.com/philsquared/Catch
+            * write a README describing the requirements
         * clean up arg parsing:
             * move if firstpass to just around switch
         * move vlogs from main to sim init; silence tests; add test flags for turning on comparisons?
