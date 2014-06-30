@@ -16,6 +16,8 @@ OTHER REFACTORING / TESTS
         * finish converting all the printfs / couts
         * Clean up all the inconsistent log / print / cout formatting
 
+    * clean up temperature / translation step / rotation step code and figure out exactly what is happening when the number of replicas is 1. Write a unit test for this.
+
     * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
 		* samples are now in sync between versions
         * outstanding issue: fix formatting of boundconformations file
