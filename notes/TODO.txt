@@ -54,6 +54,7 @@ SIMULATIONS
 
 THESIS
 * write foundations chapter
+    * kT units or RT units?!
 * write design / implementation chapter
 
 --------------------------------------------------------------------------------

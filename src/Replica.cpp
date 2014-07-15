@@ -668,7 +668,7 @@ void Replica::MCSearchAcceptReject(int mcstep)
         accept++;
         debug_log << "* Replace:\tdelta E = " << delta << ";\tE = " << potential;
     }
-    // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
+    // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J
     else if (gsl_rng_uniform(rng) < exp(-delta*kcal/(Rgas*temperature)))
     {
         potential = newPotential;
