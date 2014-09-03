@@ -2,6 +2,10 @@
 RIGHT NOW
 --------------------------------------------------------------------------------
 
+FIXES
+    * turn parallel sum back on
+    * see if it works out of the box for async version
+
 OTHER REFACTORING / TESTS
     * proper logging
         * switch from google-glog to easylogging (check the licence); it has a very similar api but is a lot more configurable and is header-only
