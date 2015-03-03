@@ -3,8 +3,12 @@ RIGHT NOW
 --------------------------------------------------------------------------------
 
 FIXES
-    * turn parallel sum back on
-    * see if it works out of the box for async version
+    * Fix the damn logging so that the code runs
+
+TO CHECK
+    * modf or modff? Float4 has *floats*.
+    * alternate GPU implementation with the chain id and bond id (?) in a separate float2. No unpacking; copy once. Use a different precompiler flag and test performance difference.
+    * first throw out all the unused GPU code so it's clear what to change.
 
 OTHER REFACTORING / TESTS
     * proper logging

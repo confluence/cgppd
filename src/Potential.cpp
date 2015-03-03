@@ -88,7 +88,7 @@ double calculate_torsion(Residue * residues, const Torsion torsion, TorsionalLoo
     int r1 = rj.aminoAcidIndex;
     int r2 = rk.aminoAcidIndex;
 
-
+    // that's not a sigma; it's a delta. Whoops.
     double potential = (1 + cos(phi - torsion_data.getSigma(r1, r2, 1))) * torsion_data.getV(r1, r2, 1) +
         (1 + cos(2 * phi - torsion_data.getSigma(r1, r2, 2))) * torsion_data.getV(r1, r2, 2) +
         (1 + cos(3 * phi - torsion_data.getSigma(r1, r2, 3))) * torsion_data.getV(r1, r2, 3) +
