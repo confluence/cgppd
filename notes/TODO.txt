@@ -4,11 +4,7 @@ RIGHT NOW
 
 FIXES
     * Fix the damn logging so that the code runs
-
-TO CHECK
-    * modf or modff? Float4 has *floats*.
-    * alternate GPU implementation with the chain id and bond id (?) in a separate float2. No unpacking; copy once. Use a different precompiler flag and test performance difference.
-    * first throw out all the unused GPU code so it's clear what to change.
+    * implement the shift instead of the current crappy fraction encoding
 
 OTHER REFACTORING / TESTS
     * proper logging
