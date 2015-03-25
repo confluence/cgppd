@@ -75,6 +75,7 @@ extern "C"
     cudaError_t cudaFree( void* devPtr );
     cudaError_t cudaGetDevice( int* dev );
     cudaError_t cudaSetDevice( int dev );
+    cudaError_t cudaDeviceReset( void );
 
 };
 

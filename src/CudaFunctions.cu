@@ -82,10 +82,10 @@ float * LJPotentialDataToDevice (AminoAcids *a)
     return LJPotentialData;
 #else
     float * _LJPotentialData;  // global device memory
-    CUDA_SAFE_CALL(cudaMalloc((void**)&_LJPotentialData,containerSize));
-    CUDA_SAFE_CALL(cudaMemset(_LJPotentialData,0,containerSize));
+    checkCudaErrors(cudaMalloc((void**)&_LJPotentialData,containerSize));
+    checkCudaErrors(cudaMemset(_LJPotentialData,0,containerSize));
     // copy host memory to device
-    CUDA_SAFE_CALL(cudaMemcpy(_LJPotentialData, safeData, tableSize, cudaMemcpyHostToDevice) );
+    checkCudaErrors(cudaMemcpy(_LJPotentialData, safeData, tableSize, cudaMemcpyHostToDevice) );
     delete [] safeData;
     return _LJPotentialData;
 #endif
@@ -115,7 +115,7 @@ void copyLJPotentialDataToDevice (float * dev_LJPotentialData, AminoAcids *a)
 void cudaInfo()
 {
     int deviceCount;
-    CUDA_SAFE_CALL_NO_SYNC(cudaGetDeviceCount(&deviceCount));
+    checkCudaErrors(cudaGetDeviceCount(&deviceCount)); // this used to be CUDA_SAFE_CALL_NO_SYNC -- what's the difference?
     if (deviceCount == 0)
     {
         printf("ERROR: no devices supporting CUDA.\n");

@@ -21,13 +21,10 @@
 #include "definitions.h"
 
 #if USING_CUDA
-#include <cuda.h> // apparently included in helper_cuda
 //#include <cutil.h>  // obsolete
-#include <cuda_runtime_api.h> // apparently included in helper_cuda
+//#include <cuda_runtime_api.h> // apparently included in helper_cuda
 //#include <cutil_inline.h>  // obsolete
 //#include <cutil_inline_runtime.h>  // obsolete
-#include <helper_cuda.h>
-#include <helper_timer.h>
 #endif
 
 #include "structures.h"
@@ -38,7 +35,10 @@
 #include "Quaternion.h"
 
 #if USING_CUDA
+#include <cuda.h> // apparently included in helper_cuda
 #include "cudaExterns.h"
+#include <helper_cuda.h>
+#include <helper_timer.h>
 #endif
 
 #if GLVIS

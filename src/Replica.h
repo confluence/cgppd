@@ -10,12 +10,12 @@
 #include "AminoAcids.h"
 
 #if USING_CUDA
-    #include <cuda.h>
+    //#include <cuda.h> // we may be able to comment this out; helper_cuda may include it
     //#include <cutil.h>
     //#include <cutil_inline.h>
-    #include <helper_cuda.h>
     #include <builtin_types.h> // can we find this, and is it necessary?
     #include "cudaExterns.h"
+    #include <helper_cuda.h>
     #include <helper_timer.h>
 #endif  // USING_CUDA
 

@@ -1,7 +1,7 @@
 #include "definitions.h"
 #if USING_CUDA
-#include <cutil.h>
-#include <cutil_inline.h>
+//#include <cutil.h>
+//#include <cutil_inline.h>
 #endif
 
 #include <Simulation.h>
