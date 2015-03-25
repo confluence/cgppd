@@ -10,13 +10,15 @@
 #include "AminoAcids.h"
 
 #if USING_CUDA
-    #include <cuda.h>
-    #include <cutil.h>
-    #include <cutil_inline.h>
+    //#include <cuda.h>
+    //#include <cutil.h>
+    //#include <cutil_inline.h>
+    #include <helper_cuda.h>
     #include <builtin_types.h>
     #include "cudaExterns.h"
 #elif INCLUDE_TIMERS
-    #include <cutil.h>
+    //#include <cutil.h>
+    // TODO TODO TODO is this even relevant, or did we make this not happen in definitions?
 #endif  // USING_CUDA
 
 #include "Molecule.h"
@@ -204,13 +206,20 @@ public:
 
 #if INCLUDE_TIMERS
     //timers for profiling the cuda functions
-    uint replicaToGPUTimer;
-    uint replicaToHostTimer;
-    uint replicaUpdateGPUTimer;
-    uint replicaECUDATimer;
-    uint replicaMoleculeUpdateTimer;
-    uint initGPUMemoryTimer;
-    uint replicaEHostTimer;
+    //uint replicaToGPUTimer;
+    //uint replicaToHostTimer;
+    //uint replicaUpdateGPUTimer;
+    //uint replicaECUDATimer;
+    //uint replicaMoleculeUpdateTimer;
+    //uint initGPUMemoryTimer;
+    //uint replicaEHostTimer;
+    StopWatchInterface *replicaToGPUTimer;
+    StopWatchInterface *replicaToHostTimer;
+    StopWatchInterface *replicaUpdateGPUTimer;
+    StopWatchInterface *replicaECUDATimer;
+    StopWatchInterface *replicaMoleculeUpdateTimer;
+    StopWatchInterface *initGPUMemoryTimer;
+    StopWatchInterface *replicaEHostTimer;
     bool timersInit;
 #endif
 

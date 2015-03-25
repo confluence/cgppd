@@ -7,11 +7,12 @@ using namespace std;
 
 #include "definitions.h"
 
-#include <cuda.h>
-#include <cutil.h>  // CUDA c util package
-#include <cuda_runtime_api.h>
-#include <cutil_inline.h>
-#include <cutil_inline_runtime.h>
+//#include <cuda.h>
+//#include <cutil.h>  // CUDA c util package
+//#include <cuda_runtime_api.h>
+//#include <cutil_inline.h>
+//#include <cutil_inline_runtime.h>
+#include <helper_cuda.h>
 
 // #include "Replica.h"
 // #include "Molecule.h"

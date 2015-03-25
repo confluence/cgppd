@@ -119,10 +119,10 @@ void Replica::teardown_CUDA()
 {
 #if CUDA_STREAMS
     FreeSumSpace();
-    cutilCheckMsg("Error freeing sum space");
+    getLastCudaError("Error freeing sum space");
 #endif // CUDA_STREAMS
     FreeDevice();
-    cutilCheckMsg("Error freeing device");
+    getLastCudaError("Error freeing device");
 }
 
 #endif // USING_CUDA
@@ -131,21 +131,36 @@ void Replica::teardown_CUDA()
 void Replica::initTimers()
 {
     //timers for profiling the cuda functions
-    replicaToGPUTimer = 0;
-    replicaToHostTimer = 0;
-    replicaUpdateGPUTimer = 0;
-    replicaMoleculeUpdateTimer = 0;
-    replicaECUDATimer = 0;
-    initGPUMemoryTimer = 0;
-    replicaEHostTimer = 0;
+    //replicaToGPUTimer = 0;
+    //replicaToHostTimer = 0;
+    //replicaUpdateGPUTimer = 0;
+    //replicaMoleculeUpdateTimer = 0;
+    //replicaECUDATimer = 0;
+    //initGPUMemoryTimer = 0;
+    //replicaEHostTimer = 0;
+    replicaToGPUTimer = NULL;
+    replicaToHostTimer = NULL;
+    replicaUpdateGPUTimer = NULL;
+    replicaMoleculeUpdateTimer = NULL;
+    replicaECUDATimer = NULL;
+    initGPUMemoryTimer = NULL;
+    replicaEHostTimer = NULL;
 
-    CUT_SAFE_CALL( cutCreateTimer(&replicaToGPUTimer) );
-    CUT_SAFE_CALL( cutCreateTimer(&replicaToHostTimer) );
-    CUT_SAFE_CALL( cutCreateTimer(&replicaUpdateGPUTimer) );
-    CUT_SAFE_CALL( cutCreateTimer(&replicaMoleculeUpdateTimer) );
-    CUT_SAFE_CALL( cutCreateTimer(&replicaECUDATimer) );
-    CUT_SAFE_CALL( cutCreateTimer(&initGPUMemoryTimer) );
-    CUT_SAFE_CALL( cutCreateTimer(&replicaEHostTimer) );
+    //CUT_SAFE_CALL( cutCreateTimer(&replicaToGPUTimer) );
+    //CUT_SAFE_CALL( cutCreateTimer(&replicaToHostTimer) );
+    //CUT_SAFE_CALL( cutCreateTimer(&replicaUpdateGPUTimer) );
+    //CUT_SAFE_CALL( cutCreateTimer(&replicaMoleculeUpdateTimer) );
+    //CUT_SAFE_CALL( cutCreateTimer(&replicaECUDATimer) );
+    //CUT_SAFE_CALL( cutCreateTimer(&initGPUMemoryTimer) );
+    //CUT_SAFE_CALL( cutCreateTimer(&replicaEHostTimer) );
+
+    sdkCreateTimer(&replicaToGPUTimer);
+    sdkCreateTimer(&replicaToHostTimer);
+    sdkCreateTimer(&replicaUpdateGPUTimer);
+    sdkCreateTimer(&replicaMoleculeUpdateTimer);
+    sdkCreateTimer(&replicaECUDATimer);
+    sdkCreateTimer(&initGPUMemoryTimer);
+    sdkCreateTimer(&replicaEHostTimer);
 
     timersInit = true;
 }
@@ -156,13 +171,20 @@ Replica::~Replica()
 #if INCLUDE_TIMERS
     if (timersInit)
     {
-        CUT_SAFE_CALL( cutDeleteTimer(replicaToGPUTimer) );
-        CUT_SAFE_CALL( cutDeleteTimer(replicaToHostTimer) );
-        CUT_SAFE_CALL( cutDeleteTimer(replicaUpdateGPUTimer) );
-        CUT_SAFE_CALL( cutDeleteTimer(replicaMoleculeUpdateTimer) );
-        CUT_SAFE_CALL( cutDeleteTimer(replicaECUDATimer) );
-        CUT_SAFE_CALL( cutDeleteTimer(initGPUMemoryTimer) );
-        CUT_SAFE_CALL( cutDeleteTimer(replicaEHostTimer) )
+        //CUT_SAFE_CALL( cutDeleteTimer(replicaToGPUTimer) );
+        //CUT_SAFE_CALL( cutDeleteTimer(replicaToHostTimer) );
+        //CUT_SAFE_CALL( cutDeleteTimer(replicaUpdateGPUTimer) );
+        //CUT_SAFE_CALL( cutDeleteTimer(replicaMoleculeUpdateTimer) );
+        //CUT_SAFE_CALL( cutDeleteTimer(replicaECUDATimer) );
+        //CUT_SAFE_CALL( cutDeleteTimer(initGPUMemoryTimer) );
+        //CUT_SAFE_CALL( cutDeleteTimer(replicaEHostTimer) )
+        sdkDeleteTimer(&replicaToGPUTimer);
+        sdkDeleteTimer(&replicaToHostTimer);
+        sdkDeleteTimer(&replicaUpdateGPUTimer);
+        sdkDeleteTimer(&replicaMoleculeUpdateTimer);
+        sdkDeleteTimer(&replicaECUDATimer);
+        sdkDeleteTimer(&initGPUMemoryTimer);
+        sdkDeleteTimer(&replicaEHostTimer);
     }
 #endif
 
@@ -399,7 +421,8 @@ inline float crowderPairPotential(const float r)
 Potential Replica::E()
 {
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL(cutStartTimer(replicaEHostTimer));
+    //CUT_SAFE_CALL(cutStartTimer(replicaEHostTimer));
+    sdkStartTimer(&replicaEHostTimer);
 #endif
 
     Potential potential;
@@ -469,7 +492,8 @@ Potential Replica::E()
     }
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
+    //CUT_SAFE_CALL(cutStopTimer(replicaEHostTimer));
+    sdkStopTimer(&replicaEHostTimer);
 #endif
     last_potential_obj = potential;
     return potential;
@@ -530,13 +554,20 @@ void Replica::printTimers()
     cout << "Timer values (ms)" << endl;
     cout << "Total(ms)   \tAverage(ms)  \t Action" << endl;
 
-    printf("%12.6f\t%12.6f\t Replica to GPU (init & transfer)\n",   cutGetTimerValue(replicaToGPUTimer),            cutGetAverageTimerValue(replicaToGPUTimer));
-    printf("%12.6f\t%12.6f\t Replica Update on GPU (transter)\n",   cutGetTimerValue(replicaUpdateGPUTimer),        cutGetAverageTimerValue(replicaUpdateGPUTimer));
-    printf("%12.6f\t%12.6f\t Kernel Timer (computation)\n",         cutGetTimerValue(replicaECUDATimer),            cutGetAverageTimerValue(replicaECUDATimer));
-    printf("%12.6f\t%12.6f\t Host Timer (computation)\n",           cutGetTimerValue(replicaEHostTimer),            cutGetAverageTimerValue(replicaEHostTimer));
-    printf("%12.6f\t%12.6f\t Update Molecule on GPU (transfer)\n",  cutGetTimerValue(replicaMoleculeUpdateTimer),   cutGetAverageTimerValue(replicaMoleculeUpdateTimer));
-    printf("%12.6f\t%12.6f\t GPU Memory Initialisation (malloc)\n", cutGetTimerValue(initGPUMemoryTimer),           cutGetAverageTimerValue(initGPUMemoryTimer));
-    printf("Kernel Speedup:  %0.1fx\n", cutGetAverageTimerValue(replicaEHostTimer)/cutGetAverageTimerValue(replicaECUDATimer));
+    //printf("%12.6f\t%12.6f\t Replica to GPU (init & transfer)\n",   cutGetTimerValue(replicaToGPUTimer),            cutGetAverageTimerValue(replicaToGPUTimer));
+    //printf("%12.6f\t%12.6f\t Replica Update on GPU (transter)\n",   cutGetTimerValue(replicaUpdateGPUTimer),        cutGetAverageTimerValue(replicaUpdateGPUTimer));
+    //printf("%12.6f\t%12.6f\t Kernel Timer (computation)\n",         cutGetTimerValue(replicaECUDATimer),            cutGetAverageTimerValue(replicaECUDATimer));
+    //printf("%12.6f\t%12.6f\t Host Timer (computation)\n",           cutGetTimerValue(replicaEHostTimer),            cutGetAverageTimerValue(replicaEHostTimer));
+    //printf("%12.6f\t%12.6f\t Update Molecule on GPU (transfer)\n",  cutGetTimerValue(replicaMoleculeUpdateTimer),   cutGetAverageTimerValue(replicaMoleculeUpdateTimer));
+    //printf("%12.6f\t%12.6f\t GPU Memory Initialisation (malloc)\n", cutGetTimerValue(initGPUMemoryTimer),           cutGetAverageTimerValue(initGPUMemoryTimer));
+    //printf("Kernel Speedup:  %0.1fx\n", cutGetAverageTimerValue(replicaEHostTimer)/cutGetAverageTimerValue(replicaECUDATimer));
+    printf("%12.6f\t%12.6f\t Replica to GPU (init & transfer)\n",   sdkGetTimerValue(&replicaToGPUTimer),            sdkGetAverageTimerValue(&replicaToGPUTimer));
+    printf("%12.6f\t%12.6f\t Replica Update on GPU (transter)\n",   sdkGetTimerValue(&replicaUpdateGPUTimer),        sdkGetAverageTimerValue(&replicaUpdateGPUTimer));
+    printf("%12.6f\t%12.6f\t Kernel Timer (computation)\n",         sdkGetTimerValue(&replicaECUDATimer),            sdkGetAverageTimerValue(&replicaECUDATimer));
+    printf("%12.6f\t%12.6f\t Host Timer (computation)\n",           sdkGetTimerValue(&replicaEHostTimer),            sdkGetAverageTimerValue(&replicaEHostTimer));
+    printf("%12.6f\t%12.6f\t Update Molecule on GPU (transfer)\n",  sdkGetTimerValue(&replicaMoleculeUpdateTimer),   sdkGetAverageTimerValue(&replicaMoleculeUpdateTimer));
+    printf("%12.6f\t%12.6f\t GPU Memory Initialisation (malloc)\n", sdkGetTimerValue(&initGPUMemoryTimer),           sdkGetAverageTimerValue(&initGPUMemoryTimer));
+    printf("Kernel Speedup:  %0.1fx\n", sdkGetAverageTimerValue(&replicaEHostTimer)/sdkGetAverageTimerValue(&replicaECUDATimer));
 
 #else
 
@@ -576,28 +607,28 @@ void Replica::ReserveSumSpace()
     resultSize = gridSize;
     //for a parallel sum each grid must have one cell in the array of results from all the threads
     cudaMallocHost((void**)&kernelResult, sizeof(float)*resultSize*resultSize);
-    cutilCheckMsg("Error allocating sum space on host");
+    getLastCudaError("Error allocating sum space on host");
     cudaMalloc((void **)&device_kernelResult,sizeof(float)*resultSize*resultSize);
-    cutilCheckMsg("Error allocating sum space on device");
+    getLastCudaError("Error allocating sum space on device");
 
 //     cudaError_t err;
 //     if ((err = cudaGetLastError()) != cudaSuccess)
 //         printf("CUDA error: %s\n", cudaGetErrorString(err));
 
     memset(kernelResult,0,sizeof(float)*resultSize*resultSize);
-    cutilCheckMsg("Error zeroing sum space on host");
+    getLastCudaError("Error zeroing sum space on host");
     //CUDA_memcpy_to_device_async(device_kernelResult,kernelResult,sizeof(float)*resultSize*resultSize,cudaStream);
     //CUDA_memcpy_to_device(device_kernelResult,kernelResult,sizeof(float)*resultSize*resultSize);
     cudaMemset(device_kernelResult, 0, sizeof(float)*resultSize*resultSize);
-    cutilCheckMsg("Error zeroing sum space on device");
+    getLastCudaError("Error zeroing sum space on device");
 }
 
 void Replica::FreeSumSpace()
 {
     cudaFreeHost(kernelResult);
-    cutilCheckMsg("Error freeing sum space on host");
+    getLastCudaError("Error freeing sum space on host");
     cudaFree(device_kernelResult);
-    cutilCheckMsg("Error freeing sum space on device");
+    getLastCudaError("Error freeing sum space on device");
 }
 
 double Replica::SumGridResults()
@@ -619,7 +650,7 @@ double Replica::SumGridResults()
         potentialSum += kernelResult[i];
 
     cudaMemset(device_kernelResult, 0, sizeof(float)*resultSize*resultSize);
-    cutilCheckMsg("Error zeroing sum space on device after summing");
+    getLastCudaError("Error zeroing sum space on device after summing");
     return potentialSum;
 }
 #endif
@@ -692,7 +723,8 @@ void Replica::MCSearchAcceptReject(int mcstep)
 void Replica::ReplicaDataToDevice()
 {
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL(cutStartTimer(initGPUMemoryTimer));
+    //CUT_SAFE_CALL(cutStartTimer(initGPUMemoryTimer));
+    sdkStartTimer(&initGPUMemoryTimer);
 #endif
 
     // allocate total size needed.
@@ -718,8 +750,10 @@ void Replica::ReplicaDataToDevice()
     cudaMalloc((void**)&device_moleculeCount,sizeof(int));
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL(cutStopTimer(initGPUMemoryTimer));
-    CUT_SAFE_CALL(cutStartTimer(replicaToGPUTimer));
+    //CUT_SAFE_CALL(cutStopTimer(initGPUMemoryTimer));
+    sdkStopTimer(&initGPUMemoryTimer);
+    //CUT_SAFE_CALL(cutStartTimer(replicaToGPUTimer));
+    sdkStartTimer(&replicaToGPUTimer);
 #endif
     // keep a counter to calculate the offset from the beginning of the residues array
     int arrayIndex = 0;
@@ -809,8 +843,8 @@ void Replica::ReplicaDataToDevice()
 
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaToGPUTimer) );
-    //cout << "Data to GPU Initialisation and Transfer time: " << (cutGetTimerValue(initGPUMemoryTimer)+cutGetTimerValue(replicaToGPUTimer)) << "ms"<< endl;
+    //CUT_SAFE_CALL( cutStopTimer(replicaToGPUTimer) );
+    sdkStopTimer(&replicaToGPUTimer);
 #endif
 
     replicaIsOnDevice = true;
@@ -827,7 +861,8 @@ void Replica::MoleculeDataToDevice(int moleculeId)
         ReplicaDataToDevice();
     }
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(replicaMoleculeUpdateTimer) );
+    //CUT_SAFE_CALL( cutStartTimer(replicaMoleculeUpdateTimer) );
+    sdkStartTimer(&replicaMoleculeUpdateTimer);
 #endif
 
     // TODO: change to use float4 for everything, will eliminate this copy
@@ -864,7 +899,8 @@ void Replica::MoleculeDataToDevice(int moleculeId)
     //residueMeta will already be on the device
 #endif
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaMoleculeUpdateTimer) );
+    //CUT_SAFE_CALL( cutStopTimer(replicaMoleculeUpdateTimer) );
+    sdkStopTimer(&replicaMoleculeUpdateTimer);
 #endif
     return;
 }
@@ -872,7 +908,8 @@ void Replica::MoleculeDataToDevice(int moleculeId)
 void Replica::EonDeviceAsync() // TODO: need to add flexible potential to this, or is it done elsewhere?
 {
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
+    //CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
+    sdkStartTimer(&replicaECUDATimer);
 #endif
 #if CUDA_STREAMS
     // compute potential parts
@@ -887,14 +924,16 @@ void Replica::EonDeviceAsync() // TODO: need to add flexible potential to this, 
     cout << " ! Replica::EonDeviceAsync() can only be run using streams" << endl;
 #endif
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
+    //CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
+    sdkStopTimer(&replicaECUDATimer);
 #endif
 }
 
 double Replica::EonDevice()
 {
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
+    //CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
+    sdkStartTimer(&replicaECUDATimer);
 #endif
 
     double result(0.0);
@@ -902,7 +941,8 @@ double Replica::EonDevice()
     CUDA_EonDevice(device_float4_residuePositions, device_float4_residueMeta, device_residueCount, device_moleculeStartPositions, device_moleculeCount, device_LJPotentials, &result,blockSize,dataSetSize,sharedMemSize);
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
+    //CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );
+    sdkStopTimer(&replicaECUDATimer);
 #endif
 
     return result;

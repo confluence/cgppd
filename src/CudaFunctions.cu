@@ -5,8 +5,10 @@
 using namespace std;
 
 #include "CudaFunctions.h"
-#include <cutil.h>
-#include <cutil_inline.h>
+//#include <cutil.h>
+//#include <cutil_inline.h>
+#include <helper_cuda.h> // TODO TODO TODO WHY? we do this in the h
+
 // Block index
 #define bx blockIdx.x
 #define by blockIdx.y
@@ -106,7 +108,7 @@ void copyLJPotentialDataToDevice (float * dev_LJPotentialData, AminoAcids *a)
     //CUDA_SAFE_CALL(cudaMalloc((void**)&dev_LJPotentialData,mem_size));
     // copy host memory to device
     cudaMemcpy(dev_LJPotentialData, safeData, mem_size, cudaMemcpyHostToDevice);
-    cutilCheckMsg("Failed to copy contact potentials");
+    getLastCudaError("Failed to copy contact potentials");
     delete [] safeData;
 }
 
@@ -143,7 +145,7 @@ void cudaInfo()
 void CUDA_setBoxDimension(float value)
 {
     cudaMemcpyToSymbol(const_boxdim, &value, sizeof(value));
-    cutilCheckMsg ("Set boxdim");
+    getLastCudaError ("Set boxdim");
 
 };
 void CUDA_freeBoxDimension()
@@ -170,7 +172,7 @@ void CUDA_EonDevice_async(float4 *residuePositions, float4 *residueMeta, int * r
 
     E_TiledKernel<<< dimGrid,dimBlock,sm_size,stream >>>(residuePositions, residueMeta, residueCount, moleculePositions, moleculeCount, LJPotentials, kernelResult);
 
-    cutilCheckMsg("Kernel execution failed");
+    getLastCudaError("Kernel execution failed");
     //cudaMemcpyAsync(hostResult,kernelResult, sizeof(float)*resultSize*resultSize, cudaMemcpyDeviceToHost,stream);
     return;
 };
@@ -258,7 +260,7 @@ void CUDA_EonDevice(float4 *residuePositions, float4 *residueMeta, int * residue
 #endif
     // free the memory assigned for this iteration.
     cudaFree(d_result);
-    cutilCheckMsg("Kernel execution failed");
+    getLastCudaError("Kernel execution failed");
     return;
 };
 
@@ -299,7 +301,7 @@ void CUDA_EonDeviceTest(float *d_x, float *d_y,float *d_z, int *d_id, float4 *re
     // free the memory assigned for this iteration.
     cudaFree(d_result);
     // check if kernel invocation generated an error
-    cutilCheckMsg("Kernel execution failed");
+    getLastCudaError("Kernel execution failed");
 
     return;
 };
@@ -588,7 +590,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
 void CUDA_setMoleculeBlength(int length)
 {
     cudaMemcpyToSymbol(const_lenght_of_b, &length, sizeof(length));
-    cutilCheckMsg ("CUDA_setMoleculeBlength: Set b size");
+    getLastCudaError ("CUDA_setMoleculeBlength: Set b size");
 }
 
 // kernel to evaluate the potential between two molecules.
@@ -727,7 +729,7 @@ void CUDA_EonDeviceNC(float4 *residuePositions, float4 *residueMeta, int * resid
 
     // free the memory assigned for this iteration.
     cudaFree(d_result);
-    cutilCheckMsg("Kernel execution failed EonDeviceNC");
+    getLastCudaError("Kernel execution failed EonDeviceNC");
     return;
 };
 
