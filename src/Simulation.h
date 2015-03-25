@@ -27,6 +27,7 @@
 //#include <cutil_inline.h>  // obsolete
 //#include <cutil_inline_runtime.h>  // obsolete
 #include <helper_cuda.h>
+#include <helper_timer.h>
 #endif
 
 #include "structures.h"

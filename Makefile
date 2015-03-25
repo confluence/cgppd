@@ -1,7 +1,8 @@
 ################################################################################
 
 INCLUDE=-I/usr/include/glog/ -I/usr/include/gflags/
-LIBS=-L/usr/lib64
+#LIBS=-L/usr/lib64
+LIBS=-L/usr/lib
 LINKS=-lpthread -lgsl -lgslcblas
 CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
 COMPILER=g++
