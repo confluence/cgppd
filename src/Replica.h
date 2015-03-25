@@ -10,7 +10,7 @@
 #include "AminoAcids.h"
 
 #if USING_CUDA
-    //#include <cuda.h>
+    #include <cuda.h>
     //#include <cutil.h>
     //#include <cutil_inline.h>
     #include <helper_cuda.h>
