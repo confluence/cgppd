@@ -20,8 +20,12 @@ Simulation::Simulation() : waitingThreads(0), exchanges(0), tests(0),  totalExch
 #endif
 
 #if INCLUDE_TIMERS
-    cutCreateTimer(&RELoopTimer);
-    cutCreateTimer(&MCLoopTimer);
+    //cutCreateTimer(&RELoopTimer);
+    //cutCreateTimer(&MCLoopTimer);
+    RELoopTimer = NULL;
+    MCLoopTimer = NULL;
+    sdkCreateTimer(&RELoopTimer);
+    sdkCreateTimer(&MCLoopTimer);
 #endif
 }
 
@@ -43,8 +47,10 @@ Simulation::~Simulation()
     }
 
 #if INCLUDE_TIMERS
-    cutDeleteTimer(RELoopTimer);
-    cutDeleteTimer(MCLoopTimer);
+    //cutDeleteTimer(RELoopTimer);
+    //cutDeleteTimer(MCLoopTimer);
+    sdkDeleteTimer(&RELoopTimer);
+    sdkDeleteTimer(&MCLoopTimer);
 #endif
 }
 
@@ -675,7 +681,8 @@ void Simulation::run()
     writeSamplingFileHeaders();
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
+    //CUT_SAFE_CALL( cutStartTimer(RELoopTimer) );
+    sdkStartTimer(&RELoopTimer);
 #endif
 
     VLOG(0) << "--- Launching threads ---";
@@ -694,13 +701,15 @@ void Simulation::run()
     while (++steps < parameters.REsteps)  // until enough steps taken
     {
 #if INCLUDE_TIMERS
-        CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
+        //CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
+        sdkStartTimer(&MCLoopTimer);
 #endif
 
         pthread_cond_wait(&waitingReplicaExchangeCond, &waitingCounterMutex);
 
 #if INCLUDE_TIMERS
-        CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
+        //CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
+        sdkStopTimer(&MCLoopTimer);
 #endif
 
         //if the sampling has started
@@ -773,7 +782,8 @@ void Simulation::run()
     }
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
+    //CUT_SAFE_CALL( cutStartTimer(MCLoopTimer) );
+    sdkStartTimer(&MCLoopTimer);
 #endif
 
     pthread_cond_broadcast(&waitingThreadCond);
@@ -787,7 +797,8 @@ void Simulation::run()
         pthread_join(thread[i],NULL);
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
+    //CUT_SAFE_CALL( cutStopTimer(MCLoopTimer) );
+    sdkStopTimer(&MCLoopTimer);
 #endif
 
     VLOG(0) << "--- All threads complete.---";
@@ -811,10 +822,13 @@ void Simulation::run()
 
 
 #if INCLUDE_TIMERS
-    CUT_SAFE_CALL( cutStopTimer(RELoopTimer) );
+    //CUT_SAFE_CALL( cutStopTimer(RELoopTimer) );
+    sdkStopTimer(&RELoopTimer);
     VLOG(0) << "Simulation Timers";
-    VLOG(0) << "MC Loop: Tot  " << cutGetTimerValue(MCLoopTimer) << " ms  Ave " << cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps) << "ms (" << parameters.MCsteps << " steps, " << parameters.replicas << " replicas, " << parameters.threads << " threads, " << parameters.streams << " streams)";
-    VLOG(0) << "Simulation: " << cutGetTimerValue(RELoopTimer) << " ms  (" << parameters.REsteps << " exchanges)";
+    //VLOG(0) << "MC Loop: Tot  " << cutGetTimerValue(MCLoopTimer) << " ms  Ave " << cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps) << "ms (" << parameters.MCsteps << " steps, " << parameters.replicas << " replicas, " << parameters.threads << " threads, " << parameters.streams << " streams)";
+    VLOG(0) << "MC Loop: Tot  " << sdkGetTimerValue(&MCLoopTimer) << " ms  Ave " << sdkGetTimerValue(&MCLoopTimer)/float(parameters.REsteps) << "ms (" << parameters.MCsteps << " steps, " << parameters.replicas << " replicas, " << parameters.threads << " threads, " << parameters.streams << " streams)";
+    //VLOG(0) << "Simulation: " << cutGetTimerValue(RELoopTimer) << " ms  (" << parameters.REsteps << " exchanges)";
+    VLOG(0) << "Simulation: " << sdkGetTimerValue(&RELoopTimer) << " ms  (" << parameters.REsteps << " exchanges)";
 #endif
 
     pthread_mutex_lock(&writeFileMutex);
@@ -858,20 +872,20 @@ void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials
 {
     // initialise cuda for use in this thread
     cuInit(0);
-    cutilCheckMsg("Failed to initialise CUDA runtime.");
+    getLastCudaError("Failed to initialise CUDA runtime.");
 
     cudaSetDevice(device_id);
-    cutilCheckMsg("Failed to pick device for the CUDA runtime.");
+    getLastCudaError("Failed to pick device for the CUDA runtime.");
 
     CUDA_setBoxDimension(box_dimension);
-    cutilCheckMsg("Failed to copy box dimensions to GPU.");
+    getLastCudaError("Failed to copy box dimensions to GPU.");
 
     // copy the LJpotentials to gpu memory in this thread context so it can access it
     cudaMalloc((void**)&device_LJ_potentials, LJArraySize);
-    cutilCheckMsg("Failed to allocate contact potential memory on the GPU.");
+    getLastCudaError("Failed to allocate contact potential memory on the GPU.");
 
     copyLJPotentialDataToDevice(device_LJ_potentials, amino_acid_data);
-    cutilCheckMsg("Failed to copy contact potentials to device.");
+    getLastCudaError("Failed to copy contact potentials to device.");
 
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     bindLJTexture(device_LJ_potentials);
@@ -894,7 +908,7 @@ void teardown_CUDA(float * device_LJ_potentials)
 {
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     unbindLJTexture();
-    cutilCheckMsg("Error freeing texture");
+    getLastCudaError("Error freeing texture");
 #endif
 
     cudaFree(device_LJ_potentials);

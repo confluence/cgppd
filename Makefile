@@ -38,9 +38,12 @@ DEBUG=no
 ################################################################################
 
 ifeq ($(CUDA),yes)
-INCLUDE+=-I/$(HOME)/NVIDIA_GPU_Computing_SDK/C/common/inc -I/usr/include/nvidia-current/cuda -I/usr/local/cuda/include
-LIBS+=-L/$(HOME)/NVIDIA_GPU_Computing_SDK/C/lib -L/usr/lib64/nvidia-current -L/usr/local/cuda/lib64
-LINKS+=-lcudart -lcutil -lcuda -lglog -lgflags
+#INCLUDE+=-I/$(HOME)/NVIDIA_GPU_Computing_SDK/C/common/inc -I/usr/include/nvidia-current/cuda -I/usr/local/cuda/include
+INCLUDE+=-I/$(HOME)/NVIDIA_CUDA_Samples/common/inc -I/usr/include/nvidia-346/cuda -I/usr/local/cuda/include
+#LIBS+=-L/$(HOME)/NVIDIA_GPU_Computing_SDK/C/lib -L/usr/lib64/nvidia-current -L/usr/local/cuda/lib64
+LIBS+=-L/$(HOME)/NVIDIA_CUDA_Samples/common/lib -L/usr/lib/nvidia-346 -L/usr/local/cuda/lib64
+#LINKS+=-lcudart -lcutil -lcuda -lglog -lgflags
+LINKS+=-lcudart -lcuda -lglog -lgflags
 OBJS+=CudaFunctions
 DEFINE+=-DEnableCUDA
 endif

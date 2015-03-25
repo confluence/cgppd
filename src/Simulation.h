@@ -21,11 +21,12 @@
 #include "definitions.h"
 
 #if USING_CUDA
-#include <cuda.h>
-#include <cutil.h>  // CUDA c util package
-#include <cuda_runtime_api.h>
-#include <cutil_inline.h>
-#include <cutil_inline_runtime.h>
+//#include <cuda.h> // apparently included in helper_cuda
+//#include <cutil.h>  // obsolete
+//#include <cuda_runtime_api.h> // apparently included in helper_cuda
+//#include <cutil_inline.h>  // obsolete
+//#include <cutil_inline_runtime.h>  // obsolete
+#include <helper_cuda.h>
 #endif
 
 #include "structures.h"
@@ -92,8 +93,10 @@ public:
     map<int, float> temperature;
 
 #if INCLUDE_TIMERS
-    uint RELoopTimer;
-    uint MCLoopTimer;
+    //uint RELoopTimer;
+    //uint MCLoopTimer;
+    StopWatchInterface *RELoopTimer;
+    StopWatchInterface *MCLoopTimer;
 #endif
 
     Simulation();
