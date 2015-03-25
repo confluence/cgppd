@@ -14,11 +14,9 @@
     //#include <cutil.h>
     //#include <cutil_inline.h>
     #include <helper_cuda.h>
-    #include <builtin_types.h>
+    #include <builtin_types.h> // can we find this, and is it necessary?
     #include "cudaExterns.h"
-#elif INCLUDE_TIMERS
-    //#include <cutil.h>
-    // TODO TODO TODO is this even relevant, or did we make this not happen in definitions?
+    #include <helper_timer.h>
 #endif  // USING_CUDA
 
 #include "Molecule.h"
