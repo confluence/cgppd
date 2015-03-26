@@ -3,7 +3,7 @@
 INCLUDE=-I/usr/include/glog/ -I/usr/include/gflags/
 #LIBS=-L/usr/lib64
 LIBS=-L/usr/lib
-LINKS=-lpthread -lgsl -lgslcblas
+LINKS=-lpthread -lgsl -lgslcblas -lglog
 CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
 COMPILER=g++
 HGVERSION:= $(shell hg parents --template 'hgid: {node|short}')
@@ -44,7 +44,7 @@ INCLUDE+=-I/$(HOME)/NVIDIA_CUDA_Samples/common/inc -I/usr/local/cuda/include
 #LIBS+=-L/$(HOME)/NVIDIA_GPU_Computing_SDK/C/lib -L/usr/lib64/nvidia-current -L/usr/local/cuda/lib64
 LIBS+=-L/$(HOME)/NVIDIA_CUDA_Samples/common/lib -L/usr/local/cuda/lib64
 #LINKS+=-lcudart -lcutil -lcuda -lglog -lgflags
-LINKS+=-lcudart -lcuda -lglog -lgflags
+LINKS+=-lcudart -lcuda -lgflags
 OBJS+=CudaFunctions
 DEFINE+=-DEnableCUDA
 endif
