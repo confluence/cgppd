@@ -1,5 +1,3 @@
-//#include <string>
-//#include <ctype.h>
 #include <Geometry.h>
 #include <testCommon.h>
 
