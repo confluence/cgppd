@@ -59,8 +59,7 @@ SIMULATIONS
 THESIS
 * write foundations chapter
     * kT units or RT units?!
-* write design / implementation chapter
-
+* add final edits to design/implementation chapter after making changes in the code
 --------------------------------------------------------------------------------
 NOW
 --------------------------------------------------------------------------------
@@ -123,11 +122,6 @@ OPTIMISATION
 * Maybe leave this for last; possibly just mention it as a future direction instead of doing it
 
 CLEANUP
-* Remove dependence on cutil, which is not supposed to be used in production.
-    * Need timers and a way to check CUDA errors?
-    * Possibly read the cutil source code and reimplement these?
-    * New SDK should have new helper functions
-    * but we need to extract it from the single-file installer somehow
 
 * convert all printfs / fprintfs to streams and all char arrays to strings
 * Eliminate extraneous preprocessor directives

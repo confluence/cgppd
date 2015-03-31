@@ -74,7 +74,7 @@ void Simulation::printHelp()
     cout << "\t-x|--tmax x:    The temperature of the highest replica" << endl;
     cout << "\t-n|--tmin x:    The temperature of the lowest replica" << endl;
     cout << "\t-d|--blockdim x: Number of threads per CUDA block" << endl;
-    cout << "\t-v|--v: Verbosity level (glog flag)" << endl;
+    cout << "\t-v|--v: Verbosity level" << endl; // TODO see how this works in Easylogging
 
     exit(0);
 }
@@ -130,8 +130,9 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                     parameters.inputFile = true;
                     break;
                 case 'v':
-                    // This is a bit of a hack, but I really don't want to refactor everything to use gflags just for verbose logs.
-                    FLAGS_v = atoi(optarg); 
+                    //// This is a bit of a hack, but I really don't want to refactor everything to use gflags just for verbose logs.
+                    //FLAGS_v = atoi(optarg);
+                    // I think we should ignore it for now?
                     break;
                 default:
                     // Ignore all other options in this pass

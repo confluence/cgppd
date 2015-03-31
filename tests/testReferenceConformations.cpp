@@ -173,8 +173,8 @@ void TestReferenceConformations::testVsKimResults()
     double max_e_DH(0);
     double max_e_total(0);
     
-    LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << "Comparison to Kim's results";
-    LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << "Relative errors:";
+    LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Comparison to Kim's results";
+    LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Relative errors:";
     
     for (int i = 0; i < 10; i++) {
         const double & kim_LJ = kim_results[i].total_LJ();
@@ -191,7 +191,7 @@ void TestReferenceConformations::testVsKimResults()
         double e_DH = fabs(kim_DH - DH)/fabs(kim_DH);
         double e_total = fabs(kim_total - total)/fabs(kim_total);
         
-        LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total;
+        LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total;
 
         mean_e_LJ += e_LJ/10;
         mean_e_DH += e_DH/10;
@@ -202,8 +202,8 @@ void TestReferenceConformations::testVsKimResults()
         max_e_total = max(max_e_total, e_total);
     }
     
-    LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total;
-    LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total;
+    LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total;
+    LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total;
     
     // Apart from the LJ in conformations 1 and 6, we seem to be doing quite well. We should probably investigate that more closely.
     
@@ -244,8 +244,8 @@ void TestReferenceConformations::testVsCharmmResults()
     double max_e_DH(0);
     double max_e_total(0);
     
-    LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << "Comparison to CHARMM results";
-    LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << "Relative errors:";
+    LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Comparison to CHARMM results";
+    LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Relative errors:";
     
     for (int i = 0; i < 10; i++) {
         const double & charmm_LJ = charmm_results[i].total_LJ();
@@ -262,7 +262,7 @@ void TestReferenceConformations::testVsCharmmResults()
         double e_DH = fabs(charmm_DH - DH)/fabs(charmm_DH);
         double e_total = fabs(charmm_total - total)/fabs(charmm_total);
         
-        LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total;
+        LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total;
 
         mean_e_LJ += e_LJ/10;
         mean_e_DH += e_DH/10;
@@ -273,8 +273,8 @@ void TestReferenceConformations::testVsCharmmResults()
         max_e_total = max(max_e_total, e_total);
     }
     
-    LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total;
-    LOG_IF(INFO, PRINT_REFERENCE_CONFORMATIONS_FROM_TEST) << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total;
+    LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total;
+    LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total;
     
     // This is less good, but also less important than the distance from the original results.
         

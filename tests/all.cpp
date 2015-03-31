@@ -3,13 +3,15 @@
 #include <string.h>
 #include <testCommon.h>
 
+INITIALIZE_EASYLOGGINGPP
+
 using namespace std;
 
 int main( int argc, char **argv)
 {
-    FLAGS_log_dir = "logs";
-    FLAGS_alsologtostderr = 1;
-    google::InitGoogleLogging(argv[0]);
+    //FLAGS_log_dir = "logs";
+    //FLAGS_alsologtostderr = 1;
+    //google::InitGoogleLogging(argv[0]);
 
     CppUnit::TextUi::TestRunner runner;
     CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();

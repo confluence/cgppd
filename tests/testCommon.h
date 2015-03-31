@@ -4,7 +4,9 @@
 #include <set>
 #include <sstream>
 
-#include <glog/logging.h>
+//#include <glog/logging.h>
+
+#include "easylogging++.h"
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/extensions/HelperMacros.h>
