@@ -27,7 +27,7 @@ public:
     bool operator != (Vector3f v) {
         return (x != v.x || y != v.y || z != v.z);
     };
-    bool almost_equal(const Vector3f v, const float eps);
+    bool almost_equal(const Vector3f v, const float eps=0.00001);
     Vector3f operator = (Vector3f v) {
         x=v.x;
         y=v.y;
