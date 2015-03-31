@@ -18,13 +18,6 @@
 
 #include "definitions.h"
 
-#if USING_CUDA
-//#include <cutil.h>  // obsolete
-//#include <cuda_runtime_api.h> // apparently included in helper_cuda
-//#include <cutil_inline.h>  // obsolete
-//#include <cutil_inline_runtime.h>  // obsolete
-#endif
-
 #include "structures.h"
 #include "AminoAcid.h"
 #include "TorsionalLookupMatrix.h"

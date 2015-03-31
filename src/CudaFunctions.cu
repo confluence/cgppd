@@ -5,8 +5,6 @@
 using namespace std;
 
 #include "CudaFunctions.h"
-//#include <cutil.h>
-//#include <cutil_inline.h>
 #include <helper_cuda.h> // TODO TODO TODO WHY? we do this in the h
 
 // Block index

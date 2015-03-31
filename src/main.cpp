@@ -4,10 +4,7 @@ INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char **argv)
 {
-    //FLAGS_log_dir = "logs";
-    //FLAGS_alsologtostderr = 1;
-
-    //google::InitGoogleLogging(argv[0]);
+    START_EASYLOGGINGPP(argc, argv);
 
     VLOG(0) << "CGPPD version: " << HGVERSION;
     VLOG(0) << "Compiled with:";
