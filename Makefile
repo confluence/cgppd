@@ -95,7 +95,7 @@ endif
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
 
 test: ${OBJFILES} ${TEST_SOURCES}
-	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} ${LIBS} -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
+	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} ${LIBS} -DHGVERSION="\"${HGVERSION}\"" -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
 
 obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
 	@echo Making CUDA files.
@@ -114,7 +114,7 @@ obj/main.o: src/main.cpp
 
 obj/%.o: src/%.cpp src/%.d src/%.h
 	@mkdir -p $(dir $@)
-	$(COMPILER) $(CFLAGS) ${INCLUDE} ${DEFINE} -o $@ -c $<
+	$(COMPILER) $(CFLAGS) ${INCLUDE} ${DEFINE} -DHGVERSION="\"${HGVERSION}\"" -o $@ -c $<
 
 clean:
 	@rm -rf obj cgppd test

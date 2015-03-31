@@ -94,7 +94,6 @@ public:
     Simulation();
     ~Simulation();
 
-
     void init(int argc, char **argv, int pid);
 
     void printHelp();
@@ -102,6 +101,7 @@ public:
     void loadArgsFromFile();
     void check_and_modify_parameters();
     void writeFileIndex();
+    void printSettings();
     void printArgs();
 
     void run();

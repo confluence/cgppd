@@ -58,7 +58,7 @@ public:
 
     void loadMolecule(const moldata mdata);
 
-    void saveAsSinglePDB(const char *filename, const char *title, bool skip_crowders=true);
+    void saveAsSinglePDB(const char *filename, const char *title, int sample, bool skip_crowders=true);
 
     AminoAcids aminoAcids;
 

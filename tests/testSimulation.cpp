@@ -131,9 +131,7 @@ void TestSimulation::testREMC()
     
     char * argv[] = {"program_name_goes_here", "-f", "tests/remctestfile", NULL};
     
-    int argc(3);
-    int pid = int( getpid() );
-    s.init(argc, argv, pid);
+    s.init(3, argv, int(getpid()));
     
     // seed the simulation range with a constant
     // seed each replica range with a constant
