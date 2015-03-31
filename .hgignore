@@ -1,6 +1,7 @@
 2g33_CA_full.pdb
 2g33_full.vdb
 .*\.kate-swp
+.*\.pyc
 .*~
 obj/.*
 output/.*
@@ -8,3 +9,5 @@ output/.*
 cgppd$
 test$
 .*\.d
+inc/.*
+logs/.*\.log
