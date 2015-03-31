@@ -91,11 +91,18 @@ TEST_CASE("Simulation", "[simulation]") {
     }
 
     SECTION("REMC sanity check") {
+        // clean up the old output dir if it exists
+        char command[256];
+        memset(command, 0, 256);
+        sprintf(command, "rm -rf output/remctest_0");
+        
+        REQUIRE(system(command) == 0);
 
         char * argv[] = {"program_name_goes_here", "-f", "tests/remctestfile", NULL};
+        int argc = 3;
+        int pid = 0;
 
-        // TODO: use a constant instead of a pid
-        s.init(3, argv, int(getpid()));
+        s.init(argc, argv, pid);
         
         // seed the simulation range with a constant
         // seed each replica range with a constant
@@ -109,9 +116,22 @@ TEST_CASE("Simulation", "[simulation]") {
         // run the simulation
         
         s.run();
+        
+        memset(command, 0, 256);
+        sprintf(command, "if [ ! -d tests/remctest ]; then tar --directory tests -xzf tests/remctest.tgz; fi");
 
-        // TODO: compare output directory to reference directory with diff -- exclude log file
-        // TODO: delete test output directory
+        REQUIRE(system(command) == 0);
 
+        memset(command, 0, 256);
+        sprintf(command, "diff -r --exclude log tests/remctest output/remctest_0");
+
+        REQUIRE(system(command) == 0);
+
+        // This deletion shouldn't happen if the test fails, so we'll be able to inspect the directory
+
+        memset(command, 0, 256);
+        sprintf(command, "rm -rf output/remctest_0");
+        
+        REQUIRE(system(command) == 0);
     }
 }
