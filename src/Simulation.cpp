@@ -130,9 +130,7 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                     parameters.inputFile = true;
                     break;
                 case 'v':
-                    //// This is a bit of a hack, but I really don't want to refactor everything to use gflags just for verbose logs.
-                    //FLAGS_v = atoi(optarg);
-                    // I think we should ignore it for now?
+                    // handled by logging library
                     break;
                 default:
                     // Ignore all other options in this pass
@@ -511,6 +509,33 @@ void Simulation::init(int argc, char **argv, int pid)
     loadArgsFromFile();
     getArgs(argc, argv, false);
 
+    // File stuff
+
+    // We need to create these directories in order to open files for writing
+    // We need the files now so we can store them in the simulation data
+    // Move this earlier, so we can put the logs here
+    char mkdir_command[256];
+    memset(mkdir_command, 0, 256);
+    sprintf(mkdir_command, "mkdir -p output/%s/pdb",  parameters.prefix);
+    int make_dirs = system(mkdir_command);
+
+    VLOG(0) << "Created output directory: output/" << parameters.prefix;
+
+    ostringstream log_path;
+    log_path << "output/" << parameters.prefix << "/log";
+
+    el::Configurations conf;
+    conf.setGlobally(el::ConfigurationType::Filename, log_path.str());
+    el::Loggers::reconfigureLogger("default", conf);
+
+    VLOG(0) << "------------------------------------------------------------------------";
+    VLOG(0) << "LOGGING TO " << log_path.str();
+    VLOG(0) << "------------------------------------------------------------------------";
+
+    initSamplingFiles();
+    
+    printSettings();
+
     // sanity check and calculation of some secondary parameters
     check_and_modify_parameters();
 
@@ -546,19 +571,6 @@ void Simulation::init(int argc, char **argv, int pid)
         VLOG(0) << "\tCrowding is modelled using the full potential calculations.";
 #endif
     }
-
-    // File stuff
-    VLOG(0) << "Output files will be written to output " << parameters.prefix;
-
-    // We need to create these directories in order to open files for writing
-    // We need the files now so we can store them in the simulation data
-    // TODO: maybe move all this stuff to run
-    char mkdir_command[256];
-    memset(mkdir_command, 0, 256);
-    sprintf(mkdir_command, "mkdir -p output/%s/pdb",  parameters.prefix);
-    int make_dirs = system(mkdir_command);
-
-    initSamplingFiles();
 
     // now set up all the replicas
 
@@ -1171,6 +1183,40 @@ void Simulation::writeFileIndex()
     }
 
     fclose(fileindexf);
+}
+
+void Simulation::printSettings()
+{
+    VLOG(0) << "CGPPD version: " << HGVERSION;
+    VLOG(0) << "Compiled with:";
+
+#ifdef GLVIS
+    VLOG(0) << "\tOpenGL support";
+#endif
+
+#if USING_CUDA
+    VLOG(0) << "\tCUDA support";
+#if CUDA_STREAMS
+    VLOG(0) << "\t\tAsynchronous GPU calls (CUDA capability 1.1+ required)";
+#endif // CUDA_STREAMS
+    VLOG(0) << "\t\tTile size: " << TILE_DIM;
+    string mem_type;
+#if LJ_LOOKUP_METHOD == SHARED_MEM
+    mem_type = "Shared";
+#elif LJ_LOOKUP_METHOD == CONST_MEM
+    mem_type = "Constant";
+#elif LJ_LOOKUP_METHOD == GLOBAL_MEM
+    mem_type = "Global";
+#elif LJ_LOOKUP_METHOD == TEXTURE_MEM
+    mem_type = "Texture";
+#endif // LJ_LOOKUP_METHOD
+    VLOG(0) << "\t\tLJ lookup memory type: " << mem_type;
+#endif // USING_CUDA
+
+    VLOG_IF(COMPENSATE_KERNEL_SUM, 0) << "\tKahan summation in kernels";
+    VLOG_IF(FLEXIBLE_LINKS, 0) << "\tFlexible linkers";
+    VLOG_IF(LJ_REPULSIVE, 0) << "\tLennard-Jones potentials always repulsive";
+    VLOG_IF(LJ_OFF, 0) << "\tLennard-Jones potentials off";
 }
 
 void Simulation::printArgs()
