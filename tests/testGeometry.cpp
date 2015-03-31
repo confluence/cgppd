@@ -3,6 +3,8 @@
 #include <Geometry.h>
 #include <testCommon.h>
 
+#if FLEXIBLE_LINKS
+
 TEST_CASE("Geometry", "[geometry]") {
     vector<Residue> residues; // we're going to fill this with dummy residues for one of the diubiquitins, with just a label and a chain ID
     
@@ -95,3 +97,5 @@ TEST_CASE("Geometry", "[geometry]") {
         }
     }
 }
+
+#endif // FLEXIBLE_LINKS

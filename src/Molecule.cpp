@@ -92,6 +92,17 @@ void Molecule::log_info(int index)
     VLOG(1) << "\t\t" << index << " " << filename << "; " << residueCount << " residues; centre: " << center << "; volume: " << volume << " A^3";
 }
 
+vector<string> Molecule::residue_sequence()
+{
+    vector<string> sequence;
+    
+    for (int i = 0; i < residueCount; i++) {
+        sequence.push_back(string(AminoAcidsData.get(Residues[i].aminoAcidIndex).getSNAME()));
+    }
+
+    return sequence;
+}
+
 void Molecule::MC_backup_restore(const Molecule* m)
 {
     memcpy(Residues, m->Residues, sizeof(Residue) * m->residueCount);

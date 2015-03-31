@@ -52,7 +52,7 @@ public:
 #endif // FLEXIBLE_LINKS
     };
     
-    bool almost_equal(const Potential p, const float eps);
+    bool almost_equal(const Potential p, const float eps=0.00001);
 
     friend ostream& operator<<(ostream& os, const Potential p);
 
