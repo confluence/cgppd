@@ -1,11 +1,13 @@
 #include "Simulation.h"
 
+INITIALIZE_EASYLOGGINGPP
+
 int main(int argc, char **argv)
 {
-    FLAGS_log_dir = "logs";
-    FLAGS_alsologtostderr = 1;
+    //FLAGS_log_dir = "logs";
+    //FLAGS_alsologtostderr = 1;
 
-    google::InitGoogleLogging(argv[0]);
+    //google::InitGoogleLogging(argv[0]);
 
     VLOG(0) << "CGPPD version: " << HGVERSION;
     VLOG(0) << "Compiled with:";
@@ -33,10 +35,10 @@ int main(int argc, char **argv)
     VLOG(0) << "\t\tLJ lookup memory type: " << mem_type;
 #endif // USING_CUDA
 
-    VLOG_IF(0, COMPENSATE_KERNEL_SUM) << "\tKahan summation in kernels";
-    VLOG_IF(0, FLEXIBLE_LINKS) << "\tFlexible linkers";
-    VLOG_IF(0, LJ_REPULSIVE) << "\tLennard-Jones potentials always repulsive";
-    VLOG_IF(0, LJ_OFF) << "\tLennard-Jones potentials off";
+    VLOG_IF(COMPENSATE_KERNEL_SUM, 0) << "\tKahan summation in kernels";
+    VLOG_IF(FLEXIBLE_LINKS, 0) << "\tFlexible linkers";
+    VLOG_IF(LJ_REPULSIVE, 0) << "\tLennard-Jones potentials always repulsive";
+    VLOG_IF(LJ_OFF, 0) << "\tLennard-Jones potentials off";
 
     int pid = int( getpid() );
 

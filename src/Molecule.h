@@ -8,7 +8,8 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-#include <glog/logging.h>
+//#include <glog/logging.h>
+#include "easylogging++.h"
 
 #include "definitions.h"
 #include "AminoAcids.h"

@@ -1,6 +1,7 @@
 ################################################################################
 
-INCLUDE=-I/usr/include/glog/ -I/usr/include/gflags/
+INCLUDE=-Iinc
+#INCLUDE=-I/usr/include/glog/ -I/usr/include/gflags/
 #LIBS=-L/usr/lib64
 LIBS=-L/usr/lib
 LINKS=-lpthread -lgsl -lgslcblas -lglog
@@ -105,7 +106,7 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 endif
 
 src/%.d: src/%.cpp
-	$(COMPILER) $(CFLAGS) -MM -MT '$(patsubst src/%.cpp,obj/%.o,$<)' $< -MF $@
+	$(COMPILER) $(CFLAGS) ${INCLUDE} ${DEFINE} -MM -MT '$(patsubst src/%.cpp,obj/%.o,$<)' $< -MF $@
 
 obj/main.o: src/main.cpp
 	@mkdir -p $(dir $@)
