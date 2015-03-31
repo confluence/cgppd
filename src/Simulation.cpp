@@ -524,13 +524,13 @@ void Simulation::init(int argc, char **argv, int pid)
     ostringstream log_path;
     log_path << "output/" << parameters.prefix << "/log";
 
+    VLOG(0) << "------------------------------------------------------------------------";
+    VLOG(0) << "LOGGING REST OF SIMULATION TO " << log_path.str();
+    VLOG(0) << "------------------------------------------------------------------------";
+
     el::Configurations conf;
     conf.setGlobally(el::ConfigurationType::Filename, log_path.str());
     el::Loggers::reconfigureLogger("default", conf);
-
-    VLOG(0) << "------------------------------------------------------------------------";
-    VLOG(0) << "LOGGING TO " << log_path.str();
-    VLOG(0) << "------------------------------------------------------------------------";
 
     initSamplingFiles();
     

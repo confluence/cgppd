@@ -5,11 +5,11 @@ INITIALIZE_EASYLOGGINGPP
 int main(int argc, char **argv)
 {
     START_EASYLOGGINGPP(argc, argv);
-    el::Configurations conf("log.conf");
+    el::Configurations conf("logs/log.conf");
     el::Loggers::reconfigureLogger("default", conf);
 
     VLOG(0) << "------------------------------------------------------------------------";
-    VLOG(0) << "LOGGING TO DEFAULT LOG!";
+    VLOG(0) << "LOGGING TO " << conf.get(el::Level::Info, el::ConfigurationType::Filename)->value();
     VLOG(0) << "------------------------------------------------------------------------";
 
     Simulation simulation;

@@ -1,6 +1,4 @@
-//#include "definitions.h"
 #include <Simulation.h>
-//#include <Replica.h>
 #include <testCommon.h>
 
 #if !LJ_REPULSIVE && !LJ_OFF  // ignore this whole test unless we're using the normal LJ constants

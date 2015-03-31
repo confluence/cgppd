@@ -1,8 +1,6 @@
 ################################################################################
 
 INCLUDE=-Iinc
-#INCLUDE=-I/usr/include/glog/ -I/usr/include/gflags/
-#LIBS=-L/usr/lib64
 LIBS=-L/usr/lib
 LINKS=-lpthread -lgsl -lgslcblas -lglog
 CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
@@ -40,11 +38,8 @@ DEBUG=no
 ################################################################################
 
 ifeq ($(CUDA),yes)
-#INCLUDE+=-I/$(HOME)/NVIDIA_GPU_Computing_SDK/C/common/inc -I/usr/include/nvidia-current/cuda -I/usr/local/cuda/include
 INCLUDE+=-I/$(HOME)/NVIDIA_CUDA_Samples/common/inc -I/usr/local/cuda/include
-#LIBS+=-L/$(HOME)/NVIDIA_GPU_Computing_SDK/C/lib -L/usr/lib64/nvidia-current -L/usr/local/cuda/lib64
 LIBS+=-L/$(HOME)/NVIDIA_CUDA_Samples/common/lib -L/usr/local/cuda/lib64
-#LINKS+=-lcudart -lcutil -lcuda -lglog -lgflags
 LINKS+=-lcudart -lcuda -lgflags
 OBJS+=CudaFunctions
 DEFINE+=-DEnableCUDA
@@ -57,9 +52,7 @@ DEFINE+=-DEnableOPENGL
 endif
 
 # Always create these, because we might make test with TEST=no (although that would be silly)
-#TEST_INCLUDE=${INCLUDE} -I/usr/include/cppunit/ -Isrc -Itests
 TEST_INCLUDE=${INCLUDE} -Isrc -Itests
-#TEST_LINKS=${LINKS} -lcppunit
 TEST_LINKS=${LINKS}
 TEST_SOURCES:=$(shell find tests/ -regex '.*\.\(cpp\|h\)')
 # suppress warnings about conversion from string constant to char * when constructing argv in tests

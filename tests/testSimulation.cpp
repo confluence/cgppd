@@ -1,151 +1,117 @@
-//#include <iostream>
-//#include "definitions.h"
 #include "Simulation.h"
 #include <testCommon.h>
 
-//class TestSimulation : public CppUnit::TestFixture
-//{
-    //CPPUNIT_TEST_SUITE(TestSimulation);
-    //CPPUNIT_TEST(testGetArgs);
-    //CPPUNIT_TEST(testLoadArgsFromFile);
-    //CPPUNIT_TEST(testREMC);
-    //CPPUNIT_TEST_SUITE_END();
+TEST_CASE("Simulation", "[simulation]") {
 
-//private:
+    Simulation s;
 
+    SECTION ("Get arguments from command line") {
 
-//public:
-    //void setUp();
-    //void testGetArgs();
-    //void testLoadArgsFromFile();
-    //void testREMC();
-    //void tearDown();
-//};
+        char * argv[] = {"my_programname", "-f", "tests/argtestfile", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-b", "23", "-n", "23", "-x", "23", "-d", "23", NULL};
+        int argc(25);
 
-//CPPUNIT_TEST_SUITE_REGISTRATION(TestSimulation);
+        s.getArgs(argc, argv, true);
+        s.getArgs(argc, argv, false);
 
-//void TestSimulation::setUp()
-//{
-//}
+        REQUIRE(s.parameters.viewConditions);
+        REQUIRE(s.parameters.skipsimulation);
+    #if USING_CUDA
+        REQUIRE(s.parameters.cuda_blockSize == 23);
+        REQUIRE(s.parameters.auto_blockdim == false);
+    #endif
+        REQUIRE(s.parameters.threads == 23);
+        REQUIRE(s.parameters.streams == 23);
+        REQUIRE(s.parameters.gpus == 23);
+        REQUIRE(s.parameters.MCsteps == 23);
+        REQUIRE(s.parameters.REsteps == 23);
+        REQUIRE(s.parameters.replicas == 23);
+        REQUIRE(s.parameters.sampleFrequency == 5000);
+        REQUIRE(s.parameters.sampleStartsAfter == 5000);
+        REQUIRE(s.parameters.inputFile);
+        REQUIRE(s.parameters.nonCrowders == 0);
+        REQUIRE(s.parameters.pid == 0);
+        REQUIRE(s.parameters.resume == false);
 
-//void TestSimulation::testGetArgs()
-//{
-    //Simulation s;
-    
-    //char * argv[] = {"my_programname", "-f", "tests/argtestfile", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-b", "23", "-n", "23", "-x", "23", "-d", "23", NULL};
-    //int argc(25);
+        REQUIRE(s.parameters.bound == Approx(23.0));
+        REQUIRE(s.parameters.temperatureMin == Approx(23.0));
+        REQUIRE(s.parameters.temperatureMax == Approx(23.0));
 
-    //s.getArgs(argc, argv, true);
-    //s.getArgs(argc, argv, false);
+        REQUIRE(strcmp(s.parameters.prefix, "") == 0);
+        REQUIRE(strcmp(s.parameters.file, "tests/argtestfile") == 0);
+    }
 
-    //CPPUNIT_ASSERT_EQUAL(true, s.parameters.viewConditions);
-    //CPPUNIT_ASSERT_EQUAL(true, s.parameters.skipsimulation);
-//#if USING_CUDA
-    //CPPUNIT_ASSERT_EQUAL(23, s.parameters.cuda_blockSize);
-    //CPPUNIT_ASSERT_EQUAL(false, s.parameters.auto_blockdim);
-//#endif
-    //CPPUNIT_ASSERT_EQUAL(23, s.parameters.threads);
-    //CPPUNIT_ASSERT_EQUAL(23, s.parameters.streams);
-    //CPPUNIT_ASSERT_EQUAL(23, s.parameters.gpus);
-    //CPPUNIT_ASSERT_EQUAL(23, s.parameters.MCsteps);
-    //CPPUNIT_ASSERT_EQUAL(23, s.parameters.REsteps);
-    //CPPUNIT_ASSERT_EQUAL(23, s.parameters.replicas);
-    //CPPUNIT_ASSERT_EQUAL(5000, s.parameters.sampleFrequency);
-    //CPPUNIT_ASSERT_EQUAL(5000, s.parameters.sampleStartsAfter);
-    //CPPUNIT_ASSERT_EQUAL(true, s.parameters.inputFile);
-    //CPPUNIT_ASSERT_EQUAL(0, s.parameters.nonCrowders);
-    //CPPUNIT_ASSERT_EQUAL(0, s.parameters.pid);
-    //CPPUNIT_ASSERT_EQUAL(false, s.parameters.resume);
+    SECTION("Load configuration from file") {
+        strcpy(s.parameters.file, "tests/argtestfile");
+        s.parameters.inputFile = true;
 
-    //CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.bound, 0);
-    //CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.temperatureMin, 0);
-    //CPPUNIT_ASSERT_DOUBLES_EQUAL(23.0, s.parameters.temperatureMax, 0);
+        s.loadArgsFromFile();
 
-    //CPPUNIT_ASSERT(strcmp(s.parameters.prefix, "") == 0);
-    //CPPUNIT_ASSERT(strcmp(s.parameters.file, "tests/argtestfile") == 0);
-//}
+        REQUIRE(s.parameters.viewConditions == false);
+        REQUIRE(s.parameters.skipsimulation == false);
+        #if USING_CUDA
+        REQUIRE(s.parameters.cuda_blockSize == TILE_DIM);
+        REQUIRE(s.parameters.auto_blockdim);
+        #endif
+        REQUIRE(s.parameters.threads == 1);
+        REQUIRE(s.parameters.streams == 1);
+        REQUIRE(s.parameters.gpus == 1);
+        REQUIRE(s.parameters.MCsteps == 10000);
+        REQUIRE(s.parameters.REsteps == 10000);
+        REQUIRE(s.parameters.replicas == 1);
+        REQUIRE(s.parameters.sampleFrequency == 1000);
+        REQUIRE(s.parameters.sampleStartsAfter == 1000);
+        REQUIRE(s.parameters.inputFile);
+        REQUIRE(s.parameters.nonCrowders == 2);
+        REQUIRE(s.parameters.pid == 0);
+        REQUIRE(s.parameters.resume == false);
 
-//void TestSimulation::testLoadArgsFromFile()
-//{
-    //Simulation s;
-    //strcpy(s.parameters.file, "tests/argtestfile");
-    //s.parameters.inputFile = true;
+        REQUIRE(s.parameters.bound == Approx(100.0));
+        REQUIRE(s.parameters.temperatureMin == Approx(288.0));
+        REQUIRE(s.parameters.temperatureMax == Approx(300.0));
 
-    //s.loadArgsFromFile();
+        REQUIRE(strcmp(s.parameters.prefix, "") == 0);
+        REQUIRE(strcmp(s.parameters.file, "tests/argtestfile") == 0);
 
-    //CPPUNIT_ASSERT_EQUAL(false, s.parameters.viewConditions);
-    //CPPUNIT_ASSERT_EQUAL(false, s.parameters.skipsimulation);
-//#if USING_CUDA
-    //CPPUNIT_ASSERT_EQUAL(TILE_DIM, s.parameters.cuda_blockSize);
-    //CPPUNIT_ASSERT_EQUAL(true, s.parameters.auto_blockdim);
-//#endif
-    //CPPUNIT_ASSERT_EQUAL(1, s.parameters.threads);
-    //CPPUNIT_ASSERT_EQUAL(1, s.parameters.streams);
-    //CPPUNIT_ASSERT_EQUAL(1, s.parameters.gpus);
-    //CPPUNIT_ASSERT_EQUAL(10000, s.parameters.MCsteps);
-    //CPPUNIT_ASSERT_EQUAL(10000, s.parameters.REsteps);
-    //CPPUNIT_ASSERT_EQUAL(1, s.parameters.replicas);
-    //CPPUNIT_ASSERT_EQUAL(1000, s.parameters.sampleFrequency);
-    //CPPUNIT_ASSERT_EQUAL(1000, s.parameters.sampleStartsAfter);
-    //CPPUNIT_ASSERT_EQUAL(true, s.parameters.inputFile);
-    //CPPUNIT_ASSERT_EQUAL(2, s.parameters.nonCrowders);
-    //CPPUNIT_ASSERT_EQUAL(0, s.parameters.pid);
-    //CPPUNIT_ASSERT_EQUAL(false, s.parameters.resume);
+        REQUIRE(s.parameters.mdata.size() == 7);
+        REQUIRE(s.parameters.mdata_map.size() == 2);
 
-    //CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, s.parameters.bound, 0);
-    //CPPUNIT_ASSERT_DOUBLES_EQUAL(288.0, s.parameters.temperatureMin, 0);
-    //CPPUNIT_ASSERT_DOUBLES_EQUAL(300.0, s.parameters.temperatureMax, 0);
+        moldata uim_data = s.parameters.mdata[s.parameters.mdata_map["UIM1"]];
+        moldata ubq_data = s.parameters.mdata[s.parameters.mdata_map["ubiquitin"]];
 
-    //CPPUNIT_ASSERT(strcmp(s.parameters.prefix, "") == 0);
-    //CPPUNIT_ASSERT(strcmp(s.parameters.file, "tests/argtestfile") == 0);
+        REQUIRE(uim_data.all_flexible);
+        REQUIRE(uim_data.segments.size() == 0);
 
-    //CPPUNIT_ASSERT_EQUAL(7, (int)s.parameters.mdata.size());
-    //CPPUNIT_ASSERT_EQUAL(2, (int)s.parameters.mdata_map.size());
-    
-    //moldata uim_data = s.parameters.mdata[s.parameters.mdata_map["UIM1"]];
-    //moldata ubq_data = s.parameters.mdata[s.parameters.mdata_map["ubiquitin"]];
-    
-    //CPPUNIT_ASSERT_EQUAL(true, uim_data.all_flexible);
-    //CPPUNIT_ASSERT_EQUAL(0, (int)uim_data.segments.size());
-    
-    //CPPUNIT_ASSERT_EQUAL(false, ubq_data.all_flexible);
-    //CPPUNIT_ASSERT_EQUAL(1, (int)ubq_data.segments.size());
-    
-    //CPPUNIT_ASSERT_EQUAL(72, ubq_data.segments[0].residue_indices[0]);
-    //CPPUNIT_ASSERT_EQUAL(73, ubq_data.segments[0].residue_indices[1]);
-    //CPPUNIT_ASSERT_EQUAL(74, ubq_data.segments[0].residue_indices[2]);
-    //CPPUNIT_ASSERT_EQUAL(75, ubq_data.segments[0].residue_indices[3]);
-//}
+        REQUIRE(ubq_data.all_flexible == false);
+        REQUIRE(ubq_data.segments.size() == 1);
 
-//void TestSimulation::testREMC()
-//{
-    //// This test ensures that the synchronous and asynchronous CUDA options produce the same results.
-    
-    //Simulation s;
-    
-    //char * argv[] = {"program_name_goes_here", "-f", "tests/remctestfile", NULL};
-    
-    //s.init(3, argv, int(getpid()));
-    
-    //// seed the simulation range with a constant
-    //// seed each replica range with a constant
-    
-    //gsl_rng_set(s.REMCRng, 0);
-    
-    //for (int i = 0; i < s.parameters.replicas; i++) {
-        //gsl_rng_set(s.replica[i].rng, i);
-    //}
+        REQUIRE(ubq_data.segments[0].residue_indices[0] == 72);
+        REQUIRE(ubq_data.segments[0].residue_indices[1] == 73);
+        REQUIRE(ubq_data.segments[0].residue_indices[2] == 74);
+        REQUIRE(ubq_data.segments[0].residue_indices[3] == 75);
+    }
 
-    //// run the simulation
-    
-    //// TODO TODO TODO make the logging work better and add a completely silent mode for unit tests
-    //s.run();
+    SECTION("REMC sanity check") {
 
-    //// compare output directory to reference directory with diff
-    
-//}
+        char * argv[] = {"program_name_goes_here", "-f", "tests/remctestfile", NULL};
 
-//void TestSimulation::tearDown()
-//{
-    //// TODO: delete test output directory
-//}
+        // TODO: use a constant instead of a pid
+        s.init(3, argv, int(getpid()));
+        
+        // seed the simulation range with a constant
+        // seed each replica range with a constant
+        
+        gsl_rng_set(s.REMCRng, 0);
+        
+        for (int i = 0; i < s.parameters.replicas; i++) {
+            gsl_rng_set(s.replica[i].rng, i);
+        }
+
+        // run the simulation
+        
+        s.run();
+
+        // TODO: compare output directory to reference directory with diff -- exclude log file
+        // TODO: delete test output directory
+
+    }
+}

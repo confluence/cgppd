@@ -8,7 +8,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-//#include <glog/logging.h>
+#define ELPP_NO_DEFAULT_LOG_FILE 1
 #include "easylogging++.h"
 
 #include "definitions.h"
