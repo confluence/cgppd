@@ -8,6 +8,8 @@
 #ifndef CUDAEXTERNS_H_
 #define CUDAEXTERNS_H_
 
+#include "AminoAcids.h"
+
 extern "C"
 {
     float * LJPotentialDataToDevice (AminoAcids *a);

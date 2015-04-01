@@ -1,13 +1,11 @@
 #ifndef TORSIONALLOOKUPMATRIX_H_
 #define TORSIONALLOOKUPMATRIX_H_
 
-#include <fstream>
-#include <iostream>
-#include <cstdlib>
-#include <cstring>
-#include <cmath>
 #include "AminoAcids.h"
 #include "definitions.h"
+
+#define ELPP_NO_DEFAULT_LOG_FILE 1
+#include "easylogging++.h"
 
 using namespace std;
 

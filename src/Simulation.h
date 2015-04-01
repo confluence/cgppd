@@ -1,36 +1,11 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <cstring>
-#include <cmath>
-#include <string.h>
-#include <pthread.h>
-#include <sys/mman.h>
-#include <gsl/gsl_qrng.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-#include <map>
+#include <sys/mman.h> // what is this for?
 #include <unistd.h>  // include for profiling, TAU cannot find getpid() as it is an externed call
 #include <getopt.h>
 
-#include "definitions.h"
-
-#include "structures.h"
-#include "AminoAcid.h"
 #include "Replica.h"
-#include "TorsionalLookupMatrix.h"
-#include "vector3f.h"
-#include "Quaternion.h"
-
-#if USING_CUDA
-#include <cuda.h> // apparently included in helper_cuda
-#include "cudaExterns.h"
-#include <helper_cuda.h>
-#include <helper_timer.h>
-#endif
 
 #if GLVIS
 #include "openglvis.h"

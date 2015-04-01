@@ -23,7 +23,7 @@ bool TorsionalLookupMatrix::loadData(const char* filename, AminoAcids &aminoAcid
     ifstream input(filename);
     if (!input.good())
     {
-        //LOG(ERROR) << "Failed to open torsional data file " << filename;
+        LOG(ERROR) << "Failed to open torsional data file " << filename;
         return false;
     }
 
