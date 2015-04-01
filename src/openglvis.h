@@ -15,6 +15,8 @@
 #include <linux/kernel.h>
 #include "Replica.h"
 
+#include <GL/glut.h> // how to suppress compilation error?
+
 extern Replica * GLreplica;
 extern Replica (*replica)[REPLICA_COUNT];
 extern Camera camera;

@@ -521,7 +521,7 @@ void GLUTKeyboardPress(unsigned char key, int x, int y)
         dr++;
         dr = dr%gl_replicaCount;
         GLreplica = & (*replica)[dr]; // TODO: problem!
-        cout << "displaying replica: " << dr << " E=" << GLreplica->potential << endl;
+        LOG(INFO) << "displaying replica: " << dr << " E=" << GLreplica->potential;
         break;
     case 'm':
     case 'M':

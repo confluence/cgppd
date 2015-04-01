@@ -490,7 +490,7 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
     ifstream input(pdbfilename);
     if (!input.good())
     {
-        cout << "Failed to open file: " << pdbfilename << " ("<<filename<<")\n";
+        LOG(INFO) << "Failed to open file: " << pdbfilename << " ("<<filename<<")";
         exit(0);
     }
 

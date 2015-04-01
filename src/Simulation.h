@@ -20,8 +20,8 @@
 
 #include "structures.h"
 #include "AminoAcid.h"
-#include "TorsionalLookupMatrix.h"
 #include "Replica.h"
+#include "TorsionalLookupMatrix.h"
 #include "vector3f.h"
 #include "Quaternion.h"
 

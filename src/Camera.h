@@ -3,7 +3,6 @@
 
 #include "vector3f.h"
 #include <cmath>
-#include <GL/glut.h> // how to suppress compilation error?
 
 #define MOUSEROTATEFACTOR 350*0.8f
 

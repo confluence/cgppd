@@ -82,7 +82,7 @@ TEST_CASE("Replica", "[replica]") {
 
         REQUIRE((replica.E() + replica.internal_molecule_E(true)).almost_equal(expected_flexible_potential));
 #if USING_CUDA
-        REQUIRE(replica.EonDevice() + replica.internal_molecule_E(false).total() == Approx(expected_flexible_potential.total()));
+        REQUIRE((replica.EonDevice() + replica.internal_molecule_E(false).total()) == Approx(expected_flexible_potential.total()));
 #endif // USING_CUDA
 
         replica.calculate_rigid_potential_only = true;

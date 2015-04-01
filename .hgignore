@@ -11,3 +11,5 @@ test$
 .*\.d
 inc/.*
 logs/.*\.log
+tests/remctest_CPU
+tests/remctest_GPU
