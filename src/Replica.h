@@ -1,32 +1,18 @@
 #ifndef REPLICA_H_
 #define REPLICA_H_
 
-#include "vector3f.h"
-#include "definitions.h"
 #include "structures.h"
-#include "Quaternion.h"
-#include <fstream>
-#include <vector>
-#include "AminoAcids.h"
 
 #if USING_CUDA
-    //#include <cuda.h> // we may be able to comment this out; helper_cuda may include it
-    //#include <cutil.h>
-    //#include <cutil_inline.h>
-    #include <builtin_types.h> // can we find this, and is it necessary?
+    #include <cuda.h>
+    #include <builtin_types.h>
     #include "cudaExterns.h"
     #include <helper_cuda.h>
     #include <helper_timer.h>
 #endif  // USING_CUDA
 
 #include "Molecule.h"
-#include "Potential.h"
-#include <gsl/gsl_qrng.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-#include "TorsionalLookupMatrix.h"
 #include <pthread.h>
-//#include "rngfunctions.h"
 
 using namespace std;
 

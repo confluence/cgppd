@@ -1,46 +1,26 @@
 --------------------------------------------------------------------------------
-RIGHT NOW
+NOW
 --------------------------------------------------------------------------------
 
 FIXES
-    * Fix the damn logging so that the code runs
     * implement the shift instead of the current crappy fraction encoding
+    * decrease local translate step size? Ask Rob.
 
-OTHER REFACTORING / TESTS
-    * proper logging
-        * switch from google-glog to easylogging (check the licence); it has a very similar api but is a lot more configurable and is header-only
-        * https://github.com/easylogging/easyloggingpp
-            * make a lib subdirectory (not version-controlled)
-            * maybe move the necessary cutil stuff into it
-            * maybe switch unit tests to catch https://github.com/philsquared/Catch
-            * write a README describing the requirements
-        * clean up arg parsing:
-            * move if firstpass to just around switch
-        * move vlogs from main to sim init; silence tests; add test flags for turning on comparisons?
-        * finish converting all the printfs / couts
-        * Clean up all the inconsistent log / print / cout formatting
+BUG FIXES AND REFACTORING
+    * remove unused code for e.g. old kernels and MC on the GPU
 
-    * clean up temperature / translation step / rotation step code and figure out exactly what is happening when the number of replicas is 1. Write a unit test for this.
+    * clean up temperature / translation step / rotation step code and figure out exactly what is happening when the number of replicas is 1. Write a unit test for this. Is this a bug?
 
-    * collect statistics of acceptance / rejection; compare sync and async; make sure nothing suspicious is happening
-		* samples are now in sync between versions
-        * outstanding issue: fix formatting of boundconformations file
-            * only one value per replica; put pdb file on the same line
-        * move information about compilation options, etc. out of PDB files and into an info file in the directory
-        * what is fileindex used for? It seems pretty useless. It's not even used in postprocessing.
-        * info file should describe exactly how the code was compiled and what config parameters were used.
-        * If we do proper logging, the log should go in there.
-        * stop outputting rotation / translation (no longer relevant)
-            * but only if compiled with flexible linkers?
+    * fix chain processing
+        * use chain names if they exist
+        * fix old PDB files with chain id in the wrong place (WTF)
+    * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 
-    * put methods on residue that look stuff up in AminoAcidData?
-        * remove copies of vdv radius and charge?
-        * either pass AminoAcidData to methods on Residue or pass residues to methods on AminoAcidData. The latter fits better with what is there now.
-
-    * rework the cpu potential
-        * include the internal unbonded stuff in the replica code
-        * remove that part of the molecule code; explicitly make the molecule E for bonded potential only
-        * make a new method for the unbonded potential which needs to be subtracted from the gpu sum
+    * outstanding issue: fix formatting of boundconformations file
+        * only one value per replica; put pdb file on the same line
+    * what is fileindex used for? It seems pretty useless. It's not even used in postprocessing.
+    * stop outputting rotation / translation (no longer relevant)
+        * but only if compiled with flexible linkers?
 
     * rework diubiquitin creation script to do the molecules the more sensible way around and also add a fake sidechain
 
@@ -50,58 +30,17 @@ OTHER REFACTORING / TESTS
         * actually, do we have any results for the bonded components from Kim?
         * could the tiny discrepancy from Kim's results be due to additional nonbonded components from inside segments? (There would be no inter-domain contribution because Kim & Hummer's model doesn't have a flex move).
 
-    * unit test for parsing various input files (amino acids, torsions, etc..)
-
 SIMULATIONS
 * diubiquitin simulations -- once the segment code is fixed
     * DON'T FORGET to make a fake side-chain out of alanine
 
 THESIS
-* write foundations chapter
-    * kT units or RT units?!
+* kT units or RT units -- what does this mean?
 * add final edits to design/implementation chapter after making changes in the code
---------------------------------------------------------------------------------
-NOW
---------------------------------------------------------------------------------
-
-MODEL CORRECTNESS
-* potential is now much (?) bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct? Also including the potential from inside proteins should raise the total (right)?
-    * analyse potential breakdown (from CPU-only version)
-* Are any conversions required for the linker components?
-
-CLEANUP / BUGFIX
-* remove probably pointless optimisations like summing vector components separately (since we don't do this everywhere anyway)
-* remove unused code for e.g. old kernels and MC on the GPU
-* fix chain processing
-    * use chain names if they exist
-    * fix old PDB files with chain id in the wrong place (WTF)
-* remove printing of old cruft about translation/rotation
-* make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 
 --------------------------------------------------------------------------------
 SOON
 --------------------------------------------------------------------------------
-
-TEST
-* stuff that's disabled
-    * Kahan sums -- sort of tested; no difference apparent
-
-OPTIONS
-* add possibility to individually enable / disable all the MC mutations?
-    * would be useful to disable whole-molecule translation / rotation for individual molecule tests
-    * and to disable flex moves if rigid domains should be static relative to each other
-
-VALIDATION
-* should we try crankshaft moves with more residues, and see if this improves the repulsive LJ results?
-
-REFACTOR
-* is it really necessary to use custom vector3f and vector3d types?
-* is it really necessary to use size_t for iterators instead of int?
-* Reorder methods and attributes, especially in header.  SETUP, MC MOVES, POTENTIAL CALCULATION
-* MOLECULE: constructor / destructor
-    * reserveResidueSpace not consistently used?
-* AMINO ACIDS
-    * clean up read from file
 
 SIMULATIONS
 * redo Ian's tail/no tail simulations with flexible tail; replicate post-processing used in original thesis
@@ -109,6 +48,16 @@ SIMULATIONS
 BENCHMARKING
 * do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
 * how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
+
+MODEL CORRECTNESS
+* potential is now much (?) bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct? Also including the potential from inside proteins should raise the total (right)?
+    * analyse potential breakdown (from CPU-only version)
+* Are any conversions required for the linker components?
+
+CLEANUP / BUGFIX
+* Why is the GL broken for some simulations?
+    * Try to silence that annoying compilation error
+* unit test for parsing various input files (amino acids, torsions, etc..)
 
 --------------------------------------------------------------------------------
 LATER / MAYBE

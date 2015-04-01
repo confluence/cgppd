@@ -7,7 +7,6 @@ using namespace std;
 #include "definitions.h"
 #include <helper_cuda.h>
 #include "constants.h"
-#include "AminoAcids.h"
 #include "cudaExterns.h"
 
 float * LJPotentialDataToDevice (AminoAcids *a);
