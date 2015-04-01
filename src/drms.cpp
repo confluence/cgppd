@@ -51,8 +51,6 @@ double DRMS(Replica* sim, Replica* exp, bool reverseOrder)
 		}
 		drms = min(drms,drms2/N);
 	}
-	//cout << "DRMS (angstrom): " << drms/Angstrom << endl;
-	//cout << "Quality of interfacial residue data [0:1]: " << experimental_contacts/native_contacts << endl;
-	//cout << "Binding contacts discovered: " << binding_contacts << endl;
+
 	return drms;
 }

@@ -550,29 +550,17 @@ Potential Replica::internal_molecule_E(bool include_LJ_and_DH) {
 void Replica::printTimers()
 {
 #if INCLUDE_TIMERS
-
-    cout << "Timer values (ms)" << endl;
-    cout << "Total(ms)   \tAverage(ms)  \t Action" << endl;
-
-    //printf("%12.6f\t%12.6f\t Replica to GPU (init & transfer)\n",   cutGetTimerValue(replicaToGPUTimer),            cutGetAverageTimerValue(replicaToGPUTimer));
-    //printf("%12.6f\t%12.6f\t Replica Update on GPU (transter)\n",   cutGetTimerValue(replicaUpdateGPUTimer),        cutGetAverageTimerValue(replicaUpdateGPUTimer));
-    //printf("%12.6f\t%12.6f\t Kernel Timer (computation)\n",         cutGetTimerValue(replicaECUDATimer),            cutGetAverageTimerValue(replicaECUDATimer));
-    //printf("%12.6f\t%12.6f\t Host Timer (computation)\n",           cutGetTimerValue(replicaEHostTimer),            cutGetAverageTimerValue(replicaEHostTimer));
-    //printf("%12.6f\t%12.6f\t Update Molecule on GPU (transfer)\n",  cutGetTimerValue(replicaMoleculeUpdateTimer),   cutGetAverageTimerValue(replicaMoleculeUpdateTimer));
-    //printf("%12.6f\t%12.6f\t GPU Memory Initialisation (malloc)\n", cutGetTimerValue(initGPUMemoryTimer),           cutGetAverageTimerValue(initGPUMemoryTimer));
-    //printf("Kernel Speedup:  %0.1fx\n", cutGetAverageTimerValue(replicaEHostTimer)/cutGetAverageTimerValue(replicaECUDATimer));
-    printf("%12.6f\t%12.6f\t Replica to GPU (init & transfer)\n",   sdkGetTimerValue(&replicaToGPUTimer),            sdkGetAverageTimerValue(&replicaToGPUTimer));
-    printf("%12.6f\t%12.6f\t Replica Update on GPU (transter)\n",   sdkGetTimerValue(&replicaUpdateGPUTimer),        sdkGetAverageTimerValue(&replicaUpdateGPUTimer));
-    printf("%12.6f\t%12.6f\t Kernel Timer (computation)\n",         sdkGetTimerValue(&replicaECUDATimer),            sdkGetAverageTimerValue(&replicaECUDATimer));
-    printf("%12.6f\t%12.6f\t Host Timer (computation)\n",           sdkGetTimerValue(&replicaEHostTimer),            sdkGetAverageTimerValue(&replicaEHostTimer));
-    printf("%12.6f\t%12.6f\t Update Molecule on GPU (transfer)\n",  sdkGetTimerValue(&replicaMoleculeUpdateTimer),   sdkGetAverageTimerValue(&replicaMoleculeUpdateTimer));
-    printf("%12.6f\t%12.6f\t GPU Memory Initialisation (malloc)\n", sdkGetTimerValue(&initGPUMemoryTimer),           sdkGetAverageTimerValue(&initGPUMemoryTimer));
-    printf("Kernel Speedup:  %0.1fx\n", sdkGetAverageTimerValue(&replicaEHostTimer)/sdkGetAverageTimerValue(&replicaECUDATimer));
-
+    LOG(INFO) << "Timer values (ms)";
+    LOG(INFO) << "Total(ms)   \tAverage(ms)  \t Action";
+    LOG(INFO) << sdkGetTimerValue(&replicaToGPUTimer) << sdkGetAverageTimerValue(&replicaToGPUTimer) << "Replica to GPU (init & transfer)";
+    LOG(INFO) << sdkGetTimerValue(&replicaUpdateGPUTimer) << sdkGetAverageTimerValue(&replicaUpdateGPUTimer) << "Replica Update on GPU (transter)";
+    LOG(INFO) << sdkGetTimerValue(&replicaECUDATimer) << sdkGetAverageTimerValue(&replicaECUDATimer) << "Kernel Timer (computation)";
+    LOG(INFO) << sdkGetTimerValue(&replicaEHostTimer) << sdkGetAverageTimerValue(&replicaEHostTimer) << "Host Timer (computation)";
+    LOG(INFO) << sdkGetTimerValue(&replicaMoleculeUpdateTimer) << sdkGetAverageTimerValue(&replicaMoleculeUpdateTimer) << "Update Molecule on GPU (transfer)";
+    LOG(INFO) << sdkGetTimerValue(&initGPUMemoryTimer) << sdkGetAverageTimerValue(&initGPUMemoryTimer) << "GPU Memory Initialisation (malloc)";
+    LOG(INFO) << "Kernel Speedup: " << sdkGetAverageTimerValue(&replicaEHostTimer)/sdkGetAverageTimerValue(&replicaECUDATimer);
 #else
-
-    cout << "Timers disabled: set INCLUDE_TIMERS 1 and USING_CUDA 1 in definitions.h" << endl;
-
+    LOG(INFO) << "Timers disabled: set INCLUDE_TIMERS 1 and USING_CUDA 1 in definitions.h";
 #endif
 }
 
@@ -599,7 +587,7 @@ void Replica::ReserveSumSpace()
 {
     if (!replicaIsOnDevice)
     {
-        cout << "! Error: replica not on device implies paddedSize==0; cannot perform Replica::ReserveSumSpace()" << endl;
+        LOG(ERROR) << "! Error: replica not on device implies paddedSize==0; cannot perform Replica::ReserveSumSpace()";
     }
     // result stored on the device
     // gridSize can be arbitrary
@@ -857,7 +845,7 @@ void Replica::MoleculeDataToDevice(int moleculeId)
 {
     if (!replicaIsOnDevice)
     {
-        cout << "ERROR: Replica::MoleculeDataToDevice("<< moleculeId << ") called without initialising device data."<< endl;
+        LOG(ERROR) << "ERROR: Replica::MoleculeDataToDevice("<< moleculeId << ") called without initialising device data.";
         ReplicaDataToDevice();
     }
 #if INCLUDE_TIMERS
@@ -921,7 +909,7 @@ void Replica::EonDeviceAsync() // TODO: need to add flexible potential to this, 
     cudaMemcpyAsync(kernelResult,device_kernelResult,resultSize*resultSize*sizeof(float),cudaMemcpyDeviceToHost,cudaStream);
 
 #else
-    cout << " ! Replica::EonDeviceAsync() can only be run using streams" << endl;
+    LOG(ERROR) << "Replica::EonDeviceAsync() can only be run using streams.";
 #endif
 #if INCLUDE_TIMERS
     //CUT_SAFE_CALL( cutStopTimer(replicaECUDATimer) );

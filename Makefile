@@ -83,13 +83,13 @@ OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
 ################################################################################
 
 ifneq ($(TEST),yes)
-cgppd: obj/main.o ${OBJFILES} inc/easylogging++.h
+cgppd: obj/main.o ${OBJFILES}
 else
 cgppd: obj/main.o ${OBJFILES} test
 endif
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
 
-test: ${OBJFILES} ${TEST_SOURCES} inc/catch.hpp
+test: ${OBJFILES} ${TEST_SOURCES}
 	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} ${LIBS} -DHGVERSION="\"${HGVERSION}\"" -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
 
 obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
@@ -110,18 +110,6 @@ obj/main.o: src/main.cpp
 obj/%.o: src/%.cpp src/%.d src/%.h
 	@mkdir -p $(dir $@)
 	$(COMPILER) $(CFLAGS) ${INCLUDE} ${DEFINE} -DHGVERSION="\"${HGVERSION}\"" -o $@ -c $<
-
-inc/easylogging++.h:
-	@wget https://github.com/easylogging/easyloggingpp/releases/download/v9.80/easyloggingpp_v9.80.tar.gz
-	@tar -xzf inc/easyloggingpp_v9.80.tar.gz
-	@rm easyloggingpp_v9.80.tar.gz
-	@chmod -x "easylogging++.h"
-	@mv "easylogging++.h" $@
-	# I know this is horrifying, but there's a macro name clash with catch.hpp
-	@sed -ri 's/\bCHECK\b/ELPP_CHECK/g' $@
-
-inc/catch.hpp:
-	@wget -O $@ https://raw.githubusercontent.com/philsquared/Catch/develop/single_include/catch.hpp
 
 clean:
 	@rm -rf obj cgppd test

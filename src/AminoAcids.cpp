@@ -31,7 +31,7 @@ bool AminoAcids::loadAminoAcidData(const char* filename)
     ifstream input(filename);
     if (!input.good())
     {
-        cout << "-!- Failed to open file: " << filename << "\n";
+        //LOG(ERROR) << "Failed to open amino acid data file " << filename;
         exit(0);
         return false;
     }
@@ -65,7 +65,6 @@ bool AminoAcids::loadAminoAcidData(const char* filename)
             input.getline(buffer,63);
             sscanf(buffer,"%f",&data[i].electrostaticCharge);
             data[i].index = i;
-            //cout << data[i].name << " " << data[i].sname << " " << data[i].vanderWaalRadius << " " << data[i].electrostaticCharge << endl;
             i++;
         }
         input.getline(line,255);
@@ -81,7 +80,7 @@ bool AminoAcids::loadLJPotentialData(const char* filename)
     ifstream input(filename);
     if (!input.good())
     {
-        cout << "-!- Failed to open file: " << filename << "\n";
+        //LOG(ERROR) << "Failed to open LJ potential data file " << filename;
         exit(0);
         return false;
     }
@@ -106,7 +105,6 @@ bool AminoAcids::loadLJPotentialData(const char* filename)
         // if its not a blank line (=0) or a line beginiing with #
         if (strcmp(line,"")!=0 && strncmp(line,"#",1)!=0)
         {
-            //cout << "line:" << line << endl;
             if (labelline)
             {
                 char *label = strtok (line," ");

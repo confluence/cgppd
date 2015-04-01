@@ -116,14 +116,24 @@ TEST_CASE("Simulation", "[simulation]") {
         // run the simulation
         
         s.run();
+
+        // CPU and GPU results will diverge because the CPU potential is a double and the GPU potential is a float.
+        // Also, addition of components is done in a different order.
+        // But sync and async GPU results are calculated identically and should not differ.
+
+#if USING_CUDA
+        const char * architecture = "GPU";
+#else
+        const char * architecture = "CPU";
+#endif
         
         memset(command, 0, 256);
-        sprintf(command, "if [ ! -d tests/remctest ]; then tar --directory tests -xzf tests/remctest.tgz; fi");
+        sprintf(command, "if [ ! -d tests/remctest_%s ]; then tar --directory tests -xzf tests/remctest_%s.tgz; fi", architecture, architecture);
 
         REQUIRE(system(command) == 0);
 
         memset(command, 0, 256);
-        sprintf(command, "diff -r --exclude log tests/remctest output/remctest_0");
+        sprintf(command, "diff -r --exclude log tests/remctest_%s output/remctest_0", architecture);
 
         REQUIRE(system(command) == 0);
 

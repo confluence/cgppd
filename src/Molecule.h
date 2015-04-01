@@ -1,15 +1,15 @@
 #ifndef MOLECULE_H_
 #define MOLECULE_H_
 
+#define ELPP_NO_DEFAULT_LOG_FILE 1
+#include "easylogging++.h"
+
 #include <fstream>
 #include <cstring>
 #include <vector>
 #include <gsl/gsl_qrng.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
-
-#define ELPP_NO_DEFAULT_LOG_FILE 1
-#include "easylogging++.h"
 
 #include "definitions.h"
 #include "AminoAcids.h"
