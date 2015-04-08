@@ -3,7 +3,8 @@ NOW
 --------------------------------------------------------------------------------
 
 FIXES
-    * implement the shift instead of the current crappy fraction encoding
+    * optimise GPU pair check for polyalanine -- reduce whole thing to residue difference.
+    * implement the shift instead of the current crappy fraction encoding -- DONE; test properly
     * decrease local translate step size? Ask Rob.
 
 BUG FIXES AND REFACTORING

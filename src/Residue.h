@@ -35,7 +35,7 @@ public:
     float pos_w; // domain.bond
     float meta_w; // residue.chain
     
-    void pack_GPU_floats();
+    void pack_GPU_floats(int num_segment_bonds, int num_chains);
 #endif
 
     double distance(const Vector3f p, const float bounding_value=0.0f);
