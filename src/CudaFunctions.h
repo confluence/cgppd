@@ -12,16 +12,16 @@ using namespace std;
 float * LJPotentialDataToDevice (AminoAcids *a);
 void copyLJPotentialDataToDevice (float * dev_LJPotentialData, AminoAcids *a);
 
-void MCSearchOnDevice();
+//void MCSearchOnDevice();
 
-// rotations and translations on gpu memory
-void CUDA_rotateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_rotationVector, float4* d_center, cudaStream_t stream);
-void CUDA_translateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_translation, float4* d_center, cudaStream_t stream);
+//// rotations and translations on gpu memory
+//void CUDA_rotateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_rotationVector, float4* d_center, cudaStream_t stream);
+//void CUDA_translateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_translation, float4* d_center, cudaStream_t stream);
 
 
 void CUDA_EonDevice(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, double* result, int blockSize, int datasetSize, int sharedMemSize);
 void CUDA_EonDeviceNC(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, double* result, int blockSize, int datasetSize, int sharedMemSize);
-void CUDA_EonDeviceTest(float *d_x, float *d_y, float *d_z, int *d_id, float4 *residueMeta, float* LJPotentials, double* result, int blockSize, int datasetSize);
+//void CUDA_EonDeviceTest(float *d_x, float *d_y, float *d_z, int *d_id, float4 *residueMeta, float* LJPotentials, double* result, int blockSize, int datasetSize);
 
 void CUDA_setBoxDimension(float value);
 void CUDA_freeBoxDimension();
@@ -91,20 +91,20 @@ texture<float4, 1, cudaReadModeElementType> residuePositionTex;
 
 
 __global__ void parallelSum_kernel(float * values);
-__global__ void E_SimpleKernel(float4 * residuePositions, float4 * residueMeta, int * residueCount, int * moleculePositions, int * moleculeCount, float* LJPotentialData, float* result);
+//__global__ void E_SimpleKernel(float4 * residuePositions, float4 * residueMeta, int * residueCount, int * moleculePositions, int * moleculeCount, float* LJPotentialData, float* result);
 __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, int * residueCount, int * moleculePositions, int * moleculeCount, float* LJPotentialData, float* result);
 __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta, int * residueCount, int * moleculePositions, int * moleculeCount, float* LJPotentialData, float* result);
-__global__ void E_TestTiledKernel(float *x, float *y, float *z, int *id , float4 * residueMeta, float* LJPotentialData, float* result);
-__global__ void rotateMolecule_kernel (float4 *residuePositions, int *startPosition, int *length, float4* rotationVector, float4* center);
-__global__ void translateMolecule_kernel (float4 *residuePositions, int *startPosition, int *length, float4* translationVector, float4* center);
+//__global__ void E_TestTiledKernel(float *x, float *y, float *z, int *id , float4 * residueMeta, float* LJPotentialData, float* result);
+//__global__ void rotateMolecule_kernel (float4 *residuePositions, int *startPosition, int *length, float4* rotationVector, float4* center);
+//__global__ void translateMolecule_kernel (float4 *residuePositions, int *startPosition, int *length, float4* translationVector, float4* center);
 
 // the following only works for texture based lj lookups and shared memory caches
 
 
-void CUDA_setMoleculeBlength(int length);
+//void CUDA_setMoleculeBlength(int length);
 
-__constant__ int const_lenght_of_b;
-__global__ void E_MoleculeKernel(float4 * residuePositionsA, float4 * residueMetaA, float4 * residuePositionsB, float4 * residueMetaB, float* LJPotentialData, float* result);
+//__constant__ int const_lenght_of_b;
+//__global__ void E_MoleculeKernel(float4 * residuePositionsA, float4 * residueMetaA, float4 * residuePositionsB, float4 * residueMetaB, float* LJPotentialData, float* result);
 
 
 

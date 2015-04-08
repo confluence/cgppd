@@ -996,64 +996,64 @@ void Replica::FreeDevice()
 #endif
 }
 
-#if CUDA_MC
-// rotate the molecule on device about a vector and amount
-bool Replica::rotateOnDevice(int moleculeId, Vector3f rvector, float amount)
-{
-    //device_rotationVector;  // vector(x,y,z)|amount(w)
+//#if CUDA_MC
+//// rotate the molecule on device about a vector and amount
+//bool Replica::rotateOnDevice(int moleculeId, Vector3f rvector, float amount)
+//{
+    ////device_rotationVector;  // vector(x,y,z)|amount(w)
 
-    host_rotationVector->x = rvector.x;
-    host_rotationVector->y = rvector.y;
-    host_rotationVector->z = rvector.z;
-    host_rotationVector->w = amount;
-    CUDA_memcpy_to_device_async(device_rotationVector,&host_rotationVector,sizeof(float4),cudaStream);
+    //host_rotationVector->x = rvector.x;
+    //host_rotationVector->y = rvector.y;
+    //host_rotationVector->z = rvector.z;
+    //host_rotationVector->w = amount;
+    //CUDA_memcpy_to_device_async(device_rotationVector,&host_rotationVector,sizeof(float4),cudaStream);
 
-    CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeId], &device_moleculeLengths[moleculeId], molecules[moleculeId].length, device_rotationVector, &device_moleculeCenters[moleculeId], cudaStream);
+    //CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeId], &device_moleculeLengths[moleculeId], molecules[moleculeId].length, device_rotationVector, &device_moleculeCenters[moleculeId], cudaStream);
 
-    // create the undo vector while its busy
-    host_reverseRotationVector->x = rvector.x;
-    host_reverseRotationVector->y = rvector.y;
-    host_reverseRotationVector->z = rvector.z;
-    host_reverseRotationVector->w = -amount;
-    CUDA_memcpy_to_device_async(device_reverseTranslationVector,&host_reverseTranslationVector,sizeof(float4),cudaStream);
+    //// create the undo vector while its busy
+    //host_reverseRotationVector->x = rvector.x;
+    //host_reverseRotationVector->y = rvector.y;
+    //host_reverseRotationVector->z = rvector.z;
+    //host_reverseRotationVector->w = -amount;
+    //CUDA_memcpy_to_device_async(device_reverseTranslationVector,&host_reverseTranslationVector,sizeof(float4),cudaStream);
 
 
-    return true;
-}
+    //return true;
+//}
 
-bool Replica::translateOnDevice(int moleculeId, Vector3f translation)
-{
-    // send the vector to the device
-    host_translationVector->x = translation.x;
-    host_translationVector->y = translation.y;
-    host_translationVector->z = translation.z;
-    CUDA_memcpy_to_device_async(device_translationVector,&host_translationVector,sizeof(float4),cudaStream);
+//bool Replica::translateOnDevice(int moleculeId, Vector3f translation)
+//{
+    //// send the vector to the device
+    //host_translationVector->x = translation.x;
+    //host_translationVector->y = translation.y;
+    //host_translationVector->z = translation.z;
+    //CUDA_memcpy_to_device_async(device_translationVector,&host_translationVector,sizeof(float4),cudaStream);
 
-//  CUDA_translateMolecule (float4 *residuePositions, int *startPosition, int *moleculeLength, int moleculeLength, int *moleculeId, float4* translation, cudaStream_t stream)
+////  CUDA_translateMolecule (float4 *residuePositions, int *startPosition, int *moleculeLength, int moleculeLength, int *moleculeId, float4* translation, cudaStream_t stream)
 
-    CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeId], &device_moleculeLengths[moleculeId], molecules[moleculeId].length, device_translationVector, &device_moleculeCenters[moleculeId], cudaStream);
+    //CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[moleculeId], &device_moleculeLengths[moleculeId], molecules[moleculeId].length, device_translationVector, &device_moleculeCenters[moleculeId], cudaStream);
 
-    // create the undo vector while its busy
-    host_reverseTranslationVector->x = -translation.x;
-    host_reverseTranslationVector->y = -translation.y;
-    host_reverseTranslationVector->z = -translation.z;
-    CUDA_memcpy_to_device_async(device_reverseTranslationVector,&host_reverseTranslationVector,sizeof(float4),cudaStream);
+    //// create the undo vector while its busy
+    //host_reverseTranslationVector->x = -translation.x;
+    //host_reverseTranslationVector->y = -translation.y;
+    //host_reverseTranslationVector->z = -translation.z;
+    //CUDA_memcpy_to_device_async(device_reverseTranslationVector,&host_reverseTranslationVector,sizeof(float4),cudaStream);
 
-    return true;
-}
+    //return true;
+//}
 
-void Replica::cudaRollbackMutation()
-{
-    if (lastMutationWasATranslate)
-    {
-        CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[lastMutatedMolecule], &device_moleculeLengths[lastMutatedMolecule], molecules[lastMutatedMolecule].length, device_reverseTranslationVector,&device_moleculeCenters[lastMutatedMolecule], cudaStream);
-    }
-    else
-    {
-        CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[lastMutatedMolecule], &device_moleculeLengths[lastMutatedMolecule], molecules[lastMutatedMolecule].length, device_reverseRotationVector,&device_moleculeCenters[lastMutatedMolecule], cudaStream);
-    }
-}
-#endif // CUDA MC
+//void Replica::cudaRollbackMutation()
+//{
+    //if (lastMutationWasATranslate)
+    //{
+        //CUDA_translateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[lastMutatedMolecule], &device_moleculeLengths[lastMutatedMolecule], molecules[lastMutatedMolecule].length, device_reverseTranslationVector,&device_moleculeCenters[lastMutatedMolecule], cudaStream);
+    //}
+    //else
+    //{
+        //CUDA_rotateMolecule(device_float4_residuePositions, &device_moleculeStartPositions[lastMutatedMolecule], &device_moleculeLengths[lastMutatedMolecule], molecules[lastMutatedMolecule].length, device_reverseRotationVector,&device_moleculeCenters[lastMutatedMolecule], cudaStream);
+    //}
+//}
+//#endif // CUDA MC
 #endif  // CUDA
 
 // this code is a bit special...
@@ -1067,6 +1067,7 @@ void Replica::sample(SimulationData * data, int current_step, float boundEnergyT
     {
 #if USING_CUDA
         nonCrowderPotential = EonDeviceNC(); // do on GPU, no stream support, can be implemented in 3mins if stream samlping is fixed.
+        // TODO: arrrgh, what does this *mean*?
 #else
         // if there are crowders and molecules of interest the only use the energy of the interesting ones
         // TODO: make absolutely sure all the NC molecules are at the front of the list

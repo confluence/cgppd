@@ -152,10 +152,10 @@ void CUDA_freeBoxDimension()
 
 
 
-void MCSearchOnDevice()
-{
-    printf("MCSearchOnDevice() does nothing\n");
-};
+//void MCSearchOnDevice()
+//{
+    //printf("MCSearchOnDevice() does nothing\n");
+//};
 
 // stream kernel for overlapping calls
 void CUDA_EonDevice_async(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, float* kernelResult, int resultSize, int blockSize, int datasetSize, int sm_size, cudaStream_t stream)
@@ -261,47 +261,47 @@ void CUDA_EonDevice(float4 *residuePositions, float4 *residueMeta, int * residue
     return;
 };
 
-void CUDA_EonDeviceTest(float *d_x, float *d_y,float *d_z, int *d_id, float4 *residueMeta, float* LJPotentials, float* result, int blockSize, int datasetSize)
-{
+//void CUDA_EonDeviceTest(float *d_x, float *d_y,float *d_z, int *d_id, float4 *residueMeta, float* LJPotentials, float* result, int blockSize, int datasetSize)
+//{
 
-    // result stored on the device
-    // gridSize can be arbitrary
-    int gridSize(datasetSize/blockSize);
-    float *tmpSums = new float[gridSize*gridSize];
+    //// result stored on the device
+    //// gridSize can be arbitrary
+    //int gridSize(datasetSize/blockSize);
+    //float *tmpSums = new float[gridSize*gridSize];
 
-    //for a parallel sum each grid must have one cell in the array of results from all the threads
-    float *d_result;
-    cudaMalloc((void **)&d_result,sizeof(float)*gridSize*gridSize);
-    cudaMemset(d_result,0,sizeof(float)*gridSize*gridSize);
+    ////for a parallel sum each grid must have one cell in the array of results from all the threads
+    //float *d_result;
+    //cudaMalloc((void **)&d_result,sizeof(float)*gridSize*gridSize);
+    //cudaMemset(d_result,0,sizeof(float)*gridSize*gridSize);
 
-    //float4 testmem;
-    //cudaMemcpy(&testmem,residuePositions, sizeof(float4), cudaMemcpyDeviceToHost);
+    ////float4 testmem;
+    ////cudaMemcpy(&testmem,residuePositions, sizeof(float4), cudaMemcpyDeviceToHost);
 
 
-    // Launch the device computation
-    // result must become an array of dimensions the same as grid so that the multiple thread blocks can sum in it properly
+    //// Launch the device computation
+    //// result must become an array of dimensions the same as grid so that the multiple thread blocks can sum in it properly
 
-    dim3 dimBlock(blockSize,1,1);   		// threads
-    dim3 dimGrid(gridSize,gridSize,1);    	// blocks
+    //dim3 dimBlock(blockSize,1,1);   		// threads
+    //dim3 dimGrid(gridSize,gridSize,1);    	// blocks
 
-    printf ("+++++++++++++++++++ NO KERNEL EXECUTED +++++++++++++++++++++++++++++");
-    //E_TestTiledKernel<<< dimGrid,dimBlock >>>(d_x,d_y,d_z,d_id, residueMeta, LJPotentials, d_result);
+    //printf ("+++++++++++++++++++ NO KERNEL EXECUTED +++++++++++++++++++++++++++++");
+    ////E_TestTiledKernel<<< dimGrid,dimBlock >>>(d_x,d_y,d_z,d_id, residueMeta, LJPotentials, d_result);
 
-    cudaMemcpy(tmpSums,d_result, sizeof(float)*gridSize*gridSize, cudaMemcpyDeviceToHost);
-    result[0] = 0.0f;
-    for (int i=0; i<gridSize*gridSize; i++)
-    {
-        result[0] += tmpSums[i];
-    }
-    delete [] tmpSums;
+    //cudaMemcpy(tmpSums,d_result, sizeof(float)*gridSize*gridSize, cudaMemcpyDeviceToHost);
+    //result[0] = 0.0f;
+    //for (int i=0; i<gridSize*gridSize; i++)
+    //{
+        //result[0] += tmpSums[i];
+    //}
+    //delete [] tmpSums;
 
-    // free the memory assigned for this iteration.
-    cudaFree(d_result);
-    // check if kernel invocation generated an error
-    getLastCudaError("Kernel execution failed");
+    //// free the memory assigned for this iteration.
+    //cudaFree(d_result);
+    //// check if kernel invocation generated an error
+    //getLastCudaError("Kernel execution failed");
 
-    return;
-};
+    //return;
+//};
 
 __device__ float length(const float4 a, const float4 b)
 {
@@ -451,7 +451,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
 #elif ASSUME_POLYMER_FOLDING_TEST
             // More efficient handling of this special case.  Assume we are folding a single polymer.
             // There's only one chain; we calculate all pairs except close neighbours on the backbone.
-            if (fabs(meta.w - yresiduem.w) < 4))
+            if (fabs(meta.w - yresiduem.w) < 4)
 #else
              // same molecule or padder
             if (yresiduep.w == pos.w || pos.w == PADDER_IDENTIFIER)
@@ -589,118 +589,118 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
 };
 
 
-void CUDA_setMoleculeBlength(int length)
-{
-    cudaMemcpyToSymbol(const_lenght_of_b, &length, sizeof(length));
-    getLastCudaError ("CUDA_setMoleculeBlength: Set b size");
-}
+//void CUDA_setMoleculeBlength(int length)
+//{
+    //cudaMemcpyToSymbol(const_lenght_of_b, &length, sizeof(length));
+    //getLastCudaError ("CUDA_setMoleculeBlength: Set b size");
+//}
 
-// kernel to evaluate the potential between two molecules.
-// assigns a tread to each residue in molecule A, and iterates through molecule B
-// TODO: check it works
-__global__ void E_MoleculeKernel(float4 * residuePositionsA, float4 * residueMetaA, float4 * residuePositionsB, float4 * residueMetaB, float* LJPotentialData, float* result )
-{
-    extern __shared__ float sharedmem_results[];	// array of temp results to sum, one per thread run.
+//// kernel to evaluate the potential between two molecules.
+//// assigns a tread to each residue in molecule A, and iterates through molecule B
+//// TODO: check it works
+//__global__ void E_MoleculeKernel(float4 * residuePositionsA, float4 * residueMetaA, float4 * residuePositionsB, float4 * residueMetaB, float* LJPotentialData, float* result )
+//{
+    //extern __shared__ float sharedmem_results[];	// array of temp results to sum, one per thread run.
 
-    const int positionOfPosition = blockDim.x/4;
-    const int positionOfMeta = __mul24(5,blockDim.x)/4;
-    extern __shared__ float4 B_Positions[];
-    extern __shared__ float4 B_Meta[];
+    //const int positionOfPosition = blockDim.x/4;
+    //const int positionOfMeta = __mul24(5,blockDim.x)/4;
+    //extern __shared__ float4 B_Positions[];
+    //extern __shared__ float4 B_Meta[];
 
-    sharedmem_results[tx] = 0.0f;
+    //sharedmem_results[tx] = 0.0f;
 
-    float4 A_pos = residuePositionsA[bx*blockDim.x+tx];
-    float4 A_meta = residueMetaA[bx*blockDim.x+tx];
+    //float4 A_pos = residuePositionsA[bx*blockDim.x+tx];
+    //float4 A_meta = residueMetaA[bx*blockDim.x+tx];
 
-    // copy residues from GRAM to shared memory tiles
+    //// copy residues from GRAM to shared memory tiles
 
-    for( int tile(0); tile < const_lenght_of_b/blockDim.x; tile++)
-    {
-        B_Positions[positionOfPosition + tx] = residuePositionsB[tile*blockDim.x+tx];
-        B_Meta[positionOfMeta + tx] 		 = residueMetaB[tile*blockDim.x+tx];
+    //for( int tile(0); tile < const_lenght_of_b/blockDim.x; tile++)
+    //{
+        //B_Positions[positionOfPosition + tx] = residuePositionsB[tile*blockDim.x+tx];
+        //B_Meta[positionOfMeta + tx] 		 = residueMetaB[tile*blockDim.x+tx];
 
-        __syncthreads();  // very important so that the entire shared mem array is assigned before any threads use it
+        //__syncthreads();  // very important so that the entire shared mem array is assigned before any threads use it
 
-        if (A_pos.w > PADDER_IDENTIFIER && B_Positions[positionOfPosition + tx].w > PADDER_IDENTIFIER) // the residue in question is not a padding element
-        {
-            float lj_subtotal(0.0f);
-            float dh_subtotal(0.0f);
+        //if (A_pos.w > PADDER_IDENTIFIER && B_Positions[positionOfPosition + tx].w > PADDER_IDENTIFIER) // the residue in question is not a padding element
+        //{
+            //float lj_subtotal(0.0f);
+            //float dh_subtotal(0.0f);
 
-            for (int i = 0; i < blockDim.x; ++i)
-            {
-                int ijX(rint( AA_COUNT*A_meta.x + B_Meta[positionOfMeta + i].x));
-                float r(length(A_pos,B_Positions[positionOfPosition + i]) + EPS);  // add eps so that r is never 0, can happen in a collision
-                // get contacts for short range, do long while it loads
-                float Eij(LJ_lambda*(tex1Dfetch(LJTexture,ijX) - e0));
-                // do long range
-                float DH(dhPotential(A_meta.y,B_Meta[positionOfMeta + i].y,r));
-                dh_subtotal += DH;
-                //continue doing short range
-                float sigmaij((A_meta.z + B_Meta[positionOfMeta + i].z) * 0.5f);
-                float LJtmp(__powf(sigmaij/r,6.0f));
-                float LJ (-4.0f*Eij*LJtmp*(LJtmp-1.0f));
-                if (Eij>0.0f && r < (sigmaij*r0_constant))
-                    LJ = -LJ + 2.0f*Eij;
-                lj_subtotal += LJ;
+            //for (int i = 0; i < blockDim.x; ++i)
+            //{
+                //int ijX(rint( AA_COUNT*A_meta.x + B_Meta[positionOfMeta + i].x));
+                //float r(length(A_pos,B_Positions[positionOfPosition + i]) + EPS);  // add eps so that r is never 0, can happen in a collision
+                //// get contacts for short range, do long while it loads
+                //float Eij(LJ_lambda*(tex1Dfetch(LJTexture,ijX) - e0));
+                //// do long range
+                //float DH(dhPotential(A_meta.y,B_Meta[positionOfMeta + i].y,r));
+                //dh_subtotal += DH;
+                ////continue doing short range
+                //float sigmaij((A_meta.z + B_Meta[positionOfMeta + i].z) * 0.5f);
+                //float LJtmp(__powf(sigmaij/r,6.0f));
+                //float LJ (-4.0f*Eij*LJtmp*(LJtmp-1.0f));
+                //if (Eij>0.0f && r < (sigmaij*r0_constant))
+                    //LJ = -LJ + 2.0f*Eij;
+                //lj_subtotal += LJ;
 
-            } // for i = 0..Bdx
-            sharedmem_results[tx] = (lj_subtotal * RT_to_kcalmol) + (dh_subtotal * DH_CONVERSION_FACTOR);
-        } // if !padding
+            //} // for i = 0..Bdx
+            //sharedmem_results[tx] = (lj_subtotal * RT_to_kcalmol) + (dh_subtotal * DH_CONVERSION_FACTOR);
+        //} // if !padding
 
-        __syncthreads();  // make sure all threads are done before moving to the enxt tile
-    }
-    // do reduction, see SDK reduction example
-    // FULLY unrolled reduction
+        //__syncthreads();  // make sure all threads are done before moving to the enxt tile
+    //}
+    //// do reduction, see SDK reduction example
+    //// FULLY unrolled reduction
 
-    // do reduction in shared mem
-    if (blockDim.x >= 512) {
-        if (tx < 256) {
-            sharedmem_results[tx] += sharedmem_results[tx + 256];
-        }
-        __syncthreads();
-    }
-    if (blockDim.x >= 256) {
-        if (tx < 128) {
-            sharedmem_results[tx] += sharedmem_results[tx + 128];
-        }
-        __syncthreads();
-    }
-    if (blockDim.x >= 128) {
-        if (tx <  64) {
-            sharedmem_results[tx] += sharedmem_results[tx + 64];
-        }
-        __syncthreads();
-    }
+    //// do reduction in shared mem
+    //if (blockDim.x >= 512) {
+        //if (tx < 256) {
+            //sharedmem_results[tx] += sharedmem_results[tx + 256];
+        //}
+        //__syncthreads();
+    //}
+    //if (blockDim.x >= 256) {
+        //if (tx < 128) {
+            //sharedmem_results[tx] += sharedmem_results[tx + 128];
+        //}
+        //__syncthreads();
+    //}
+    //if (blockDim.x >= 128) {
+        //if (tx <  64) {
+            //sharedmem_results[tx] += sharedmem_results[tx + 64];
+        //}
+        //__syncthreads();
+    //}
 
-    if (tx < 32)
-    {
-        if (blockDim.x >=  64) {
-            sharedmem_results[tx] += sharedmem_results[tx + 32];
-        }
-        if (blockDim.x >=  32) {
-            sharedmem_results[tx] += sharedmem_results[tx + 16];
-        }
-        if (blockDim.x >=  16) {
-            sharedmem_results[tx] += sharedmem_results[tx +  8];
-        }
-        if (blockDim.x >=   8) {
-            sharedmem_results[tx] += sharedmem_results[tx +  4];
-        }
-        if (blockDim.x >=   4) {
-            sharedmem_results[tx] += sharedmem_results[tx +  2];
-        }
-        if (blockDim.x >=   2) {
-            sharedmem_results[tx] += sharedmem_results[tx +  1];
-        }
-    }
+    //if (tx < 32)
+    //{
+        //if (blockDim.x >=  64) {
+            //sharedmem_results[tx] += sharedmem_results[tx + 32];
+        //}
+        //if (blockDim.x >=  32) {
+            //sharedmem_results[tx] += sharedmem_results[tx + 16];
+        //}
+        //if (blockDim.x >=  16) {
+            //sharedmem_results[tx] += sharedmem_results[tx +  8];
+        //}
+        //if (blockDim.x >=   8) {
+            //sharedmem_results[tx] += sharedmem_results[tx +  4];
+        //}
+        //if (blockDim.x >=   4) {
+            //sharedmem_results[tx] += sharedmem_results[tx +  2];
+        //}
+        //if (blockDim.x >=   2) {
+            //sharedmem_results[tx] += sharedmem_results[tx +  1];
+        //}
+    //}
 
-    // write results of the calculation back to global memory, only thread 0 has the correct answer
-    // only one warp processes < 32, therefore no syncthreads required here
-    if (tx == 0)
-        result[bx*gridDim.x+by] = sharedmem_results[tx];
+    //// write results of the calculation back to global memory, only thread 0 has the correct answer
+    //// only one warp processes < 32, therefore no syncthreads required here
+    //if (tx == 0)
+        //result[bx*gridDim.x+by] = sharedmem_results[tx];
 
-    return;
-};
+    //return;
+//};
 
 
 void CUDA_EonDeviceNC(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, double* result, int blockSize, int datasetSize, int sm_size)
@@ -808,7 +808,7 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
             float4 meta = X_tile_residueMeta[positionOfMeta + i];
 #endif
             
-#if FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS && !ASSUME_POLYMER_FOLDING_TEST
             // padder or crowder or same rigid domain or same bond or residues close on the backbone
             // currently ignoring case where residues are close because of a bond; subtracting this component on the CPU instead
             
@@ -827,6 +827,10 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
             float ychain = modff(yresiduem.w, &yresid);
                         
             if (pos.w == PADDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER || (xdomain && xdomain == ydomain) || (xbond && xbond == ybond) || (xchain == ychain && fabs(xresid - yresid) < 4))
+#elif ASSUME_POLYMER_FOLDING_TEST
+            // More efficient handling of this special case.  Assume we are folding a single polymer.
+            // There's only one chain; we calculate all pairs except close neighbours on the backbone.
+            if (fabs(meta.w - yresiduem.w) < 4)
 #else
              // same molecule or padder or crowder
             if (yresiduep.w == pos.w || pos.w == PADDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER)
@@ -844,7 +848,7 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
 
                 float LJ(0.0f);
                 float DH(0.0f);
-
+#if !LJ_OFF
                 int ijX(rint( AA_COUNT*yresiduem.x + meta.x));
 
                 //do the texture fetch first
@@ -856,11 +860,11 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
                 float Eij(LJ_lambda*(const_LJPotentialData[ijX] - e0));
 #else  // __global__ or __constant__
                 float Eij(LJ_lambda*(LJPotentialData[ijX] - e0));
-#endif
+#endif // LJ_LOOKUP_METHOD
+#endif // !LJ_OFF
                 DH = dhPotential(yresiduem.y,meta.y,r);
-
                 dh_subtotal += DH;
-
+#if !LJ_OFF
                 // sigmaij is the average atomic radius determined by the van der waals radius in kim2008
                 float sigmaij((yresiduem.z + meta.z) * 0.5f);
 
@@ -873,8 +877,8 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
                 }
 
                 lj_subtotal += LJ;
-
-            } // if !(X_tile_residuePositions.w == Y_tile_residuePositions.w || X_tile_residuePositions.w < CROWDER_IDENTIFIER )
+#endif // !LJ_OFF
+            } // if pair not excluded
         } // for i = 0..Bdx
         sharedmem_results[tx] = (lj_subtotal * RT_to_kcalmol) + (dh_subtotal * DH_CONVERSION_FACTOR);
 
@@ -999,71 +1003,71 @@ __global__ void parallelSum_kernel(float * values)
     }
 };
 
-__global__ void rotateMolecule_kernel (float4 *residuePositions, int *startPosition, int *length, float4* rotationVector, float4 *center)
-{
-    // cache frequently used variables
-    __shared__ float4 centerV;
-    __shared__ float4 q;
+//__global__ void rotateMolecule_kernel (float4 *residuePositions, int *startPosition, int *length, float4* rotationVector, float4 *center)
+//{
+    //// cache frequently used variables
+    //__shared__ float4 centerV;
+    //__shared__ float4 q;
 
-    centerV.x = center->x;
-    centerV.y = center->y;
-    centerV.z = center->z;
+    //centerV.x = center->x;
+    //centerV.y = center->y;
+    //centerV.z = center->z;
 
-    // create rotation quaternion
-    q.w = cos(rotationVector->w*0.5f);
-    q.x = rotationVector->x*sin(rotationVector->w*0.5f);
-    q.y = rotationVector->y*sin(rotationVector->w*0.5f);
-    q.z = rotationVector->z*sin(rotationVector->w*0.5f);
+    //// create rotation quaternion
+    //q.w = cos(rotationVector->w*0.5f);
+    //q.x = rotationVector->x*sin(rotationVector->w*0.5f);
+    //q.y = rotationVector->y*sin(rotationVector->w*0.5f);
+    //q.z = rotationVector->z*sin(rotationVector->w*0.5f);
 
-    __syncthreads();
+    //__syncthreads();
 
-    // made it a unit quaternion
-    float rq_len = rsqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+    //// made it a unit quaternion
+    //float rq_len = rsqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
 
-    __syncthreads();
+    //__syncthreads();
 
-    q.w = q.w*rq_len;
-    q.x = q.x*rq_len;
-    q.y = q.y*rq_len;
-    q.z = q.z*rq_len;
+    //q.w = q.w*rq_len;
+    //q.x = q.x*rq_len;
+    //q.y = q.y*rq_len;
+    //q.z = q.z*rq_len;
 
-    __syncthreads();
+    //__syncthreads();
 
-    //rotate the molecule using the quaternion made earlier
+    ////rotate the molecule using the quaternion made earlier
 
-#define vx (residuePositions[bx*blockDim.x+tx+startPosition[0]].x - centerV.x)
-#define vy (residuePositions[bx*blockDim.x+tx+startPosition[0]].y - centerV.y)
-#define vz (residuePositions[bx*blockDim.x+tx+startPosition[0]].z - centerV.z)
+//#define vx (residuePositions[bx*blockDim.x+tx+startPosition[0]].x - centerV.x)
+//#define vy (residuePositions[bx*blockDim.x+tx+startPosition[0]].y - centerV.y)
+//#define vz (residuePositions[bx*blockDim.x+tx+startPosition[0]].z - centerV.z)
 
-    if (bx*blockDim.x+tx < length[0])  // not addressing out of bounds
-    {
-        residuePositions[bx*blockDim.x+startPosition[0]+tx].x = ( vx*(q.w*q.w+q.x*q.x-q.y*q.y-q.z*q.z) + vy*(q.x*q.y-q.w*q.z)*2.0f  		+ vz*(q.w*q.y+q.x*q.z)*2.0f )        	 + centerV.x;
-        residuePositions[bx*blockDim.x+startPosition[0]+tx].y = ( vx*(q.w*q.z+q.x*q.y)*2.0f   		 + vy*(q.w*q.w-q.x*q.x+q.y*q.y-q.z*q.z) + vz*(q.y*q.z-q.w*q.x)*2.0f ) 		     + centerV.y;
-        residuePositions[bx*blockDim.x+startPosition[0]+tx].z = ( vx*(q.x*q.z-q.w*q.y)*2.0f   		 + vy*(q.y*q.z+q.w*q.x)*2.0f   		    + vz*(q.w*q.w-q.x*q.x-q.y*q.y+q.z*q.z) ) + centerV.z;
-    }
+    //if (bx*blockDim.x+tx < length[0])  // not addressing out of bounds
+    //{
+        //residuePositions[bx*blockDim.x+startPosition[0]+tx].x = ( vx*(q.w*q.w+q.x*q.x-q.y*q.y-q.z*q.z) + vy*(q.x*q.y-q.w*q.z)*2.0f  		+ vz*(q.w*q.y+q.x*q.z)*2.0f )        	 + centerV.x;
+        //residuePositions[bx*blockDim.x+startPosition[0]+tx].y = ( vx*(q.w*q.z+q.x*q.y)*2.0f   		 + vy*(q.w*q.w-q.x*q.x+q.y*q.y-q.z*q.z) + vz*(q.y*q.z-q.w*q.x)*2.0f ) 		     + centerV.y;
+        //residuePositions[bx*blockDim.x+startPosition[0]+tx].z = ( vx*(q.x*q.z-q.w*q.y)*2.0f   		 + vy*(q.y*q.z+q.w*q.x)*2.0f   		    + vz*(q.w*q.w-q.x*q.x-q.y*q.y+q.z*q.z) ) + centerV.z;
+    //}
 
-};
+//};
 
-__global__ void translateMolecule_kernel (float4 *residuePositions, int *startPosition, int *length, float4* translationVector, float4 *center)
-{
-    if (bx*blockDim.x+tx < length[0])  // not addressing out of bounds
-    {
-        residuePositions[bx*blockDim.x+startPosition[0]+tx].x = (residuePositions[bx*blockDim.x+startPosition[0]+tx].x + translationVector->x);
-        residuePositions[bx*blockDim.x+startPosition[0]+tx].y = (residuePositions[bx*blockDim.x+startPosition[0]+tx].y + translationVector->y);
-        residuePositions[bx*blockDim.x+startPosition[0]+tx].z = (residuePositions[bx*blockDim.x+startPosition[0]+tx].z + translationVector->z);
-    }
+//__global__ void translateMolecule_kernel (float4 *residuePositions, int *startPosition, int *length, float4* translationVector, float4 *center)
+//{
+    //if (bx*blockDim.x+tx < length[0])  // not addressing out of bounds
+    //{
+        //residuePositions[bx*blockDim.x+startPosition[0]+tx].x = (residuePositions[bx*blockDim.x+startPosition[0]+tx].x + translationVector->x);
+        //residuePositions[bx*blockDim.x+startPosition[0]+tx].y = (residuePositions[bx*blockDim.x+startPosition[0]+tx].y + translationVector->y);
+        //residuePositions[bx*blockDim.x+startPosition[0]+tx].z = (residuePositions[bx*blockDim.x+startPosition[0]+tx].z + translationVector->z);
+    //}
 
-    float3 tmpCenter;
-    tmpCenter.x = center->x + translationVector->x;
-    tmpCenter.y = center->y + translationVector->y;
-    tmpCenter.z = center->z + translationVector->z;
+    //float3 tmpCenter;
+    //tmpCenter.x = center->x + translationVector->x;
+    //tmpCenter.y = center->y + translationVector->y;
+    //tmpCenter.z = center->z + translationVector->z;
 
-    __syncthreads();
+    //__syncthreads();
 
-    center->x = tmpCenter.x;
-    center->y = tmpCenter.y;
-    center->z = tmpCenter.z;
-};
+    //center->x = tmpCenter.x;
+    //center->y = tmpCenter.y;
+    //center->z = tmpCenter.z;
+//};
 
 
 
