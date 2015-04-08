@@ -3,13 +3,13 @@ NOW
 --------------------------------------------------------------------------------
 
 FIXES
-    * optimise GPU pair check for polyalanine -- reduce whole thing to residue difference.
-    * ALSO, don't do the LJ if LJ is off!
+    * optimise GPU pair check for polyalanine -- reduce whole thing to residue difference. -- DONE; test properly
+    * ALSO, don't do the LJ if LJ is off! -- DONE; test properly
     * implement the shift instead of the current crappy fraction encoding -- DONE; test properly
     * decrease local translate step size? Ask Rob.
-
+    
 BUG FIXES AND REFACTORING
-    * remove unused code for e.g. old kernels and MC on the GPU
+    * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on.
 
     * clean up temperature / translation step / rotation step code and figure out exactly what is happening when the number of replicas is 1. Write a unit test for this. Is this a bug?
 

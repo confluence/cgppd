@@ -429,7 +429,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
             // meta.z = vdw radius
             // FLEXIBLE: meta.w = CROWDER_IDENTIFIER or RESIDUE_ID.CHAIN_UID
             // RIGID: meta.w = CROWDER_IDENTIFIER or unused
-#if FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS && !ASSUME_POLYMER_FOLDING_TEST
             // padder or same rigid domain or same bond or residues close on the backbone
             // currently ignoring case where residues are close because of a bond; subtracting this component on the CPU instead
             
@@ -448,6 +448,10 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
             float ychain = modff(yresiduem.w, &yresid);
             
             if (pos.w == PADDER_IDENTIFIER || (xdomain && xdomain == ydomain) || (xbond && xbond == ybond) || (xchain == ychain && fabs(xresid - yresid) < 4))
+#elif ASSUME_POLYMER_FOLDING_TEST
+            // More efficient handling of this special case.  Assume we are folding a single polymer.
+            // There's only one chain; we calculate all pairs except close neighbours on the backbone.
+            if (fabs(meta.w - yresiduem.w) < 4))
 #else
              // same molecule or padder
             if (yresiduep.w == pos.w || pos.w == PADDER_IDENTIFIER)
@@ -467,7 +471,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                 float LJ(0.0f);
                 float DH(0.0f);
 
-#if REPULSIVE_CROWDING
+#if REPULSIVE_CROWDING && !LJ_OFF
                 if (yresiduem.w == CROWDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER) // repulsive crowder interaction
                 {
                     if (r<const_repulsive_cutoff)
@@ -476,6 +480,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                 else  // normal LJ interaction
                 {
 #endif
+#if !LJ_OFF
                     int ijX(rint( AA_COUNT*yresiduem.x + meta.x));
                     //do the texture fetch first
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
@@ -486,11 +491,11 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                     float Eij(LJ_lambda*(const_LJPotentialData[ijX] - e0));
 #else  // __global__ or __constant__
                     float Eij(LJ_lambda*(LJPotentialData[ijX] - e0));
-#endif
-
+#endif // LJ_LOOKUP_METHOD
+#endif // !LJ_OFF
                     DH = dhPotential(yresiduem.y,meta.y,r);
                     dh_subtotal += DH;
-
+#if !LJ_OFF
                     // sigmaij is the average atomic radius determined by the van der waals radius in kim2008
                     float sigmaij((yresiduem.z + meta.z) * 0.5f);
 
@@ -502,11 +507,11 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
                     {
                         LJ = -LJ + 2.0f*Eij;
                     }
-
-#if REPULSIVE_CROWDING
+#endif // !LJ_OFF
+#if REPULSIVE_CROWDING && !LJ_OFF
                 }  // end conditional branch for LJ or repulsive short-range energy
 #endif
-
+#if !LJ_OFF
 #if COMPENSATE_KERNEL_SUM
                 y = LJ - c_lj;
                 t = lj_subtotal + y;
@@ -515,7 +520,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
 #else
                 lj_subtotal += LJ;
 #endif
-
+#endif // !LJ_OFF
             } // if !(X_tile_residuePositions.w == Y_tile_residuePositions.w || X_tile_residuePositions.w < CROWDER_IDENTIFIER )
         } // for i = 0..Bdx
         sharedmem_results[tx] = (lj_subtotal * RT_to_kcalmol) + (dh_subtotal * DH_CONVERSION_FACTOR);

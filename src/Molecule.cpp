@@ -623,7 +623,7 @@ Potential Molecule::E(bool include_LJ_and_DH)
 
             for (size_t i = 0; i < residueCount; i++) {
                 for (size_t j = i + 1; j < residueCount; j++) {
-    
+#if !ASSUME_POLYMER_FOLDING_TEST
                     /* ignore pairs which are:
                         - in the same rigid domain
                         - close neighbours on the backbone in the same chain
@@ -631,9 +631,17 @@ Potential Molecule::E(bool include_LJ_and_DH)
                         - close neighbours across a bond */
 
                     if (!Residues[i].same_rigid_domain_as(Residues[j]) && !Residues[i].chain_neighbour_of(Residues[j]) && !Residues[i].bonded_to(Residues[j]) && !graph.indirect_neighbours.count(Pair(i, j))) {
+#else // ASSUME_POLYMER_FOLDING_TEST
+                    // More efficient handling of this special case.  Assume we are folding a single polymer.
+                    // There's only one chain; we calculate all pairs except close neighbours on the backbone.
+                    // Because there's only one chain we can just compare residue indices.
+                    if (abs(i - j) >= 4) {
+#endif
                         double r(Residues[i].distance(Residues[j], bounding_value) + EPS);
+#if !LJ_OFF
                         /* Calculate LJ-type potential for each residue pair; increment molecule total. */
                         potential.increment_LJ(calculate_LJ(Residues[i], Residues[j], r, AminoAcidsData));
+#endif
                         /* Calculate electrostatic potential for each residue pair; increment molecule total. */
                         potential.increment_DH(calculate_DH(Residues[i], Residues[j], r));
                     }
@@ -643,8 +651,10 @@ Potential Molecule::E(bool include_LJ_and_DH)
             // We calculated the LJ and DH on the GPU; here we need to *subtract* the indirect neighbour total, which is too complex to do on the GPU for now
             for (set<Pair>::iterator p = graph.indirect_neighbours.begin(); p != graph.indirect_neighbours.end(); p++) {
                 double r(Residues[p->i].distance(Residues[p->j], bounding_value) + EPS);
+#if !LJ_OFF
                 /* Calculate LJ-type potential for each residue pair; DECREMENT molecule total. */
                 potential.increment_LJ(-calculate_LJ(Residues[p->i], Residues[p->j], r, AminoAcidsData));
+#endif
                 /* Calculate electrostatic potential for each residue pair; DECREMENT molecule total. */
                 potential.increment_DH(-calculate_DH(Residues[p->i], Residues[p->j], r));
             }
