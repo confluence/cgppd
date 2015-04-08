@@ -4,6 +4,7 @@ NOW
 
 FIXES
     * optimise GPU pair check for polyalanine -- reduce whole thing to residue difference.
+    * ALSO, don't do the LJ if LJ is off!
     * implement the shift instead of the current crappy fraction encoding -- DONE; test properly
     * decrease local translate step size? Ask Rob.
 
