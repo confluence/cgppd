@@ -432,7 +432,7 @@ Potential Replica::E()
 
     for (size_t mI = 0; mI < moleculeCount; mI++)
     {
-#if REPULSIVE_CROWDING
+#if REPULSIVE_CROWDING && !LJ_OFF
         if (molecules[mI].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
         {
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
@@ -455,7 +455,7 @@ Potential Replica::E()
 #endif
             for (size_t mJ = mI + 1; mJ < moleculeCount; mJ++)
             {
-#if REPULSIVE_CROWDING
+#if REPULSIVE_CROWDING && !LJ_OFF
                 if (molecules[mJ].moleculeRoleIdentifier == CROWDER_IDENTIFIER)
                 {
                     for (size_t mi = 0; mi < molecules[mI].residueCount; mi++)
@@ -478,7 +478,9 @@ Potential Replica::E()
                         for (size_t mj = 0; mj < molecules[mJ].residueCount; mj++)
                         {
                             double r(iRes.distance(jRes, boundingValue) + EPS);
+#if !LJ_OFF
                             potential.increment_LJ(calculate_LJ(iRes, jRes, r, aminoAcids));
+#endif
                             potential.increment_DH(calculate_DH(iRes, jRes, r));
                         }
                     }
@@ -511,7 +513,9 @@ Potential Replica::E(Molecule *a, Molecule *b)
         for (size_t mj = 0; mj < b->residueCount; mj++)
         {
             double r(aRes.distance(bRes, boundingValue) + EPS);
+#if !LJ_OFF
             potential.increment_LJ(calculate_LJ(aRes, bRes, r, aminoAcids));
+#endif
             potential.increment_DH(calculate_DH(aRes, bRes, r));
         }
     }
