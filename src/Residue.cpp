@@ -26,7 +26,7 @@ Residue::Residue(const Residue & r)
 }
 
 #if USING_CUDA
-void Residue::pack_GPU_floats()
+void Residue::pack_GPU_floats(int num_segment_bonds, int num_chains)
 {
     // pos.w = DOMAIN_UID.BOND_UID
     // meta.w = RESIDUE_ID.CHAIN_UID
@@ -36,10 +36,12 @@ void Residue::pack_GPU_floats()
 
    float bond_fraction(0);
    if (segment_bond_UID) {
-       bond_fraction = pow(2.0, -segment_bond_UID);
+       //bond_fraction = pow(2.0, -segment_bond_UID);
+       bond_fraction = segment_bond_UID / (pow(2.0, ceil( log2( num_segment_bonds + 1 ) )));
    }
 
-   float chain_fraction(pow(2.0, -chain_UID)); // chain_UID is never zero; they start at 1 and every residue has one
+   //float chain_fraction(pow(2.0, -chain_UID)); // chain_UID is never zero; they start at 1 and every residue has one
+   chain_fraction = chain_UID / (pow(2.0, ceil( log2( num_chains + 1 ) )));
    
    pos_w = (float)rigid_domain_UID + bond_fraction;
    meta_w = (float)resSeq + chain_fraction;
