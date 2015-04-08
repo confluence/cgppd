@@ -9,7 +9,12 @@ FIXES
     * decrease local translate step size? Ask Rob.
     
 BUG FIXES AND REFACTORING
-    * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on.
+    * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on. -- partially done
+    * WHY do we still have two kernels? Can we seriously not merge the tiled kernel and the tiled NC kernel?
+        * Why do we even call the NC kernel from the sample function? Just to subtract the crowders?
+        * Can we not just use the normal potential if there are no crowders?
+        * compare the pieces of code and see what remaining differences there are
+    * Async version of NC kernel? Unnecessary if we merge them.
 
     * clean up temperature / translation step / rotation step code and figure out exactly what is happening when the number of replicas is 1. Write a unit test for this. Is this a bug?
 

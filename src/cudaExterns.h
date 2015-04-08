@@ -15,16 +15,16 @@ extern "C"
     float * LJPotentialDataToDevice (AminoAcids *a);
     void copyLJPotentialDataToDevice (float * dev_LJPotentialData, AminoAcids *a);
 
-    void MCSearchOnDevice();
+    //void MCSearchOnDevice();
 
-    // rotations and translations on gpu memory
-    void CUDA_rotateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_rotationVector, float4* d_center, cudaStream_t stream);
-    void CUDA_translateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_translation, float4* d_center, cudaStream_t stream);
+    //// rotations and translations on gpu memory
+    //void CUDA_rotateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_rotationVector, float4* d_center, cudaStream_t stream);
+    //void CUDA_translateMolecule (float4 *d_residuePositions, int *d_startPosition, int *d_moleculeLength, int moleculeLength, float4* d_translation, float4* d_center, cudaStream_t stream);
 
 
     void CUDA_EonDevice(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, double* result, int blockSize, int datasetSize, int sharedMemSize);
     void CUDA_EonDeviceNC(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, double* result, int blockSize, int datasetSize, int sharedMemSize);
-    void CUDA_EonDeviceTest(float *d_x, float *d_y, float *d_z, int *d_id, float4 *residueMeta, float* LJPotentials, double* result, int blockSize, int datasetSize);
+    //void CUDA_EonDeviceTest(float *d_x, float *d_y, float *d_z, int *d_id, float4 *residueMeta, float* LJPotentials, double* result, int blockSize, int datasetSize);
 
     // initialise device
     void cudaInfo();
