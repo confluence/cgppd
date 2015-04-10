@@ -1,7 +1,7 @@
 #include <Simulation.h>
 #include <testCommon.h>
 
-#if !LJ_REPULSIVE && !LJ_OFF  // ignore this whole test unless we're using the normal LJ constants
+#if !LJ_REPULSIVE && !LJ_OFF && !ASSUME_POLYMER_FOLDING_TEST // ignore this whole test unless we're using the normal LJ constants
 
 TEST_CASE("Reference conformations" "[reference]") {
     AminoAcids aminoAcidData;
@@ -261,4 +261,4 @@ TEST_CASE("Reference conformations" "[reference]") {
 #endif // USING_CUDA
 }
 
-#endif // !LJ_REPULSIVE && !LJ_OFF
+#endif // !LJ_REPULSIVE && !LJ_OFF && !ASSUME_POLYMER_FOLDING_TEST

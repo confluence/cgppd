@@ -31,6 +31,7 @@ GL=yes
 STREAMS=no
 LINKERS=yes
 LJ=normal
+POLYMERTEST=no
 
 TEST=yes
 DEBUG=no
@@ -85,6 +86,10 @@ ifeq ($(LJ),repulsive)
 DEFINE+=-DEnableLJRepulsive
 APPNAME=cgppd_ljrep
 TESTNAME=test_ljrep
+endif
+
+ifeq ($(POLYMERTEST),yes)
+DEFINE+=-DEnablePolymerTest
 endif
 
 OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
