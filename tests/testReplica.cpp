@@ -83,6 +83,11 @@ TEST_CASE("Replica", "[replica]") {
         REQUIRE((replica.E() + replica.internal_molecule_E(true)).almost_equal(expected_flexible_potential));
 #if USING_CUDA
         REQUIRE((replica.EonDevice() + replica.internal_molecule_E(false).total()) == Approx(expected_flexible_potential.total()));
+        REQUIRE(replica.EonDeviceNC() == Approx(expected_flexible_potential.total())); // don't forget that this includes the molecule potential
+#if CUDA_STREAMS
+        replica.EonDeviceAsync();
+        REQUIRE((replica.SumGridResults() + replica.internal_molecule_E(false).total()) == Approx(expected_flexible_potential.total()));
+#endif // CUDA_STREAMS
 #endif // USING_CUDA
 
         replica.calculate_rigid_potential_only = true;
@@ -93,6 +98,11 @@ TEST_CASE("Replica", "[replica]") {
         REQUIRE(replica.E().almost_equal(expected_rigid_potential));
 #if USING_CUDA
         REQUIRE(replica.EonDevice() == Approx(expected_rigid_potential.total()));
+        REQUIRE(replica.EonDeviceNC() == Approx(expected_rigid_potential.total()));
+#if CUDA_STREAMS
+        replica.EonDeviceAsync();
+        REQUIRE(replica.SumGridResults() == Approx(expected_rigid_potential.total()));
+#endif // CUDA_STREAMS
 #endif // USING_CUDA
     }
 

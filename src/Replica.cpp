@@ -897,7 +897,7 @@ void Replica::MoleculeDataToDevice(int moleculeId)
     return;
 }
 
-void Replica::EonDeviceAsync() // TODO: need to add flexible potential to this, or is it done elsewhere?
+void Replica::EonDeviceAsync()
 {
 #if INCLUDE_TIMERS
     //CUT_SAFE_CALL( cutStartTimer(replicaECUDATimer) );
