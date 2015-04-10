@@ -95,10 +95,13 @@ class Simulation(object):
 
     @classmethod
     def write_summary(cls, filenames, summaryfilename, args):
+        num_files = len(filenames)
         with open(summaryfilename, 'w') as summaryfile:
-            for filename in filenames:
+            for i, filename in enumerate(filenames):
                 with open(filename) as pdbfile:
-                    logging.debug("Parsing file '%s'..." % filename)
+                    logging.debug("Parsing file '%s' (%d of %d)..." % (filename, i, num_files))
+                    if not i % 1000:
+                        logging.info("%d of %d files parsed..." % (i, num_files))
                     sample_id, temperature, potential = cls.FILENAME.match(filename).groups()
 
                     sample = Sample(int(sample_id), float(temperature), float(potential))
