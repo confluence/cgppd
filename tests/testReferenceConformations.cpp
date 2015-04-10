@@ -16,6 +16,7 @@ TEST_CASE("Reference conformations" "[reference]") {
     float * ljp_t;
     double gpu[10];
     double gpu_nc[10];
+    double gpu_async[10];
 #endif
 
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
@@ -67,6 +68,10 @@ TEST_CASE("Reference conformations" "[reference]") {
 #if USING_CUDA
         gpu[i] = replicas[i].EonDevice();
         gpu_nc[i] = replicas[i].EonDeviceNC();
+#if CUDA_STREAMS
+        replicas[i].EonDeviceAsync();
+        gpu_async[i] = replicas[i].SumGridResults();
+#endif // CUDA_STREAMS
 #endif
     }
 
@@ -91,10 +96,13 @@ TEST_CASE("Reference conformations" "[reference]") {
         for (int i = 0; i < 10; i++) {
             REQUIRE(cpu[i].almost_equal(expected_exact_results[i]));
             REQUIRE(cpu_nc[i].almost_equal(expected_exact_results[i]));
-    #if USING_CUDA
+#if USING_CUDA
             REQUIRE(gpu[i] == Approx(expected_exact_results[i].total()));
             REQUIRE(gpu_nc[i] == Approx(expected_exact_results[i].total()));
-    #endif
+#if CUDA_STREAMS
+            REQUIRE(gpu_async[i] == Approx(expected_exact_results[i].total()));
+#endif
+#endif
         }
     }
 

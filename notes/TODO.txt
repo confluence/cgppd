@@ -3,9 +3,7 @@ SOONER
 --------------------------------------------------------------------------------
 
 FIXES
-    * optimise GPU pair check for polyalanine -- reduce whole thing to residue difference. -- DONE; test properly
-    * ALSO, don't do the LJ if LJ is off! -- DONE; test properly
-    * implement the shift instead of the current crappy fraction encoding -- DONE; test properly
+    * optimise GPU pair check for polyalanine -- reduce whole thing to residue difference. -- test properly before implementing
     * decrease local translate step size? Ask Rob.
 
 SIMULATIONS
