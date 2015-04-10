@@ -634,8 +634,8 @@ Potential Molecule::E(bool include_LJ_and_DH)
 #else // ASSUME_POLYMER_FOLDING_TEST
                     // More efficient handling of this special case.  Assume we are folding a single polymer.
                     // There's only one chain; we calculate all pairs except close neighbours on the backbone.
-                    // Because there's only one chain we can just compare residue indices. But we have to convert from size_t to int, otherwise hilarity ensues.
-                    if (abs(int(i) - int(j)) >= 4) {
+                    // Because there's only one chain we can just compare residue indices. And we know that j > i.
+                    if ((j - i) >= 4) {
 #endif
                         double r(Residues[i].distance(Residues[j], bounding_value) + EPS);
 #if !LJ_OFF
