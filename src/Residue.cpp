@@ -41,7 +41,7 @@ void Residue::pack_GPU_floats(int num_segment_bonds, int num_chains)
    }
 
    //float chain_fraction(pow(2.0, -chain_UID)); // chain_UID is never zero; they start at 1 and every residue has one
-   chain_fraction = chain_UID / (pow(2.0, ceil( log2( num_chains + 1 ) )));
+   float chain_fraction = chain_UID / (pow(2.0, ceil( log2( num_chains + 1 ) )));
    
    pos_w = (float)rigid_domain_UID + bond_fraction;
    meta_w = (float)resSeq + chain_fraction;

@@ -68,14 +68,14 @@
     #if LJ_REPULSIVE
         #undef e0
         #define e0  0.0001f // k_b T
-        #define ASSUME_POLYMER_FOLDING_TEST 1 // shortcut the non-bonded potential criteria
+        //#define ASSUME_POLYMER_FOLDING_TEST 1 // shortcut the non-bonded potential criteria
     #endif
 
     #if LJ_OFF
         //#undef LJ_lambda
         //#define LJ_lambda 0.0f // not efficient, but takes care of both GPU and CPU calculation
         // That was really dumb. We're going to do this properly so that we don't waste days on unnecessary calculations.
-        #define ASSUME_POLYMER_FOLDING_TEST 1 // shortcut the non-bonded potential criteria
+        //#define ASSUME_POLYMER_FOLDING_TEST 1 // shortcut the non-bonded potential criteria
     #endif
 
 #endif
