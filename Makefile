@@ -101,7 +101,7 @@ endif
 ${TESTNAME}: ${OBJFILES} ${TEST_SOURCES}
 	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} ${LIBS} -DHGVERSION="\"${HGVERSION}\"" -o $@ ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
 
-obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
+obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h src/cudaExterns.h src/definitions.h src/constants.h src/AminoAcids.h
 	@echo Making CUDA files.
 	nvcc ${NVCC_ARCH} ${NVCC_COMPILER_FLAGS} ${INCLUDE} ${DEFINE} -c src/CudaFunctions.cu -o obj/CudaFunctions.o
 

@@ -296,7 +296,7 @@ void Graph::assign_uids(Residue * residues, int & chain_offset, int & domain_off
         residues[i].chain_UID = chain_uid[residues[i].chain_int_id];
         
 #if USING_CUDA
-        residues[i].pack_GPU_floats(segment_bonds.size(), num_chains);
+        residues[i].pack_GPU_floats(bond_offset, chain_offset);
 #endif
     }
 }
