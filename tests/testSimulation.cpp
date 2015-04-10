@@ -90,6 +90,7 @@ TEST_CASE("Simulation", "[simulation]") {
         REQUIRE(ubq_data.segments[0].residue_indices[3] == 75);
     }
 
+#if !LJ_REPULSIVE && !LJ_OFF // ignore this whole test unless we're using the normal LJ constants
     SECTION("REMC sanity check") {
         // clean up the old output dir if it exists
         char command[256];
@@ -125,7 +126,7 @@ TEST_CASE("Simulation", "[simulation]") {
         const char * architecture = "GPU";
 #else
         const char * architecture = "CPU";
-#endif
+#endif // USING_CUDA
         
         memset(command, 0, 256);
         sprintf(command, "if [ ! -d tests/remctest_%s ]; then tar --directory tests -xzf tests/remctest_%s.tgz; fi", architecture, architecture);
@@ -144,4 +145,5 @@ TEST_CASE("Simulation", "[simulation]") {
         
         REQUIRE(system(command) == 0);
     }
+#endif // !LJ_REPULSIVE && !LJ_OFF
 }

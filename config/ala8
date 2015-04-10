@@ -15,3 +15,7 @@ title Polyalanine (ala8) polymer test
 files
 
 p(0,0,0) r(0,0,0,0) data/polyalanine/ALA_8.pdb 8-polyalanine
+
+segments
+
+8-polyalanine all

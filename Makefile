@@ -70,12 +70,21 @@ ifeq ($(LINKERS),yes)
 DEFINE+=-DEnableFlexibleLinkers
 endif
 
+ifeq ($(LJ),normal)
+APPNAME=cgppd
+TESTNAME=test
+endif
+
 ifeq ($(LJ),off)
 DEFINE+=-DEnableLJOff
+APPNAME=cgppd_ljoff
+TESTNAME=test_ljoff
 endif
 
 ifeq ($(LJ),repulsive)
 DEFINE+=-DEnableLJRepulsive
+APPNAME=cgppd_ljrep
+TESTNAME=test_ljrep
 endif
 
 OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
@@ -83,14 +92,14 @@ OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
 ################################################################################
 
 ifneq ($(TEST),yes)
-cgppd: obj/main.o ${OBJFILES}
+${APPNAME}: obj/main.o ${OBJFILES}
 else
-cgppd: obj/main.o ${OBJFILES} test
+${APPNAME}: obj/main.o ${OBJFILES} ${TESTNAME}
 endif
 	${COMPILER} ${INCLUDE} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
 
-test: ${OBJFILES} ${TEST_SOURCES}
-	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} ${LIBS} -DHGVERSION="\"${HGVERSION}\"" -o test ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
+${TESTNAME}: ${OBJFILES} ${TEST_SOURCES}
+	${COMPILER} ${TEST_INCLUDE} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} ${LIBS} -DHGVERSION="\"${HGVERSION}\"" -o $@ ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
 
 obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h
 	@echo Making CUDA files.
@@ -112,7 +121,7 @@ obj/%.o: src/%.cpp src/%.d src/%.h
 	$(COMPILER) $(CFLAGS) ${INCLUDE} ${DEFINE} -DHGVERSION="\"${HGVERSION}\"" -o $@ -c $<
 
 clean:
-	@rm -rf obj cgppd test
+	@rm -rf obj $(DEPFILES)
 
 help:
 	@echo "Usage: make [cgppd] [options]"

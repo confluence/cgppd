@@ -15,3 +15,7 @@ title Polyalanine (ala2048) polymer test
 files
 
 p(0,0,0) r(0,0,0,0) data/polyalanine/ALA_2048.pdb 2048-polyalanine
+
+segments
+
+2048-polyalanine all

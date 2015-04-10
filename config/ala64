@@ -15,3 +15,7 @@ title Polyalanine (ala64) polymer test
 files
 
 p(0,0,0) r(0,0,0,0) data/polyalanine/ALA_64.pdb 64-polyalanine
+
+segments
+
+64-polyalanine all

@@ -206,13 +206,13 @@ class SimulationSet(object):
             sim_dir = "%s/pdb" % d
 
             if not os.path.isfile(summaryfilename):
-		logging.info("Writing new summary file...")
+                logging.info("Writing new summary file...")
                 if os.path.exists(sim_dir):
                     files = glob.glob("%s/*" % sim_dir)
                     Simulation.write_summary(files, summaryfilename, args)
 
             if os.path.isfile(summaryfilename):
-		logging.info("Loading summary file...")
+                logging.info("Loading summary file...")
                 s = Simulation.from_summary(summaryfilename, args)
                 simulations.append(s)
 
