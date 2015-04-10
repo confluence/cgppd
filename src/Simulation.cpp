@@ -484,19 +484,6 @@ void Simulation::check_and_modify_parameters()
             LOG(WARNING) << "\tWARNINGING: Too many streams; setting equal to " << parameters.streams << ".";
         }
     }
-
-    int length = strlen(parameters.prefix);
-#if REPULSIVE_CROWDING
-    length += sprintf(parameters.prefix + length, "_repcrowding");
-#endif
-
-#if LJ_REPULSIVE
-    length += sprintf(parameters.prefix + length, "_repLJ");
-#endif
-
-#if LJ_OFF
-    length += sprintf(parameters.prefix + length, "_LJoff");
-#endif
 }
 
 void Simulation::init(int argc, char **argv, int pid)
@@ -1174,6 +1161,7 @@ void Simulation::closeSamplingFiles()
 void Simulation::writeFileIndex()
 {
     char fileindex[256];
+    memset(fileindex, 0, 256);
     sprintf(fileindex,"output/%s/fileindex", parameters.prefix);
     FILE * fileindexf = fopen (fileindex,"w");
     fprintf(fileindexf,"index molecule_file_path crowder(Y/N)\n");

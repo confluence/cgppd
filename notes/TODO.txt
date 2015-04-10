@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-NOW
+SOONER
 --------------------------------------------------------------------------------
 
 FIXES
@@ -7,8 +7,14 @@ FIXES
     * ALSO, don't do the LJ if LJ is off! -- DONE; test properly
     * implement the shift instead of the current crappy fraction encoding -- DONE; test properly
     * decrease local translate step size? Ask Rob.
-    
-BUG FIXES AND REFACTORING
+
+SIMULATIONS
+    * redo polyalanine simulations
+    * rework diubiquitin creation script to do the molecules the more sensible way around and also add a fake sidechain out of alanine
+    * redo simulations of ubiquitin+uim without tail, with rigid tail and with flexible tail
+        * How to determine bound state when the potential is much higher because of binded components? Subtract some kind of average?
+
+BUGS / POTHOLES TO INVESTIGATE
     * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on. -- partially done
     * WHY do we still have two kernels? Can we seriously not merge the tiled kernel and the tiled NC kernel?
         * Why do we even call the NC kernel from the sample function? Just to subtract the crowders?
@@ -16,74 +22,67 @@ BUG FIXES AND REFACTORING
         * compare the pieces of code and see what remaining differences there are
     * Async version of NC kernel? Unnecessary if we merge them.
 
-    * clean up temperature / translation step / rotation step code and figure out exactly what is happening when the number of replicas is 1. Write a unit test for this. Is this a bug?
-
-    * fix chain processing
-        * use chain names if they exist
-        * fix old PDB files with chain id in the wrong place (WTF)
-    * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
-
-    * outstanding issue: fix formatting of boundconformations file
-        * only one value per replica; put pdb file on the same line
-    * what is fileindex used for? It seems pretty useless. It's not even used in postprocessing.
-    * stop outputting rotation / translation (no longer relevant)
-        * but only if compiled with flexible linkers?
-
-    * rework diubiquitin creation script to do the molecules the more sensible way around and also add a fake sidechain
-
-    * more extensive potential unit tests: add potential test with all the weird geometry features, i.e. diubiquitin with one molecule and two chains. Maybe two diubiquitin, so we have two molecules with two chains each and can test absolutely everything.
-
     * check if magnitude of bonded components is correct
         * actually, do we have any results for the bonded components from Kim?
         * could the tiny discrepancy from Kim's results be due to additional nonbonded components from inside segments? (There would be no inter-domain contribution because Kim & Hummer's model doesn't have a flex move).
 
-SIMULATIONS
-* diubiquitin simulations -- once the segment code is fixed
-    * DON'T FORGET to make a fake side-chain out of alanine
+CLEANUP / REFACTOR
+    * outstanding issue: fix formatting of boundconformations file
+        * only one value per replica; put pdb file on the same line
+
+    * what is fileindex used for? It seems pretty useless. It's not even used in postprocessing.
+
+    * stop outputting rotation / translation (no longer relevant)
+        * but only if compiled with flexible linkers?
+
+UNIT TESTS
+    * more extensive potential unit tests: add potential test with all the weird geometry features, i.e. diubiquitin with one molecule and two chains. Maybe two diubiquitin, so we have two molecules with two chains each and can test absolutely everything.
+
+--------------------------------------------------------------------------------
+LATER
+--------------------------------------------------------------------------------
+
+POTHOLES
+    * clean up temperature / translation step / rotation step code and figure out exactly what is happening when the number of replicas is 1. Write a unit test for this. Is this a bug?
+    
+    * fix chain processing
+        * use chain names if they exist
+        * fix old PDB files with chain id in the wrong place (WTF)
+
+    * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 
 THESIS
-* kT units or RT units -- what does this mean?
-* add final edits to design/implementation chapter after making changes in the code
+    * Verification & Validation
+    * Applications
+    * Conclusions
+    * Go back and add conclusions to introduction
 
---------------------------------------------------------------------------------
-SOON
---------------------------------------------------------------------------------
-
-SIMULATIONS
-* redo Ian's tail/no tail simulations with flexible tail; replicate post-processing used in original thesis
+CLEANUP / REFACTOR
+    * Why is the GL broken for some simulations?
+    * Try to silence that annoying compilation error
 
 BENCHMARKING
-* do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
-* how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
-
-MODEL CORRECTNESS
-* potential is now much (?) bigger because of the bonded components -- that is likely to affect calculation of the bound state. Should it be this high? Are the units correct? Also including the potential from inside proteins should raise the total (right)?
-    * analyse potential breakdown (from CPU-only version)
-* Are any conversions required for the linker components?
-
-CLEANUP / BUGFIX
-* Why is the GL broken for some simulations?
-    * Try to silence that annoying compilation error
-* unit test for parsing various input files (amino acids, torsions, etc..)
+    * do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
+    * how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
 
 --------------------------------------------------------------------------------
-LATER / MAYBE
+MUCH LATER / FUTURE WORK
 --------------------------------------------------------------------------------
 
 OPTIMISATION
-* why not precalculate the LJ coefficients which are independent from r?
-    * We could definitely at least store Eij instead of eij.
-    * How much extra storage / memory transfer overhead would be required for 3 coefficients (3EijSigij, 2Eij and 2^(1/6)Sigij)?
-    * Maybe do it and test it? float3 table instead of float.
-* Maybe leave this for last; possibly just mention it as a future direction instead of doing it
+    * why not precalculate the LJ coefficients which are independent from r?
+        * We could definitely at least store Eij instead of eij.
+        * How much extra storage / memory transfer overhead would be required for 3 coefficients (3EijSigij, 2Eij and 2^(1/6)Sigij)?
+        * Maybe do it and test it? float3 table instead of float.
+
+    * instead of storing pairs of residue integer properties in floats for transfer to GPU, add more floats
 
 CLEANUP
+    * convert all printfs / fprintfs to streams and all char arrays to strings
+    * Eliminate extraneous preprocessor directives
+    * factor the compensated summation out of Potential; add it in in a subclass later (although it's probably not necessary anyway)
+    * Eliminate the MCSearch method and make everything call shared sub-methods
 
-* convert all printfs / fprintfs to streams and all char arrays to strings
-* Eliminate extraneous preprocessor directives
-* factor the compensated summation out of Potential; add it in in a subclass later (although it's probably not necessary anyway)
-* Eliminate the MCSearch method and make everything call shared sub-methods
-
-
-ADD
-* Multiple GPUs?  Does that work?  It should just work.
+TESTS
+    * unit test for parsing various input files (amino acids, torsions, etc..)
+    * Multiple GPUs?  Does that work?  It should just work.
