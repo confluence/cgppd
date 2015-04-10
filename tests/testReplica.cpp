@@ -64,6 +64,7 @@ TEST_CASE("Replica", "[replica]") {
 #endif // CUDA_STREAMS
 #endif // USING_CUDA
 
+#if !ASSUME_POLYMER_FOLDING_TEST // ignore this whole test if we're using the shortcut conditions for a single polymer
     SECTION("Potential") {
         
 #if !LJ_REPULSIVE && !LJ_OFF
@@ -105,6 +106,7 @@ TEST_CASE("Replica", "[replica]") {
 #endif // CUDA_STREAMS
 #endif // USING_CUDA
     }
+#endif // ASSUME_POLYMER_FOLDING_TEST
 
     SECTION("Geometry") {
         Molecule & m1 = replica.molecules[0];
@@ -179,3 +181,4 @@ TEST_CASE("Replica", "[replica]") {
 #endif // USING_CUDA
     cout.flush();
 }
+
