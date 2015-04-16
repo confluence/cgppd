@@ -17,6 +17,7 @@ RESUMING FROM SAMPLE
         * UPDATE STEP!
             * can we? otherwise we could subtract the number of steps already done from the total, but that would mess up the numbering.
             * I think we can; it's a while loop.
+            * we can read all these values off the replicas in the test to check that we're interpreting the files correctly. E.g. steps.
         
 
 FIXES
