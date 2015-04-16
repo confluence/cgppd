@@ -2,8 +2,25 @@
 SOONER
 --------------------------------------------------------------------------------
 
+RESUMING FROM SAMPLE
+    * write unit test first
+        * just copy the generator from the old one to keep the state?
+        * https://www.gnu.org/software/gsl/manual/html_node/Copying-random-number-generator-state.html
+    * directory name
+    * change to this directory; write files inside it?
+    * read filenames from last sample; make sure this is written last
+    * update the child replicas from corresponding sample files
+        * split molecules based on chains in the config and in the PDB files?
+            * make sure the chains correspond
+        * update potential
+        * update acceptance ratios
+        * UPDATE STEP!
+            * can we? otherwise we could subtract the number of steps already done from the total, but that would mess up the numbering.
+            * I think we can; it's a while loop.
+        
+
 FIXES
-    * optimise GPU pair check for polyalanine -- reduce whole thing to residue difference. -- test properly before implementing
+    * implement resuming from a sample, because loadshedding. :/
     * decrease local translate step size? Ask Rob.
 
 SIMULATIONS

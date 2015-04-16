@@ -663,6 +663,12 @@ void Simulation::init(int argc, char **argv, int pid)
     cout.flush();
 }
 
+void Simulation::resume_from(char * directory_name)
+{
+    // do stuff
+}
+
+
 void Simulation::run()
 {
     // we can't use pthreads and CUDA at the moment, but we are going to use streams

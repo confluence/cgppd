@@ -70,6 +70,7 @@ public:
     ~Simulation();
 
     void init(int argc, char **argv, int pid);
+    void resume_from(char * directory_name);
 
     void printHelp();
     void getArgs(int argc, char **argv, bool first_pass);

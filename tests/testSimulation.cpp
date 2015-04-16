@@ -146,4 +146,15 @@ TEST_CASE("Simulation", "[simulation]") {
         REQUIRE(system(command) == 0);
     }
 #endif // !LJ_REPULSIVE && !LJ_OFF && !ASSUME_POLYMER_FOLDING_TEST
+
+    SECTION("Resume from existing directory") {
+        // first run the simulation uninterrupted
+        // save the directory
+
+        // new simulation, but for fewer steps (override step value?)
+        // new simulation, copy generators from old simulation
+        // try to resume
+
+        // compare the two directories
+    }
 }
