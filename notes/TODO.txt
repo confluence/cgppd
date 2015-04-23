@@ -32,6 +32,7 @@ SIMULATIONS
 
 BUGS / POTHOLES TO INVESTIGATE
     * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on. -- partially done
+        * remove compensated summation everywhere; we don't need it; it's pointless to keep it in
     * WHY do we still have two kernels? Can we seriously not merge the tiled kernel and the tiled NC kernel?
         * Why do we even call the NC kernel from the sample function? Just to subtract the crowders?
         * Can we not just use the normal potential if there are no crowders?
@@ -39,7 +40,8 @@ BUGS / POTHOLES TO INVESTIGATE
     * Async version of NC kernel? Unnecessary if we merge them.
     * TEMPLATES! They should make everything better. https://www.google.com/search?q=cuda+kernel+template
     * Factor out calculations into functions using __device__ http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#device-function-qualifier
-    * fast kernel for polymers with only one kind of residue -- no LJ lookup necessary!
+        * this is already done for DH; why isn't it done for everything else?
+    * fast kernel for polymers with only one kind of residue -- no LJ lookup necessary! Constant Eij.
 
     * check if magnitude of bonded components is correct
         * actually, do we have any results for the bonded components from Kim?
