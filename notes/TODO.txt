@@ -37,6 +37,8 @@ BUGS / POTHOLES TO INVESTIGATE
         * Can we not just use the normal potential if there are no crowders?
         * compare the pieces of code and see what remaining differences there are
     * Async version of NC kernel? Unnecessary if we merge them.
+    * TEMPLATES! They should make everything better. https://www.google.com/search?q=cuda+kernel+template
+    * Factor out calculations into functions using __device__ http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#device-function-qualifier
 
     * check if magnitude of bonded components is correct
         * actually, do we have any results for the bonded components from Kim?
