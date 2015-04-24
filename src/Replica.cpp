@@ -726,13 +726,13 @@ void Replica::ReplicaDataToDevice()
     DLOG(INFO) << "block size: " << blockSize << ", padded size: " << paddedSize;
 
 #if CUDA_STREAMS
-    cudaMallocHost((void**)&host_float4_residuePositions,sizeof(float4)*paddedSize);
+    cudaMallocHost((void**)&host_float4_residuePositions,sizeof(float4)*paddedSize); // pinned memory?
 #else
     host_float4_residuePositions = new float4[paddedSize];
 #endif
 
     //host_float4_residuePositions = new float4[paddedSize];
-    host_float4_residueMeta = new float4[paddedSize];
+    host_float4_residueMeta = new float4[paddedSize]; // WTF? Why is this not different for streams?
     host_moleculeStartPositions = new int[moleculeCount];
 
     cudaMalloc((void**)&device_float4_residuePositions,sizeof(float4)*paddedSize);

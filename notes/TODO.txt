@@ -1,3 +1,14 @@
+SOONEST
+* constant Eij for polyalanine -- temp solution using preprocessor flag
+* resuming from sample
+
+SHORTLY AFTERWARDS
+* kernel cleanup and templating?
+* replace shitty integer packing with expanded data structures?
+    * float3 for pos (x,y,z)
+    * float3 for meta (amino acid index (int), charge, vdW radius)
+    * short4 for geometry? (domain, bond, residue, chain)
+
 --------------------------------------------------------------------------------
 SOONER
 --------------------------------------------------------------------------------
@@ -19,6 +30,22 @@ RESUMING FROM SAMPLE
             * I think we can; it's a while loop.
             * we can read all these values off the replicas in the test to check that we're interpreting the files correctly. E.g. steps.
 
+
+KERNEL CLEANUP AND TEMPLATING
+    * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on. -- partially done
+        * remove compensated summation everywhere; we don't need it; it's pointless to keep it in
+    * WHY do we still have two kernels? Can we seriously not merge the tiled kernel and the tiled NC kernel?
+        * Why do we even call the NC kernel from the sample function? Just to subtract the crowders?
+        * Can we not just use the normal potential if there are no crowders?
+        * compare the pieces of code and see what remaining differences there are
+    * Async version of NC kernel? Unnecessary if we merge them.
+    * TEMPLATES! They should make everything better. https://www.google.com/search?q=cuda+kernel+template
+    * Factor out calculations into functions using __device__ http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#device-function-qualifier
+        * this is already done for DH; why isn't it done for everything else?
+    * fast kernel for polymers with only one kind of residue -- no LJ lookup necessary! Constant Eij.
+        * quick and dirty solution for now: use preprocessor directive to set a constant Eij for polyalanine
+    * eventual runtime detection of crowders (presence of; inclusion of), flexibility, one residue type
+
 FIXES
     * implement resuming from a sample, because loadshedding. :/
     * decrease local translate step size? Ask Rob.
@@ -31,18 +58,6 @@ SIMULATIONS
         * How to determine bound state when the potential is much higher because of binded components? Subtract some kind of average?
 
 BUGS / POTHOLES TO INVESTIGATE
-    * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on. -- partially done
-        * remove compensated summation everywhere; we don't need it; it's pointless to keep it in
-    * WHY do we still have two kernels? Can we seriously not merge the tiled kernel and the tiled NC kernel?
-        * Why do we even call the NC kernel from the sample function? Just to subtract the crowders?
-        * Can we not just use the normal potential if there are no crowders?
-        * compare the pieces of code and see what remaining differences there are
-    * Async version of NC kernel? Unnecessary if we merge them.
-    * TEMPLATES! They should make everything better. https://www.google.com/search?q=cuda+kernel+template
-    * Factor out calculations into functions using __device__ http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#device-function-qualifier
-        * this is already done for DH; why isn't it done for everything else?
-    * fast kernel for polymers with only one kind of residue -- no LJ lookup necessary! Constant Eij.
-
     * check if magnitude of bonded components is correct
         * actually, do we have any results for the bonded components from Kim?
         * could the tiny discrepancy from Kim's results be due to additional nonbonded components from inside segments? (There would be no inter-domain contribution because Kim & Hummer's model doesn't have a flex move).
