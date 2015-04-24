@@ -1,13 +1,20 @@
 SOONEST
+* Why do we need residueID on the GPU at all? We only compare these within the same chain, so why not use existing array indices?
 * constant Eij for polyalanine -- temp solution using preprocessor flag
 * resuming from sample
 
 SHORTLY AFTERWARDS
 * kernel cleanup and templating?
-* replace shitty integer packing with expanded data structures?
-    * float3 for pos (x,y,z)
+* replace shitty integer packing with expanded data structures
+    * float4 for pos (x,y,z, PADDER / CROWDER / molecule (int))
     * float3 for meta (amino acid index (int), charge, vdW radius)
-    * short4 for geometry? (domain, bond, residue, chain)
+    * short4 for geometry (domain, bond, residue, chain) -- maybe char4? How high do we want to go? Do we want to template this, depending on max(domains, bonds, residues, chains)? Which is likely to be residues.
+        * We could reorganise this to swap residue and molecule ids
+            * Why do we even have residue IDs? We only compare them when the chains are the same, so why not just use array indices?
+            * if we can eliminate these we could use short3; etc.
+            * or short4 with the molecule moved off the pos.
+                * then we could also template this down to a short1 if the simulation is rigid.
+            * if we can do this right now, we can eliminate one modff!
 
 --------------------------------------------------------------------------------
 SOONER
