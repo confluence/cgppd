@@ -28,21 +28,21 @@ void CUDA_freeBoxDimension();
 // box dimension for periodic boundary image calculation
 __constant__ float const_boxdim;
 
-void cudaInfo();
+//void cudaInfo();
 //copy data to the device
-int CUDA_memcpy_to_device(void * destination, void * source, int mem_size);
-int CUDA_memcpy_to_host(void * destination, void * source, int mem_size);
+//int CUDA_memcpy_to_device(void * destination, void * source, int mem_size);
+//int CUDA_memcpy_to_host(void * destination, void * source, int mem_size);
 
 // Asynchronous calls for use with streams
-int CUDA_memcpy_to_device_async(void * destination, void * source, int mem_size, cudaStream_t stream);
-int CUDA_memcpy_to_host_async(void * destination, void * source, int mem_size, cudaStream_t stream);
+//int CUDA_memcpy_to_device_async(void * destination, void * source, int mem_size, cudaStream_t stream);
+//int CUDA_memcpy_to_host_async(void * destination, void * source, int mem_size, cudaStream_t stream);
 void CUDA_EonDevice_async(float4 *residuePositions, float4 *residueMeta, int *residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, float* device_result, int resultSize, int blockSize, int datasetSize, int sharedMemSize, cudaStream_t stream);
-void CUDA_Esum_async(float* result, float *d_resultMatrix, int resultSize, int datasetSize, cudaStream_t stream);
+//void CUDA_Esum_async(float* result, float *d_resultMatrix, int resultSize, int datasetSize, cudaStream_t stream);
 
 int CUDA_cudaMalloc(void ** destination, int mem_size);
 int CUDA_cudaMemset(void * destination, int value, int mem_size);
 
-void printCudaError(int code);
+//void printCudaError(int code);
 int CUDA_cudaFree(void ** destination);
 int CUDA_createCudaStream(cudaStream_t *stream);
 
@@ -50,8 +50,8 @@ int CUDA_createCudaStream(cudaStream_t *stream);
 
 void bindLJTexture(float * ljp);
 void unbindLJTexture();
-void bindLJTexture2D(float *ljp);
-void unbindLJTexture2D ();
+//void bindLJTexture2D(float *ljp);
+//void unbindLJTexture2D ();
 
 #endif
 

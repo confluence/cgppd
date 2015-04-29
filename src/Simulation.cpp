@@ -883,6 +883,7 @@ void setup_CUDA(int device_id, float box_dimension, float * device_LJ_potentials
     cudaSetDevice(device_id);
     getLastCudaError("Failed to pick device for the CUDA runtime.");
 
+    // TODO: free this afterwards using CUDA_freeBoxDimension?
     CUDA_setBoxDimension(box_dimension);
     getLastCudaError("Failed to copy box dimensions to GPU.");
 

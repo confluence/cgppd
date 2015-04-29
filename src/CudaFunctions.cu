@@ -109,35 +109,35 @@ void copyLJPotentialDataToDevice (float * dev_LJPotentialData, AminoAcids *a)
     delete [] safeData;
 }
 
-void cudaInfo()
-{
-    int deviceCount;
-    checkCudaErrors(cudaGetDeviceCount(&deviceCount)); // this used to be CUDA_SAFE_CALL_NO_SYNC -- what's the difference?
-    if (deviceCount == 0)
-    {
-        printf("ERROR: no devices supporting CUDA.\n");
-        exit(EXIT_FAILURE);
-    }
-#if OUTPUT_LEVEL > 0
-    struct cudaDeviceProp devInfo;
-    printf("\n------------------------------------\n");
-    for (int i=0; i<deviceCount; i++)
-    {
-        cudaGetDeviceProperties( &devInfo, 0 );
-        printf ("CUDA Device %d Info:\n",i);
-        printf("Name: %s\n", devInfo.name );
-        printf("totalGlobalMem: %i\n",(int)devInfo.totalGlobalMem );
-        printf("sharedMemPerBlock: %i\n",(int)devInfo.sharedMemPerBlock );
-        printf("regsPerBlock: %i\n",devInfo.regsPerBlock );
-        printf("warpSize: %i\n",devInfo.warpSize );
-        printf("memPitch %i\n",(int)devInfo.memPitch );
-        printf("maxThreadsPerBlock: %i\n",devInfo.maxThreadsPerBlock);
-        if (i < deviceCount-1)
-            printf("\n");
-    }
-    printf("------------------------------------\n");
-#endif
-}
+//void cudaInfo()
+//{
+    //int deviceCount;
+    //checkCudaErrors(cudaGetDeviceCount(&deviceCount)); // this used to be CUDA_SAFE_CALL_NO_SYNC -- what's the difference?
+    //if (deviceCount == 0)
+    //{
+        //printf("ERROR: no devices supporting CUDA.\n");
+        //exit(EXIT_FAILURE);
+    //}
+//#if OUTPUT_LEVEL > 0
+    //struct cudaDeviceProp devInfo;
+    //printf("\n------------------------------------\n");
+    //for (int i=0; i<deviceCount; i++)
+    //{
+        //cudaGetDeviceProperties( &devInfo, 0 );
+        //printf ("CUDA Device %d Info:\n",i);
+        //printf("Name: %s\n", devInfo.name );
+        //printf("totalGlobalMem: %i\n",(int)devInfo.totalGlobalMem );
+        //printf("sharedMemPerBlock: %i\n",(int)devInfo.sharedMemPerBlock );
+        //printf("regsPerBlock: %i\n",devInfo.regsPerBlock );
+        //printf("warpSize: %i\n",devInfo.warpSize );
+        //printf("memPitch %i\n",(int)devInfo.memPitch );
+        //printf("maxThreadsPerBlock: %i\n",devInfo.maxThreadsPerBlock);
+        //if (i < deviceCount-1)
+            //printf("\n");
+    //}
+    //printf("------------------------------------\n");
+//#endif
+//}
 
 void CUDA_setBoxDimension(float value)
 {
@@ -174,10 +174,10 @@ void CUDA_EonDevice_async(float4 *residuePositions, float4 *residueMeta, int * r
     return;
 };
 
-void CUDA_Esum_async(float* result, float *d_resultMatrix, int resultSize, int datasetSize, cudaStream_t stream)
-{
-    // parallel sum on gpu if required
-}
+//void CUDA_Esum_async(float* result, float *d_resultMatrix, int resultSize, int datasetSize, cudaStream_t stream)
+//{
+    //// parallel sum on gpu if required
+//}
 
 // alternative summation algorithm will work with up to 33554432 residues
 void CUDA_EonDevice(float4 *residuePositions, float4 *residueMeta, int * residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, double* result, int blockSize, int datasetSize, int sm_size)
