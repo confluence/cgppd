@@ -982,18 +982,18 @@ void Replica::FreeDevice()
     cudaFree(device_residueCount);
     cudaFree(device_moleculeCount);
 
-#if CUDA_MC
-    cudaFree(device_moleculeCenters);
-    cudaFree(device_moleculeLengths);
-    cudaFree(device_translationVector);
-    cudaFree(device_reverseTranslationVector);
-    cudaFree(device_rotationVector);
-    cudaFree(device_reverseRotationVector);
-    cudaFreeHost(host_translationVector);
-    cudaFreeHost(host_reverseTranslationVector);
-    cudaFreeHost(host_rotationVector);
-    cudaFreeHost(host_reverseRotationVector);
-#endif
+//#if CUDA_MC
+    //cudaFree(device_moleculeCenters);
+    //cudaFree(device_moleculeLengths);
+    //cudaFree(device_translationVector);
+    //cudaFree(device_reverseTranslationVector);
+    //cudaFree(device_rotationVector);
+    //cudaFree(device_reverseRotationVector);
+    //cudaFreeHost(host_translationVector);
+    //cudaFreeHost(host_reverseTranslationVector);
+    //cudaFreeHost(host_rotationVector);
+    //cudaFreeHost(host_reverseRotationVector);
+//#endif
 }
 
 //#if CUDA_MC
