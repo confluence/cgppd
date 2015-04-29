@@ -143,25 +143,25 @@ public:
     bool replicaIsOnDevice;
 
 
-#if CUDA_MC
-    int *device_moleculeLengths;
-    float4 *device_moleculeCenters;				// rotational centers of each molecule
+//#if CUDA_MC
+    //int *device_moleculeLengths;
+    //float4 *device_moleculeCenters;				// rotational centers of each molecule
 
-    float4 *device_translationVector;
-    float4 *device_reverseTranslationVector;
-    float4 *device_rotationVector;  // vector(x,y,z)|amount(w)
-    float4 *device_reverseRotationVector;
-    float4 *host_translationVector;
-    float4 *host_reverseTranslationVector;
-    float4 *host_rotationVector;  // vector(x,y,z)|amount(w)
-    float4 *host_reverseRotationVector;
+    //float4 *device_translationVector;
+    //float4 *device_reverseTranslationVector;
+    //float4 *device_rotationVector;  // vector(x,y,z)|amount(w)
+    //float4 *device_reverseRotationVector;
+    //float4 *host_translationVector;
+    //float4 *host_reverseTranslationVector;
+    //float4 *host_rotationVector;  // vector(x,y,z)|amount(w)
+    //float4 *host_reverseRotationVector;
 
-    bool rotateOnDevice(int moleculeId, Vector3f vector, float amount);
-    bool translateOnDevice(int moleculeId, Vector3f translation);
-    bool lastMutationWasATranslate;
-    int lastMutatedMolecule;
-    void cudaRollbackMutation();
-#endif
+    //bool rotateOnDevice(int moleculeId, Vector3f vector, float amount);
+    //bool translateOnDevice(int moleculeId, Vector3f translation);
+    //bool lastMutationWasATranslate;
+    //int lastMutatedMolecule;
+    //void cudaRollbackMutation();
+//#endif
 
     void ReplicaDataToDevice();	// copy the replica to the device
     void MoleculeDataToDevice(int moleculeId); // update a molecule on the device
