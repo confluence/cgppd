@@ -27,28 +27,32 @@ extern "C"
     //void CUDA_EonDeviceTest(float *d_x, float *d_y, float *d_z, int *d_id, float4 *residueMeta, float* LJPotentials, double* result, int blockSize, int datasetSize);
 
     // initialise device
-    void cudaInfo();
+    //void cudaInfo();
     //copy data to the device
-    int CUDA_memcpy_to_device(void * destination, void * source, int mem_size);
-    int CUDA_memcpy_to_host(void * destination, void * source, int mem_size);
+    //int CUDA_memcpy_to_device(void * destination, void * source, int mem_size);
+    //int CUDA_memcpy_to_host(void * destination, void * source, int mem_size);
 
     // Asynchronous calls for use with streams
-    int CUDA_memcpy_to_device_async(void * destination, void * source, int mem_size, cudaStream_t stream);
-    int CUDA_memcpy_to_host_async(void * destination, void * source, int mem_size, cudaStream_t stream);
+    //int CUDA_memcpy_to_device_async(void * destination, void * source, int mem_size, cudaStream_t stream);
+    //int CUDA_memcpy_to_host_async(void * destination, void * source, int mem_size, cudaStream_t stream);
     void CUDA_EonDevice_async(float4 *residuePositions, float4 *residueMeta, int *residueCount, int *moleculePositions, int *moleculeCount, float* LJPotentials, float* device_result, int resultSize, int blockSize, int datasetSize, int sharedMemSize, cudaStream_t stream);
-    void CUDA_Esum_async(float* result, float *d_resultMatrix, int resultSize, int datasetSize, cudaStream_t stream);
+    //void CUDA_Esum_async(float* result, float *d_resultMatrix, int resultSize, int datasetSize, cudaStream_t stream);
 
-    void printCudaError(int code);
+    //void printCudaError(int code);
 
     void CUDA_setBoxDimension(float value);
-    void CUDA_freeBoxDimension();
+    void CUDA_freeBoxDimension(); // TODO: we should use this in Simulation
+
+// TODO: eliminate the directive; we will always use texture memory
 
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
     void bindLJTexture(float * ljp);
     void unbindLJTexture();
-    void bindLJTexture2D(float *ljp);
-    void unbindLJTexture2D ();
+    //void bindLJTexture2D(float *ljp);
+    //void unbindLJTexture2D ();
 #endif
+
+// TODO: eliminate these; we won't ever use anything other than shared memory
 
 #if METADATA_MEMORY == TEXTURE_MEM
     int bindMetaDataToTexture(void* deviceMemory, size_t size);
@@ -63,10 +67,10 @@ extern "C"
     cudaError_t cudaStreamCreate(cudaStream_t*);
     cudaError_t cudaStreamSynchronize(cudaStream_t);
     cudaError_t cudaStreamDestroy(cudaStream_t);
-    cudaError_t cudaStreamQuery(cudaStream_t);
-    cudaError_t cudaThreadSynchronize();
-    const char* cudaGetErrorString(cudaError_t);
-    cudaError_t cudaGetLastError();
+    //cudaError_t cudaStreamQuery(cudaStream_t);
+    //cudaError_t cudaThreadSynchronize();
+    //const char* cudaGetErrorString(cudaError_t);
+    //cudaError_t cudaGetLastError();
     cudaError_t cudaGetDeviceCount(int*);
     cudaError_t cudaMalloc( void** devPtr, size_t size );
     cudaError_t cudaMemset( void* devPtr, int value ,size_t size );
@@ -77,7 +81,7 @@ extern "C"
     cudaError_t cudaFree( void* devPtr );
     cudaError_t cudaGetDevice( int* dev );
     cudaError_t cudaSetDevice( int dev );
-    cudaError_t cudaDeviceReset( void );
+    //cudaError_t cudaDeviceReset( void );
 
 };
 
