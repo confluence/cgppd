@@ -69,8 +69,8 @@ extern "C"
     cudaError_t cudaStreamDestroy(cudaStream_t);
     //cudaError_t cudaStreamQuery(cudaStream_t);
     //cudaError_t cudaThreadSynchronize();
-    //const char* cudaGetErrorString(cudaError_t);
-    //cudaError_t cudaGetLastError();
+    const char* cudaGetErrorString(cudaError_t);
+    cudaError_t cudaGetLastError();
     cudaError_t cudaGetDeviceCount(int*);
     cudaError_t cudaMalloc( void** devPtr, size_t size );
     cudaError_t cudaMemset( void* devPtr, int value ,size_t size );
@@ -81,7 +81,7 @@ extern "C"
     cudaError_t cudaFree( void* devPtr );
     cudaError_t cudaGetDevice( int* dev );
     cudaError_t cudaSetDevice( int dev );
-    //cudaError_t cudaDeviceReset( void );
+    cudaError_t cudaDeviceReset( void );
 
 };
 
