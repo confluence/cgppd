@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 make clean
 make LJ=repulsive STREAMS=yes POLYMERTEST=yes
