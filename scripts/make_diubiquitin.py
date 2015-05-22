@@ -43,9 +43,11 @@ class Chain(object):
     def copy(cls, chain):
         return cls([Residue.copy(r) for r in chain.residues])
 
-    def rotate(self, theta, axis):
+    def rotate(self, theta, axis, centre):
         for r in self.residues:
-            r.pos = np.array(vector(r.pos).rotate(theta, axis))
+            rel_pos = r.pos - centre
+            rel_pos = np.array(vector(rel_pos).rotate(theta, axis))
+            r.pos = rel_pos + centre
 
     def translate(self, translation_vector):
         for r in self.residues:
@@ -93,7 +95,6 @@ binding_sites = {
 }
 
 for sitename, site in binding_sites.iteritems():
-    print sitename, site
     # target vector = binding site -> centre
 
     v_t = centre - site
@@ -125,7 +126,7 @@ for sitename, site in binding_sites.iteritems():
     # create translated and rotated ubiquitin
 
     second_ubiquitin = Chain.copy(ubiquitin)
-    second_ubiquitin.rotate(theta, axis)
+    second_ubiquitin.rotate(theta, axis, centre)
     second_ubiquitin.translate(trans)
 
     # TODO this is where we will add the alanine
@@ -142,5 +143,5 @@ for sitename, site in binding_sites.iteritems():
 # TODO: optionally add fake alanine sidechain to end of tail
 #       pad the bond with 2 * 3.8 instead and put the alanine in the middle
 
-# Why is lys_48 messed up? The bond distance is way too large.
-# All the bond distances are wrong! They should be 3.8, and are not.
+
+# TODO: build in a test to measure the distance between the tail and the binding site.
