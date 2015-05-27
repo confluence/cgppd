@@ -2,7 +2,9 @@
 
 import sys
 import numpy as np
+import math
 import re
+import argparse
 from visual import vector
 
 
@@ -19,7 +21,8 @@ class Residue(object):
 class Chain(object):
     ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z ]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
 
-    FORMAT = "ATOM  {:>5}  CA  {} {}{:>4}    {:8.3f}{:8.3f}{:8.3f}  0.00  0.00\n" # atom id, amino acid, chain id, residue id, x, y, z
+    ATOM_FORMAT = "ATOM  {:>5}  CA  {} {}{:>4}    {:8.3f}{:8.3f}{:8.3f}  0.00  0.00\n" # atom id, amino acid, chain id, residue id, x, y, z
+    TER_FORMAT = "TER   {:>5}      {} {}{:>4}\n"
 
     def __init__(self, residues):
         self.residues = residues
@@ -57,7 +60,11 @@ class Chain(object):
         lines = []
 
         for i, r in enumerate(self.residues):
-            lines.append(self.FORMAT.format(offset + i + 1, r.amino_acid, chain_id, i + 1, r.pos[0], r.pos[1], r.pos[2]))
+            lines.append(self.ATOM_FORMAT.format(offset + i + 1, r.amino_acid, chain_id, i + 1, r.pos[0], r.pos[1], r.pos[2]))
+
+        i = len(self.residues)
+        r = self.residues[-1]
+        lines.append(self.TER_FORMAT.format(offset + i, r.amino_acid, chain_id, i))
 
         return lines
 
@@ -84,9 +91,58 @@ class Molecule(object):
             offset += len(c.residues)
             chain_id = chr(ord(chain_id) + 1)
 
-        lines.append("TER\n")
+        lines.append("END\n")
 
         return lines
+
+
+class Quaternion(object):
+    def __init__(self, q):
+        self.q = np.array([q[0], q[1], q[2], q[3]], dtype=np.float64)
+
+    @classmethod
+    def from_angle_axis(cls, angle, axis):
+        q = cls.from_vector(axis).q
+        l = np.linalg.norm(q)
+        if l > np.finfo(float).eps * 4.0:
+            q *= math.sin(angle/2.0) / l
+        q[0] = math.cos(angle/2.0)
+        return cls(q)
+
+    @classmethod
+    def from_vector(cls, v):
+        vn = v / np.linalg.norm(v)
+        return cls(np.array([0.0, vn[0], vn[1], vn[2]]))
+
+    def conjugate(self):
+        c = np.array(self.q, copy=True)
+        np.negative(c[1:], c[1:])
+        return Quaternion(c)
+
+    def multiply(self, other):
+        w0, x0, y0, z0 = self.q
+        w1, x1, y1, z1 = other.q
+
+        return Quaternion([
+            -x1*x0 - y1*y0 - z1*z0 + w1*w0,
+            x1*w0 + y1*z0 - z1*y0 + w1*x0,
+            -x1*z0 + y1*w0 + z1*x0 + w1*y0,
+            x1*y0 - y1*x0 + z1*w0 + w1*z0
+        ])
+
+    def rotate(self, v):
+        return self.multiply(Quaternion.from_vector(v)).multiply(self.conjugate())[1:]
+
+
+def test_quaternion_from_angle_axis():
+    q = Quaternion.from_angle_axis(0.123, [1, 0, 0])
+    assert np.allclose(q.q, [0.99810947, 0.06146124, 0, 0])
+
+def test_quaternion_multiply():
+    q = Quaternion([4, 1, -2, 3]).multiply(Quaternion([8, -5, 6, 7]))
+    assert np.allclose(q.q, [28, 20, 30, 56]) # is this right?
+
+    # TODO a rotation test, and then replace the rotation from the visual library
 
 
 UBIQUITIN_PDB = """ATOM     25  CA  MET     1      19.902   3.678  -0.899  0.00  0.00      B
@@ -269,8 +325,13 @@ def test_make_diubiquitin_with_fake_sidechain():
         assert abs(ala_site_length - 3.8) < 0.00001
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate diubiquitin PDBs")
+    parser.add_argument("-f", "--fake-sidechain", help="Create a fake side-chain by inserting an alanine between the bonded residues", action="store_true")
+    args = parser.parse_args()
+
     for resid in (48, 63, 1):
-        diubiquitin, output_filename = make_diubiquitin(resid)
+        diubiquitin, output_filename = make_diubiquitin(resid, args.fake_sidechain)
         with open(output_filename, 'w') as outputfile:
             outputfile.writelines(diubiquitin.to_pdb())
 
+# TODO: check if we're actually doing quaternion rotation!
