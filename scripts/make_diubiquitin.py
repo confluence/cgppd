@@ -142,8 +142,6 @@ def test_quaternion_multiply():
     q = Quaternion([4, 1, -2, 3]).multiply(Quaternion([8, -5, 6, 7]))
     assert np.allclose(q.q, [28, 20, 30, 56]) # is this right?
 
-    # TODO a rotation test, and then replace the rotation from the visual library
-
 
 UBIQUITIN_PDB = """ATOM     25  CA  MET     1      19.902   3.678  -0.899  0.00  0.00      B
 ATOM     26  CA  GLN     2      17.074   3.470   1.639  0.00  0.00      B
@@ -334,4 +332,5 @@ if __name__ == "__main__":
         with open(output_filename, 'w') as outputfile:
             outputfile.writelines(diubiquitin.to_pdb())
 
-# TODO: check if we're actually doing quaternion rotation!
+# TODO a rotation test, and then replace the rotation from the visual library
+# TODO output lines for config file (pdb and flexibility sections)
