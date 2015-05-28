@@ -5,7 +5,28 @@ import numpy as np
 import math
 import re
 import argparse
-from visual import vector
+
+
+def rotate(v, axis, theta):
+    axis = np.asarray(axis)
+    theta = np.asarray(theta)
+    axis = axis/math.sqrt(np.dot(axis, axis))
+    
+    a = math.cos(theta/2)
+    b, c, d = -axis*math.sin(theta/2)
+    aa, bb, cc, dd = a*a, b*b, c*c, d*d
+    bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
+    
+    matrix = np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
+                     [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
+                     [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
+
+    return np.dot(matrix, v)
+
+
+def test_rotate():
+    assert np.allclose(rotate([3, 5, 0], [4, 4, 1], 1.2), [2.74911638, 4.77180932, 1.91629719])
+    assert np.allclose(rotate([12, 34, 56], [78, 90,12], 2*math.pi), [12, 34, 56])
 
 
 class Residue(object):
@@ -49,7 +70,7 @@ class Chain(object):
     def rotate(self, theta, axis, centre):
         for r in self.residues:
             rel_pos = r.pos - centre
-            rel_pos = np.array(vector(rel_pos).rotate(theta, axis))
+            rel_pos = rotate(rel_pos, axis, theta)
             r.pos = rel_pos + centre
 
     def translate(self, translation_vector):
@@ -94,53 +115,6 @@ class Molecule(object):
         lines.append("END\n")
 
         return lines
-
-
-class Quaternion(object):
-    def __init__(self, q):
-        self.q = np.array([q[0], q[1], q[2], q[3]], dtype=np.float64)
-
-    @classmethod
-    def from_angle_axis(cls, angle, axis):
-        q = cls.from_vector(axis).q
-        l = np.linalg.norm(q)
-        if l > np.finfo(float).eps * 4.0:
-            q *= math.sin(angle/2.0) / l
-        q[0] = math.cos(angle/2.0)
-        return cls(q)
-
-    @classmethod
-    def from_vector(cls, v):
-        vn = v / np.linalg.norm(v)
-        return cls(np.array([0.0, vn[0], vn[1], vn[2]]))
-
-    def conjugate(self):
-        c = np.array(self.q, copy=True)
-        np.negative(c[1:], c[1:])
-        return Quaternion(c)
-
-    def multiply(self, other):
-        w0, x0, y0, z0 = self.q
-        w1, x1, y1, z1 = other.q
-
-        return Quaternion([
-            -x1*x0 - y1*y0 - z1*z0 + w1*w0,
-            x1*w0 + y1*z0 - z1*y0 + w1*x0,
-            -x1*z0 + y1*w0 + z1*x0 + w1*y0,
-            x1*y0 - y1*x0 + z1*w0 + w1*z0
-        ])
-
-    def rotate(self, v):
-        return self.multiply(Quaternion.from_vector(v)).multiply(self.conjugate())[1:]
-
-
-def test_quaternion_from_angle_axis():
-    q = Quaternion.from_angle_axis(0.123, [1, 0, 0])
-    assert np.allclose(q.q, [0.99810947, 0.06146124, 0, 0])
-
-def test_quaternion_multiply():
-    q = Quaternion([4, 1, -2, 3]).multiply(Quaternion([8, -5, 6, 7]))
-    assert np.allclose(q.q, [28, 20, 30, 56]) # is this right?
 
 
 UBIQUITIN_PDB = """ATOM     25  CA  MET     1      19.902   3.678  -0.899  0.00  0.00      B
@@ -245,7 +219,7 @@ def make_diubiquitin(binding_resid, fake_sidechain=False):
 
     # apply rotation to end of tail (relative to centre; i.e. v_s)
 
-    rot_v_s = np.array(vector(v_s).rotate(theta, axis))
+    rot_v_s = rotate(v_s, axis, theta)
 
     # calculate translation vector: end of rotated tail -> binding site (-v_t!)
 
@@ -332,5 +306,4 @@ if __name__ == "__main__":
         with open(output_filename, 'w') as outputfile:
             outputfile.writelines(diubiquitin.to_pdb())
 
-# TODO a rotation test, and then replace the rotation from the visual library
 # TODO output lines for config file (pdb and flexibility sections)
