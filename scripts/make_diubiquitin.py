@@ -249,17 +249,37 @@ def make_diubiquitin(binding_resid, fake_sidechain=False):
     # output PDB
 
     diubiquitin = Molecule([second_ubiquitin, ubiquitin])
+
     if fake_sidechain:
         sitename += "_sidechain"
     output_filename = "diubiquitin_%s.pdb" % sitename
 
-    return diubiquitin, output_filename
+    # output config
+
+    if fake_sidechain:
+        flexible_segment_1 = "73 74 75 76 77 %d" % (binding_resid + 77)
+        flexible_segment_2 = "150 151 152 153"
+    else:
+        flexible_segment_1 = "73 74 75 76 %d" % (binding_resid + 76)
+        flexible_segment_2 = "149 150 151 152"
+
+    output_config = """files
+
+t(0,0,0) r(0,0,0,0) data/diubiquitin/%s diubiquitin
+
+segments
+
+diubiquitin %s
+diubiquitin %s
+""" % (output_filename, flexible_segment_1, flexible_segment_2)
+
+    return diubiquitin, output_filename, output_config
 
 
 def test_make_diubiquitin():
     resids = (48, 63, 1)
     results = [make_diubiquitin(resid, False) for resid in resids]
-    molecules, filenames = zip(*results)
+    molecules, filenames, configs = zip(*results)
     
     assert filenames == ("diubiquitin_lys_48.pdb", "diubiquitin_lys_63.pdb", "diubiquitin_met_1.pdb")
 
@@ -277,7 +297,7 @@ def test_make_diubiquitin():
 def test_make_diubiquitin_with_fake_sidechain():
     resids = (48, 63, 1)
     results = [make_diubiquitin(resid, True) for resid in resids]
-    molecules, filenames = zip(*results)
+    molecules, filenames, configs = zip(*results)
     
     assert filenames == ("diubiquitin_lys_48_sidechain.pdb", "diubiquitin_lys_63_sidechain.pdb", "diubiquitin_met_1_sidechain.pdb")
 
@@ -302,8 +322,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for resid in (48, 63, 1):
-        diubiquitin, output_filename = make_diubiquitin(resid, args.fake_sidechain)
+        diubiquitin, output_filename, output_config = make_diubiquitin(resid, args.fake_sidechain)
         with open(output_filename, 'w') as outputfile:
             outputfile.writelines(diubiquitin.to_pdb())
 
-# TODO output lines for config file (pdb and flexibility sections)
+        print "-----------------------"
+        print output_config
+
+# TODO multiple disconnected segments in one molecule?! Can we read that from config?
