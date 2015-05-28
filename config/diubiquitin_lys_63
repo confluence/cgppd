@@ -13,4 +13,9 @@ prefix diubiquitin_lys_63
 
 files
 
-t(0,0,0) r(0,0,0,0) data/diubiquitin/diubiquitin_lys_63.pdb
+t(0,0,0) r(0,0,0,0) data/diubiquitin/diubiquitin_lys_63_sidechain.pdb diubiquitin
+
+segments
+
+diubiquitin 73 74 75 76 77 140
+diubiquitin 150 151 152 153

@@ -1,10 +1,12 @@
 SOONEST
 
-* check to see if we can specify multiple segments for one molecule (probably yes)
 * set up diubiquitin simulations using new script and run them
 * process data from polyalanine simulations and try to complete them
 
 SHORTLY AFTERWARDS
+
+DO ALL THIS IN A PARALLEL BRANCH; DON'T BREAK THE EXISTING IMPLEMENTATION FOR SIMULATIONS!
+
 * ZOMG, can we use fmaf to speed up the calculations?
     * The compiler may be doing this already: https://stackoverflow.com/questions/23042126/cuda-fmaf-function
 * Why do we need residueID on the GPU at all? We only compare these within the same chain, so why not use existing array indices?

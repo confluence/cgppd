@@ -13,4 +13,9 @@ prefix diubiquitin_met_1
 
 files
 
-t(0,0,0) r(0,0,0,0) data/diubiquitin/diubiquitin_met_1.pdb
+t(0,0,0) r(0,0,0,0) data/diubiquitin/diubiquitin_met_1_sidechain.pdb diubiquitin
+
+segments
+
+diubiquitin 73 74 75 76 77 78
+diubiquitin 150 151 152 153
