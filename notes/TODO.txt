@@ -1,7 +1,15 @@
 SOONEST
 
 * set up diubiquitin simulations using new script and run them
+* figure out postprocessing chain
+    * PDBs -> trajectory file -> g_cluster -> postprocess
+    * only take samples past a certain iteration and at 300K?
+        * so other replicas are only used for exchange?
+        * is the threshold different to the sample threshold?
+    * postprocess calculates rmsd from reference structure?
+        
 * process data from polyalanine simulations and try to complete them
+    * should we also only take data for 300K?
 
 SHORTLY AFTERWARDS
 
