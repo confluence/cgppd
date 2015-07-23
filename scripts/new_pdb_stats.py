@@ -94,6 +94,12 @@ class Simulation(object):
         self.N = N
 
     @classmethod
+    def write_summary_from_trajectory(cls, trajectoryfilename, summaryfilename, args):
+        with open(trajectoryfilename, 'r') as trajectoryfile:
+            with open(summaryfilename, 'w') as summaryfile:
+                pass # first figure out what clustered trajectory file looks like
+
+    @classmethod
     def write_summary(cls, filenames, summaryfilename, args):
         num_files = len(filenames)
         with open(summaryfilename, 'w') as summaryfile:
@@ -197,6 +203,26 @@ class SimulationSet(object):
 
     def __init__(self, simulations):
         self.simulations = simulations # list
+
+    @classmethod
+    def from_trajectorylist(cls, args):
+        simulations = []
+
+        for trajectoryfilename in args.trajectories:
+            logging.info("Processing trajectory '%s'..." % trajectoryfilename)
+
+            summaryfilename = "summary_%s" % trajectoryfilename
+
+            if not os.path.isfile(summaryfilename):
+                logging.info("Writing new summary file...")
+                Simulation.write_summary_from_trajectory(trajectoryfilename, summaryfilename, args)
+
+            if os.path.isfile(summaryfilename):
+                logging.info("Loading summary file...")
+                s = Simulation.from_summary(summaryfilename, args)
+                simulations.append(s)
+
+        return cls(simulations)
 
     @classmethod
     def from_dirlist(cls, args):
@@ -374,7 +400,10 @@ PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("plot_"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
-    parser.add_argument("dirs", help="Individual directories to process", nargs="+")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-d", "--dirs", help="Individual directories to process", nargs="*")
+    group.add_argument("-j", "--trajectories", help="Individual trajectory files to process", nargs="*")
 
     parser.add_argument("-p", "--plot", action="append", dest="plots", default=[], help="Select plot(s) (available: %s)" % ", ".join(PLOTS))
     parser.add_argument("-m", "--measurement", action="append", dest="measurements", default=[], help="Select measurement(s) (available: %s)" % ", ".join(SimulationSet.MEASUREMENTS))
@@ -392,7 +421,14 @@ if __name__ == "__main__":
     elif args.verbose:
         logging.basicConfig(level=logging.INFO)
 
-    s = SimulationSet.from_dirlist(args)
+    if not args.dirs and not args.trajectories:
+        logging.warn("No directories or trajectories given. Exiting.")
+        sys.exit(1)
+    elif args.dirs:
+        s = SimulationSet.from_dirlist(args)
+    else:
+        s = SimulationSet.from_trajectorylist(args)
+        
     s.all_plots(args)
 
 
