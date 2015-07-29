@@ -6,8 +6,8 @@
 obj/.*
 output/.*
 .*\.cubin
-cgppd$
-test$
+cgppd(_.+)?$
+test(_.+)?$
 .*\.d
 inc/.*
 logs/.*\.log
