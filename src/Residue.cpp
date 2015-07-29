@@ -18,11 +18,23 @@ Residue::Residue(const Residue & r)
     aminoAcidIndex = r.aminoAcidIndex;
     electrostaticCharge = r.electrostaticCharge;
     vanderWaalRadius = r.vanderWaalRadius;
+    
     position = r.position;
     relativePosition = r.relativePosition;
+    
     chainId = r.chainId;
+    chain_int_id = r.chain_int_id;
     resSeq = r.resSeq;
     moleculeId = r.moleculeId;
+    
+    chain_UID = r.chain_UID;
+    rigid_domain_UID = r.rigid_domain_UID;
+    segment_bond_UID = r.segment_bond_UID;
+
+#if USING_CUDA
+    pos_w = r.pos_w;
+    meta_w = r.meta_w;
+#endif
 }
 
 #if USING_CUDA

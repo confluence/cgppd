@@ -1141,7 +1141,7 @@ void Replica::saveAsSinglePDB(const char *filename, const char *prefix, int samp
     fprintf(output,"REMARK sample: %d \n", sample);
     fprintf(output,"REMARK potential: %0.10f \n", float(potential));
 
-    char chainId = 'A';
+    char out_chain_id = 0;
     int itemcount = 0;
     int lastSeqNo = 0;
     size_t i;
@@ -1157,12 +1157,13 @@ void Replica::saveAsSinglePDB(const char *filename, const char *prefix, int samp
             Residue r = molecules[m].Residues[i];
             itemcount++;
 
-            fprintf(output,"ATOM  %5d CA   %3s %C%4d    %8.3f%8.3f%8.3f%6.2f%6.2f\n", itemcount, aminoAcids.get(r.aminoAcidIndex).getSNAME(), chainId, r.resSeq, r.position.x, r.position.y, r.position.z, 0.0f, 0.0f);
+            out_chain_id = 64 + r.chain_UID;
+
+            fprintf(output,"ATOM  %5d CA   %3s %C%4d    %8.3f%8.3f%8.3f%6.2f%6.2f\n", itemcount, aminoAcids.get(r.aminoAcidIndex).getSNAME(), out_chain_id, r.resSeq, r.position.x, r.position.y, r.position.z, 0.0f, 0.0f);
 
             lastSeqNo = r.resSeq;
         }
-        fprintf(output,"TER   %5d      %3s %C%4d \n", itemcount, aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(), chainId, lastSeqNo);
-        chainId++;
+        fprintf(output,"TER   %5d      %3s %C%4d \n", itemcount, aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(), out_chain_id, lastSeqNo);
         fflush(output);
     }
     fprintf(output,"END \n");
