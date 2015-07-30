@@ -84,7 +84,12 @@ class Temperature(object):
 class Simulation(object):
     FILENAME = re.compile('.*/pdb/sample_(.*)_(.*)K_ *(.*).pdb')
     NAME = re.compile('(\d*)$')
+
     ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
+    REMARK_SAMPLE = re.compile('REMARK sample: (\d+)')
+    REMARK_POTENTIAL = re.compile('REMARK potential: (-?\d+\.\d+)')
+    FRAME = re.compile('TITLE *frame t= -?(\d+).000')
+    
     SAMPLE = re.compile('(\d+) at (\d+\.\d+)K with potential (-?\d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
     CHAIN = re.compile('chain (.*) length (\d+\.\d+) radius (\d+\.\d+)')
 
@@ -97,7 +102,52 @@ class Simulation(object):
     def write_summary_from_trajectory(cls, trajectoryfilename, summaryfilename, args):
         with open(trajectoryfilename, 'r') as trajectoryfile:
             with open(summaryfilename, 'w') as summaryfile:
-                pass # first figure out what clustered trajectory file looks like
+                logging.debug("Parsing trajectory file '%s' ..." % (trajectoryfilename))
+
+                # we probably need to postprocess with cgppd to find the potentials -- or do we?
+                # also probably need to store information about the clusters, e.g. number of samples per cluster
+                # we need to measure the length of the whole molecule, not just the chains
+                sample = Sample(0, 300.0, 0)
+                chain = None
+                
+                for line in trajectoryfile:
+                    if line.startswith("REMARK sample:"): # unclustered trajectory
+                        sample.sample_id = int(cls.REMARK_SAMPLE.match(line).group(1))
+                    elif line.startswith("REMARK potential:"): # unclustered trajectory
+                        sample.potential = float(cls.REMARK_POTENTIAL.match(line).group(1))
+                    elif "frame" in line: # clustered trajectory
+                        sample.sample_id = int(cls.FRAME.match(line).group(1))
+                    elif line.startswith("ATOM"):
+                        amino_acid, chain_id, index, x, y, z = cls.ATOM.match(line).groups()
+
+                        if not chain:
+                            chain = Chain(chain_id)
+                        chain.add_residue(Residue(amino_acid, int(index), float(x), float(y), float(z)))
+
+                    elif line.startswith("TER"): # end of chain
+                        sample.add_chain(chain)
+                        chain = None
+                    
+                    elif line.startswith("ENDMDL"): # end of sample
+                        summaryfile.write(str(sample))
+
+                        # quick and dirty hack to calculate stats for multi-chain molecule
+                        # length relies on sensible ordering of chains in the PDB file
+                        molecule = Chain("all")
+                        
+                        for chain in sample.chains:
+                            chain.measure()
+                            summaryfile.write(str(chain))
+
+                            molecule.residues.extend(chain.residues)
+
+                        molecule.measure()
+                        summaryfile.write(str(molecule))
+                            
+                        sample = Sample(0, 300.0, 0)
+                        chain = None
+                            
+                
 
     @classmethod
     def write_summary(cls, filenames, summaryfilename, args):
@@ -132,7 +182,13 @@ class Simulation(object):
 
     @classmethod
     def from_summary(cls, filename, args):
-        name = filename.split('/')[-2].split("_")[0]
+        directory, basename = os.path.split(filename)
+        if basename == "summary":
+            name = os.path.split(directory)[1]
+        else:
+            name = os.path.splitext(basename)[0].split("_")[1]
+        
+        name = os.path.basename(filename).split("_")[0]
         N = cls.NAME.search(name).group(1) or None
 
         with open(filename) as summaryfile:
@@ -172,7 +228,7 @@ class Dataset(object):
 
         for sim in simulation_set.simulations:
             for t in sim.temperatures_list:
-                if args.temperatures and t not in args.temperatures:
+                if args.temperatures and t.temperature not in args.temperatures:
                     continue
 
                 for s in t.samples:
@@ -323,34 +379,20 @@ class SimulationSet(object):
             for chain_id in dataset.chain_ids:
                 values_per_temperature = []
 
-                if args.aggregate: # aggregate all temperatures
+                for temperature in dataset.temperatures:
                     values = []
 
                     for N in dataset.simulations:
-                        chains = [c for t in dataset.temperatures for c in dataset.data[(N, chain_id, t)]]
+                        chains = dataset.data[(N, chain_id, temperature)]
                         chain_values = np.array([getattr(c, measurement) for c in chains])
                         values.append(np.sqrt(np.mean(chain_values**2)))
 
-                    values_per_temperature.append((None, values))
-
-                else:
-                    for temperature in dataset.temperatures:
-                        values = []
-
-                        for N in dataset.simulations:
-                            chains = dataset.data[(N, chain_id, temperature)]
-                            chain_values = np.array([getattr(c, measurement) for c in chains])
-                            values.append(np.sqrt(np.mean(chain_values**2)))
-
-                        values_per_temperature.append((temperature, values))
+                    values_per_temperature.append((temperature, values))
 
                 fig = plt.figure()
 
                 for i, (temperature, values) in enumerate(values_per_temperature):
-                    if temperature is not None:
-                        ax = fig.add_subplot(dataset.dimy, dataset.dimx, i + 1)
-                    else:
-                        ax = fig.add_subplot(1, 1, i + 1)
+                    ax = fig.add_subplot(dataset.dimy, dataset.dimx, i + 1)
 
                     plt.plot(xvalues, values, 'bo')
 
@@ -366,10 +408,8 @@ class SimulationSet(object):
 
                         ax.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
 
-                        if temperature is not None:
-                            ax.set_title("%sK" % temperature)
-                        else:
-                            ax.set_title("All temperatures (%sK - %sK)" % (dataset.temperatures[0], dataset.temperatures[-1]))
+                        ax.set_title("%sK" % temperature)
+  
 
                         ax.set_xscale('log', basex=2) # TODO: investigate using the loglog function instead; maybe add an option for it
                         ax.set_yscale('log')
@@ -407,9 +447,9 @@ if __name__ == "__main__":
 
     parser.add_argument("-p", "--plot", action="append", dest="plots", default=[], help="Select plot(s) (available: %s)" % ", ".join(PLOTS))
     parser.add_argument("-m", "--measurement", action="append", dest="measurements", default=[], help="Select measurement(s) (available: %s)" % ", ".join(SimulationSet.MEASUREMENTS))
-    parser.add_argument("-c", "--chain", action="append", dest="chains", default=[], help="Select chain(s)")
-    parser.add_argument("-t", "--temperature", action="append", type=float, dest="temperatures", default=[], help="Select temperature(s)")
-    parser.add_argument("-a", "--aggregate", help="Aggregate temperatures (plot vs N only)", action="store_true")
+    parser.add_argument("-c", "--chain", action="append", dest="chains", default=["all"], help="Select chain(s)")
+    parser.add_argument("-t", "--temperature", action="append", type=float, dest="temperatures", default=[300.0], help="Select temperature(s)")
+
     parser.add_argument("-f", "--fit", help="Attempt to fit values to function with the provided exponent (plot vs N only)")
 
     parser.add_argument("-v", "--verbose", help="Turn on verbose output", action="count")
