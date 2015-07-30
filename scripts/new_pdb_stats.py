@@ -56,11 +56,12 @@ class Chain(object):
 
 
 class Sample(object):
-    def __init__(self, sample_id, temperature, potential, chains=None):
+    def __init__(self, sample_id, temperature, potential, chains=None, cluster=None):
         self.sample_id = sample_id
         self.temperature = temperature
         self.potential = potential
         self.chains = chains or []
+        self.cluster = cluster
 
     def add_chain(self, chain):
         self.chains.append(chain)
@@ -81,14 +82,67 @@ class Temperature(object):
         return "temperature %f with %d samples" % (self.temperature, len(self.samples))
 
 
+class Cluster(object):
+    def __init__(self, frame_id, chains=None, samples=None):
+        self.frame_id = frame_id
+        self.chains = chains or []
+        self.samples = samples or []
+
+    def add_chain(self, chain):
+        self.chains.append(chain)
+
+
+class ClusterSet(object): 
+    FRAME = re.compile('TITLE *frame t= -?(\d+).000')
+
+    def __init__(self, clusters):
+        self.clusters = clusters # dict with frame as key
+    
+    @classmethod
+    def from_trajectory_and_log(cls, trajectoryfilename, logfilename, args):
+        with open(trajectoryfilename, 'r') as trajectoryfile:
+            clusters = {}
+            logging.debug("Parsing trajectory file '%s' ..." % (trajectoryfilename))
+            
+            for line in trajectoryfile:
+                if "frame" in line: # clustered trajectory
+                    cluster = Cluster(int(cls.FRAME.match(line).group(1)))
+                    chain = None
+                elif line.startswith("ATOM"):
+                    amino_acid, chain_id, index, x, y, z = cls.ATOM.match(line).groups()
+
+                    if not chain:
+                        chain = Chain(chain_id)
+                    chain.add_residue(Residue(amino_acid, int(index), float(x), float(y), float(z)))
+
+                elif line.startswith("TER"): # end of chain
+                    cluster.add_chain(chain)
+                    chain = None
+                
+                elif line.startswith("ENDMDL"): # end of cluster
+                    # quick and dirty hack to calculate stats for multi-chain molecule
+                    # length relies on sensible ordering of chains in the PDB file
+                    molecule = Chain("all")
+                    
+                    for chain in cluster.chains:
+                        chain.measure()
+                        molecule.residues.extend(chain.residues)
+
+                    molecule.measure()
+                    cluster.add_chain(molecule)
+                    clusters[cluster.frame_id] = cluster
+
+        with open(logfilename, 'r') as logfile:
+            pass
+
+        return cls(clusters)
+
+
 class Simulation(object):
     FILENAME = re.compile('.*/pdb/sample_(.*)_(.*)K_ *(.*).pdb')
     NAME = re.compile('(\d*)$')
 
     ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
-    REMARK_SAMPLE = re.compile('REMARK sample: (\d+)')
-    REMARK_POTENTIAL = re.compile('REMARK potential: (-?\d+\.\d+)')
-    FRAME = re.compile('TITLE *frame t= -?(\d+).000')
     
     SAMPLE = re.compile('(\d+) at (\d+\.\d+)K with potential (-?\d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
     CHAIN = re.compile('chain (.*) length (\d+\.\d+) radius (\d+\.\d+)')
@@ -97,57 +151,6 @@ class Simulation(object):
         self.temperatures = temperatures # actually needs to be a dict
         self.name = name
         self.N = N
-
-    @classmethod
-    def write_summary_from_trajectory(cls, trajectoryfilename, summaryfilename, args):
-        with open(trajectoryfilename, 'r') as trajectoryfile:
-            with open(summaryfilename, 'w') as summaryfile:
-                logging.debug("Parsing trajectory file '%s' ..." % (trajectoryfilename))
-
-                # we probably need to postprocess with cgppd to find the potentials -- or do we?
-                # also probably need to store information about the clusters, e.g. number of samples per cluster
-                # we need to measure the length of the whole molecule, not just the chains
-                sample = Sample(0, 300.0, 0)
-                chain = None
-                
-                for line in trajectoryfile:
-                    if line.startswith("REMARK sample:"): # unclustered trajectory
-                        sample.sample_id = int(cls.REMARK_SAMPLE.match(line).group(1))
-                    elif line.startswith("REMARK potential:"): # unclustered trajectory
-                        sample.potential = float(cls.REMARK_POTENTIAL.match(line).group(1))
-                    elif "frame" in line: # clustered trajectory
-                        sample.sample_id = int(cls.FRAME.match(line).group(1))
-                    elif line.startswith("ATOM"):
-                        amino_acid, chain_id, index, x, y, z = cls.ATOM.match(line).groups()
-
-                        if not chain:
-                            chain = Chain(chain_id)
-                        chain.add_residue(Residue(amino_acid, int(index), float(x), float(y), float(z)))
-
-                    elif line.startswith("TER"): # end of chain
-                        sample.add_chain(chain)
-                        chain = None
-                    
-                    elif line.startswith("ENDMDL"): # end of sample
-                        summaryfile.write(str(sample))
-
-                        # quick and dirty hack to calculate stats for multi-chain molecule
-                        # length relies on sensible ordering of chains in the PDB file
-                        molecule = Chain("all")
-                        
-                        for chain in sample.chains:
-                            chain.measure()
-                            summaryfile.write(str(chain))
-
-                            molecule.residues.extend(chain.residues)
-
-                        molecule.measure()
-                        summaryfile.write(str(molecule))
-                            
-                        sample = Sample(0, 300.0, 0)
-                        chain = None
-                            
-                
 
     @classmethod
     def write_summary(cls, filenames, summaryfilename, args):
@@ -176,19 +179,30 @@ class Simulation(object):
                             chain = None
 
                     summaryfile.write(str(sample))
+                    
+                    # quick and dirty hack to calculate stats for multi-chain molecule
+                    # length relies on sensible ordering of chains in the PDB file
+                    molecule = Chain("all")
+                    
                     for chain in sample.chains:
                         chain.measure()
                         summaryfile.write(str(chain))
 
+                        molecule.residues.extend(chain.residues)
+
+                    molecule.measure()
+                    summaryfile.write(str(molecule))
+
     @classmethod
     def from_summary(cls, filename, args):
         directory, basename = os.path.split(filename)
-        if basename == "summary":
-            name = os.path.split(directory)[1]
-        else:
-            name = os.path.splitext(basename)[0].split("_")[1]
         
-        name = os.path.basename(filename).split("_")[0]
+        rest, last_dir = os.path.split(directory)
+        name = "_".join(last_dir.split("_")[:-1])
+
+        if basename == "cluster_summary":
+            name = "cluster_" + name
+
         N = cls.NAME.search(name).group(1) or None
 
         with open(filename) as summaryfile:
@@ -259,26 +273,6 @@ class SimulationSet(object):
 
     def __init__(self, simulations):
         self.simulations = simulations # list
-
-    @classmethod
-    def from_trajectorylist(cls, args):
-        simulations = []
-
-        for trajectoryfilename in args.trajectories:
-            logging.info("Processing trajectory '%s'..." % trajectoryfilename)
-
-            summaryfilename = "summary_%s" % trajectoryfilename
-
-            if not os.path.isfile(summaryfilename):
-                logging.info("Writing new summary file...")
-                Simulation.write_summary_from_trajectory(trajectoryfilename, summaryfilename, args)
-
-            if os.path.isfile(summaryfilename):
-                logging.info("Loading summary file...")
-                s = Simulation.from_summary(summaryfilename, args)
-                simulations.append(s)
-
-        return cls(simulations)
 
     @classmethod
     def from_dirlist(cls, args):
@@ -441,9 +435,7 @@ PLOTS = tuple(n[5:] for n in SimulationSet.__dict__ if n.startswith("plot_"))
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
 
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("-d", "--dirs", help="Individual directories to process", nargs="*")
-    group.add_argument("-j", "--trajectories", help="Individual trajectory files to process", nargs="*")
+    parser.add_argument("dirs", help="Individual directories to process", nargs="+")
 
     parser.add_argument("-p", "--plot", action="append", dest="plots", default=[], help="Select plot(s) (available: %s)" % ", ".join(PLOTS))
     parser.add_argument("-m", "--measurement", action="append", dest="measurements", default=[], help="Select measurement(s) (available: %s)" % ", ".join(SimulationSet.MEASUREMENTS))
@@ -461,14 +453,8 @@ if __name__ == "__main__":
     elif args.verbose:
         logging.basicConfig(level=logging.INFO)
 
-    if not args.dirs and not args.trajectories:
-        logging.warn("No directories or trajectories given. Exiting.")
-        sys.exit(1)
-    elif args.dirs:
-        s = SimulationSet.from_dirlist(args)
-    else:
-        s = SimulationSet.from_trajectorylist(args)
-        
+    s = SimulationSet.from_dirlist(args)
+
     s.all_plots(args)
 
 
