@@ -1,6 +1,10 @@
 SOONEST
 
-* set up diubiquitin simulations using new script and run them
+* finish incorporating clusters into plotting script
+* figure out what plots we need
+* possibly email Rob about clustering and comparisons
+* turn off / zip / possibly rotate logs
+
 * figure out postprocessing chain
     * PDBs -> trajectory file -> g_cluster -> postprocess
     * only take samples past a certain iteration and at 300K?
