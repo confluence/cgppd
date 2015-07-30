@@ -5,15 +5,17 @@ import sys
 import argparse
 import glob
 import os
-
 import re
 import math
-import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize
+import csv
 
 import logging
+
+class BananaError(Exception):
+    pass
 
 
 class Residue(object):
@@ -21,9 +23,6 @@ class Residue(object):
         self.amino_acid = amino_acid
         self.index = index
         self.position = np.array((x, y, z))
-
-    def __str__(self):
-        return "%d: %s %s" % (self.index, self.amino_acid, self.position)
 
 
 class Chain(object):
@@ -51,10 +50,6 @@ class Chain(object):
             self.radius = math.sqrt(sum(np.dot(v.T, v) for v in diff_vectors) / mass)
 
 
-    def __str__(self):
-        return "chain %s length %f radius %f\n" % (self.chain_id, self.length, self.radius)
-
-
 class Sample(object):
     def __init__(self, sample_id, temperature, potential, chains=None, cluster=None):
         self.sample_id = sample_id
@@ -66,50 +61,55 @@ class Sample(object):
     def add_chain(self, chain):
         self.chains.append(chain)
 
-    def __str__(self):
-        return "sample %d at %fK with potential %f\n" % (self.sample_id, self.temperature, self.potential)
-
 
 class Temperature(object):
-    def __init__(self, temperature, samples=None):
+    def __init__(self, temperature, samples=None, cluster_set=None):
         self.temperature = temperature
         self.samples = samples or []
+        self.cluster_set = cluster_set or []
 
     def add_sample(self, sample):
         self.samples.append(sample)
 
-    def __str__(self):
-        return "temperature %f with %d samples" % (self.temperature, len(self.samples))
+    def add_clusters(self, cluster_set):
+        self.cluster_set = cluster_set
+        for cluster in cluster_set.clusters.itervalues():
+            cluster.match_to_samples(self.samples)
 
 
 class Cluster(object):
-    def __init__(self, frame_id, chains=None, samples=None):
+    def __init__(self, frame_id, chains=None, members=None):
         self.frame_id = frame_id
         self.chains = chains or []
-        self.samples = samples or []
+        self.members = members or []
 
     def add_chain(self, chain):
         self.chains.append(chain)
 
+    def match_to_samples(self, samples):
+        self.samples = [samples[i + 1] for i in self.members]
+
 
 class ClusterSet(object): 
-    FRAME = re.compile('TITLE *frame t= -?(\d+).000')
+    FRAME = re.compile('TITLE *frame t= (-?\d+).000')
+    LOG_ROW_SEP = re.compile(" *\| *")
+    MEMBER_SEP = re.compile(" *")
 
     def __init__(self, clusters):
         self.clusters = clusters # dict with frame as key
     
     @classmethod
-    def from_trajectory_and_log(cls, trajectoryfilename, logfilename, args):
+    def write_summary(cls, trajectoryfilename, logfilename, clustersummaryfilename, args):
         with open(trajectoryfilename, 'r') as trajectoryfile:
             clusters = {}
-            logging.debug("Parsing trajectory file '%s' ..." % (trajectoryfilename))
+            logging.info("Parsing trajectory file '%s' ..." % (trajectoryfilename))
             
             for line in trajectoryfile:
                 if "frame" in line: # clustered trajectory
                     cluster = Cluster(int(cls.FRAME.match(line).group(1)))
                     chain = None
                 elif line.startswith("ATOM"):
-                    amino_acid, chain_id, index, x, y, z = cls.ATOM.match(line).groups()
+                    amino_acid, chain_id, index, x, y, z = Simulation.ATOM.match(line).groups()
 
                     if not chain:
                         chain = Chain(chain_id)
@@ -133,7 +133,58 @@ class ClusterSet(object):
                     clusters[cluster.frame_id] = cluster
 
         with open(logfilename, 'r') as logfile:
-            pass
+            cluster = None;
+            
+            for line in logfile:
+                if "|" not in line:
+                    continue
+                elif line.startswith("cl."):
+                    continue
+                else:
+                    _, _, frame_id, members = cls.LOG_ROW_SEP.split(line)
+
+                    if frame_id:
+                        if " " in frame_id:
+                            frame_id, _ = frame_id.split(" ")
+                        cluster = clusters[int(frame_id)]
+
+                    cluster.members.extend(int(m) for m in cls.MEMBER_SEP.split(members))
+
+        with open(clustersummaryfilename, 'w') as summaryfile:
+            writer = csv.writer(summaryfile)
+            for frame_id, cluster in clusters.iteritems():
+                row = [frame_id, " ".join(str(m) for m in cluster.members)]
+                
+                # quick and dirty hack to calculate stats for multi-chain molecule
+                # length relies on sensible ordering of chains in the PDB file
+                molecule = Chain("all")
+                
+                for chain in cluster.chains:
+                    chain.measure()
+                    row.extend([chain.chain_id, chain.length, chain.radius])
+
+                    molecule.residues.extend(chain.residues)
+
+                molecule.measure()
+                row.extend([molecule.chain_id, molecule.length, molecule.radius])
+
+                writer.writerow(row)
+
+    @classmethod
+    def from_summary(cls, filename, args):
+        clusters = {}
+        
+        with open(filename, 'r') as summaryfile:
+            reader = csv.reader(summaryfile)
+            for row in reader:
+                frame_id, members = row[:2]
+                cluster = Cluster(int(frame_id), members=[int(m) for m in members.split()])
+
+                for i in range(2, len(row), 3):
+                    chain_id, length, radius = row[i:i+3]
+                    cluster.add_chain(Chain(chain_id, float(length), float(radius)))
+
+                clusters[cluster.frame_id] = cluster
 
         return cls(clusters)
 
@@ -143,9 +194,6 @@ class Simulation(object):
     NAME = re.compile('(\d*)$')
 
     ATOM = re.compile('ATOM *\d+ *CA *([A-Z]{3}) ([A-Z]) *(\d+) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *(-?\d+\.\d{3}) *\d+\.\d{2} *\d+\.\d{2}')
-    
-    SAMPLE = re.compile('(\d+) at (\d+\.\d+)K with potential (-?\d+\.\d+)\n(.*)', re.MULTILINE | re.DOTALL)
-    CHAIN = re.compile('chain (.*) length (\d+\.\d+) radius (\d+\.\d+)')
 
     def __init__(self, temperatures, name, N=None):
         self.temperatures = temperatures # actually needs to be a dict
@@ -156,6 +204,8 @@ class Simulation(object):
     def write_summary(cls, filenames, summaryfilename, args):
         num_files = len(filenames)
         with open(summaryfilename, 'w') as summaryfile:
+            writer = csv.writer(summaryfile)
+            
             for i, filename in enumerate(filenames):
                 with open(filename) as pdbfile:
                     logging.debug("Parsing file '%s' (%d of %d)..." % (filename, i, num_files))
@@ -178,56 +228,48 @@ class Simulation(object):
                             sample.add_chain(chain)
                             chain = None
 
-                    summaryfile.write(str(sample))
+                    row = [sample.sample_id, sample.temperature, sample.potential]
                     
-                    # quick and dirty hack to calculate stats for multi-chain molecule
-                    # length relies on sensible ordering of chains in the PDB file
+                    ## quick and dirty hack to calculate stats for multi-chain molecule
+                    ## length relies on sensible ordering of chains in the PDB file
                     molecule = Chain("all")
                     
                     for chain in sample.chains:
                         chain.measure()
-                        summaryfile.write(str(chain))
+                        row.extend([chain.chain_id, chain.length, chain.radius])
 
                         molecule.residues.extend(chain.residues)
 
                     molecule.measure()
-                    summaryfile.write(str(molecule))
+                    row.extend([molecule.chain_id, molecule.length, molecule.radius])
+                    writer.writerow(row)
 
     @classmethod
     def from_summary(cls, filename, args):
-        directory, basename = os.path.split(filename)
+        directory, _ = os.path.split(filename)
         
         rest, last_dir = os.path.split(directory)
         name = "_".join(last_dir.split("_")[:-1])
 
-        if basename == "cluster_summary":
-            name = "cluster_" + name
-
         N = cls.NAME.search(name).group(1) or None
 
+        temperatures = {}
+
         with open(filename) as summaryfile:
-            summary = summaryfile.read()
-            temperatures = {}
+            reader = csv.reader(summaryfile)
 
-            for s in re.split("sample", summary):
-                if not s:
-                    continue
+            for row in reader:
+                sample_id, temperature, potential = row[:3]
+                sample = Sample(int(sample_id), float(temperature), float(potential))
 
-                sample_id, temperature, potential, chain_lines = cls.SAMPLE.search(s).groups()
-                sample_id, temperature, potential = int(sample_id), float(temperature), float(potential)
+                for i in range(3, len(row), 3):
+                    chain_id, length, radius = row[i:i+3]
+                    sample.add_chain(Chain(chain_id, float(length), float(radius)))
 
-                sample = Sample(sample_id, temperature, potential)
+                if sample.temperature not in temperatures:
+                    temperatures[sample.temperature] = Temperature(sample.temperature)
 
-                for c in chain_lines.split("\n"):
-                    if not c:
-                        continue
-                    chain_id, length, radius = cls.CHAIN.match(c).groups()
-                    sample.add_chain(Chain(chain_id, float(length), float(radius), temperature))
-
-                if temperature not in temperatures:
-                    temperatures[temperature] = Temperature(temperature)
-
-                temperatures[temperature].add_sample(sample)
+                temperatures[sample.temperature].add_sample(sample)
 
             return cls(temperatures, name, N)
 
@@ -281,7 +323,7 @@ class SimulationSet(object):
         for d in args.dirs:
             logging.info("Processing directory '%s'..." % d)
 
-            summaryfilename = "%s/summary" % d
+            summaryfilename = "%s/summary.csv" % d
             sim_dir = "%s/pdb" % d
 
             if not os.path.isfile(summaryfilename):
@@ -290,10 +332,25 @@ class SimulationSet(object):
                     files = glob.glob("%s/*" % sim_dir)
                     Simulation.write_summary(files, summaryfilename, args)
 
-            if os.path.isfile(summaryfilename):
-                logging.info("Loading summary file...")
-                s = Simulation.from_summary(summaryfilename, args)
-                simulations.append(s)
+            logging.info("Loading summary file...")
+            s = Simulation.from_summary(summaryfilename, args)
+
+            if 300.0 in s.temperatures:
+                clusterfilename = os.path.join(d, "clusters.pdb")
+                clusterlogname = os.path.join(d, "cluster.log")
+
+                if os.path.isfile(clusterfilename) and os.path.isfile(clusterlogname):
+                    logging.info("Cluster data detected.")
+                    clustersummaryfilename = "%s/cluster_summary.csv" % d
+
+                    if not os.path.isfile(clustersummaryfilename):
+                        logging.info("Writing new cluster summary file...")                    
+                        ClusterSet.write_summary(clusterfilename, clusterlogname, clustersummaryfilename, args)
+
+                    logging.info("Loading cluster summary file...")
+                    s.temperatures[300.0].add_clusters(ClusterSet.from_summary(clustersummaryfilename, args))
+
+            simulations.append(s)            
 
         return cls(simulations)
 
@@ -304,6 +361,13 @@ class SimulationSet(object):
         fig.text(0.02, 0.5, ylabel, ha='center', va='center', rotation='vertical')
         plt.show()
         plt.close()
+
+    def plot_cluster_members(self, dataset, args):
+        if 300.0 not in dataset.temperatures:
+            raise BananaError("Could not find 300K in available temperatures.")
+
+        pass # TODO; what should we actually plot? cluster vs % of population?
+            
 
     def plot_histogram(self, dataset, args):
         for measurement in dataset.measurements:
@@ -366,8 +430,7 @@ class SimulationSet(object):
         try:
             xvalues = np.array([int(N) for N in dataset.simulations])
         except TypeError:
-            logging.error("This dataset does not have a range of residue sizes.")
-            sys.exit(1)
+            raise BananaError("This dataset does not have a range of residue sizes.")
 
         for measurement in dataset.measurements:
             for chain_id in dataset.chain_ids:
@@ -425,7 +488,7 @@ class SimulationSet(object):
 
             if not plot_method:
                 logging.warn("Unsupported plot type: %s" % plot)
-                sys.exit(1)
+                continue
 
             plot_method(dataset, args)
 
@@ -453,9 +516,12 @@ if __name__ == "__main__":
     elif args.verbose:
         logging.basicConfig(level=logging.INFO)
 
-    s = SimulationSet.from_dirlist(args)
-
-    s.all_plots(args)
+    try:
+        s = SimulationSet.from_dirlist(args)
+        s.all_plots(args)
+    except BananaError, e:
+        logging.error(e)
+        sys.exit(1)
 
 
 
