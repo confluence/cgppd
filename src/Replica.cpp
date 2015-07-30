@@ -1144,6 +1144,7 @@ void Replica::saveAsSinglePDB(const char *filename, const char *prefix, int samp
     char out_chain_id = 0;
     int itemcount = 0;
     int lastSeqNo = 0;
+    char last_chain = 0;
     size_t i;
     for (size_t m = 0; m < moleculeCount; m++)
     {
@@ -1155,13 +1156,19 @@ void Replica::saveAsSinglePDB(const char *filename, const char *prefix, int samp
         for (i = 0; i < molecules[m].residueCount; i++)
         {
             Residue r = molecules[m].Residues[i];
-            itemcount++;
 
             out_chain_id = 64 + r.chain_UID;
+
+            if (i > 0 && out_chain_id != last_chain) {
+                fprintf(output,"TER   %5d      %3s %C%4d \n", itemcount, aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(), last_chain, lastSeqNo);
+            }
+            
+            itemcount++;
 
             fprintf(output,"ATOM  %5d CA   %3s %C%4d    %8.3f%8.3f%8.3f%6.2f%6.2f\n", itemcount, aminoAcids.get(r.aminoAcidIndex).getSNAME(), out_chain_id, r.resSeq, r.position.x, r.position.y, r.position.z, 0.0f, 0.0f);
 
             lastSeqNo = r.resSeq;
+            last_chain = out_chain_id;
         }
         fprintf(output,"TER   %5d      %3s %C%4d \n", itemcount, aminoAcids.get(molecules[m].Residues[i-1].aminoAcidIndex).getSNAME(), out_chain_id, lastSeqNo);
         fflush(output);
