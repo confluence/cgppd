@@ -21,11 +21,10 @@ def measure(residues):
 
     return length, radius
 
-# TODO TODO TODO the sample step and the sample number are not the same thing. Add them both. enumerate files...
-
 class Sample(object):
-    def __init__(self, sample_no, length, radius, potential, cluster=None):
+    def __init__(self, sample_no, sample_step, length, radius, potential, cluster=None):
         self.sample_no = sample_no
+        self.sample_step = sample_step
         self.length = length
         self.radius = radius
         self.potential = potential
@@ -37,7 +36,7 @@ class Sample(object):
         
         for line in pdb_file:
             if "sample" in line:
-                sample_no = int(re.search("(\d+)", line).group(1))
+                sample_step = int(re.search("(\d+)", line).group(1))
             elif "potential" in line:
                 potential = float(re.search("(-?\d+\.\d+)", line).group(1))
             elif "ATOM" in line:
@@ -45,7 +44,7 @@ class Sample(object):
 
         length, radius = measure(residues)
         
-        return cls(sample_no, length, radius, potential)
+        return cls(None, sample_step, length, radius, potential)
 
 
 class Cluster(object):
@@ -114,13 +113,15 @@ class Simulation(object):
         clusters = {}
 
         summary_filename = os.path.join(directory, "summary.csv")
+        header = ("sample_no", "sample_step", "length", "radius", "potential")
 
         if os.path.isfile(summary_filename):
             print "Reading sample summary..."
             with open(summary_filename, "r") as summary_file:
                 reader = csv.reader(summary_file)
-                for sample_no, length, radius, potential in reader:
-                    samples.append(Sample(int(sample_no), float(length), float(radius), float(potential)))
+                reader.next() # skip header
+                for sample_no, sample_step, length, radius, potential in reader:
+                    samples.append(Sample(int(sample_no), int(sample_step), float(length), float(radius), float(potential)))
                     
         else:
             print "Writing sample summary..."
@@ -129,16 +130,21 @@ class Simulation(object):
                 with open(pdb_filename, "r") as pdbfile:
                     samples.append(Sample.from_PDB(pdbfile))
 
-            samples.sort(key=attrgetter("sample_no"))
+            samples.sort(key=attrgetter("sample_step"))
+            
+            for i, sample in enumerate(samples):
+                sample.sample_no = i
 
             with open(summary_filename, "w") as summary_file:
                 writer = csv.writer(summary_file)
+                writer.writerow(header)
                 for sample in samples:
-                    writer.writerow([sample.sample_no, sample.length, sample.radius, sample.potential])
+                    writer.writerow([sample.sample_no, sample.sample_step, sample.length, sample.radius, sample.potential])
 
         # clusters
         
         cluster_summary_filename = os.path.join(directory, "cluster_summary.csv")
+        cluster_header = ("sample_no", "length", "radius", "potential", "members")
         cluster_log_filename = os.path.join(directory, "cluster.log")
         cluster_filename = os.path.join(directory, "clusters.pdb")
 
@@ -146,11 +152,12 @@ class Simulation(object):
             print "Reading cluster summary..."
             with open(cluster_summary_filename, "r") as cluster_summary_file:
                 reader = csv.reader(cluster_summary_file)
+                reader.next() # skip header
                 for sample_no, length, radius, potential, members_str in reader:
                     members = [int(m) for m in members_str.split()]
                     
                     cluster = Cluster(int(sample_no), float(length), float(radius), float(potential), members)
-                    clusters.append(cluster)
+                    clusters[int(sample_no)] = cluster
                     
                     for m in members:
                         samples[m].cluster = cluster.sample_no
@@ -165,6 +172,7 @@ class Simulation(object):
 
             with open(cluster_summary_filename, "w") as cluster_summary_file:
                 writer = csv.writer(cluster_summary_file)
+                writer.writerow(cluster_header)
 
                 for sample_no, cluster in sorted(clusters.iteritems()):
                     writer.writerow([sample_no, cluster.length, cluster.radius, cluster.potential, " ".join(str(m) for m in cluster.members)])
@@ -175,9 +183,11 @@ class Simulation(object):
         return cls(samples, clusters)
 
 def plot_length(simulations):
-    print "Plotting height"
     for simulation in simulations:
         plt.hist([s.length for s in simulation.samples])
+        plt.show()
+
+        plt.hist([c.length for c in simulation.clusters.itervalues()])
         plt.show()
 
 
