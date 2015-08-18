@@ -147,7 +147,7 @@ class ClusterSet(object):
                         if " " in frame_id:
                             frame_id, _ = frame_id.split(" ")
                         cluster = clusters[int(frame_id)]
-
+                    
                     cluster.members.extend(int(m) for m in cls.MEMBER_SEP.split(members))
 
         with open(clustersummaryfilename, 'w') as summaryfile:
@@ -251,7 +251,9 @@ class Simulation(object):
         rest, last_dir = os.path.split(directory)
         name = "_".join(last_dir.split("_")[:-1])
 
-        N = cls.NAME.search(name).group(1) or None
+        N = name[3:] if name.startswith("ala") else None
+
+        #N = cls.NAME.search(name).group(1) or None
 
         temperatures = {}
 
@@ -367,12 +369,17 @@ class SimulationSet(object):
             raise BananaError("Could not find 300K in available temperatures.")
 
         pass # TODO; what should we actually plot? cluster vs % of population?
+
+
+    # TODO plot all simulations on the same axes
             
 
     def plot_histogram(self, dataset, args):
+        print dataset.simulations
         for measurement in dataset.measurements:
 
             for sim in dataset.simulations:
+                print sim
                 for chain_id in dataset.chain_ids:
                     fig = plt.figure()
 
@@ -382,7 +389,7 @@ class SimulationSet(object):
                         chains = dataset.data[(sim, chain_id, temperature)]
 
                         values = np.array([getattr(c, measurement) for c in chains])
-                        ax.hist(values)
+                        ax.hist(values, bins=50)
 
                         ax.set_title("%sK" % temperature)
 
@@ -391,7 +398,7 @@ class SimulationSet(object):
                             label.set_rotation(30)
                             label.set_fontsize(10)
 
-                    title = "%s %s" % (chain_id, measurement)
+                    title = "%s %s %s" % (sim, chain_id, measurement)
                     xlabel = u"%s (Å)" % measurement
                     ylabel = "Frequency (count)"
 
@@ -420,7 +427,7 @@ class SimulationSet(object):
                             label.set_rotation(30)
                             label.set_fontsize(10)
 
-                    title = "%s %s" % (chain_id, measurement)
+                    title = "%s %s %s" % (sim, chain_id, measurement)
                     xlabel = "Sample time"
                     ylabel = u"%s (Å)" % measurement
 
