@@ -28,7 +28,7 @@ class Sample(object):
         self.length = length
         self.radius = radius
         self.potential = potential
-        self.cluster = cluster # sample_no
+        self.cluster = cluster # cluster object
 
     @classmethod
     def from_PDB(cls, pdb_file):
@@ -51,12 +51,13 @@ class Cluster(object):
     LOG_ROW_SEP = re.compile(" *\| *")
     MEMBER_SEP = re.compile(" *")
 
-    def __init__(self, sample_no, length, radius, potential=None, members=None):
+    def __init__(self, sample_no, length, radius, potential=None, member_nos=None, members=None):
         self.sample_no = sample_no
         self.length = length
         self.radius = radius
         self.potential = potential
-        self.members = members or [] # sample_nos
+        self.member_nos = member_nos or [] # sample_nos
+        self.members = members or [] # sample objects
 
     @classmethod
     def from_PDB(cls, pdb_file):
@@ -92,12 +93,13 @@ class Cluster(object):
 
                     cluster = clusters[int(frame_id) + 1]
                
-                cluster.members.extend(int(m) + 1 for m in cls.MEMBER_SEP.split(members))
+                cluster.member_nos.extend(int(m) + 1 for m in cls.MEMBER_SEP.split(members))
 
         for cluster in clusters.itervalues():
             cluster.potential = samples[cluster.sample_no].potential
-            for sample_no in cluster.members:
-                samples[sample_no].cluster = cluster.sample_no
+            for sample_no in cluster.member_nos:
+                samples[sample_no].cluster = cluster
+                cluster.members.append(samples[sample_no])
 
 
 class Simulation(object):
@@ -154,13 +156,14 @@ class Simulation(object):
                 reader = csv.reader(cluster_summary_file)
                 reader.next() # skip header
                 for sample_no, length, radius, potential, members_str in reader:
-                    members = [int(m) for m in members_str.split()]
+                    member_nos = [int(m) for m in members_str.split()]
                     
-                    cluster = Cluster(int(sample_no), float(length), float(radius), float(potential), members)
+                    cluster = Cluster(int(sample_no), float(length), float(radius), float(potential), member_nos)
                     clusters[int(sample_no)] = cluster
                     
-                    for m in members:
-                        samples[m].cluster = cluster.sample_no
+                    for m in member_nos:
+                        samples[m].cluster = cluster
+                        cluster.members.append(samples[m])
                         
         elif os.path.isfile(cluster_filename) and os.path.isfile(cluster_log_filename):
             print "Writing cluster summary..."
@@ -187,7 +190,7 @@ def plot_length(simulations):
         plt.hist([s.length for s in simulation.samples])
         plt.show()
 
-        plt.hist([c.length for c in simulation.clusters.itervalues()])
+        plt.hist([s.cluster.length for s in simulation.samples])
         plt.show()
 
 
