@@ -185,6 +185,8 @@ class Simulation(object):
 
         return cls(samples, clusters)
 
+# TODO do this properly; subgraphs and labels, etc. Commandline params for plots.
+
 def plot_length(simulations):
     for simulation in simulations:
         plt.hist([s.length for s in simulation.samples])
