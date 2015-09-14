@@ -9,6 +9,7 @@ import argparse
 from operator import attrgetter
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 def measure(residues):
     length = np.linalg.norm(np.array(residues[-1]) - np.array(residues[0]))
@@ -31,16 +32,21 @@ class Sample(object):
         self.potential = potential
 
     @classmethod
-    def from_PDB(cls, pdb_file):
+    def from_PDB(cls, pdb_file, pdb_filename):
         residues = []
         
-        for line in pdb_file:
-            if "sample" in line:
-                sample_step = int(re.search("(\d+)", line).group(1))
-            elif "potential" in line:
-                potential = float(re.search("(-?\d+\.\d+)", line).group(1))
-            elif "ATOM" in line:
-                residues.append((float(line[30:38]), float(line[38:46]), float(line[46:54])))
+        for lineno, line in enumerate(pdb_file, 1):
+            try:
+                if "sample" in line:
+                    sample_step = int(re.search("(\d+)", line).group(1))
+                elif "potential" in line:
+                    potential = float(re.search("(-?\d+\.\d+)", line).group(1))
+                elif "ATOM" in line:
+                    # we can deal with overflows here which are technically illegal PDB syntax, because we know the precision is fixed
+                    residues.append(tuple(float(n) for n in re.findall('(-?\d+\.\d{3})', line[30:-12])))
+                    #residues.append((float(line[30:38]), float(line[38:46]), float(line[46:54])))
+            except ValueError, e:
+                sys.exit("Error parsing file '%s' at line %d: %s" % (pdb_filename, lineno, e))
 
         length, radius = measure(residues)
         
@@ -72,7 +78,7 @@ class Simulation(object):
                             
             for pdb_filename in glob.iglob(os.path.join(directory, "pdb", "sample*_300.0K_*.pdb")):
                 with open(pdb_filename, "r") as pdbfile:
-                    samples.append(Sample.from_PDB(pdbfile))
+                    samples.append(Sample.from_PDB(pdbfile, pdb_filename))
 
             samples.sort(key=attrgetter("sample_step"))
             
@@ -100,7 +106,7 @@ class PolyalanineSimulationSequence(object):
         
         for d in dirs:
             dirname = os.path.basename(d)
-            name_match = NAME.match(dirname)
+            name_match = cls.NAME.match(dirname)
             if name_match is None:
                 sys.exit("'%s' does not look like a polyalanine simulation." % dirname)
             n = int(name_match.group(1))
@@ -148,5 +154,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    simulation_set = PolyalanineSimulationSequence.from_dirlist(args.dirs)
+    simulation_set = PolyalanineSimulationSequence.from_dirs(args.dirs)
     plot_mean_radius(simulation_set, args.lj)
