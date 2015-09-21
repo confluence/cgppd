@@ -9,6 +9,7 @@ import argparse
 from operator import attrgetter
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import optimize
 import sys
 
 def measure(residues):
@@ -120,7 +121,7 @@ class PolyalanineSimulationSequence(object):
 
 def plot_mean_radius(simulation_set, lj):
     xvalues, sims = zip(*simulation_set.sims)
-    values = [np.sqrt(np.mean(s.radius**2)) for sim in sims for s in sim.samples]
+    values = [np.sqrt(np.mean([s.radius**2 for s in sim.samples])) for sim in sims]
     
     plt.plot(xvalues, values, 'bo')
     
@@ -138,11 +139,11 @@ def plot_mean_radius(simulation_set, lj):
 
     plt.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
 
-    plt.set_title("%sK" % temperature)
+    plt.title("LJ %s" % lj)
 
 
-    plt.set_xscale('log', basex=2) # TODO: investigate using the loglog function instead; maybe add an option for it
-    plt.set_yscale('log')
+    plt.xscale('log', basex=2) # TODO: investigate using the loglog function instead; maybe add an option for it
+    plt.yscale('log')
         
     plt.show()
     
