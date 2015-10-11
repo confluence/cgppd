@@ -3,12 +3,10 @@
 sim_dir=$1
 shift
 
-trajectory_file="$sim_dir/trajectory.pdb"
-
-if [ ! -f "$trajectory_file" ]
+if [ ! -f "$sim_dir/trajectory.pdb" ]
 then
-    cat $sim_dir/pdb/*300.0K* >> "$trajectory_file"
-    sed -i 's/END/ENDMDL/' "$trajectory_file"
+    cat $sim_dir/pdb/*300.0K* >> "$sim_dir/trajectory.pdb"
+    sed -i 's/END/ENDMDL/' "$sim_dir/trajectory.pdb"
 fi
 
 for cutoff in $@
@@ -16,6 +14,6 @@ do
     cluster_dir="$sim_dir/clusters_$cutoff"
     mkdir "$cluster_dir"
     cd "$cluster_dir"
-    g_cluster -f "$trajectory_file" -s "$trajectory_file" -cutoff $cutoff -cl
+    g_cluster -f "../trajectory.pdb" -s "../trajectory.pdb" -cutoff $cutoff -cl
     cd -
 done
