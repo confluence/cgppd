@@ -3,9 +3,10 @@
 sim_dir=$1
 shift
 
-trajectory_file=$sim_dir/trajectory.pdb
+trajectory_file="$sim_dir/trajectory.pdb"
 
-if [ ! -f "$trajectory_file" ]; then
+if [ ! -f "$trajectory_file" ]
+then
     cat $sim_dir/pdb/*300.0K* >> "$trajectory_file"
     sed -i 's/END/ENDMDL/' "$trajectory_file"
 fi
