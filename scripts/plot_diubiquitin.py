@@ -108,7 +108,7 @@ class Simulation(object):
         self.clusters = clusters # dict
 
     @classmethod
-    def from_dir(cls, directory):
+    def from_dir(cls, directory, cutoff):
         print "Processing directory %s..." % directory
         
         samples = []
@@ -144,49 +144,52 @@ class Simulation(object):
                     writer.writerow([sample.sample_no, sample.sample_step, sample.length, sample.radius, sample.potential])
 
         # clusters
+
+        if cutoff:
+            print "Using cluster with cutoff %s" % cutoff
+            cutoff_dirname = "clusters_%s" % cutoff
         
-        cluster_summary_filename = os.path.join(directory, "cluster_summary.csv")
-        cluster_header = ("sample_no", "length", "radius", "potential", "members")
-        cluster_log_filename = os.path.join(directory, "cluster.log")
-        cluster_filename = os.path.join(directory, "clusters.pdb")
+            cluster_summary_filename = os.path.join(directory, cutoff_dirname, "cluster_summary.csv")
+            cluster_header = ("sample_no", "length", "radius", "potential", "members")
+            cluster_log_filename = os.path.join(directory, cutoff_dirname, "cluster.log")
+            cluster_filename = os.path.join(directory, cutoff_dirname, "clusters.pdb")
 
-        if os.path.isfile(cluster_summary_filename):
-            print "Reading cluster summary..."
-            with open(cluster_summary_filename, "r") as cluster_summary_file:
-                reader = csv.reader(cluster_summary_file)
-                reader.next() # skip header
-                for sample_no, length, radius, potential, members_str in reader:
-                    member_nos = [int(m) for m in members_str.split()]
-                    
-                    cluster = Cluster(int(sample_no), float(length), float(radius), float(potential), member_nos)
-                    clusters[int(sample_no)] = cluster
-                    
-                    for m in member_nos:
-                        samples[m].cluster = cluster
-                        cluster.members.append(samples[m])
+            if os.path.isfile(cluster_summary_filename):
+                print "Reading cluster summary..."
+                with open(cluster_summary_filename, "r") as cluster_summary_file:
+                    reader = csv.reader(cluster_summary_file)
+                    reader.next() # skip header
+                    for sample_no, length, radius, potential, members_str in reader:
+                        member_nos = [int(m) for m in members_str.split()]
                         
-        elif os.path.isfile(cluster_filename) and os.path.isfile(cluster_log_filename):
-            print "Writing cluster summary..."
-            with open(cluster_filename, "r") as cluster_file:
-                clusters = Cluster.from_PDB(cluster_file) # without potential or members
+                        cluster = Cluster(int(sample_no), float(length), float(radius), float(potential), member_nos)
+                        clusters[int(sample_no)] = cluster
+                        
+                        for m in member_nos:
+                            samples[m].cluster = cluster
+                            cluster.members.append(samples[m])
+                            
+            else os.path.isfile(cluster_filename) and os.path.isfile(cluster_log_filename):
+                print "Writing cluster summary..."
+                with open(cluster_filename, "r") as cluster_file:
+                    clusters = Cluster.from_PDB(cluster_file) # without potential or members
 
-            with open(cluster_log_filename, "r") as cluster_log_file:
-                Cluster.match_to_samples(clusters, cluster_log_file, samples)
+                with open(cluster_log_filename, "r") as cluster_log_file:
+                    Cluster.match_to_samples(clusters, cluster_log_file, samples)
 
-            with open(cluster_summary_filename, "w") as cluster_summary_file:
-                writer = csv.writer(cluster_summary_file)
-                writer.writerow(cluster_header)
+                with open(cluster_summary_filename, "w") as cluster_summary_file:
+                    writer = csv.writer(cluster_summary_file)
+                    writer.writerow(cluster_header)
 
-                for sample_no, cluster in sorted(clusters.iteritems()):
-                    writer.writerow([sample_no, cluster.length, cluster.radius, cluster.potential, " ".join(str(m) for m in cluster.members)])
+                    for sample_no, cluster in sorted(clusters.iteritems()):
+                        writer.writerow([sample_no, cluster.length, cluster.radius, cluster.potential, " ".join(str(m) for m in cluster.members)])
                 
         else:
-            print "No cluster information found. Please run g_cluster."
+            print "No cluster information found."
 
         return cls(samples, clusters)
 
 # TODO do this properly; subgraphs and labels, etc. Commandline params for plots.
-
 def plot_length(simulations):
     for simulation in simulations:
         plt.hist([s.length for s in simulation.samples])
@@ -199,9 +202,10 @@ def plot_length(simulations):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
+    parser.add_argument("-c", "--cutoff", help="Use cluster with this cutoff")
 
     args = parser.parse_args()
 
-    simulations = [Simulation.from_dir(d) for d in args.dirs]
+    simulations = [Simulation.from_dir(d, args.cutoff) for d in args.dirs]
     plot_length(simulations)
 
