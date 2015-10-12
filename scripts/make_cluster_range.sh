@@ -14,6 +14,6 @@ do
     cluster_dir="$sim_dir/clusters_$cutoff"
     mkdir "$cluster_dir"
     cd "$cluster_dir"
-    g_cluster -f "../trajectory.pdb" -s "../trajectory.pdb" -cutoff $cutoff -cl
+    echo "0 0" | g_cluster -f "../trajectory.pdb" -s "../trajectory.pdb" -cutoff $cutoff -cl
     cd -
 done
