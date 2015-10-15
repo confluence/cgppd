@@ -27,11 +27,10 @@ with open(filename, "r") as f:
         
 header_str = "".join(headers)
 title, xlabel, ylabel = re.search('title "(.*?)".*xaxis  label "(.*?)".*yaxis  label "(.*?)"', header_str, re.MULTILINE|re.DOTALL).groups()
+
+title = "%s - %s" % (title, filename)
             
 x, y = zip(*items)
-
-print x
-print y
 
 plt.bar(x, y, width=0.01)
 plt.title(title)
