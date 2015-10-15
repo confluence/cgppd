@@ -37,6 +37,7 @@ plt.bar(x, y, width=0.01)
 plt.title(title)
 plt.xlabel(xlabel)
 plt.ylabel(ylabel)
-plt.ylim([0,1400000])
+plt.xlim([0, 2.5])
+plt.ylim([0, 1400000])
 
 plt.show()
