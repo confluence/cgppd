@@ -1,0 +1,8 @@
+Questions:
+
+* Temperature ranges and 300K replica
+* Interpretation of RMSD distribution histogram (peaks and valleys), and how to pick cutoff
+** Does the number of peaks correspond to the number of clusters?
+** The further apart the peaks are, the further apart the clusters are?
+* Differences between multiple runs -- do more runs to see if 
+* Possibility to use GPU cluster now, maybe?
