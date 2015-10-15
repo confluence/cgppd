@@ -1,8 +1,35 @@
 Questions:
 
 * Temperature ranges and 300K replica
+
 * Interpretation of RMSD distribution histogram (peaks and valleys), and how to pick cutoff
 ** Does the number of peaks correspond to the number of clusters?
 ** The further apart the peaks are, the further apart the clusters are?
-* Differences between multiple runs -- do more runs to see if 
-* Possibility to use GPU cluster now, maybe?
+** Complications:
+*** distances between clusters are not the same -- more peaks / spikes
+*** clusters are not the same shape -- more jagged, but still vaguely same shape. Picking cutoff more complicated?
+** is all of this invalid because I'm using one dimension?
+
+* Should we be using RMSD or DRMS for the clustering? Try calculating both?
+
+* Differences between multiple runs -- do more runs to see if a pattern emerges. Not that bad if
+* Possibility to use GPU cluster now, maybe? Probably not necessary; these do not take long. Just run ten copies, but find out about temperatures first.
+
+Notes:
+
+* close to 300K is OK
+* try VMD clustering
+* try running for longer
+* ask Rob about the clustering parameters and histograms
+* running larger polyalanine for longer probably necessary, esp. for repulsive LJ -- look at plot vs time; try running one of the medium-sized ones for longer
+
+VMD:
+* https://github.com/luisico/clustering
+* load (with stride of 10)
+* analysis -> align -- name CA; add all
+* display -> reset view
+* use plugin
+
+* Lys-63: unattached tail moves around a lot, which may account for most of the blurring and for a lot of variation in the end-to-end length
+* try representing the tail and the binding site using VDW, rest with points
+** 73, 74, 75, 76, 77 -- 150, 151, 152, 153
