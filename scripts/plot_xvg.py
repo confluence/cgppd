@@ -28,7 +28,8 @@ with open(filename, "r") as f:
 header_str = "".join(headers)
 title, xlabel, ylabel = re.search('title "(.*?)".*xaxis  label "(.*?)".*yaxis  label "(.*?)"', header_str, re.MULTILINE|re.DOTALL).groups()
 
-title = "%s - %s" % (title, filename)
+simdir = re.search('(diubiquitin[^/]+)', filename).group(1)
+title = "%s - %s" % (title, simdir)
             
 x, y = zip(*items)
 
@@ -36,5 +37,6 @@ plt.bar(x, y, width=0.01)
 plt.title(title)
 plt.xlabel(xlabel)
 plt.ylabel(ylabel)
+plt.ylim([0,1400000])
 
 plt.show()
