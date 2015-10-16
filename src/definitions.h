@@ -44,7 +44,7 @@
     #define PADDER_AATYPE 		20.0f
 
     // code things
-//     #define VERBOSE_THREAD_LOGGING 1
+    #define VERBOSE_THREAD_LOGGING 1
 
     #ifdef EnableOPENGL			//set here to override the makefile
         #define GLVIS 1

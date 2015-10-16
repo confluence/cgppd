@@ -225,7 +225,7 @@ bool Molecule::centre_outside_boundary(Vector3f c)
     bool outside = c.sumSquares() < bounding_value * bounding_value;
 
     if (outside) {
-        DLOG(WARNING) << "Move rejected because it would move molecule beyond boundary sphere.";
+        VLOG(1) << "Move rejected because it would move molecule beyond boundary sphere.";
     }
 
     return outside;
@@ -431,7 +431,11 @@ int Molecule::get_MC_mutation_type(gsl_rng * rng)
 #if FLEXIBLE_LINKS
     if (is_flexible)
     {
+#if !ASSUME_SINGLE_MOLECULE
         return (int) gsl_ran_discrete(rng, MC_discrete_table);
+#else // if ASSUME_SINGLE_MOLECULE
+        return (int) gsl_ran_discrete(rng, MC_discrete_table) + 2; // a bit hacky
+#endif
     }
     else
     {
