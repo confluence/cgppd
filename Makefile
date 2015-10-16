@@ -2,7 +2,7 @@
 
 INCLUDE=-Iinc
 LIBS=-L/usr/lib
-LINKS=-lpthread -lgsl -lgslcblas -lglog
+LINKS=-lpthread -lgsl -lgslcblas
 CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
 COMPILER=g++
 HGVERSION:= $(shell hg parents --template 'hgid: {node|short}')
@@ -32,6 +32,7 @@ STREAMS=no
 LINKERS=yes
 LJ=normal
 POLYMERTEST=no
+SINGLEMOLECULE=no
 
 TEST=yes
 DEBUG=no
@@ -90,6 +91,10 @@ endif
 
 ifeq ($(POLYMERTEST),yes)
 DEFINE+=-DEnablePolymerTest
+endif
+
+ifeq ($(SINGLEMOLECULE),yes)
+DEFINE+=-DEnableSingleMolecule
 endif
 
 OBJFILES=$(patsubst %, obj/%.o, $(OBJS))

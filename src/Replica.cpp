@@ -316,7 +316,7 @@ void Replica::initRNGs()
     rng = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (rng, random());
 
-#if FLEXIBLE_LINKS
+#if FLEXIBLE_LINKS && !ASSUME_SINGLE_MOLECULE
     MC_move_weights = new double[4];
     MC_move_weights[0] =  WEIGHT_MC_TRANSLATE;
     MC_move_weights[1] = WEIGHT_MC_ROTATE;
@@ -324,6 +324,17 @@ void Replica::initRNGs()
     MC_move_weights[3] = WEIGHT_MC_LOCAL;
 
     MC_discrete_table = gsl_ran_discrete_preproc(4, MC_move_weights);
+    for (size_t m = 0; m < moleculeCount; m++)
+    {
+        // TODO this is hacky, but it will be gone when this is per-simulation
+        molecules[m].MC_discrete_table = MC_discrete_table;
+    }
+#elif FLEXIBLE_LINKS // and ASSUME_SINGLE_MOLECULE
+    MC_move_weights = new double[2];
+    MC_move_weights[0] = WEIGHT_MC_FLEX;
+    MC_move_weights[1] = WEIGHT_MC_LOCAL;
+
+    MC_discrete_table = gsl_ran_discrete_preproc(2, MC_move_weights);
     for (size_t m = 0; m < moleculeCount; m++)
     {
         // TODO this is hacky, but it will be gone when this is per-simulation
@@ -407,8 +418,7 @@ void Replica::MCSearch(int steps, int mcstep)
 #endif
         }
 
-        // TODO: this is probably wrong
-        DLOG(INFO) << debug_log.str();
+        VLOG(1) << debug_log.str();
 
     }
 }
@@ -707,7 +717,7 @@ void Replica::MCSearchAcceptReject(int mcstep)
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
     
-    DLOG(INFO) << debug_log.str();
+    VLOG(1) << debug_log.str();
 }
 #endif  // streams
 
@@ -723,7 +733,7 @@ void Replica::ReplicaDataToDevice()
 
     paddedSize = int(ceil(float(residueCount)/float(blockSize)))*blockSize; // reserve a blocksize multiple because it allows for efficient summation
     dataSetSize = paddedSize;
-    DLOG(INFO) << "block size: " << blockSize << ", padded size: " << paddedSize;
+    VLOG(1) << "block size: " << blockSize << ", padded size: " << paddedSize;
 
 #if CUDA_STREAMS
     cudaMallocHost((void**)&host_float4_residuePositions,sizeof(float4)*paddedSize); // pinned memory?
