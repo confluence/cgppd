@@ -3,7 +3,7 @@
 using namespace std;
 
 // TODO: we probably need a default constructor for dynamic arrays. :/
-Molecule::Molecule() : residueCount(0), chainCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)),
+Molecule::Molecule() : residueCount(0), chainCount(0), length(0.0f), contiguous(false), bounding_value(0), moleculeRoleIdentifier(0.0f), index(-2), rotation(Quaternion(1.0f, 0, 0, 0)), only_molecule(false),
 #if FLEXIBLE_LINKS
 is_flexible(false),
 #endif // FLEXIBLE_LINKS
@@ -429,16 +429,13 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
 int Molecule::get_MC_mutation_type(gsl_rng * rng)
 {
 #if FLEXIBLE_LINKS
-    if (is_flexible)
-    {
-#if !ASSUME_SINGLE_MOLECULE
-        return (int) gsl_ran_discrete(rng, MC_discrete_table);
-#else // if ASSUME_SINGLE_MOLECULE
-        return (int) gsl_ran_discrete(rng, MC_discrete_table) + 2; // a bit hacky
-#endif
-    }
-    else
-    {
+    if (is_flexible) {
+        if (!only_molecule) {
+            return (int) gsl_ran_discrete(rng, MC_discrete_table);
+        } else { // this is the only molecule; no translations or rotations
+            return (int) gsl_ran_discrete(rng, MC_discrete_table) + 2; // shift by two integers to get values of flex and local mutations
+        }
+    } else {
         return (int) gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
     }
 #else // if not FLEXIBLE_LINKS

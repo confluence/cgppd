@@ -93,10 +93,6 @@ ifeq ($(POLYMERTEST),yes)
 DEFINE+=-DEnablePolymerTest
 endif
 
-ifeq ($(SINGLEMOLECULE),yes)
-DEFINE+=-DEnableSingleMolecule
-endif
-
 OBJFILES=$(patsubst %, obj/%.o, $(OBJS))
 
 ################################################################################

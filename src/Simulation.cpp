@@ -1213,7 +1213,6 @@ void Simulation::printSettings()
     VLOG_IF(LJ_REPULSIVE, 0) << "\tLennard-Jones potentials always repulsive";
     VLOG_IF(LJ_OFF, 0) << "\tLennard-Jones potentials off";
     VLOG_IF(ASSUME_POLYMER_FOLDING_TEST, 0) << "\tAll residues assumed to be alanine (polymer test)";
-    VLOG_IF(ASSUME_SINGLE_MOLECULE, 0) << "\tAssuming single molecule; molecule translations and rotations turned off";
 }
 
 void Simulation::printArgs()
