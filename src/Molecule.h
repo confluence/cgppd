@@ -93,6 +93,7 @@ public:
     int index;
     float volume;
     float moleculeRoleIdentifier;
+    bool only_molecule;
 
     float length;
 

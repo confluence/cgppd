@@ -316,29 +316,29 @@ void Replica::initRNGs()
     rng = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (rng, random());
 
-#if FLEXIBLE_LINKS && !ASSUME_SINGLE_MOLECULE
-    MC_move_weights = new double[4];
-    MC_move_weights[0] =  WEIGHT_MC_TRANSLATE;
-    MC_move_weights[1] = WEIGHT_MC_ROTATE;
-    MC_move_weights[2] = WEIGHT_MC_FLEX;
-    MC_move_weights[3] = WEIGHT_MC_LOCAL;
-
-    MC_discrete_table = gsl_ran_discrete_preproc(4, MC_move_weights);
-    for (size_t m = 0; m < moleculeCount; m++)
-    {
-        // TODO this is hacky, but it will be gone when this is per-simulation
-        molecules[m].MC_discrete_table = MC_discrete_table;
-    }
-#elif FLEXIBLE_LINKS // and ASSUME_SINGLE_MOLECULE
-    MC_move_weights = new double[2];
-    MC_move_weights[0] = WEIGHT_MC_FLEX;
-    MC_move_weights[1] = WEIGHT_MC_LOCAL;
-
-    MC_discrete_table = gsl_ran_discrete_preproc(2, MC_move_weights);
-    for (size_t m = 0; m < moleculeCount; m++)
-    {
-        // TODO this is hacky, but it will be gone when this is per-simulation
-        molecules[m].MC_discrete_table = MC_discrete_table;
+#if FLEXIBLE_LINKS
+    if (moleculeCount > 1) {
+        MC_move_weights = new double[4];
+        MC_move_weights[0] =  WEIGHT_MC_TRANSLATE;
+        MC_move_weights[1] = WEIGHT_MC_ROTATE;
+        MC_move_weights[2] = WEIGHT_MC_FLEX;
+        MC_move_weights[3] = WEIGHT_MC_LOCAL;
+        
+        MC_discrete_table = gsl_ran_discrete_preproc(4, MC_move_weights);
+        
+        for (size_t m = 0; m < moleculeCount; m++) {
+            // TODO this is hacky, but it will be gone when this is per-simulation
+            molecules[m].MC_discrete_table = MC_discrete_table;
+        }
+    } else { // only one molecule; no rotations or translations
+        MC_move_weights = new double[2];
+        MC_move_weights[0] = WEIGHT_MC_FLEX;
+        MC_move_weights[1] = WEIGHT_MC_LOCAL;
+        
+        MC_discrete_table = gsl_ran_discrete_preproc(2, MC_move_weights);
+        
+        molecules[0].only_molecule = true;
+        molecules[0].MC_discrete_table = MC_discrete_table;
     }
 #endif
     RNGs_initialised = true;

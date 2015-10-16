@@ -81,11 +81,5 @@
     #else
         #define ASSUME_POLYMER_FOLDING_TEST 0
     #endif
-    
-    #ifdef EnableSingleMolecule
-        #define ASSUME_SINGLE_MOLECULE 1 // hack; no rigid mutations because they're null moves
-    #else
-        #define ASSUME_SINGLE_MOLECULE 0
-    #endif
 
 #endif
