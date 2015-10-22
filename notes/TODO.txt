@@ -1,50 +1,25 @@
 SOONEST
 
-* finish incorporating clusters into plotting script
-* figure out what plots we need
-* possibly email Rob about clustering and comparisons
-* turn off / zip / possibly rotate logs
-
-* figure out postprocessing chain
-    * PDBs -> trajectory file -> g_cluster -> postprocess
-    * only take samples past a certain iteration and at 300K?
-        * so other replicas are only used for exchange?
-        * is the threshold different to the sample threshold?
-    * postprocess calculates rmsd from reference structure?
-        * drms and potential
-        * plots: drms-proportion of drms?; energy-drms
-        * what is the reference structure? Should be "native" diubiquitin. Ask Rob? I assume DRMS takes rotation into account.
-        * drms as opposed to rmsd
-        * it compares distances between residues in the same replica, between replicas
-        
-* process data from polyalanine simulations and try to complete them
-    * should we also only take data for 300K?
+* run diubiquitin simulations a few more times (5?) to see if results are consistent
+* fix clustering script; use replica closest to 300K
+* try clustering results in vmd; compare to g_cluster
+* finish fixing plotting scripts. Decouple the creation of summary files from the plotting.
+* look at radius vs time plots for polyalanine to see if running for longer would help; 
+* re-run polyalanine simulations (at least the repulsive ones) -- with translations and rotations removed we should get twice the mc steps for free
 
 SHORTLY AFTERWARDS
 
-DO ALL THIS IN A PARALLEL BRANCH; DON'T BREAK THE EXISTING IMPLEMENTATION FOR SIMULATIONS!
+* Update the tests to take the new single molecule detection into account
 
-* ZOMG, can we use fmaf to speed up the calculations?
-    * The compiler may be doing this already: https://stackoverflow.com/questions/23042126/cuda-fmaf-function
-* Why do we need residueID on the GPU at all? We only compare these within the same chain, so why not use existing array indices?
-* constant Eij for polyalanine -- temp solution using preprocessor flag
-* resuming from sample
-
-* kernel cleanup and templating?
-* replace shitty integer packing with expanded data structures
-    * float4 for pos (x,y,z, PADDER / CROWDER / molecule (int))
-    * float3 for meta (amino acid index (int), charge, vdW radius)
-    * short4 for geometry (domain, bond, residue, chain) -- maybe char4? How high do we want to go? Do we want to template this, depending on max(domains, bonds, residues, chains)? Which is likely to be residues.
-        * We could reorganise this to swap residue and molecule ids
-            * Why do we even have residue IDs? We only compare them when the chains are the same, so why not just use array indices?
-            * if we can eliminate these we could use short3; etc.
-            * or short4 with the molecule moved off the pos.
-                * then we could also template this down to a short1 if the simulation is rigid.
-            * if we can do this right now, we can eliminate one modff!
+SIMULATIONS
+    * redo simulations of ubiquitin+uim without tail, with rigid tail and with flexible tail
+        * How to determine bound state when the potential is much higher because of bonded components? Subtract some kind of average?
 
 --------------------------------------------------------------------------------
 SOONER
 --------------------------------------------------------------------------------
+
+DO ALL THIS IN A PARALLEL BRANCH; DON'T BREAK THE EXISTING IMPLEMENTATION FOR SIMULATIONS!
 
 RESUMING FROM SAMPLE
     * write unit test first
@@ -63,7 +38,6 @@ RESUMING FROM SAMPLE
             * I think we can; it's a while loop.
             * we can read all these values off the replicas in the test to check that we're interpreting the files correctly. E.g. steps.
 
-
 KERNEL CLEANUP AND TEMPLATING
     * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on. -- partially done
         * remove compensated summation everywhere; we don't need it; it's pointless to keep it in
@@ -79,16 +53,16 @@ KERNEL CLEANUP AND TEMPLATING
         * quick and dirty solution for now: use preprocessor directive to set a constant Eij for polyalanine
     * eventual runtime detection of crowders (presence of; inclusion of), flexibility, one residue type
 
-FIXES
-    * implement resuming from a sample, because loadshedding. :/
-    * decrease local translate step size? Ask Rob.
-
-SIMULATIONS
-    * redo polyalanine simulations
-        * before the repulsive LJ sims, implement fast kernel for same kind of residue
-    * rework diubiquitin creation script to do the molecules the more sensible way around and also add a fake sidechain out of alanine
-    * redo simulations of ubiquitin+uim without tail, with rigid tail and with flexible tail
-        * How to determine bound state when the potential is much higher because of binded components? Subtract some kind of average?
+    * replace shitty integer packing with expanded data structures
+        * float4 for pos (x,y,z, PADDER / CROWDER / molecule (int))
+        * float3 for meta (amino acid index (int), charge, vdW radius)
+        * short4 for geometry (domain, bond, residue, chain) -- maybe char4? How high do we want to go? Do we want to template this, depending on max(domains, bonds, residues, chains)? Which is likely to be residues.
+            * We could reorganise this to swap residue and molecule ids
+                * Why do we even have residue IDs? We only compare them when the chains are the same, so why not just use array indices?
+                * if we can eliminate these we could use short3; etc.
+                * or short4 with the molecule moved off the pos.
+                    * then we could also template this down to a short1 if the simulation is rigid.
+                * if we can do this right now, we can eliminate one modff!
 
 BUGS / POTHOLES TO INVESTIGATE
     * check if magnitude of bonded components is correct
