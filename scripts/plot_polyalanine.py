@@ -2,98 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import re
-import csv
 import os
-import glob
 import argparse
-from operator import attrgetter
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize
 import sys
 
-def measure(residues):
-    length = np.linalg.norm(np.array(residues[-1]) - np.array(residues[0]))
-
-    mass = len(residues)
-    centre_of_mass = np.array(residues).mean(axis=0)
-    # Avoid having to square unnecessary square roots by calculating squared distances with a dot product
-    diff_vectors = [(np.array(r) - centre_of_mass) for r in residues]
-    radius = np.sqrt(sum(np.dot(v.T, v) for v in diff_vectors) / mass)
-
-    return length, radius
-
-
-class Sample(object):
-    def __init__(self, sample_no, sample_step, length, radius, potential):
-        self.sample_no = sample_no
-        self.sample_step = sample_step
-        self.length = length
-        self.radius = radius
-        self.potential = potential
-
-    @classmethod
-    def from_PDB(cls, pdb_file, pdb_filename):
-        residues = []
-        
-        for lineno, line in enumerate(pdb_file, 1):
-            try:
-                if "sample" in line:
-                    sample_step = int(re.search("(\d+)", line).group(1))
-                elif "potential" in line:
-                    potential = float(re.search("(-?\d+\.\d+)", line).group(1))
-                elif "ATOM" in line:
-                    # we can deal with overflows here which are technically illegal PDB syntax, because we know the precision is fixed
-                    residues.append(tuple(float(n) for n in re.findall('(-?\d+\.\d{3})', line[30:-12])))
-                    #residues.append((float(line[30:38]), float(line[38:46]), float(line[46:54])))
-            except ValueError, e:
-                sys.exit("Error parsing file '%s' at line %d: %s" % (pdb_filename, lineno, e))
-
-        length, radius = measure(residues)
-        
-        return cls(None, sample_step, length, radius, potential)
-
-class Simulation(object):
-    def __init__(self, samples):
-        self.samples = samples # list
-
-    @classmethod
-    def from_dir(cls, directory):
-        print "Processing directory %s..." % directory
-        
-        samples = []
-
-        summary_filename = os.path.join(directory, "summary.csv")
-        header = ("sample_no", "sample_step", "length", "radius", "potential")
-
-        if os.path.isfile(summary_filename):
-            print "Reading sample summary..."
-            with open(summary_filename, "r") as summary_file:
-                reader = csv.reader(summary_file)
-                reader.next() # skip header
-                for sample_no, sample_step, length, radius, potential in reader:
-                    samples.append(Sample(int(sample_no), int(sample_step), float(length), float(radius), float(potential)))
-                    
-        else:
-            print "Writing sample summary..."
-                            
-            for pdb_filename in glob.iglob(os.path.join(directory, "pdb", "sample*_300.0K_*.pdb")):
-                with open(pdb_filename, "r") as pdbfile:
-                    samples.append(Sample.from_PDB(pdbfile, pdb_filename))
-
-            samples.sort(key=attrgetter("sample_step"))
-            
-            for i, sample in enumerate(samples):
-                sample.sample_no = i
-
-            with open(summary_filename, "w") as summary_file:
-                writer = csv.writer(summary_file)
-                writer.writerow(header)
-                for sample in samples:
-                    writer.writerow([sample.sample_no, sample.sample_step, sample.length, sample.radius, sample.potential])
-
-        return cls(samples)
-
+from plot_objects import Simulation
 
 class PolyalanineSimulationSequence(object):
     NAME = re.compile("ala(\d+)_.*")
@@ -119,41 +35,73 @@ class PolyalanineSimulationSequence(object):
 # TODO: use a simulation set; commandline param for type of LJ potential
 # TODO: refactor some of this; maybe factor out classes into a library
 
-def plot_mean_radius(simulation_set, lj):
-    xvalues, sims = zip(*simulation_set.sims)
-    values = [np.sqrt(np.mean([s.radius**2 for s in sim.samples])) for sim in sims]
-    
-    plt.plot(xvalues, values, 'bo')
-    
-    if lj == "off":
-        power = 1.0/2.0
-    elif lj == "repulsive":
-        power = 2.0/3.0
+# TODO Am I being stupid? Should I be taking the mean of the last x samples and not all the samples?
 
-    fitfunc = lambda p, N: p[0] * np.array(N) ** power # Target function
-    errfunc = lambda p, N, y: fitfunc(p, N) - y # Distance to the target function
-    p0 = [1.0] # Initial guess for the parameters
-    p1, success = optimize.leastsq(errfunc, p0[:], args=(xvalues, values))
-
-    #logging.debug("A = %g" % p1[0])
-
-    plt.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
-
-    plt.title("LJ %s" % lj)
-
-
-    plt.xscale('log', basex=2) # TODO: investigate using the loglog function instead; maybe add an option for it
-    plt.yscale('log')
+    def _plot_vs_n(self, measurement, args):
+        xvalues, sims = zip(*self.sims)
         
-    plt.show()
+        values = [np.sqrt(np.mean([getattr(s, measurement)**2 for s in sim.samples])) for sim in sims]
+        
+        plt.plot(xvalues, values, 'bo')
+        
+        if args.lj == "off":
+            power = 1.0/2.0
+        elif args.lj == "repulsive":
+            power = 2.0/3.0
+
+        fitfunc = lambda p, N: p[0] * np.array(N) ** power # Target function
+        errfunc = lambda p, N, y: fitfunc(p, N) - y # Distance to the target function
+        p0 = [1.0] # Initial guess for the parameters
+        p1, success = optimize.leastsq(errfunc, p0[:], args=(xvalues, values))
+
+        #logging.debug("A = %g" % p1[0])
+
+        plt.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
+
+        plt.title("LJ %s" % args.lj)
+        plt.xlabel("Number of residues")
+        plt.ylabel(u"Mean %s (Å)" % measurement)
+
+        plt.xscale('log', basex=2) # TODO: investigate using the loglog function instead; maybe add an option for it
+        plt.yscale('log')
+            
+        plt.show()
+
+    def plot_mean_radius(self, args):
+        self._plot_vs_n("radius", args)
+
+    def plot_mean_length(self, args):
+        self._plot_vs_n("length", args)
+
+    def _plot_vs_time(self, measurement, args):
+        rows = len(self.sims)
+
+        for i, (n, sim) in enumerate(self.sims, 1):
+            values = [getattr(s, measurement) for s in sim.samples]
+            plt.subplot(rows,1,i)
+            plt.plot(values)
+            plt.title("%d residues" % n)
+            plt.xlabel("Sample no.")
+            plt.ylabel(u"%s (Å)" % measurement)
+        
+        plt.show()
+            
+    def plot_radius(self, args):
+        self._plot_vs_time("radius", args)
+            
+    def plot_length(self, args):
+        self._plot_vs_time("length", args)
+        
     
+PLOTS = tuple(n[5:] for n in PolyalanineSimulationSequence.__dict__ if n.startswith("plot_"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
+    parser.add_argument("plot", help="Type of plot", choices=PLOTS)
     parser.add_argument("lj", help="Type of Lennard-Jones interaction", choices=("off", "repulsive"))
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
 
     args = parser.parse_args()
 
     simulation_set = PolyalanineSimulationSequence.from_dirs(args.dirs)
-    plot_mean_radius(simulation_set, args.lj)
+    getattr(simulation_set, "plot_%s" % args.plot)(args)
