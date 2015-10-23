@@ -2,7 +2,7 @@ SOONEST
 
 * try clustering results in vmd; compare to g_cluster
 
-* run diubiquitin simulations a few more times (5?) to see if results are consistent - IN PROGRESS
+* run diubiquitin simulations a few more times (5?) to see if results are consistent - IN PROGRESS -- maybe stop after three of each
 * fix clustering script; use replica closest to 300K -- DONE
 
 * finish fixing plotting scripts. -- IN PROGRESS
