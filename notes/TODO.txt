@@ -1,10 +1,41 @@
 SOONEST
 
-* run diubiquitin simulations a few more times (5?) to see if results are consistent
-* fix clustering script; use replica closest to 300K
 * try clustering results in vmd; compare to g_cluster
-* finish fixing plotting scripts. Decouple the creation of summary files from the plotting.
-* look at radius vs time plots for polyalanine to see if running for longer would help; 
+
+* run diubiquitin simulations a few more times (5?) to see if results are consistent - IN PROGRESS
+* fix clustering script; use replica closest to 300K -- DONE
+
+* finish fixing plotting scripts. -- IN PROGRESS
+    * move plots into group superclass
+    * put labels based on sim labels in subclass properties
+    * incorporate xvg plots; read in xvg data and attach to simulation object
+    
+* look at radius vs time plots for polyalanine to see if running for longer would help; -- DONE
+    * Maybe the boundary is the problem? Start with a smaller boundary and double each time? Lack of translation should also keep the molecule in the middle of the boundary and not screw up the PDB coordinates.
+    * Put everything into the config files:
+        * number of replicas (1)
+        * min/max temp of 300K
+        * proper boundary size
+    * Molecule lengths:
+        * 2048 6791.3058010256764
+        * 1024: 3393.8981951665842
+        * 512: 1695.1931868636684
+        * 256: 845.84001116759669
+    * What boundary should we use?
+        * 2048: 8000
+        * 1024: 4000
+        * 512: 2000
+        * 256: 1000
+        * 128: 500
+        * 64: 250
+        * 32: 125
+        * 16: 64
+        * 8: 32
+        * 4: 16
+        * or double all of these?
+
+* TRY RE-RUNNING LARGE REPULSIVE SIMULATION WITH LARGER BOUNDARY
+
 * re-run polyalanine simulations (at least the repulsive ones) -- with translations and rotations removed we should get twice the mc steps for free
 
 SHORTLY AFTERWARDS

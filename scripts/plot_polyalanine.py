@@ -32,16 +32,10 @@ class PolyalanineSimulationSequence(object):
             
         return cls(sorted(sims))
 
-# TODO: use a simulation set; commandline param for type of LJ potential
-# TODO: refactor some of this; maybe factor out classes into a library
-
-# TODO Am I being stupid? Should I be taking the mean of the last x samples and not all the samples?
-
     def _plot_vs_n(self, measurement, args):
         xvalues, sims = zip(*self.sims)
-        
         values = [np.sqrt(np.mean([getattr(s, measurement)**2 for s in sim.samples])) for sim in sims]
-        
+
         plt.plot(xvalues, values, 'bo')
         
         if args.lj == "off":
@@ -65,8 +59,6 @@ class PolyalanineSimulationSequence(object):
         plt.xscale('log', basex=2) # TODO: investigate using the loglog function instead; maybe add an option for it
         plt.yscale('log')
             
-        plt.show()
-
     def plot_mean_radius(self, args):
         self._plot_vs_n("radius", args)
 
@@ -74,34 +66,68 @@ class PolyalanineSimulationSequence(object):
         self._plot_vs_n("length", args)
 
     def _plot_vs_time(self, measurement, args):
-        rows = len(self.sims)
+        rows = int(np.floor(np.sqrt(len(self.sims))))
+        cols = int(np.ceil(np.sqrt(len(self.sims))))
 
-        for i, (n, sim) in enumerate(self.sims, 1):
-            values = [getattr(s, measurement) for s in sim.samples]
-            plt.subplot(rows,1,i)
-            plt.plot(values)
-            plt.title("%d residues" % n)
-            plt.xlabel("Sample no.")
-            plt.ylabel(u"%s (Å)" % measurement)
-        
-        plt.show()
+        for i in range(rows):
+            for j in range(cols):
+                if i * cols + j >= len(self.sims):
+                    break
+
+                n, sim = self.sims[i * cols + j]
+                values = [getattr(s, measurement) for s in sim.samples]
+                plt.subplot(rows, cols, i * cols + j + 1)
+                plt.plot(values)
+                plt.title("%d residues" % n)
+                plt.xlabel("Sample no.")
+                plt.ylabel(u"%s (Å)" % measurement)        
             
     def plot_radius(self, args):
         self._plot_vs_time("radius", args)
             
     def plot_length(self, args):
         self._plot_vs_time("length", args)
+
+    def _plot_histogram(self, measurement, args):
+        rows = int(np.floor(np.sqrt(len(self.sims))))
+        cols = int(np.ceil(np.sqrt(len(self.sims))))
+
+        for i in range(rows):
+            for j in range(cols):
+                if i * cols + j >= len(self.sims):
+                    break
+                
+                n, sim = self.sims[i * cols + j]
+                values = [getattr(s, measurement) for s in sim.samples]
+                plt.subplot(rows, cols, i * cols + j + 1)
+                plt.hist(values)
+                plt.title("%d residues" % n)
+                plt.xlabel(u"%s (Å)" % measurement)
+                plt.ylabel("No. of samples")      
+            
+    def plot_hist_radius(self, args):
+        self._plot_histogram("radius", args)
+            
+    def plot_hist_length(self, args):
+        self._plot_histogram("length", args)
         
     
 PLOTS = tuple(n[5:] for n in PolyalanineSimulationSequence.__dict__ if n.startswith("plot_"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
-    parser.add_argument("plot", help="Type of plot", choices=PLOTS)
+    
     parser.add_argument("lj", help="Type of Lennard-Jones interaction", choices=("off", "repulsive"))
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
+    
+    parser.add_argument("-p", "--plot", dest="plots", help="Type of plot", choices=PLOTS, action="append")
 
     args = parser.parse_args()
 
     simulation_set = PolyalanineSimulationSequence.from_dirs(args.dirs)
-    getattr(simulation_set, "plot_%s" % args.plot)(args)
+    
+    for plot in args.plots:
+        plt.figure()
+        getattr(simulation_set, "plot_%s" % plot)(args)
+        #plt.subplots_adjust(hspace=0.5)
+    plt.show()
