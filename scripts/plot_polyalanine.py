@@ -80,7 +80,9 @@ class PolyalanineSimulationSequence(object):
                 plt.plot(values)
                 plt.title("%d residues" % n)
                 plt.xlabel("Sample no.")
-                plt.ylabel(u"%s (Å)" % measurement)        
+                plt.ylabel(u"%s (Å)" % measurement)
+                plt.xticks(rotation='vertical')
+                plt.subplots_adjust(left=0.06, bottom=0.08, right=0.99, top=0.97, wspace=0.3, hspace=0.4)
             
     def plot_radius(self, args):
         self._plot_vs_time("radius", args)
@@ -103,7 +105,9 @@ class PolyalanineSimulationSequence(object):
                 plt.hist(values)
                 plt.title("%d residues" % n)
                 plt.xlabel(u"%s (Å)" % measurement)
-                plt.ylabel("No. of samples")      
+                plt.ylabel("No. of samples") 
+                plt.xticks(rotation='vertical')
+                plt.subplots_adjust(left=0.06, bottom=0.08, right=0.99, top=0.97, wspace=0.3, hspace=0.4)     
             
     def plot_hist_radius(self, args):
         self._plot_histogram("radius", args)
@@ -129,5 +133,4 @@ if __name__ == "__main__":
     for plot in args.plots:
         plt.figure()
         getattr(simulation_set, "plot_%s" % plot)(args)
-        #plt.subplots_adjust(hspace=0.5)
     plt.show()
