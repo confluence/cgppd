@@ -102,7 +102,7 @@ class PolyalanineSimulationSequence(object):
                 n, sim = self.sims[i * cols + j]
                 values = [getattr(s, measurement) for s in sim.samples]
                 plt.subplot(rows, cols, i * cols + j + 1)
-                plt.hist(values)
+                plt.hist(values, bins=100)
                 plt.title("%d residues" % n)
                 plt.xlabel(u"%s (Å)" % measurement)
                 plt.ylabel("No. of samples") 
