@@ -52,10 +52,13 @@ class DiubiquitinSimulationGroup(object):
         for i, (name, sim) in enumerate(self.sims, 1):
             values = [getattr(s, measurement) for s in sim.samples]
             plt.subplot(rows,1,i)
-            plt.hist(values)
+            plt.hist(values, bins=100)
             plt.title(name)
             plt.xlabel(u"%s (Å)" % measurement)
-            plt.ylabel("No. of samples")      
+            plt.ylabel("No. of samples")
+            plt.xlim([0, 80])
+            plt.ylim([0, 600])
+            plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)      
             
     def plot_hist_radius(self, args):
         self._plot_histogram("radius", args)
