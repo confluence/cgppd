@@ -333,8 +333,29 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
     // calculate quaternion from angle and axis
     Quaternion q(angle, raxis);
 
-    // apply rotation to all residues in the branch starting from the edge ri -> neighbour
-    const set<int> & branch = graph.branch(ri, neighbour);
+    // get the neighbours again
+    const vector<int> & neighbours = graph.neighbours(ri);
+
+    // select residues to rotate: the branch starting from the edge ri -> neighbour
+    const set<int> & main_branch = graph.branch(ri, neighbour);
+    set<int> branch;
+    branch.insert(main_branch.begin(), main_branch.end());
+
+    // possibly backtrack select other residues from the same rigid domain
+
+    const set<int> & ri_domain = graph.rigid_domain_around(ri);
+
+    // if the edge we're following is in a rigid domain
+    if (ri_domain.find(neighbour) != ri_domain.end()) {
+        for (vector<int>::const_iterator i = neighbours.begin(); i != neighbours.end(); i++) {
+            // for every other out edge in the same domain
+            if (*i != neighbour && ri_domain.find(*i) != ri_domain.end()) {
+                // add that branch to the residues to be rotated
+                const set<int> & additional_branch = graph.branch(ri, *i);
+                branch.insert(additional_branch.begin(), additional_branch.end());
+            }
+        }
+    }
     
     map<int, Vector3f> difference_vectors;
     Vector3f accumulated_difference(0,0,0);
@@ -356,11 +377,17 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
     #endif // BOUNDING_METHOD == BOUNDING_SPHERE
     
     // apply the move
+
+    ostringstream debug_log;
+    debug_log << "Rotating neighbours ";
     
     for (set<int>::iterator i = branch.begin(); i != branch.end(); i++) {
+        debug_log << *i << " ";
         Residues[*i].position += difference_vectors[*i];
         Residues[*i].relativePosition += difference_vectors[*i];
     }
+
+    VLOG(1) << debug_log.str();
     
     // Centre and all relative positions change
     
@@ -384,8 +411,13 @@ void Molecule::flex(gsl_rng * rng, const double rotate_step)
     vector<int> & index_set = graph.MC_flex_residues;
     int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
 
+    VLOG(1) << "Selected residue " << ri << " for flex move.";
+
+    // pick a random neighbour
     const vector<int> & neighbours = graph.neighbours(ri);
     int neighbour = neighbours[gsl_rng_uniform_int(rng, neighbours.size())];
+
+    VLOG(1) << "Selected neighbour " << neighbour;
 
     flex(raxis, rotate_step, ri, neighbour);
 }
@@ -405,6 +437,8 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 vector<int> & index_set = graph.MC_local_residues;
                 int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
 
+                VLOG(1) << "Selected residue " << ri << " for local translation.";
+
                 Vector3f v = LOCAL_TRANSLATE_STEP_SCALING_FACTOR * translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
                 break;
@@ -414,6 +448,8 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 strcat(last_MC_move, "C");
                 vector<int> & index_set = graph.MC_crankshaft_residues;
                 int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
+
+                VLOG(1) << "Selected residue " << ri << " for crankshaft.";
 
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 crankshaft(rotate_step, flip, ri);
