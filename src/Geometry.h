@@ -10,6 +10,8 @@
 #include <tuple>
 #include <algorithm>
 
+#include "easylogging++.h"
+
 // Simple structures describing links between residues in a molecule
 // i, j, etc. are indices in the residue array, which should be the same as indices into the original residue vector
 

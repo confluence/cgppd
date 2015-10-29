@@ -33,6 +33,7 @@ bool Graph::is_flexible(int i, int j)
 
 void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> segments, int num_chains)
 {
+    VLOG(1) << "Creating molecule geometry.";
     this->num_chains = num_chains;
 
     // import residue chains
@@ -42,6 +43,8 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
         if (residues[i].chainId == residues[j].chainId) {
             add_edge(i, j, all_flexible); // flexible if the whole molecule is flexible
         }
+
+        VLOG_IF(all_flexible, 1) << "All edges in this molecule are flexible.";
     }
 
     // import segment data
@@ -50,6 +53,7 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
             int j = i + 1;
 
             add_edge(s->residue_indices[i], s->residue_indices[j], true); // all of these are flexible
+            VLOG(1) << "Added flexible edge (" << s->residue_indices[i] << "," << s->residue_indices[j] << ")";
         }
     }
 
@@ -112,14 +116,17 @@ void Graph::init(vector<Residue> residues, bool all_flexible, vector<segdata> se
 
         if (!has_rigid_neighbour) {
             s_MC_local_residues.insert(j);
+            VLOG(1) << "Residue " << j << " is available for local translations.";
 
             if (neighbours.size() > 1) {
                 s_MC_crankshaft_residues.insert(j);
+                VLOG(1) << "Residue " << j << " is available for crankshaft moves.";
             }
         }
 
         if (has_flexible_neighbour) {
                 s_MC_flex_residues.insert(j);
+                VLOG(1) << "Residue " << j << " can be the pivot for flex moves.";
         }
     }
 
