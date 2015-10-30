@@ -56,25 +56,26 @@ Simulation::~Simulation()
 
 void Simulation::printHelp()
 {
-    cout << "Usage: cgppd -f <filename> [-h] [-p] [-q] [-v] [-t x] [-s x] [-g x] [-m x ] [-a x] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
+    cout << "Usage: cgppd -f <filename> [-h] [-p] [-q] [-v] [-t x] [-s x] [-g x] [-z x] [-m x ] [-a x] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
     cout << "\t-h|--help: show this dialog" << endl;
-    cout << "\t-f|--file <file>: Input config file" << endl;
-    cout << "\t-p|--preview:        use the open GL preview of this configuration, performs no simulation" << endl;
-    cout << "\t-q|--nosim:       Do everything except the simulation (for use with -p)" << endl;
-    cout << "The following values override those in the config file" << endl;
-    cout << "\t-t|--threads x:  The number of CPU/pthreads to use" << endl;
-    cout << "\t-s|--streams x:  The number of CUDA streams" << endl;
-    cout << "\t-g|--gpus x:     The number of GPUS to use" << endl;
-    cout << "\t-m|--mcsteps x:  How many MC steps to perform per replica " << endl;
+    cout << "\t-f|--file <file>:    Input config file" << endl;
+    cout << "\t-p|--preview:        Use the open GL preview of this configuration, performs no simulation" << endl;
+    cout << "\t-q|--nosim:          Do everything except the simulation (for use with -p)" << endl;
+    cout << "\t-v|--v:              Verbosity level" << endl;
+    cout << "\nThe following values override those in the config file" << endl;
+    cout << "\t-t|--threads x:      The number of CPU/pthreads to use" << endl;
+    cout << "\t-s|--streams x:      The number of CUDA streams" << endl;
+    cout << "\t-g|--gpus x:         The number of GPUs to use" << endl;
+    cout << "\t-z|--gpuoffset x:    Use GPUs starting with this one" << endl;
+    cout << "\t-m|--mcsteps x:      How many MC steps to perform per replica" << endl;
     cout << "\t-a|--sampleafter x:  How many MC steps to perform before beginning sampling" << endl;
-    cout << "\t-e|--resteps x:  How many replica exchanges to perform" << endl;
-    cout << "\t-r|--replicas x: How many replicas" << endl;
-    cout << "\t-o|--output x:   The output prefix for files created by the simulation" << endl;
-    cout << "\t-b|--boundary x:  The bounding box edge length" << endl;
-    cout << "\t-x|--tmax x:    The temperature of the highest replica" << endl;
-    cout << "\t-n|--tmin x:    The temperature of the lowest replica" << endl;
-    cout << "\t-d|--blockdim x: Number of threads per CUDA block" << endl;
-    cout << "\t-v|--v: Verbosity level" << endl; // TODO see how this works in Easylogging
+    cout << "\t-e|--resteps x:      How many replica exchanges to perform" << endl;
+    cout << "\t-r|--replicas x:     How many replicas" << endl;
+    cout << "\t-o|--output x:       The output prefix for files created by the simulation" << endl;
+    cout << "\t-b|--boundary x:     The bounding box edge length" << endl;
+    cout << "\t-x|--tmax x:         The temperature of the highest replica" << endl;
+    cout << "\t-n|--tmin x:         The temperature of the lowest replica" << endl;
+    cout << "\t-d|--blockdim x:     Number of threads per CUDA block" << endl;
 
     exit(0);
 }
@@ -93,6 +94,8 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
         {"threads", required_argument, 0, 't'},
         {"streams", required_argument, 0, 's'},
         {"gpus", required_argument, 0, 'g'},
+        {"gpuoffset", required_argument, 0, 'z'},
+        
         {"mcsteps", required_argument, 0, 'm'},
         {"sampleafter", required_argument, 0, 'a'},
         {"resteps", required_argument, 0, 'e'},
@@ -106,7 +109,7 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
         {0, 0, 0, 0},
     };
 
-    const char short_options[] = "hf:pqt:s:g:m:a:e:r:b:x:n:d:v:w:";
+    const char short_options[] = "hf:pqt:s:g:z:m:a:e:r:b:x:n:d:v:w:";
 
     // Reset getopt's awful global variables
     int opt_index = 0;
@@ -193,6 +196,10 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                 case 'g':
                     parameters.gpus = atoi(optarg);
                     VLOG(1) << "\tParameter gpus = " << parameters.gpus;
+                    break;
+                case 'z':
+                    parameters.gpuoffset = atoi(optarg);
+                    VLOG(1) << "\tParameter gpuoffset = " << parameters.gpuoffset;
                     break;
                 case 'm':
                     parameters.MCsteps = atoi(optarg);
@@ -363,6 +370,10 @@ void Simulation::loadArgsFromFile()
             {
                 parameters.gpus = atoi(value);
             }
+            if (strcmp(key, "gpuoffset") == 0)
+            {
+                parameters.gpuoffset = atoi(value);
+            }
             else if (strcmp(key, "streams") == 0)
             {
                 parameters.streams = atoi(value);
@@ -433,13 +444,13 @@ void Simulation::check_and_modify_parameters()
 
     if (parameters.bound <= 0)
     {
-        LOG(WARNING) << "\tWARNINGING: Bounding value too small; setting equal to " << BOUNDING_VALUE << ".";
+        LOG(WARNING) << "\tWARNING: Bounding value too small; setting equal to " << BOUNDING_VALUE << ".";
         parameters.bound = BOUNDING_VALUE;
     }
 
     if (parameters.temperatureMax < parameters.temperatureMin)
     {
-        LOG(WARNING) << "\tWARNINGING: Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " and " << parameters.temperatureMax << ".";
+        LOG(WARNING) << "\tWARNING: Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " and " << parameters.temperatureMax << ".";
         float tmp = parameters.temperatureMax;
         parameters.temperatureMax = parameters.temperatureMin;
         parameters.temperatureMin = tmp;
@@ -448,7 +459,7 @@ void Simulation::check_and_modify_parameters()
     if (parameters.threads > parameters.replicas)
     {
         parameters.threads = parameters.replicas;
-        LOG(WARNING) << "\tWARNINGING: Threads > replicas; setting threads equal to " << parameters.threads << ".";
+        LOG(WARNING) << "\tWARNING: Threads > replicas; setting threads equal to " << parameters.threads << ".";
     }
 
     parameters.max_replicas_per_thread = int(ceil(float(parameters.replicas) / float(parameters.threads)));
@@ -463,10 +474,12 @@ void Simulation::check_and_modify_parameters()
 #if USING_CUDA
     int availableGpus;
     cudaGetDeviceCount(&availableGpus);
-    if (parameters.gpus > availableGpus)
-    {
-        parameters.gpus = availableGpus;
-        LOG(WARNING) << "\tWARNINGING: Too many GPUs; setting equal to " << parameters.gpus << ".";
+    if (parameters.gpuoffset >= availableGpus) {
+        LOG(ERROR) << "ERROR: cannot allocate " << parameters.gpus << " GPUs with an offset of " << parameters.gpuoffset << " because only " << availableGpus << " are available. Exiting.";
+        exit(0);
+    } else if (parameters.gpus + parameters.gpuoffset > availableGpus) {
+        LOG(WARNING) << "\tWARNING: cannot allocate " << parameters.gpus << " GPUs with an offset of " << parameters.gpuoffset << " because only " << availableGpus << " are available. Reducing number of GPUs used to " << (availableGpus - parameters.gpuoffset) << ".";
+        parameters.gpus = availableGpus - parameters.gpuoffset;
     }
 #endif
 
@@ -481,7 +494,7 @@ void Simulation::check_and_modify_parameters()
             {
                 parameters.streams = parameters.replicas;
             }
-            LOG(WARNING) << "\tWARNINGING: Too many streams; setting equal to " << parameters.streams << ".";
+            LOG(WARNING) << "\tWARNING: Too many streams; setting equal to " << parameters.streams << ".";
         }
     }
 }
@@ -639,9 +652,10 @@ void Simulation::init(int argc, char **argv, int pid)
         data[i].waitingReplicaExchangeCond = &waitingReplicaExchangeCond;
 
         // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
+        // NEW: added optional offset
         // % #gpus so they share if threads > gpus
         // will perform best if threads:gpus = 1:1
-        data[i].GPUID = i % parameters.gpus;
+        data[i].GPUID = i % parameters.gpus + parameters.gpuoffset;
         VLOG(1) << "\tAssigning thread " << i << " to GPU " << data[i].GPUID;
 
         data[i].max_replicas_per_thread = parameters.max_replicas_per_thread;
@@ -1221,6 +1235,7 @@ void Simulation::printArgs()
     VLOG(1) << "\tThreads: " << parameters.threads;
     VLOG(1) << "\tStreams: " << parameters.streams;
     VLOG(1) << "\tGPUs: " << parameters.gpus;
+    VLOG(1) << "\tGPU offset: " << parameters.gpuoffset;
     VLOG(1) << "\tReplicas: " << parameters.replicas;
 
     VLOG(1) << "\tMC steps: " << parameters.MCsteps;

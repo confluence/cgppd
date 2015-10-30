@@ -86,6 +86,7 @@ struct argdata
     int streams;
     int max_replicas_per_thread;
     int gpus;
+    int gpuoffset;
     int MCsteps;
     int REsteps;
     int replicas;
@@ -113,7 +114,7 @@ struct argdata
 #if USING_CUDA
         cuda_blockSize(TILE_DIM), auto_blockdim(true),
 #endif
-        gpus(1), threads(THREAD_COUNT), streams(STREAM_COUNT), MCsteps(MC_STEPS), REsteps(REMC_STEPS),
+        gpus(1), gpuoffset(0), threads(THREAD_COUNT), streams(STREAM_COUNT), MCsteps(MC_STEPS), REsteps(REMC_STEPS),
         sampleFrequency(SAMPLE_FREQ), sampleStartsAfter(STEPS_BEFORE_SAMPLE), inputFile(false),
         replicas(REPLICA_COUNT), bound(BOUNDING_VALUE), temperatureMin(LOWTEMP), temperatureMax(HIGHTEMP),
         pid(0), resume(false), checkpointFrequency(CHECKPOINTFREQUENCY), max_replicas_per_thread(0)

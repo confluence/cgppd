@@ -47,8 +47,6 @@ SOONEST
 
 SHORTLY AFTERWARDS
 
-* Update the tests to take the new single molecule detection into account
-
 SIMULATIONS
     * redo simulations of ubiquitin+uim without tail, with rigid tail and with flexible tail
         * How to determine bound state when the potential is much higher because of bonded components? Subtract some kind of average?
