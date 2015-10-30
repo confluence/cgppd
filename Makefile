@@ -42,7 +42,7 @@ DEBUG=no
 ifeq ($(CUDA),yes)
 INCLUDE+=-I/$(HOME)/NVIDIA_CUDA_Samples/common/inc -I/usr/local/cuda/include
 LIBS+=-L/$(HOME)/NVIDIA_CUDA_Samples/common/lib -L/usr/local/cuda/lib64
-LINKS+=-lcudart -lcuda -lgflags
+LINKS+=-lcudart -lcuda
 OBJS+=CudaFunctions
 DEFINE+=-DEnableCUDA
 endif
