@@ -27,12 +27,9 @@ NVCC_ARCH=-arch=sm_20
 # Compilation defaults
 
 CUDA=yes
-GL=yes
-STREAMS=no
+GL=no
 LINKERS=yes
 LJ=normal
-POLYMERTEST=no
-SINGLEMOLECULE=no
 
 TEST=yes
 DEBUG=no
@@ -40,11 +37,11 @@ DEBUG=no
 ################################################################################
 
 ifeq ($(CUDA),yes)
-INC+=-I/$(HOME)/NVIDIA_CUDA_Samples/common/inc -I/usr/local/cuda/include
+#INC+=-I/$(HOME)/NVIDIA_CUDA_Samples/common/inc -I/usr/local/cuda/include
 #LIBS+=-L/$(HOME)/NVIDIA_CUDA_Samples/common/lib -L/usr/local/cuda/lib64
 LINKS+=-lcudart -lcuda
 OBJS+=CudaFunctions
-DEFINE+=-DEnableCUDA
+DEFINE+=-DEnableCUDA -DEnableStreams
 endif
 
 ifeq ($(GL),yes)
@@ -64,10 +61,6 @@ ifeq ($(DEBUG),yes)
 CFLAGS+=-g
 endif
 
-ifeq ($(STREAMS),yes)
-DEFINE+=-DEnableStreams
-endif
-
 ifeq ($(LINKERS),yes)
 DEFINE+=-DEnableFlexibleLinkers
 endif
@@ -75,18 +68,21 @@ endif
 ifeq ($(LJ),normal)
 APPNAME=cgppd
 TESTNAME=test
+POLYMERTEST=no
 endif
 
 ifeq ($(LJ),off)
 DEFINE+=-DEnableLJOff
 APPNAME=cgppd_ljoff
 TESTNAME=test_ljoff
+POLYMERTEST=yes
 endif
 
 ifeq ($(LJ),repulsive)
 DEFINE+=-DEnableLJRepulsive
 APPNAME=cgppd_ljrep
 TESTNAME=test_ljrep
+POLYMERTEST=yes
 endif
 
 ifeq ($(POLYMERTEST),yes)
@@ -134,11 +130,11 @@ clean:
 help:
 	@echo "Usage: make [cgppd] [options]"
 	@echo "Options:"
-	@echo "  CUDA: use CUDA (default: yes)"
-	@echo "  GL: use GL (default: yes)"
-	@echo "  STREAMS: use CUDA streams (default: no)"
+	@echo "  CUDA: use CUDA, with streams (default: yes)"
+	@echo "  GL: use GL (default: no)"
 	@echo "  LINKERS: use flexible linkers (default: yes)"
 	@echo "  TEST: build unit tests (default: yes)"
 	@echo "  DEBUG: compile with debugging symbols (default: no)"
+	@echo "  LJ=normal/off/repulsive: compile with modified LJ potentials for polymer tests (default: normal)"
 
 .PHONY: help clean
