@@ -1202,7 +1202,7 @@ string Simulation::printSettings()
     settings << "CGPPD version: " << HGVERSION << endl;
     settings << "Compiled with:" << endl;
 
-#ifdef GLVIS
+#if GLVIS
     settings << "\tOpenGL support" << endl;
 #endif
 

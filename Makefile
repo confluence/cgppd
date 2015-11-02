@@ -1,7 +1,6 @@
 ################################################################################
 
 INC=-Iinc
-#LIBS=-L/usr/lib
 LINKS=-lpthread -lgsl -lgslcblas
 CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
 COMPILER=g++
@@ -15,11 +14,9 @@ SOURCES=$(shell find src/ -name "*.cpp")
 DEPFILES=$(patsubst %.cpp, %.d, $(SOURCES))
 NODEPS=clean help
 
-
 ### the following line enables debug output and emulation
 # TODO maybe enable this when debug is on
 # NVCC_COMPILER_FLAGS=-g -deviceemu -D_EMU
-# NVCC_COMPILER_FLAGS=-g
 NVCC_ARCH=-arch=sm_20
 
 ################################################################################
@@ -37,8 +34,6 @@ DEBUG=no
 ################################################################################
 
 ifeq ($(CUDA),yes)
-#INC+=-I/$(HOME)/NVIDIA_CUDA_Samples/common/inc -I/usr/local/cuda/include
-#LIBS+=-L/$(HOME)/NVIDIA_CUDA_Samples/common/lib -L/usr/local/cuda/lib64
 LINKS+=-lcudart -lcuda
 OBJS+=CudaFunctions
 DEFINE+=-DEnableCUDA -DEnableStreams
@@ -98,11 +93,9 @@ ${APPNAME}: obj/main.o ${OBJFILES}
 else
 ${APPNAME}: obj/main.o ${OBJFILES} ${TESTNAME}
 endif
-#	${COMPILER} ${INC} ${DEFINE} ${CFLAGS} ${LIBS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
 	${COMPILER} ${INC} ${DEFINE} ${CFLAGS} -o $@ obj/main.o ${OBJFILES} ${LINKS}
 
 ${TESTNAME}: ${OBJFILES} ${TEST_SOURCES}
-#	${COMPILER} ${TEST_INC} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} ${LIBS} -DHGVERSION="\"${HGVERSION}\"" -o $@ ${OBJFILES} 
 	${COMPILER} ${TEST_INC} ${DEFINE} ${CFLAGS} ${TEST_FLAGS} -DHGVERSION="\"${HGVERSION}\"" -o $@ ${OBJFILES} ${TEST_SOURCES} ${TEST_LINKS}
 
 obj/CudaFunctions.o: src/CudaFunctions.cu src/CudaFunctions.h src/cudaExterns.h src/definitions.h src/constants.h src/AminoAcids.h
