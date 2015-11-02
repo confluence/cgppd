@@ -1,3 +1,12 @@
-To get onto GPU node:
+To get onto GPU node interactively:
 
 qsub -I -V -q GPUQ
+
+Job parameters for GPU nodes:
+
+-l nodes=srvslsgpu001:ppn=16:seriesGPU
+-l nodes=1:ppn=16:seriesGPU
+
+To select the fast cluster specifically:
+
+-l nodes=srvslsgpu003:ppn=4:seriesGPUk

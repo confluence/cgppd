@@ -77,7 +77,7 @@ public:
     void loadArgsFromFile();
     void check_and_modify_parameters();
     void writeFileIndex();
-    void printSettings();
+    string printSettings();
     void printArgs();
 
     void run();
