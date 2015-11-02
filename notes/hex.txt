@@ -1,0 +1,3 @@
+To get onto GPU node:
+
+qsub -I -V -q GPUQ
