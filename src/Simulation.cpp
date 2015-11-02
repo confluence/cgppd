@@ -1214,13 +1214,13 @@ string Simulation::printSettings()
     settings << "\t\tTile size: " << TILE_DIM << endl;
     string mem_type;
 #if LJ_LOOKUP_METHOD == SHARED_MEM
-    mem_type = "Shared" << endl;
+    mem_type = "Shared";
 #elif LJ_LOOKUP_METHOD == CONST_MEM
-    mem_type = "Constant" << endl;
+    mem_type = "Constant";
 #elif LJ_LOOKUP_METHOD == GLOBAL_MEM
-    mem_type = "Global" << endl;
+    mem_type = "Global";
 #elif LJ_LOOKUP_METHOD == TEXTURE_MEM
-    mem_type = "Texture" << endl;
+    mem_type = "Texture";
 #endif // LJ_LOOKUP_METHOD
     settings << "\t\tLJ lookup memory type: " << mem_type << endl;
 #endif // USING_CUDA
