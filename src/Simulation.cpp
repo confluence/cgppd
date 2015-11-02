@@ -56,6 +56,7 @@ Simulation::~Simulation()
 
 void Simulation::printHelp()
 {
+    cout << printSettings() << endl;
     cout << "Usage: cgppd -f <filename> [-h] [-p] [-q] [-v] [-t x] [-s x] [-g x] [-z x] [-m x ] [-a x] [-e x] [-r x] [-o x] [-b x] [-n x] [-x x] [-d x]"<< endl;
     cout << "\t-h|--help: show this dialog" << endl;
     cout << "\t-f|--file <file>:    Input config file" << endl;
@@ -534,7 +535,7 @@ void Simulation::init(int argc, char **argv, int pid)
 
     initSamplingFiles();
     
-    printSettings();
+    VLOG(0) << printSettings();
 
     // sanity check and calculation of some secondary parameters
     check_and_modify_parameters();
@@ -1194,39 +1195,52 @@ void Simulation::writeFileIndex()
     fclose(fileindexf);
 }
 
-void Simulation::printSettings()
+string Simulation::printSettings()
 {
-    VLOG(0) << "CGPPD version: " << HGVERSION;
-    VLOG(0) << "Compiled with:";
+    ostringstream settings;
+    
+    settings << "CGPPD version: " << HGVERSION << endl;
+    settings << "Compiled with:" << endl;
 
 #ifdef GLVIS
-    VLOG(0) << "\tOpenGL support";
+    settings << "\tOpenGL support" << endl;
 #endif
 
 #if USING_CUDA
-    VLOG(0) << "\tCUDA support";
+    settings << "\tCUDA support" << endl;
 #if CUDA_STREAMS
-    VLOG(0) << "\t\tAsynchronous GPU calls (CUDA capability 1.1+ required)";
+    settings << "\t\tAsynchronous GPU calls (CUDA capability 1.1+ required)" << endl;
 #endif // CUDA_STREAMS
-    VLOG(0) << "\t\tTile size: " << TILE_DIM;
+    settings << "\t\tTile size: " << TILE_DIM << endl;
     string mem_type;
 #if LJ_LOOKUP_METHOD == SHARED_MEM
-    mem_type = "Shared";
+    mem_type = "Shared" << endl;
 #elif LJ_LOOKUP_METHOD == CONST_MEM
-    mem_type = "Constant";
+    mem_type = "Constant" << endl;
 #elif LJ_LOOKUP_METHOD == GLOBAL_MEM
-    mem_type = "Global";
+    mem_type = "Global" << endl;
 #elif LJ_LOOKUP_METHOD == TEXTURE_MEM
-    mem_type = "Texture";
+    mem_type = "Texture" << endl;
 #endif // LJ_LOOKUP_METHOD
-    VLOG(0) << "\t\tLJ lookup memory type: " << mem_type;
+    settings << "\t\tLJ lookup memory type: " << mem_type << endl;
 #endif // USING_CUDA
 
-    VLOG_IF(COMPENSATE_KERNEL_SUM, 0) << "\tKahan summation in kernels";
-    VLOG_IF(FLEXIBLE_LINKS, 0) << "\tFlexible linkers";
-    VLOG_IF(LJ_REPULSIVE, 0) << "\tLennard-Jones potentials always repulsive";
-    VLOG_IF(LJ_OFF, 0) << "\tLennard-Jones potentials off";
-    VLOG_IF(ASSUME_POLYMER_FOLDING_TEST, 0) << "\tAll residues assumed to be alanine (polymer test)";
+#if COMPENSATE_KERNEL_SUM
+    settings << "\tKahan summation in kernels" << endl;
+#endif
+#if FLEXIBLE_LINKS
+    settings << "\tFlexible linkers" << endl;
+#endif
+#if LJ_REPULSIVE
+    settings << "\tLennard-Jones potentials always repulsive" << endl;
+#endif
+#if LJ_OFF
+    settings << "\tLennard-Jones potentials off" << endl;
+#endif
+#if ASSUME_POLYMER_FOLDING_TEST
+    settings << "\tAll residues assumed to be alanine (polymer test)" << endl;
+#endif
+    return settings.str();
 }
 
 void Simulation::printArgs()
