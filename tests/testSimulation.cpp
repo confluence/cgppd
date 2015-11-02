@@ -12,8 +12,11 @@ TEST_CASE("Simulation", "[simulation]") {
 
         s.getArgs(argc, argv, true);
         s.getArgs(argc, argv, false);
-
+    #if GLVIS
         REQUIRE(s.parameters.viewConditions);
+    #else
+        REQUIRE(s.parameters.viewConditions == false);
+    #endif
         REQUIRE(s.parameters.skipsimulation);
     #if USING_CUDA
         REQUIRE(s.parameters.cuda_blockSize == 23);
