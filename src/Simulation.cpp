@@ -464,7 +464,7 @@ void Simulation::check_and_modify_parameters()
     }
 
     parameters.max_replicas_per_thread = int(ceil(float(parameters.replicas) / float(parameters.threads)));
-    int spaces = parameters.replicas - parameters.max_replicas_per_thread * parameters.threads;
+    int spaces = parameters.max_replicas_per_thread * parameters.threads - parameters.replicas;
     int unused_threads = spaces / parameters.max_replicas_per_thread; // integer division
     if (unused_threads)
     {
