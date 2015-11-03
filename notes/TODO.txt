@@ -1,58 +1,37 @@
-SOONEST
+--------------------------------------------------------------------------------
+MUST BE DONE FOR THESIS
+--------------------------------------------------------------------------------
 
-* Redo simulations invalidated by unravelling bug (both lys) -- IN PROGRESS
+1) Run 3 sets of diubiquitin simulations with latest code -- IN PROGRESS
 
-* Import all additional simulations into VMD -- IN PROGRESS
+2) Analyse diubiquitin simulations in VMD and with plotting script -- IN PROGRESS
+
+3) re-run polyalanine with increasing boundary (on the cluster)
+
+4) redo simulations of ubiquitin+uim without tail, with rigid tail and with flexible tail
+        * How to determine bound state when the potential is much higher because of bonded components? Subtract some kind of average?
+
+5) Write verification and validation chapter
+
+6) Write results chapter
+
+7) Write introduction, conclusions, abstract
+
+--------------------------------------------------------------------------------
+MAYBE SHOULD BE DONE FOR THESIS
+--------------------------------------------------------------------------------
+
+* finish fixing plotting scripts
+    * move plots into group superclass
+    * put labels based on sim labels in subclass properties
+    * since we're using VMD for clustering now instead of g_cluster,  ditch the g_cluster stuff?
 
 * Run a set of simulations without the fake alanine sidechain?
 * Run a set of simulations with the free tail rigid?
 
-* run diubiquitin simulations a few more times (5?) to see if results are consistent - IN PROGRESS
-
-* finish fixing plotting scripts. -- IN PROGRESS
-    * move plots into group superclass
-    * put labels based on sim labels in subclass properties
-    * incorporate xvg plots; read in xvg data and attach to simulation object
-    
-* look at radius vs time plots for polyalanine to see if running for longer would help; -- DONE
-    * Maybe the boundary is the problem? Start with a smaller boundary and double each time? Lack of translation should also keep the molecule in the middle of the boundary and not screw up the PDB coordinates.
-    * Put everything into the config files:
-        * number of replicas (1)
-        * min/max temp of 300K
-        * proper boundary size
-    * Molecule lengths:
-        * 2048 6791.3058010256764
-        * 1024: 3393.8981951665842
-        * 512: 1695.1931868636684
-        * 256: 845.84001116759669
-    * What boundary should we use?
-        * 2048: 8000
-        * 1024: 4000
-        * 512: 2000
-        * 256: 1000
-        * 128: 500
-        * 64: 250
-        * 32: 125
-        * 16: 64
-        * 8: 32
-        * 4: 16
-        * or double all of these?
-
-* TRY RE-RUNNING LARGE REPULSIVE SIMULATION WITH LARGER BOUNDARY
-
-* re-run polyalanine simulations (at least the repulsive ones) -- with translations and rotations removed we should get twice the mc steps for free
-
-SHORTLY AFTERWARDS
-
-SIMULATIONS
-    * redo simulations of ubiquitin+uim without tail, with rigid tail and with flexible tail
-        * How to determine bound state when the potential is much higher because of bonded components? Subtract some kind of average?
-
---------------------------------------------------------------------------------
-SOONER
---------------------------------------------------------------------------------
-
-DO ALL THIS IN A PARALLEL BRANCH; DON'T BREAK THE EXISTING IMPLEMENTATION FOR SIMULATIONS!
+BENCHMARKING
+    * do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
+    * how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
 
 RESUMING FROM SAMPLE
     * write unit test first
@@ -70,6 +49,10 @@ RESUMING FROM SAMPLE
             * can we? otherwise we could subtract the number of steps already done from the total, but that would mess up the numbering.
             * I think we can; it's a while loop.
             * we can read all these values off the replicas in the test to check that we're interpreting the files correctly. E.g. steps.
+
+--------------------------------------------------------------------------------
+TO BE DONE AFTER THESIS
+--------------------------------------------------------------------------------
 
 KERNEL CLEANUP AND TEMPLATING
     * remove unused code for e.g. old kernels and MC on the GPU, so we can see wtf is going on. -- partially done
@@ -114,36 +97,18 @@ CLEANUP / REFACTOR
 UNIT TESTS
     * more extensive potential unit tests: add potential test with all the weird geometry features, i.e. diubiquitin with one molecule and two chains. Maybe two diubiquitin, so we have two molecules with two chains each and can test absolutely everything.
 
---------------------------------------------------------------------------------
-LATER
---------------------------------------------------------------------------------
-
 POTHOLES
     * clean up temperature / translation step / rotation step code and figure out exactly what is happening when the number of replicas is 1. Write a unit test for this. Is this a bug?
     
-    * fix chain processing
+    * fix chain processing -- IS THIS ACTUALLY FIXED NOW?
         * use chain names if they exist
         * fix old PDB files with chain id in the wrong place (WTF)
 
     * make sure all the non-crowders are actually loaded before all the crowders (don't rely on the input file to be correct)
 
-THESIS
-    * Verification & Validation
-    * Applications
-    * Conclusions
-    * Go back and add conclusions to introduction
-
 CLEANUP / REFACTOR
     * Why is the GL broken for some simulations?
     * Try to silence that annoying compilation error
-
-BENCHMARKING
-    * do simulations with linkers give better results than rigid simulations? (What does "better" mean?)
-    * how much overhead is caused by the flexible linkers (on the CPU and on the GPU)?
-
---------------------------------------------------------------------------------
-MUCH LATER / FUTURE WORK
---------------------------------------------------------------------------------
 
 OPTIMISATION
     * why not precalculate the LJ coefficients which are independent from r?
@@ -161,4 +126,3 @@ CLEANUP
 
 TESTS
     * unit test for parsing various input files (amino acids, torsions, etc..)
-    * Multiple GPUs?  Does that work?  It should just work.
