@@ -1,16 +1,13 @@
 SOONEST
 
-* Redo simulations invalidated by unravelling bug (both lys)
+* Redo simulations invalidated by unravelling bug (both lys) -- IN PROGRESS
 
 * Import all additional simulations into VMD -- IN PROGRESS
-* Plot histograms of end-to-end length
+
 * Run a set of simulations without the fake alanine sidechain?
 * Run a set of simulations with the free tail rigid?
 
-* Make sure we can select specific GPUs at runtime.
-
-* run diubiquitin simulations a few more times (5?) to see if results are consistent - IN PROGRESS -- maybe stop after three of each
-* fix clustering script; use replica closest to 300K -- DONE
+* run diubiquitin simulations a few more times (5?) to see if results are consistent - IN PROGRESS
 
 * finish fixing plotting scripts. -- IN PROGRESS
     * move plots into group superclass

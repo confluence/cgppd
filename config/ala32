@@ -3,12 +3,12 @@ streams 1
 threads 1
 mcsteps 10000000
 resteps 2000
-replicas 20
+replicas 1
 samplefrequency 1000
 sampleafter 1000000
-boundary 1000.0
-temperaturemax 500
-temperaturemin 240
+boundary 128.0
+temperaturemax 300
+temperaturemin 300
 prefix ala32
 title Polyalanine (ala32) polymer test
 
