@@ -7,5 +7,5 @@ cd /home/apinska/repos/cgppd
 
 source scripts/hex_setup.sh
 
-./cgppd_ljoff -f config/ala16
-./cgppd_ljoff -f config/ala32
+./cgppd_ljoff -f config/ala16 -o lj_off/ala16
+./cgppd_ljoff -f config/ala32 -o lj_off/ala32
