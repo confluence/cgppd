@@ -7,4 +7,4 @@ cd /home/apinska/repos/cgppd
 
 source scripts/hex_setup.sh
 
-./cgppd_ljoff -f config/ala2048
+./cgppd_ljoff -f config/ala2048 -o lj_off/ala2048
