@@ -101,6 +101,8 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
         {"sampleafter", required_argument, 0, 'a'},
         {"resteps", required_argument, 0, 'e'},
         {"replicas", required_argument, 0, 'r'},
+        
+        {"output", required_argument, 0, 'o'},
 
         {"boundary", required_argument, 0, 'b'},
         {"tmax", required_argument, 0, 'x'},
@@ -110,7 +112,7 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
         {0, 0, 0, 0},
     };
 
-    const char short_options[] = "hf:pqt:s:g:z:m:a:e:r:b:x:n:d:v:w:";
+    const char short_options[] = "hf:pqt:s:g:z:m:a:e:r:o:b:x:n:d:v:w:";
 
     // Reset getopt's awful global variables
     int opt_index = 0;
@@ -217,6 +219,10 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                 case 'r':
                     parameters.replicas = atoi(optarg);
                     VLOG(1) << "\tParameter replicas = " << parameters.replicas;
+                    break;
+                case 'o':
+                    sprintf(parameters.prefix, "%s_%d", optarg, parameters.pid);
+                    VLOG(1) << "\tParameter prefix = " << parameters.prefix;
                     break;
                 case 'b':
                     parameters.bound = atof(optarg);
