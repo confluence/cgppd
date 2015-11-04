@@ -2,7 +2,7 @@
 MUST BE DONE FOR THESIS
 --------------------------------------------------------------------------------
 
-0) Try debugging the CUDA illegal memory access (does it recur?) -- line 654 in Replica.cpp -- is something making this pointer go away too early in a different thread? Are we not syncing the threads before tearing down CUDA for each replica? Add a pthread_mutex_lock, etc..
+0) Try debugging the CUDA illegal memory access (does it recur?) -- line 654 in Replica.cpp -- is something making this pointer go away too early in a different thread? Are we not syncing the threads before tearing down CUDA for each replica? But we should only be tearing down the replicas in our own thread!
 
 1) Run 3 sets of diubiquitin simulations with latest code -- IN PROGRESS
 
