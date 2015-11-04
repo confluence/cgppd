@@ -1,5 +1,5 @@
 #PBS -q GPUQ
-#PBS -l nodes=srvslsgpu003:ppn=5:seriesGPUk
+#PBS -l nodes=srvslsgpu003:ppn=6:seriesGPUk
 #PBS -N diubiquitin-gpu1
 #PBS -V
 
