@@ -1062,6 +1062,7 @@ void *MCthreadableFunction(void *arg)
 
                 for (int rps = 0; rps < data->replicas_per_stream; rps++)
                 {
+                    VLOG(0) << "Thread " << data->index << " is about to MCSearchAcceptReject in replica " << (replica_offset + index + rps);
                     data->replica[replica_offset + index + rps].MCSearchAcceptReject(mcstep);
                 }
 
@@ -1102,6 +1103,7 @@ void *MCthreadableFunction(void *arg)
     // sync all streams and free gpu memory
     for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
+        VLOG(0) << "Thread " << data->index << " is about to tear down CUDA in replica " << (tx + replica_offset);
         data->replica[tx + replica_offset].teardown_CUDA();
     }
 

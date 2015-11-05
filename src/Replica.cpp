@@ -118,6 +118,7 @@ void Replica::setup_CUDA(float * device_LJ_potentials)
 void Replica::teardown_CUDA()
 {
 #if CUDA_STREAMS
+    VLOG(0) << "Replica " << label << " is about to free sum space.";
     FreeSumSpace();
     getLastCudaError("Error freeing sum space");
 #endif // CUDA_STREAMS
@@ -651,6 +652,7 @@ double Replica::SumGridResults()
     for (int i=0; i<resultSize*resultSize; i++)
         potentialSum += kernelResult[i];
 
+    VLOG(0) << "Replica " << label << " is about to zero sum space on device";
     cudaMemset(device_kernelResult, 0, sizeof(float)*resultSize*resultSize);
     getLastCudaError("Error zeroing sum space on device after summing");
     return potentialSum;
@@ -915,6 +917,7 @@ void Replica::EonDeviceAsync()
 #endif
 #if CUDA_STREAMS
     // compute potential parts
+    VLOG(0) << "Replica " << label << " is about to call CUDA_EonDevice_async";
     CUDA_EonDevice_async(device_float4_residuePositions, device_float4_residueMeta, device_residueCount, device_moleculeStartPositions, device_moleculeCount, device_LJPotentials, device_kernelResult, resultSize, blockSize, dataSetSize, sharedMemSize, cudaStream);
     //CUDA_EonDevice(device_float4_residuePositions, device_float4_residueMeta, device_residueCount, device_moleculeStartPositions, device_moleculeCount, device_LJPotentials, device_kernelResult,blockSize,dataSetSize);
 
