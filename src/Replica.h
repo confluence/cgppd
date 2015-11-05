@@ -3,6 +3,8 @@
 
 #include "structures.h"
 
+#include "logog.hpp"
+
 #if USING_CUDA
     #include <cuda.h>
     #include <builtin_types.h>
