@@ -6,7 +6,7 @@
  */
 
 #include "AminoAcids.h"
-#include "easylogging++.h" // not in the header because that's included from a .cu file
+//#include "easylogging++.h" // not in the header because that's included from a .cu file
 
 AminoAcids::AminoAcids()
 {
@@ -32,7 +32,7 @@ bool AminoAcids::loadAminoAcidData(const char* filename)
     ifstream input(filename);
     if (!input.good())
     {
-        LOG(ERROR) << "Failed to open amino acid data file " << filename;
+        //LOG(ERROR) << "Failed to open amino acid data file " << filename;
         exit(0);
         return false;
     }
@@ -81,7 +81,7 @@ bool AminoAcids::loadLJPotentialData(const char* filename)
     ifstream input(filename);
     if (!input.good())
     {
-        LOG(ERROR) << "Failed to open LJ potential data file " << filename;
+        //LOG(ERROR) << "Failed to open LJ potential data file " << filename;
         exit(0);
         return false;
     }

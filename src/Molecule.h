@@ -4,6 +4,7 @@
 #include <gsl/gsl_qrng.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <sstream>
 
 #include "TorsionalLookupMatrix.h"
 #include "Residue.h"
