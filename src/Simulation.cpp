@@ -377,7 +377,7 @@ void Simulation::loadArgsFromFile()
             {
                 parameters.gpus = atoi(value);
             }
-            if (strcmp(key, "gpuoffset") == 0)
+            else if (strcmp(key, "gpuoffset") == 0)
             {
                 parameters.gpuoffset = atoi(value);
             }
