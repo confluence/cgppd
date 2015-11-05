@@ -4,6 +4,11 @@
 
 int main(int argc, char **argv)
 {
+    LOGOG_INITIALIZE();
+    logog::Cout log_output;
+    
+    INFO("Hello, world!");
+
     //START_EASYLOGGINGPP(argc, argv);
     //el::Configurations conf("logs/log.conf");
     //el::Loggers::reconfigureLogger("default", conf);
@@ -35,5 +40,6 @@ int main(int argc, char **argv)
 #endif
 
     //VLOG(0) << "Finished.";
+    LOGOG_SHUTDOWN();
     return 0;
 }
