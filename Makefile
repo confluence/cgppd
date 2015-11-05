@@ -1,6 +1,6 @@
 ################################################################################
 
-INC=-Iinc -I/home/adrianna/repos/logog/include -Llib
+INC=-Iinc -Llib
 LINKS=-lpthread -lgsl -lgslcblas -llogog
 CFLAGS=-fno-omit-frame-pointer -O2 -std=c++11
 COMPILER=g++
