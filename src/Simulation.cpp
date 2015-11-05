@@ -146,14 +146,14 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
 
         if (!parameters.inputFile)
         {
-            LOG(ERROR) << "No configuration file provided.";
+            //LOG(ERROR) << "No configuration file provided.";
             printHelp();
         }
 
-        VLOG(1) << "Will read configuration from file: " << parameters.file;
+        //VLOG(1) << "Will read configuration from file: " << parameters.file;
     } else {
 
-        VLOG(0) << "Parsing commandline parameters...";
+        //VLOG(0) << "Parsing commandline parameters...";
 
         while (1)
         {
@@ -179,74 +179,74 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                 case 'p':
     #if GLVIS
                     parameters.viewConditions = true;
-                    VLOG(1) << "\tWill show OpenGL preview.";
+                    //VLOG(1) << "\tWill show OpenGL preview.";
     #else
-                    LOG(WARNING) << "\tThis build does not support OpenGL.";
+                    //LOG(WARNING) << "\tThis build does not support OpenGL.";
     #endif
                     break;
                 case 'q':
                     parameters.skipsimulation = true;
-                    VLOG(1) << "\tWill skip simulation.";
+                    //VLOG(1) << "\tWill skip simulation.";
                     break;
                 case 't':
                     parameters.threads = atoi(optarg);
-                    VLOG(1) << "\tParameter threads = " << parameters.threads;
+                    //VLOG(1) << "\tParameter threads = " << parameters.threads;
                     break;
                 case 's':
                     parameters.streams = atoi(optarg);
-                    VLOG(1) << "\tParameter streams = " << parameters.streams;
+                    //VLOG(1) << "\tParameter streams = " << parameters.streams;
                     break;
                 case 'g':
                     parameters.gpus = atoi(optarg);
-                    VLOG(1) << "\tParameter gpus = " << parameters.gpus;
+                    //VLOG(1) << "\tParameter gpus = " << parameters.gpus;
                     break;
                 case 'z':
                     parameters.gpuoffset = atoi(optarg);
-                    VLOG(1) << "\tParameter gpuoffset = " << parameters.gpuoffset;
+                    //VLOG(1) << "\tParameter gpuoffset = " << parameters.gpuoffset;
                     break;
                 case 'm':
                     parameters.MCsteps = atoi(optarg);
-                    VLOG(1) << "\tParameter MCsteps = " << parameters.MCsteps;
+                    //VLOG(1) << "\tParameter MCsteps = " << parameters.MCsteps;
                     break;
                 case 'a':
                     parameters.sampleStartsAfter = atoi(optarg);
-                    VLOG(1) << "\tParameter sampleStartsAfter = " << parameters.sampleStartsAfter;
+                    //VLOG(1) << "\tParameter sampleStartsAfter = " << parameters.sampleStartsAfter;
                     break;
                 case 'e':
                     parameters.REsteps = atoi(optarg);
-                    VLOG(1) << "\tParameter REsteps = " << parameters.REsteps;
+                    //VLOG(1) << "\tParameter REsteps = " << parameters.REsteps;
                     break;
                 case 'r':
                     parameters.replicas = atoi(optarg);
-                    VLOG(1) << "\tParameter replicas = " << parameters.replicas;
+                    //VLOG(1) << "\tParameter replicas = " << parameters.replicas;
                     break;
                 case 'o':
                     sprintf(parameters.prefix, "%s_%d", optarg, parameters.pid);
-                    VLOG(1) << "\tParameter prefix = " << parameters.prefix;
+                    //VLOG(1) << "\tParameter prefix = " << parameters.prefix;
                     break;
                 case 'b':
                     parameters.bound = atof(optarg);
-                    VLOG(1) << "\tParameter bound = " << parameters.bound;
+                    //VLOG(1) << "\tParameter bound = " << parameters.bound;
                     break;
                 case 'x':
                     parameters.temperatureMax = atof(optarg);
-                    VLOG(1) << "\tParameter temperatureMax = " << parameters.temperatureMax;
+                    //VLOG(1) << "\tParameter temperatureMax = " << parameters.temperatureMax;
                     break;
                 case 'n':
                     parameters.temperatureMin = atof(optarg);
-                    VLOG(1) << "\tParameter temperatureMin = " << parameters.temperatureMin;
+                    //VLOG(1) << "\tParameter temperatureMin = " << parameters.temperatureMin;
                     break;
                 case 'd':
     #if USING_CUDA
                     parameters.cuda_blockSize = atoi(optarg);
                     parameters.auto_blockdim = false;
-                    VLOG(1) << "\tParameter blockdim = " << parameters.cuda_blockSize;
+                    //VLOG(1) << "\tParameter blockdim = " << parameters.cuda_blockSize;
     #else
-                    LOG(WARNING) << "\tThis build does not support CUDA.";
+                    //LOG(WARNING) << "\tThis build does not support CUDA.";
     #endif
                     break;
                 default:
-                    LOG(WARNING) << "\tUnknown parameter: " << opt;
+                    //LOG(WARNING) << "\tUnknown parameter: " << opt;
                     printHelp();
                     break;
             }
@@ -276,11 +276,11 @@ void Simulation::loadArgsFromFile()
 
     if (!input.good())
     {
-        LOG(ERROR) << "Failed to open file: " << parameters.file;
+        //LOG(ERROR) << "Failed to open file: " << parameters.file;
         exit(0);
     }
 
-    VLOG(0) << "Parsing config file " << parameters.file << "...";
+    //VLOG(0) << "Parsing config file " << parameters.file << "...";
 
     char line[512] = {0};
 
@@ -321,7 +321,7 @@ void Simulation::loadArgsFromFile()
 
             if (result < 8)
             {
-                LOG(WARNING) << "\tUnable to parse molecule: " << line;
+                //LOG(WARNING) << "\tUnable to parse molecule: " << line;
             }
 
             else
@@ -341,7 +341,7 @@ void Simulation::loadArgsFromFile()
                     parameters.mdata_map[string(m.name)] = parameters.mdata.size() - 1;
                 }
 
-                VLOG(1) << "\tAdded molecule from file " << m.pdbfilename << ".";
+                //VLOG(1) << "\tAdded molecule from file " << m.pdbfilename << ".";
             }
         }
         else if (section == SEGMENT_SECTION)
@@ -371,7 +371,7 @@ void Simulation::loadArgsFromFile()
             char * key = strtok(line, " ");
             char * value = strtok(NULL, " ");
 
-            VLOG(1) << "\tParameter " << key << " = " << value;
+            //VLOG(1) << "\tParameter " << key << " = " << value;
 
             if (strcmp(key, "gpus") == 0)
             {
@@ -437,7 +437,7 @@ void Simulation::loadArgsFromFile()
                 }
             }
             else {
-                LOG(WARNING) << "\tUnknown parameter: " << key;
+                //LOG(WARNING) << "\tUnknown parameter: " << key;
             }
         }
     }
@@ -447,17 +447,17 @@ void Simulation::loadArgsFromFile()
 
 void Simulation::check_and_modify_parameters()
 {
-    VLOG(0) << "Checking parameters for sanity...";
+    //VLOG(0) << "Checking parameters for sanity...";
 
     if (parameters.bound <= 0)
     {
-        LOG(WARNING) << "\tWARNING: Bounding value too small; setting equal to " << BOUNDING_VALUE << ".";
+        //LOG(WARNING) << "\tWARNING: Bounding value too small; setting equal to " << BOUNDING_VALUE << ".";
         parameters.bound = BOUNDING_VALUE;
     }
 
     if (parameters.temperatureMax < parameters.temperatureMin)
     {
-        LOG(WARNING) << "\tWARNING: Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " and " << parameters.temperatureMax << ".";
+        //LOG(WARNING) << "\tWARNING: Maximum temperature < minimum temperature; swapping " << parameters.temperatureMax << " and " << parameters.temperatureMax << ".";
         float tmp = parameters.temperatureMax;
         parameters.temperatureMax = parameters.temperatureMin;
         parameters.temperatureMin = tmp;
@@ -466,7 +466,7 @@ void Simulation::check_and_modify_parameters()
     if (parameters.threads > parameters.replicas)
     {
         parameters.threads = parameters.replicas;
-        LOG(WARNING) << "\tWARNING: Threads > replicas; setting threads equal to " << parameters.threads << ".";
+        //LOG(WARNING) << "\tWARNING: Threads > replicas; setting threads equal to " << parameters.threads << ".";
     }
 
     parameters.max_replicas_per_thread = int(ceil(float(parameters.replicas) / float(parameters.threads)));
@@ -474,7 +474,7 @@ void Simulation::check_and_modify_parameters()
     int unused_threads = spaces / parameters.max_replicas_per_thread; // integer division
     if (unused_threads)
     {
-        LOG(ERROR) << "\tERROR: After assignment of " << parameters.replicas << " replicas to " << parameters.threads << " threads with " << parameters.max_replicas_per_thread << " replicas per thread, " << unused_threads << " threads are left unused. You must either increase the number of replicas or decrease the number of threads. Exiting.";
+        //LOG(ERROR) << "\tERROR: After assignment of " << parameters.replicas << " replicas to " << parameters.threads << " threads with " << parameters.max_replicas_per_thread << " replicas per thread, " << unused_threads << " threads are left unused. You must either increase the number of replicas or decrease the number of threads. Exiting.";
         exit(0);
     }
 
@@ -482,10 +482,10 @@ void Simulation::check_and_modify_parameters()
     int availableGpus;
     cudaGetDeviceCount(&availableGpus);
     if (parameters.gpuoffset >= availableGpus) {
-        LOG(ERROR) << "ERROR: cannot allocate " << parameters.gpus << " GPUs with an offset of " << parameters.gpuoffset << " because only " << availableGpus << " are available. Exiting.";
+        //LOG(ERROR) << "ERROR: cannot allocate " << parameters.gpus << " GPUs with an offset of " << parameters.gpuoffset << " because only " << availableGpus << " are available. Exiting.";
         exit(0);
     } else if (parameters.gpus + parameters.gpuoffset > availableGpus) {
-        LOG(WARNING) << "\tWARNING: cannot allocate " << parameters.gpus << " GPUs with an offset of " << parameters.gpuoffset << " because only " << availableGpus << " are available. Reducing number of GPUs used to " << (availableGpus - parameters.gpuoffset) << ".";
+        //LOG(WARNING) << "\tWARNING: cannot allocate " << parameters.gpus << " GPUs with an offset of " << parameters.gpuoffset << " because only " << availableGpus << " are available. Reducing number of GPUs used to " << (availableGpus - parameters.gpuoffset) << ".";
         parameters.gpus = availableGpus - parameters.gpuoffset;
     }
 #endif
@@ -501,7 +501,7 @@ void Simulation::check_and_modify_parameters()
             {
                 parameters.streams = parameters.replicas;
             }
-            LOG(WARNING) << "\tWARNING: Too many streams; setting equal to " << parameters.streams << ".";
+            //LOG(WARNING) << "\tWARNING: Too many streams; setting equal to " << parameters.streams << ".";
         }
     }
 }
@@ -526,36 +526,36 @@ void Simulation::init(int argc, char **argv, int pid)
     sprintf(mkdir_command, "mkdir -p output/%s/pdb",  parameters.prefix);
     int make_dirs = system(mkdir_command);
 
-    VLOG(0) << "Created output directory: output/" << parameters.prefix;
+    //VLOG(0) << "Created output directory: output/" << parameters.prefix;
 
     ostringstream log_path;
     log_path << "output/" << parameters.prefix << "/log";
 
-    VLOG(0) << "------------------------------------------------------------------------";
-    VLOG(0) << "LOGGING REST OF SIMULATION TO " << log_path.str();
-    VLOG(0) << "------------------------------------------------------------------------";
+    //VLOG(0) << "------------------------------------------------------------------------";
+    //VLOG(0) << "LOGGING REST OF SIMULATION TO " << log_path.str();
+    //VLOG(0) << "------------------------------------------------------------------------";
 
-    el::Configurations conf;
-    conf.setGlobally(el::ConfigurationType::Filename, log_path.str());
-    el::Loggers::reconfigureLogger("default", conf);
+    //el::Configurations conf;
+    //conf.setGlobally(el::ConfigurationType::Filename, log_path.str());
+    //el::Loggers::reconfigureLogger("default", conf);
 
     initSamplingFiles();
     
-    VLOG(0) << printSettings();
+    //VLOG(0) << printSettings();
 
     // sanity check and calculation of some secondary parameters
     check_and_modify_parameters();
 
     printArgs();
 
-    VLOG(0) << "Loading amino acid data " << AMINOACIDDATASOURCE << " and pair lookup table " << LJPDSOURCE;
+    //VLOG(0) << "Loading amino acid data " << AMINOACIDDATASOURCE << " and pair lookup table " << LJPDSOURCE;
     aminoAcidData.init(AMINOACIDDATASOURCE, LJPDSOURCE);
 
 #ifdef displayLJpotentials
     printPotentials(&aminoAcidData);
 #endif
 
-    VLOG(0) << "Initialising first replica...";
+    //VLOG(0) << "Initialising first replica...";
 
     // Create the initial replica, and compare CPU and GPU potential
 
@@ -573,15 +573,15 @@ void Simulation::init(int argc, char **argv, int pid)
     if (initialReplica.nonCrowderCount < initialReplica.moleculeCount)
     {
 #if REPULSIVE_CROWDING
-        VLOG(0) << "\tCrowding is modelled using: u(r) = (6/r)^(12).";
+        //VLOG(0) << "\tCrowding is modelled using: u(r) = (6/r)^(12).";
 #else
-        VLOG(0) << "\tCrowding is modelled using the full potential calculations.";
+        //VLOG(0) << "\tCrowding is modelled using the full potential calculations.";
 #endif
     }
 
     // now set up all the replicas
 
-    VLOG(0) << "Initialising child replicas...";
+    //VLOG(0) << "Initialising child replicas...";
 
     geometricTemperature = pow(double(parameters.temperatureMax/parameters.temperatureMin),double(1.0/double(parameters.replicas-1)));
     geometricTranslate = pow(double(MAX_TRANSLATION/MIN_TRANSLATION),double(1.0/double(parameters.replicas-1)));
@@ -590,7 +590,7 @@ void Simulation::init(int argc, char **argv, int pid)
     for (size_t i = 0; i < parameters.replicas; i++)
     {
         replica[i].init_child_replica(initialReplica, int(i), geometricTemperature, geometricRotation, geometricTranslate, parameters);
-        VLOG(1) << "\tReplica " << int(i) << "; temperature: " << replica[i].temperature << "; translate step: " << replica[i].translateStep << "; rotate step: " << replica[i].rotateStep;
+        //VLOG(1) << "\tReplica " << int(i) << "; temperature: " << replica[i].temperature << "; translate step: " << replica[i].translateStep << "; rotate step: " << replica[i].rotateStep;
     }
 
     // Temperature map stuff
@@ -663,7 +663,7 @@ void Simulation::init(int argc, char **argv, int pid)
         // % #gpus so they share if threads > gpus
         // will perform best if threads:gpus = 1:1
         data[i].GPUID = i % parameters.gpus + parameters.gpuoffset;
-        VLOG(1) << "\tAssigning thread " << i << " to GPU " << data[i].GPUID;
+        //VLOG(1) << "\tAssigning thread " << i << " to GPU " << data[i].GPUID;
 
         data[i].max_replicas_per_thread = parameters.max_replicas_per_thread;
 
@@ -694,13 +694,13 @@ void Simulation::run()
 {
     // we can't use pthreads and CUDA at the moment, but we are going to use streams
 
-    VLOG(0) << "Beginning simulation...";
+    //VLOG(0) << "Beginning simulation...";
 
     // TODO: add stuff for resuming here
 
     if (initialReplica.moleculeCount == 0)  // make sure something is loaded
     {
-        LOG(ERROR) << "No molecules loaded. Aborting run.";
+        //LOG(ERROR) << "No molecules loaded. Aborting run.";
         return;
     }
 
@@ -712,7 +712,7 @@ void Simulation::run()
     sdkStartTimer(&RELoopTimer);
 #endif
 
-    VLOG(0) << "--- Launching threads ---";
+    //VLOG(0) << "--- Launching threads ---";
 
     pthread_mutex_lock(&waitingCounterMutex);
 
@@ -803,7 +803,7 @@ void Simulation::run()
         }
 #endif
 
-        VLOG(0) << "Replica Exchange step " << steps << " of " << parameters.REsteps << " complete (Fraction bound @ " << near_300k << "K: " << _300kReplica->accumulativeFractionBound;
+        //VLOG(0) << "Replica Exchange step " << steps << " of " << parameters.REsteps << " complete (Fraction bound @ " << near_300k << "K: " << _300kReplica->accumulativeFractionBound;
 
         exchange_frequency();
     }
@@ -816,8 +816,8 @@ void Simulation::run()
     pthread_cond_broadcast(&waitingThreadCond);
     pthread_mutex_unlock(&waitingCounterMutex);  // release the mutex so MC threads can continue.
 
-    VLOG(0) << "--- Replica Exchanges Complete.---";
-    VLOG(0) << "--- Waiting for threads to exit. ---";
+    //VLOG(0) << "--- Replica Exchanges Complete.---";
+    //VLOG(0) << "--- Waiting for threads to exit. ---";
 
     // join the threads that have finished
     for (int i=0; i<parameters.threads; i++)
@@ -828,7 +828,7 @@ void Simulation::run()
     sdkStopTimer(&MCLoopTimer);
 #endif
 
-    VLOG(0) << "--- All threads complete.---";
+    //VLOG(0) << "--- All threads complete.---";
     fprintf(fractionBoundFile,"%9d: ", parameters.MCsteps);
     fprintf(acceptanceRatioFile,"%9d: ", parameters.MCsteps);
 
@@ -845,29 +845,29 @@ void Simulation::run()
     fprintf(acceptanceRatioFile,"\n");
     fflush(acceptanceRatioFile);
 
-    VLOG(0) << "--- Simulation finished.---";
+    //VLOG(0) << "--- Simulation finished.---";
 
 
 #if INCLUDE_TIMERS
     //CUT_SAFE_CALL( cutStopTimer(RELoopTimer) );
     sdkStopTimer(&RELoopTimer);
-    VLOG(0) << "Simulation Timers";
+    //VLOG(0) << "Simulation Timers";
     //VLOG(0) << "MC Loop: Tot  " << cutGetTimerValue(MCLoopTimer) << " ms  Ave " << cutGetTimerValue(MCLoopTimer)/float(parameters.REsteps) << "ms (" << parameters.MCsteps << " steps, " << parameters.replicas << " replicas, " << parameters.threads << " threads, " << parameters.streams << " streams)";
-    VLOG(0) << "MC Loop: Tot  " << sdkGetTimerValue(&MCLoopTimer) << " ms  Ave " << sdkGetTimerValue(&MCLoopTimer)/float(parameters.REsteps) << "ms (" << parameters.MCsteps << " steps, " << parameters.replicas << " replicas, " << parameters.threads << " threads, " << parameters.streams << " streams)";
+    //VLOG(0) << "MC Loop: Tot  " << sdkGetTimerValue(&MCLoopTimer) << " ms  Ave " << sdkGetTimerValue(&MCLoopTimer)/float(parameters.REsteps) << "ms (" << parameters.MCsteps << " steps, " << parameters.replicas << " replicas, " << parameters.threads << " threads, " << parameters.streams << " streams)";
     //VLOG(0) << "Simulation: " << cutGetTimerValue(RELoopTimer) << " ms  (" << parameters.REsteps << " exchanges)";
-    VLOG(0) << "Simulation: " << sdkGetTimerValue(&RELoopTimer) << " ms  (" << parameters.REsteps << " exchanges)";
+    //VLOG(0) << "Simulation: " << sdkGetTimerValue(&RELoopTimer) << " ms  (" << parameters.REsteps << " exchanges)";
 #endif
 
     pthread_mutex_lock(&writeFileMutex);
     closeSamplingFiles();
     pthread_mutex_unlock(&writeFileMutex);
 
-    VLOG(0) << "Simulation done.";
+    //VLOG(0) << "Simulation done.";
 
 #if INCLUDE_TIMERS
     for (size_t i=0; i<parameters.replicas; i++)
     {
-        VLOG(0) << "Replica " << i << " timers";
+        //VLOG(0) << "Replica " << i << " timers";
         replica[i].printTimers();
     }
 #endif
@@ -958,7 +958,7 @@ void *MCthreadableFunction(void *arg)
 
     int replica_offset = data->index * data->max_replicas_per_thread;
 
-    VLOG(0) << "--- Monte-Carlo thread " << int(data->index + 1) << " running. ---";
+    //VLOG(0) << "--- Monte-Carlo thread " << int(data->index + 1) << " running. ---";
 
 // TODO: why do we do this?
 #if GLVIS
@@ -969,7 +969,7 @@ void *MCthreadableFunction(void *arg)
     pthread_mutex_lock( data->logMutex );
     for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
-        VLOG(0) << "+ Thread " << data->index << " running replica " << tx + data->index * data->max_replicas_per_thread;
+        //VLOG(0) << "+ Thread " << data->index << " running replica " << tx + data->index * data->max_replicas_per_thread;
     }
     pthread_mutex_unlock( data->logMutex );
 #endif
@@ -1062,7 +1062,7 @@ void *MCthreadableFunction(void *arg)
 
                 for (int rps = 0; rps < data->replicas_per_stream; rps++)
                 {
-                    VLOG(0) << "Thread " << data->index << " is about to MCSearchAcceptReject in replica " << (replica_offset + index + rps);
+                    //VLOG(0) << "Thread " << data->index << " is about to MCSearchAcceptReject in replica " << (replica_offset + index + rps);
                     data->replica[replica_offset + index + rps].MCSearchAcceptReject(mcstep);
                 }
 
@@ -1103,7 +1103,7 @@ void *MCthreadableFunction(void *arg)
     // sync all streams and free gpu memory
     for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
-        VLOG(0) << "Thread " << data->index << " is about to tear down CUDA in replica " << (tx + replica_offset);
+        //VLOG(0) << "Thread " << data->index << " is about to tear down CUDA in replica " << (tx + replica_offset);
         data->replica[tx + replica_offset].teardown_CUDA();
     }
 
@@ -1114,7 +1114,7 @@ void *MCthreadableFunction(void *arg)
 #endif // CUDA_STREAMS
 
 #endif // USING_CUDA
-    VLOG(0) << "--- Monte-Carlo thread " << int(data->index + 1) << " exited. ---";
+    //VLOG(0) << "--- Monte-Carlo thread " << int(data->index + 1) << " exited. ---";
     return 0;
 }
 // END OF *MCthreadableFunction
@@ -1132,7 +1132,7 @@ void Simulation::initSamplingFile(const char * name, FILE ** file_addr)
     }
     if (!file)
     {
-        LOG(ERROR) << "Cannot open/create file: " << filename;
+        //LOG(ERROR) << "Cannot open/create file: " << filename;
         return;
     }
 
@@ -1142,7 +1142,7 @@ void Simulation::initSamplingFile(const char * name, FILE ** file_addr)
 void Simulation::closeSamplingFile(const char * name, FILE ** file_addr)
 {
     fclose(*file_addr);
-    VLOG(0) << "Closing sampling file: output/" << parameters.prefix << "/" <<  name;
+    //VLOG(0) << "Closing sampling file: output/" << parameters.prefix << "/" <<  name;
 }
 
 void Simulation::initSamplingFiles()
@@ -1253,20 +1253,20 @@ string Simulation::printSettings()
 
 void Simulation::printArgs()
 {
-    VLOG(1) << "Final parameters:";
-    VLOG(1) << "\tThreads: " << parameters.threads;
-    VLOG(1) << "\tStreams: " << parameters.streams;
-    VLOG(1) << "\tGPUs: " << parameters.gpus;
-    VLOG(1) << "\tGPU offset: " << parameters.gpuoffset;
-    VLOG(1) << "\tReplicas: " << parameters.replicas;
+    //VLOG(1) << "Final parameters:";
+    //VLOG(1) << "\tThreads: " << parameters.threads;
+    //VLOG(1) << "\tStreams: " << parameters.streams;
+    //VLOG(1) << "\tGPUs: " << parameters.gpus;
+    //VLOG(1) << "\tGPU offset: " << parameters.gpuoffset;
+    //VLOG(1) << "\tReplicas: " << parameters.replicas;
 
-    VLOG(1) << "\tMC steps: " << parameters.MCsteps;
-    VLOG(1) << "\tRE steps: " << parameters.REsteps;
-    VLOG(1) << "\tSampling frequency (MC steps): " << parameters.sampleFrequency;
-    VLOG(1) << "\tSampling starts after (MC steps): " << parameters.sampleStartsAfter;
+    //VLOG(1) << "\tMC steps: " << parameters.MCsteps;
+    //VLOG(1) << "\tRE steps: " << parameters.REsteps;
+    //VLOG(1) << "\tSampling frequency (MC steps): " << parameters.sampleFrequency;
+    //VLOG(1) << "\tSampling starts after (MC steps): " << parameters.sampleStartsAfter;
 
-    VLOG(1) << "\tBounding box size: " << parameters.bound;
-    VLOG(1) << "\tNon-crowder molecules: " << parameters.nonCrowders;
-    VLOG(1) << "\tMaximum temperature: " << parameters.temperatureMax;
-    VLOG(1) << "\tMinimum temperature: " << parameters.temperatureMin;
+    //VLOG(1) << "\tBounding box size: " << parameters.bound;
+    //VLOG(1) << "\tNon-crowder molecules: " << parameters.nonCrowders;
+    //VLOG(1) << "\tMaximum temperature: " << parameters.temperatureMax;
+    //VLOG(1) << "\tMinimum temperature: " << parameters.temperatureMin;
 }

@@ -1,16 +1,16 @@
 #include "Simulation.h"
 
-INITIALIZE_EASYLOGGINGPP
+//INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char **argv)
 {
-    START_EASYLOGGINGPP(argc, argv);
-    el::Configurations conf("logs/log.conf");
-    el::Loggers::reconfigureLogger("default", conf);
+    //START_EASYLOGGINGPP(argc, argv);
+    //el::Configurations conf("logs/log.conf");
+    //el::Loggers::reconfigureLogger("default", conf);
 
-    VLOG(0) << "------------------------------------------------------------------------";
-    VLOG(0) << "LOGGING TO " << conf.get(el::Level::Info, el::ConfigurationType::Filename)->value();
-    VLOG(0) << "------------------------------------------------------------------------";
+    //VLOG(0) << "------------------------------------------------------------------------";
+    //VLOG(0) << "LOGGING TO " << conf.get(el::Level::Info, el::ConfigurationType::Filename)->value();
+    //VLOG(0) << "------------------------------------------------------------------------";
 
     Simulation simulation;
     simulation.init(argc, argv, int(getpid()));
@@ -34,6 +34,6 @@ int main(int argc, char **argv)
     }
 #endif
 
-    VLOG(0) << "Finished.";
+    //VLOG(0) << "Finished.";
     return 0;
 }
