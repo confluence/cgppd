@@ -361,13 +361,13 @@ void Replica::MCSearch(int steps, int mcstep)
 {
     for (int step = 0; step < steps; step++)
     {
-        //ostringstream debug_log;
+        ostringstream debug_log;
         int moleculeNo = (int) gsl_rng_uniform_int(rng, moleculeCount);
         // save the current state so we can roll back if it was not a good mutation.
         savedMolecule.MC_backup_restore(&molecules[moleculeNo]);
         molecules[moleculeNo].make_MC_move(rng, rotateStep, translateStep);
 
-        //debug_log << "Step " << mcstep + step << ":\treplica " << label << "\tmolecule " << moleculeNo << ":\t" << molecules[moleculeNo].last_MC_move << "\t";
+        debug_log << "Step " << mcstep + step << ":\treplica " << label << "\tmolecule " << moleculeNo << ":\t" << molecules[moleculeNo].last_MC_move << "\t";
 #if USING_CUDA
         // copy host data to device. so we can do the calculations on it.
         MoleculeDataToDevice(moleculeNo);
@@ -375,7 +375,7 @@ void Replica::MCSearch(int steps, int mcstep)
 #if FLEXIBLE_LINKS
         if (!calculate_rigid_potential_only) {
             double bonded_potential = internal_molecule_E(false).total();
-            //debug_log << "new Eu: " << newPotential << ",\tnew Eb: " << bonded_potential << "\t";
+            debug_log << "new Eu: " << newPotential << ",\tnew Eb: " << bonded_potential << "\t";
             newPotential += bonded_potential;
         }
 #endif // FLEXIBLE_LINKS
@@ -384,13 +384,13 @@ void Replica::MCSearch(int steps, int mcstep)
 #if FLEXIBLE_LINKS
         if (!calculate_rigid_potential_only) {
             cpu_e += internal_molecule_E(true);
-            //debug_log << "new Eu: " << cpu_e.total_LJ() + cpu_e.total_DH() << ",\tnew Eb: " << cpu_e.total_bond() + cpu_e.total_angle() + cpu_e.total_torsion() << "\t";
+            debug_log << "new Eu: " << cpu_e.total_LJ() + cpu_e.total_DH() << ",\tnew Eb: " << cpu_e.total_bond() + cpu_e.total_angle() + cpu_e.total_torsion() << "\t";
         }
 #endif // FLEXIBLE_LINKS
         newPotential = cpu_e.total();
 #endif // not USING_CUDA
 
-        //debug_log << "new E: " << newPotential << "\t";
+        debug_log << "new E: " << newPotential << "\t";
     
         float delta = newPotential - potential;
 
@@ -399,28 +399,27 @@ void Replica::MCSearch(int steps, int mcstep)
         {
             potential = newPotential;
             accept++;
-            //debug_log << "* Replace:\tdelta E = " << delta << ";\tE = " << potential;
+            debug_log << "* Replace:\tdelta E = " << delta << ";\tE = " << potential;
         }
         // accept change if it meets the boltzmann criteria -- delta must be converted from kcal/mol to J/mol
         else if (gsl_rng_uniform(rng) < exp(-(delta*kcal)/(Rgas*temperature)))
         {
             potential = newPotential;
             acceptA++;
-            //debug_log << "**Replace:\tdelta E = " << delta << ";\tE = " << potential << ";\tU < " << exp(-delta * kcal/(Rgas*temperature));
+            debug_log << "**Replace:\tdelta E = " << delta << ";\tE = " << potential << ";\tU < " << exp(-delta * kcal/(Rgas*temperature));
         }
         //reject
         else
         {
             reject++;
-            //debug_log << "- Reject:\tdelta E = " << delta << ";\tE = " << potential;
+            debug_log << "- Reject:\tdelta E = " << delta << ";\tE = " << potential;
             molecules[moleculeNo].MC_backup_restore(&savedMolecule);
 #if USING_CUDA
             MoleculeDataToDevice(moleculeNo); // you have to update the device again because the copy will be inconsistent
 #endif
         }
 
-        //VLOG(1) << debug_log.str();
-
+        LOGOG_DEBUG(debug_log.str().c_str());
     }
 }
 

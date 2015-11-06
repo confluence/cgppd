@@ -77,8 +77,6 @@ void Simulation::printHelp()
     cout << "\t-x|--tmax x:         The temperature of the highest replica" << endl;
     cout << "\t-n|--tmin x:         The temperature of the lowest replica" << endl;
     cout << "\t-d|--blockdim x:     Number of threads per CUDA block" << endl;
-
-    exit(0);
 }
 
 void Simulation::getArgs(int argc, char **argv, bool first_pass)
@@ -130,6 +128,7 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
             {
                 case 'h':
                     printHelp();
+                    throw "help";
                     break;
                 case 'f':
                     strcpy(parameters.file, optarg);
@@ -146,14 +145,13 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
 
         if (!parameters.inputFile)
         {
-            //LOG(ERROR) << "No configuration file provided.";
             printHelp();
+            throw "No configuration file provided.";
         }
-
-        //VLOG(1) << "Will read configuration from file: " << parameters.file;
+        
+        LOGOG_DEBUG("Will read configuration from file: %s", parameters.file);
     } else {
-
-        //VLOG(0) << "Parsing commandline parameters...";
+        LOGOG_INFO("Parsing commandline parameters...");
 
         while (1)
         {
@@ -165,10 +163,9 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
             switch(opt)
             {
                 case 'h':
-                    printHelp();
-                    break;
+                    // ignore
                 case 'f':
-                    // we can ignore the file parameter on the second pass
+                    // ignore
                     break;
                 case 'v':
                     // ignore
@@ -179,75 +176,89 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                 case 'p':
     #if GLVIS
                     parameters.viewConditions = true;
-                    //VLOG(1) << "\tWill show OpenGL preview.";
+                    LOGOG_DEBUG("\tWill show OpenGL preview.");
     #else
-                    //LOG(WARNING) << "\tThis build does not support OpenGL.";
+                    LOGOG_WARN("\tThis build does not support OpenGL.");
     #endif
                     break;
                 case 'q':
                     parameters.skipsimulation = true;
-                    //VLOG(1) << "\tWill skip simulation.";
+                    LOGOG_DEBUG("\tWill skip simulation.");
                     break;
                 case 't':
                     parameters.threads = atoi(optarg);
+                    LOGOG_DEBUG("\tParameter threads = %d", parameters.threads);
                     //VLOG(1) << "\tParameter threads = " << parameters.threads;
                     break;
                 case 's':
                     parameters.streams = atoi(optarg);
+                    LOGOG_DEBUG("\tParameter streams = %d", parameters.streams);
                     //VLOG(1) << "\tParameter streams = " << parameters.streams;
                     break;
                 case 'g':
                     parameters.gpus = atoi(optarg);
+                    LOGOG_DEBUG("\tParameter gpus = %d", parameters.gpus);
                     //VLOG(1) << "\tParameter gpus = " << parameters.gpus;
                     break;
                 case 'z':
                     parameters.gpuoffset = atoi(optarg);
+                    LOGOG_DEBUG("\tParameter gpuoffset = %d", parameters.gpuoffset);
                     //VLOG(1) << "\tParameter gpuoffset = " << parameters.gpuoffset;
                     break;
                 case 'm':
                     parameters.MCsteps = atoi(optarg);
+                    LOGOG_DEBUG("\tParameter MCsteps = %s", parameters.MCsteps);
                     //VLOG(1) << "\tParameter MCsteps = " << parameters.MCsteps;
                     break;
                 case 'a':
                     parameters.sampleStartsAfter = atoi(optarg);
+                    LOGOG_DEBUG("\tParameter sampleStartsAfter = %d", parameters.sampleStartsAfter);
                     //VLOG(1) << "\tParameter sampleStartsAfter = " << parameters.sampleStartsAfter;
                     break;
                 case 'e':
                     parameters.REsteps = atoi(optarg);
+                    LOGOG_DEBUG("\tParameter REsteps = %d", parameters.REsteps);
                     //VLOG(1) << "\tParameter REsteps = " << parameters.REsteps;
                     break;
                 case 'r':
                     parameters.replicas = atoi(optarg);
+                    LOGOG_DEBUG("\tParameter replicas = %d", parameters.replicas);
                     //VLOG(1) << "\tParameter replicas = " << parameters.replicas;
                     break;
                 case 'o':
                     sprintf(parameters.prefix, "%s_%d", optarg, parameters.pid);
+                    LOGOG_DEBUG("\tParameter prefix = %s", parameters.prefix);
                     //VLOG(1) << "\tParameter prefix = " << parameters.prefix;
                     break;
                 case 'b':
                     parameters.bound = atof(optarg);
+                    LOGOG_DEBUG("\tParameter bound = %.1f", parameters.bound);
                     //VLOG(1) << "\tParameter bound = " << parameters.bound;
                     break;
                 case 'x':
                     parameters.temperatureMax = atof(optarg);
+                    LOGOG_DEBUG("\tParameter temperatureMax = %.1f", parameters.temperatureMax);
                     //VLOG(1) << "\tParameter temperatureMax = " << parameters.temperatureMax;
                     break;
                 case 'n':
                     parameters.temperatureMin = atof(optarg);
+                    LOGOG_DEBUG("\tParameter temperatureMin = %.1f", parameters.temperatureMin);
                     //VLOG(1) << "\tParameter temperatureMin = " << parameters.temperatureMin;
                     break;
                 case 'd':
     #if USING_CUDA
                     parameters.cuda_blockSize = atoi(optarg);
                     parameters.auto_blockdim = false;
+                    LOGOG_DEBUG("\tParameter cuda_blockSize = %d", parameters.cuda_blockSize);
                     //VLOG(1) << "\tParameter blockdim = " << parameters.cuda_blockSize;
     #else
                     //LOG(WARNING) << "\tThis build does not support CUDA.";
+                    LOGOG_WARN("\tThis build does not support CUDA.");
     #endif
                     break;
                 default:
-                    //LOG(WARNING) << "\tUnknown parameter: " << opt;
                     printHelp();
+                    throw "Bad parameter.";
                     break;
             }
         }
@@ -957,6 +968,8 @@ void *MCthreadableFunction(void *arg)
     SimulationData *data = (SimulationData *) arg;
 
     int replica_offset = data->index * data->max_replicas_per_thread;
+    
+    LOGOG_INFO("--- Monte-Carlo thread %d running. ---", int(data->index + 1));
 
     //VLOG(0) << "--- Monte-Carlo thread " << int(data->index + 1) << " running. ---";
 
