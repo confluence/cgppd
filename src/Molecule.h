@@ -11,6 +11,9 @@
 #include "Potential.h"
 #include "Geometry.h"
 
+#define LOGOG_USE_PREFIX 1
+#include "logog/logog.hpp"
+
 using namespace std;
 
 class Molecule

@@ -521,7 +521,6 @@ void GLUTKeyboardPress(unsigned char key, int x, int y)
         dr++;
         dr = dr%gl_replicaCount;
         GLreplica = & (*replica)[dr]; // TODO: problem!
-        //LOG(INFO) << "displaying replica: " << dr << " E=" << GLreplica->potential;
         break;
     case 'm':
     case 'M':
@@ -583,7 +582,7 @@ void GLUTmenu(int call)
     {
     case M_QUIT:
         glutDestroyWindow(glutWindowID);
-        exit(0);
+        throw "GL window closed.";
         break;
     }
 }
@@ -612,6 +611,5 @@ void init_glvis(Replica (*replicas)[REPLICA_COUNT], Replica* gl_replica, int arg
 void enter_viewing_mode(Replica* gl_replica)
 {
     GLreplica = gl_replica;
-    //VLOG(0) << "Entering free gl viewing mode.";
     glutMainLoop();
 }

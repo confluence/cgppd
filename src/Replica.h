@@ -3,9 +3,6 @@
 
 #include "structures.h"
 
-#define LOGOG_USE_PREFIX 1
-#include "logog/logog.hpp"
-
 #if USING_CUDA
     #include <cuda.h>
     #include <builtin_types.h>

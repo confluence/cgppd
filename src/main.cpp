@@ -1,7 +1,5 @@
 #include "Simulation.h"
 
-//INITIALIZE_EASYLOGGINGPP
-
 int main(int argc, char **argv)
 {
     LOGOG_INITIALIZE();
