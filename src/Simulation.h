@@ -77,7 +77,7 @@ public:
     void loadArgsFromFile();
     void check_and_modify_parameters();
     void writeFileIndex();
-    string printSettings();
+    void printSettings(ostream & os=cout);
     void printArgs();
 
     void run();

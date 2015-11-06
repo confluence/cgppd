@@ -4,9 +4,6 @@
 #include "AminoAcids.h"
 #include "definitions.h"
 
-//#define ELPP_NO_DEFAULT_LOG_FILE 1
-//#include "easylogging++.h"
-
 using namespace std;
 
 class TorsionalLookupMatrix

@@ -16,6 +16,7 @@ MUST BE DONE FOR THESIS
 * Try to replicate with a shorter simulation. E.g. ala4
 
 * Problem because there are multiple replicas per stream?
+* Could there be a problem if different streams have different numbers of replicas? But on gethen there are two streams with 10 replicas per stream.
 
 
 1) Run 3 sets of diubiquitin simulations with latest code -- IN PROGRESS

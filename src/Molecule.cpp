@@ -89,7 +89,7 @@ void Molecule::copy(const Molecule& m, Residue * contiguous_residue_offset)
 
 void Molecule::log_info(int index)
 {
-    //VLOG(1) << "\t\t" << index << " " << filename << "; " << residueCount << " residues; centre: " << center << "; volume: " << volume << " A^3";
+    LOGOG_DEBUG("\t\t%d %s; %d residues; centre: %d; volume: %.1f A^3", index, filename, residueCount, center, volume);
 }
 
 vector<string> Molecule::residue_sequence()
@@ -225,7 +225,7 @@ bool Molecule::centre_outside_boundary(Vector3f c)
     bool outside = c.sumSquares() < bounding_value * bounding_value;
 
     if (outside) {
-        //VLOG(1) << "Move rejected because it would move molecule beyond boundary sphere.";
+        LOGOG_DEBUG("Move rejected because it would move molecule beyond boundary sphere.");
     }
 
     return outside;
@@ -377,17 +377,11 @@ void Molecule::flex(const Vector3double raxis, const double angle, const int ri,
     #endif // BOUNDING_METHOD == BOUNDING_SPHERE
     
     // apply the move
-
-    //ostringstream debug_log;
-    //debug_log << "Rotating neighbours ";
     
     for (set<int>::iterator i = branch.begin(); i != branch.end(); i++) {
-        //debug_log << *i << " ";
         Residues[*i].position += difference_vectors[*i];
         Residues[*i].relativePosition += difference_vectors[*i];
     }
-
-    //VLOG(1) << debug_log.str();
     
     // Centre and all relative positions change
     
@@ -411,13 +405,9 @@ void Molecule::flex(gsl_rng * rng, const double rotate_step)
     vector<int> & index_set = graph.MC_flex_residues;
     int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
 
-    //VLOG(1) << "Selected residue " << ri << " for flex move.";
-
     // pick a random neighbour
     const vector<int> & neighbours = graph.neighbours(ri);
     int neighbour = neighbours[gsl_rng_uniform_int(rng, neighbours.size())];
-
-    //VLOG(1) << "Selected neighbour " << neighbour;
 
     flex(raxis, rotate_step, ri, neighbour);
 }
@@ -437,8 +427,6 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 vector<int> & index_set = graph.MC_local_residues;
                 int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
 
-                //VLOG(1) << "Selected residue " << ri << " for local translation.";
-
                 Vector3f v = LOCAL_TRANSLATE_STEP_SCALING_FACTOR * translate_step * normalised_random_vector_f(rng);
                 translate(v, ri);
                 break;
@@ -448,8 +436,6 @@ void Molecule::make_local_moves(gsl_rng * rng, const double rotate_step, const d
                 strcat(last_MC_move, "C");
                 vector<int> & index_set = graph.MC_crankshaft_residues;
                 int ri = index_set[gsl_rng_uniform_int(rng, index_set.size())];
-
-                //VLOG(1) << "Selected residue " << ri << " for crankshaft.";
 
                 bool flip = (bool) gsl_ran_bernoulli(rng, 0.5);
                 crankshaft(rotate_step, flip, ri);
@@ -527,8 +513,7 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
     ifstream input(pdbfilename);
     if (!input.good())
     {
-        //LOG(INFO) << "Failed to open file: " << pdbfilename << " ("<<filename<<")";
-        exit(0);
+        throw "Failed to open PDB file.";
     }
 
     // for eachline in the file
@@ -592,7 +577,7 @@ vector<Residue> Molecule::initFromPDB(const char* pdbfilename)
     input.close();
     
     if (vResidues.size() && !chainCount) {
-        //LOG(WARNING) << "Warning: check file " << pdbfilename << " for missing TER. Automatically setting number of chains to 1.";
+        LOGOG_WARN("Check file %s for missing TER. Automatically setting number of chains to 1.", pdbfilename);
         chainCount++;
     }
 
