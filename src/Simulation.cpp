@@ -199,7 +199,7 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                     break;
                 case 'm':
                     parameters.MCsteps = atoi(optarg);
-                    LOGOG_DEBUG("\tParameter MCsteps = %s", parameters.MCsteps);
+                    LOGOG_DEBUG("\tParameter MCsteps = %d", parameters.MCsteps);
                     break;
                 case 'a':
                     parameters.sampleStartsAfter = atoi(optarg);

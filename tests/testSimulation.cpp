@@ -6,8 +6,7 @@ TEST_CASE("Simulation", "[simulation]") {
     Simulation s;
 
     SECTION ("Get arguments from command line") {
-
-        char * argv[] = {"my_programname", "-f", "tests/argtestfile", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-m", "23", "-e", "23", "-r", "23", "-b", "23", "-n", "23", "-x", "23", "-d", "23", NULL};
+        char * argv[] = {"my_programname", "-f", "tests/argtestfile", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-z", "2", "-m", "23", "-e", "23", "-r", "23", "-b", "23", "-n", "23", "-x", "23", "-d", "23", NULL};
         int argc(25);
 
         s.getArgs(argc, argv, true);
@@ -25,6 +24,7 @@ TEST_CASE("Simulation", "[simulation]") {
         REQUIRE(s.parameters.threads == 23);
         REQUIRE(s.parameters.streams == 23);
         REQUIRE(s.parameters.gpus == 23);
+        REQUIRE(s.parameters.gpuoffset == 2);
         REQUIRE(s.parameters.MCsteps == 23);
         REQUIRE(s.parameters.REsteps == 23);
         REQUIRE(s.parameters.replicas == 23);
