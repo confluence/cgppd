@@ -4,8 +4,9 @@
 #include <set>
 #include <vector>
 
-//#define ELPP_NO_DEFAULT_LOG_FILE 1
-//#include "easylogging++.h"
+#define LOGOG_USE_PREFIX 1
+#include "logog/logog.hpp"
+
 #include "catch.hpp"
 
 using namespace std;

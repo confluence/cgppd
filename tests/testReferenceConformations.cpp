@@ -133,10 +133,12 @@ TEST_CASE("Reference conformations" "[reference]") {
         double max_e_LJ(0);
         double max_e_DH(0);
         double max_e_total(0);
-        
-        //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Comparison to Kim's results";
-        //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Relative errors:";
-        
+
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+        cout << "Comparison to Kim's results" << endl;
+        cout << "Relative errors:" << endl;
+#endif
+
         for (int i = 0; i < 10; i++) {
             const double & kim_LJ = kim_results[i].total_LJ();
             const double & kim_DH = kim_results[i].total_DH();
@@ -151,9 +153,10 @@ TEST_CASE("Reference conformations" "[reference]") {
             double e_LJ = fabs(kim_LJ - LJ)/fabs(kim_LJ);
             double e_DH = fabs(kim_DH - DH)/fabs(kim_DH);
             double e_total = fabs(kim_total - total)/fabs(kim_total);
-            
-            //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total;
 
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+            cout << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total << endl;
+#endif
             mean_e_LJ += e_LJ/10;
             mean_e_DH += e_DH/10;
             mean_e_total += e_total/10;
@@ -163,8 +166,10 @@ TEST_CASE("Reference conformations" "[reference]") {
             max_e_total = max(max_e_total, e_total);
         }
         
-        //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total;
-        //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total;
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+        cout << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total << endl;
+        cout << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total << endl;
+#endif
         
         // Apart from the LJ in conformations 1 and 6, we seem to be doing quite well. We should probably investigate that more closely.
         
@@ -204,8 +209,10 @@ TEST_CASE("Reference conformations" "[reference]") {
         double max_e_DH(0);
         double max_e_total(0);
         
-        //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Comparison to CHARMM results";
-        //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Relative errors:";
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+        cout << "Comparison to CHARMM results" << endl;
+        cout << "Relative errors:" << endl;
+#endif
         
         for (int i = 0; i < 10; i++) {
             const double & charmm_LJ = charmm_results[i].total_LJ();
@@ -222,7 +229,9 @@ TEST_CASE("Reference conformations" "[reference]") {
             double e_DH = fabs(charmm_DH - DH)/fabs(charmm_DH);
             double e_total = fabs(charmm_total - total)/fabs(charmm_total);
             
-            //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total;
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+            cout << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total << endl;
+#endif
 
             mean_e_LJ += e_LJ/10;
             mean_e_DH += e_DH/10;
@@ -233,8 +242,10 @@ TEST_CASE("Reference conformations" "[reference]") {
             max_e_total = max(max_e_total, e_total);
         }
         
-        //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total;
-        //LOG_IF(PRINT_REFERENCE_CONFORMATIONS_FROM_TEST, INFO) << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total;
+#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+        cout << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total << endl;
+        cout << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total << endl;
+#endif
         
         // This is less good, but also less important than the distance from the original results.
             
