@@ -677,7 +677,7 @@ void Replica::MCSearchAcceptReject(int mcstep)
         MoleculeDataToDevice(lastMutationIndex); // you have to update the device again because the copy will be inconsistent
     }
     
-    LOGOG_DEBUG(debug_log.str().c_str())
+    LOGOG_DEBUG(debug_log.str().c_str());
 }
 #endif  // streams
 
