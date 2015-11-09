@@ -7,7 +7,7 @@ TEST_CASE("Simulation", "[simulation]") {
 
     SECTION ("Get arguments from command line") {
         char * argv[] = {"my_programname", "-f", "tests/argtestfile", "-p", "-q", "-t", "23", "-s", "23", "-g", "23", "-z", "2", "-m", "23", "-e", "23", "-r", "23", "-b", "23", "-n", "23", "-x", "23", "-d", "23", NULL};
-        int argc(25);
+        int argc(27);
 
         s.getArgs(argc, argv, true);
         s.getArgs(argc, argv, false);
