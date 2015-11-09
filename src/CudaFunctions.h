@@ -9,6 +9,9 @@ using namespace std;
 #include "constants.h"
 #include "cudaExterns.h"
 
+#define throwLastCudaError(msg)      __throwLastCudaError (msg, __FILE__, __LINE__)
+void __throwLastCudaError(const char *errorMessage, const char *file, const int line);
+
 float * LJPotentialDataToDevice (AminoAcids *a);
 void copyLJPotentialDataToDevice (float * dev_LJPotentialData, AminoAcids *a);
 
