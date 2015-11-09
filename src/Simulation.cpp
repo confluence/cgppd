@@ -120,8 +120,6 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
             if (opt == -1)
                 break;
                 
-            int loglevel = LOGOG_LEVEL_ERROR;
-
             switch(opt)
             {
                 case 'h':
@@ -136,19 +134,19 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                     switch(atoi(optarg))
                     {
                         case 0:
-                            loglevel = LOGOG_LEVEL_NONE;
+                            LOGOG_SET_LEVEL(LOGOG_LEVEL_NONE);
                             break;
                         case 1:
                             // keep LOGOG_LEVEL_ERROR
                             break;
                         case 2:
-                            loglevel = LOGOG_LEVEL_WARN;
+                            LOGOG_SET_LEVEL(LOGOG_LEVEL_WARN);
                             break;
                         case 3:
-                            loglevel = LOGOG_LEVEL_INFO;
+                            LOGOG_SET_LEVEL(LOGOG_LEVEL_INFO);
                             break;
                         case 4:
-                            loglevel = LOGOG_LEVEL_ALL;
+                            LOGOG_SET_LEVEL(LOGOG_LEVEL_ALL);
                             break;
                     }
                     
@@ -158,7 +156,6 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                     break;
             }
             
-            LOGOG_SET_LEVEL(loglevel);
         }
 
         if (!parameters.inputFile)
@@ -637,18 +634,26 @@ void Simulation::init(int argc, char **argv, int pid)
     // Set up parameters to pass to threads
     for (int i = 0; i < parameters.threads; i++)
     {
-        data[i].replica = replica;
+        LOGOG_DEBUG("Assigning parameters for thread %d", i);
+        data[i].replica = replica; // common pointer to all the replicas!
         data[i].replicaCount = parameters.replicas;
+        LOGOG_DEBUG("\tReplicas: %d", data[i].replicaCount);
         data[i].index = i;
         data[i].threads = parameters.threads;
+        LOGOG_DEBUG("\tthreads: %d", data[i].threads);
         data[i].streams = parameters.streams;
+        LOGOG_DEBUG("\tstreams: %d", data[i].streams);
         data[i].MCsteps = parameters.MCsteps;
+        LOGOG_DEBUG("\tMCsteps: %d", data[i].MCsteps);
         data[i].REsteps = parameters.REsteps;
+        LOGOG_DEBUG("\tREsteps: %d", data[i].REsteps);
         data[i].MC_steps_per_RE = parameters.MCsteps/parameters.REsteps;
+        LOGOG_DEBUG("\tMC_steps_per_RE: %d", data[i].MC_steps_per_RE);
         data[i].sampleFrequency = parameters.sampleFrequency;
+        LOGOG_DEBUG("\tsampleFrequency: %d", data[i].sampleFrequency);
         data[i].sampleStartsAfter = parameters.sampleStartsAfter;
+        LOGOG_DEBUG("\tsampleStartsAfter: %d", data[i].sampleStartsAfter);
         data[i].bound = parameters.bound;
-        data[i].streams = parameters.streams;
         data[i].waitingThreadCount = &waitingThreads;
         memset(data[i].prefix, 0, 256);
         strcpy(data[i].prefix, parameters.prefix);
@@ -670,9 +675,9 @@ void Simulation::init(int argc, char **argv, int pid)
         // % #gpus so they share if threads > gpus
         // will perform best if threads:gpus = 1:1
         data[i].GPUID = i % parameters.gpus + parameters.gpuoffset;
-        LOGOG_INFO("\tAssigning thread %d to GPU %d", i, data[i].GPUID);
-
+        LOGOG_DEBUG("\tGPUID: %d", data[i].GPUID);
         data[i].max_replicas_per_thread = parameters.max_replicas_per_thread;
+        LOGOG_DEBUG("\tmax_replicas_per_thread: %d", data[i].max_replicas_per_thread);
 
         // we have already checked that the replicas can be distributed like this
         data[i].replicas_in_this_thread = parameters.max_replicas_per_thread;
@@ -680,11 +685,14 @@ void Simulation::init(int argc, char **argv, int pid)
         {
             data[i].replicas_in_this_thread -= parameters.replicas - parameters.max_replicas_per_thread * parameters.threads;
         }
+        LOGOG_DEBUG("\treplicas_in_this_thread: %d", data[i].replicas_in_this_thread);
 
 #if CUDA_STREAMS
         // the stream/replica ration must be a whole number otherwise there will be lots of waste, ie dormant streams etc
         data[i].replicas_per_stream = int(ceil(float(parameters.max_replicas_per_thread)/float(parameters.streams / parameters.threads)));
+        LOGOG_DEBUG("\treplicas_per_stream: %d", data[i].replicas_per_stream);
         data[i].streams_per_thread  = data[i].replicas_in_this_thread/data[i].replicas_per_stream;
+        LOGOG_DEBUG("\tstreams_per_thread: %d", data[i].streams_per_thread);
 #endif
     }
 

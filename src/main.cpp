@@ -3,6 +3,7 @@
 int main(int argc, char **argv)
 {
     LOGOG_INITIALIZE();
+    LOGOG_SET_LEVEL(LOGOG_LEVEL_ERROR);
     
     {
         logog::Cout log_output;
