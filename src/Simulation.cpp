@@ -119,6 +119,8 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
 
             if (opt == -1)
                 break;
+                
+            int loglevel = LOGOG_LEVEL_ERROR;
 
             switch(opt)
             {
@@ -131,12 +133,32 @@ void Simulation::getArgs(int argc, char **argv, bool first_pass)
                     parameters.inputFile = true;
                     break;
                 case 'v':
-                    LOGOG_SET_LEVEL(atoi(optarg));
+                    switch(atoi(optarg))
+                    {
+                        case 0:
+                            loglevel = LOGOG_LEVEL_NONE;
+                            break;
+                        case 1:
+                            // keep LOGOG_LEVEL_ERROR
+                            break;
+                        case 2:
+                            loglevel = LOGOG_LEVEL_WARN;
+                            break;
+                        case 3:
+                            loglevel = LOGOG_LEVEL_INFO;
+                            break;
+                        case 4:
+                            loglevel = LOGOG_LEVEL_ALL;
+                            break;
+                    }
+                    
                     break;
                 default:
                     // Ignore all other options in this pass
                     break;
             }
+            
+            LOGOG_SET_LEVEL(loglevel);
         }
 
         if (!parameters.inputFile)
@@ -1024,6 +1046,7 @@ void *MCthreadableFunction(void *arg)
 
                 for (int rps = 0; rps < data->replicas_per_stream; rps++)
                 {
+                    LOGOG_INFO("+++ About to execute MCSearchAcceptReject in replica %d", (replica_offset + index + rps));
                     data->replica[replica_offset + index + rps].MCSearchAcceptReject(mcstep);
                 }
 
@@ -1064,6 +1087,7 @@ void *MCthreadableFunction(void *arg)
     // sync all streams and free gpu memory
     for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
+        LOGOG_INFO("+++ About to teardown CUDA in replica %d", (tx + replica_offset));
         data->replica[tx + replica_offset].teardown_CUDA();
     }
 
