@@ -16,6 +16,21 @@ using namespace std;
 
 #if USING_CUDA
 
+// special sauce function for throwing an exception when there's a CUDA error instead of exiting
+void __throwLastCudaError(const char *errorMessage, const char *file, const int line)
+{
+    cudaError_t err = cudaGetLastError();
+
+    if (cudaSuccess != err)
+    {
+        fprintf(stderr, "%s(%i) : getLastCudaError() CUDA error : %s : (%d) %s.\n",
+                file, line, errorMessage, (int)err, cudaGetErrorString(err));
+        DEVICE_RESET
+        throw errorMessage;
+        //exit(EXIT_FAILURE);
+    }
+}
+
 #if LJ_LOOKUP_METHOD == TEXTURE_MEM
 
 void bindLJTexture(float * ljp)

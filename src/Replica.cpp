@@ -612,8 +612,9 @@ double Replica::SumGridResults()
     for (int i=0; i<resultSize*resultSize; i++)
         potentialSum += kernelResult[i];
 
+    LOGOG_INFO("++++++++ Replica %d is about to try zeroing sum space after summing!", label);
     cudaMemset(device_kernelResult, 0, sizeof(float)*resultSize*resultSize);
-    getLastCudaError("Error zeroing sum space on device after summing");
+    throwLastCudaError("Error zeroing sum space on device after summing");
     return potentialSum;
 }
 #endif
