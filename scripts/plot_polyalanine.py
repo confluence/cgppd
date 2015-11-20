@@ -51,8 +51,12 @@ class PolyalanineSimulationSequence(object):
         #logging.debug("A = %g" % p1[0])
 
         plt.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
+        
+        if args.lj == "off":
+            plt.title("Polyalanine with LJ potentials off")
+        elif args.lj == "repulsive":
+            plt.title("Polyalanine with repulsive LJ potentials")
 
-        plt.title("LJ %s" % args.lj)
         plt.xlabel("Number of residues")
         plt.ylabel(u"Mean %s (Å)" % measurement)
 
@@ -82,7 +86,13 @@ class PolyalanineSimulationSequence(object):
                 plt.xlabel("Sample no.")
                 plt.ylabel(u"%s (Å)" % measurement)
                 plt.xticks(rotation='vertical')
-                plt.subplots_adjust(left=0.06, bottom=0.08, right=0.99, top=0.97, wspace=0.3, hspace=0.4)
+        
+        plt.subplots_adjust(left=0.06, bottom=0.08, right=0.99, top=0.94, wspace=0.3, hspace=0.4)
+                
+        if args.lj == "off":
+            plt.suptitle("Polyalanine with LJ potentials off")
+        elif args.lj == "repulsive":
+            plt.suptitle("Polyalanine with repulsive LJ potentials")
             
     def plot_radius(self, args):
         self._plot_vs_time("radius", args)
@@ -107,7 +117,13 @@ class PolyalanineSimulationSequence(object):
                 plt.xlabel(u"%s (Å)" % measurement)
                 plt.ylabel("No. of samples") 
                 plt.xticks(rotation='vertical')
-                plt.subplots_adjust(left=0.06, bottom=0.08, right=0.99, top=0.97, wspace=0.3, hspace=0.4)     
+        
+        plt.subplots_adjust(left=0.06, bottom=0.08, right=0.99, top=0.94, wspace=0.3, hspace=0.4)   
+                
+        if args.lj == "off":
+            plt.suptitle("Polyalanine with LJ potentials off")
+        elif args.lj == "repulsive":
+            plt.suptitle("Polyalanine with repulsive LJ potentials")  
             
     def plot_hist_radius(self, args):
         self._plot_histogram("radius", args)
