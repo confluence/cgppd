@@ -41,7 +41,8 @@ class Sample(object):
             elif "potential" in line:
                 potential = float(re.search("(-?\d+\.\d+)", line).group(1))
             elif "ATOM" in line:
-                residues.append((float(line[30:38]), float(line[38:46]), float(line[46:54])))
+                # we can deal with overflows here which are technically illegal PDB syntax, because we know the precision is fixed
+                residues.append(tuple(float(n) for n in re.findall('(-?\d+\.\d{3})', line[30:-12])))
 
         length, radius = measure(residues)
         
