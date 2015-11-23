@@ -1,6 +1,6 @@
 #/!/bin/bash
 
-mkdir -p ~/repos inc libs
+mkdir -p ~/repos inc lib
 
 # Catch -- for unit tests
 
@@ -11,7 +11,7 @@ cmake ..
 make
 cd -
 ln -s ~/repos/logog/include inc/logog
-ln -s ~/repos/logog/build/liblogog.a libs/
+ln -s ~/repos/logog/build/liblogog.a lib/
 
 # Logog -- for logging
 
