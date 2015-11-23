@@ -10,6 +10,7 @@ cgppd(_.+)?$
 test(_.+)?$
 .*\.d
 inc/.*
+libs/.*
 logs/.*\.log
 tests/remctest_CPU
 tests/remctest_GPU
