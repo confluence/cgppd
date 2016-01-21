@@ -7,5 +7,5 @@ cd /home/apinska/repos/cgppd
 
 source scripts/hex_setup.sh
 
-./cgppd_ljrep -f config/ala64 --gpuoffset 1 -o lj_rep/ala64 -m 20000000 -e 4000
-./cgppd_ljrep -f config/ala128 --gpuoffset 1 -o lj_rep/ala128 -m 20000000 -e 4000
+./cgppd_ljrep -f config/ala64 --gpuoffset 1 -o lj_rep/ala64 -m 40000000 -e 8000
+./cgppd_ljrep -f config/ala128 --gpuoffset 1 -o lj_rep/ala128 -m 40000000 -e 8000
