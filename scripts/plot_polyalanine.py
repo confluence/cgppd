@@ -68,10 +68,14 @@ class PolyalanineSimulationSequence(object):
 
     def plot_mean_length(self, args):
         self._plot_vs_n("length", args)
+        
+    def _rows_and_cols(self):
+        rows = np.floor(np.sqrt(len(self.sims)))
+        cols = np.ceil(len(self.sims)/rows)
+        return int(rows), int(cols)
 
     def _plot_vs_time(self, measurement, args):
-        rows = int(np.floor(np.sqrt(len(self.sims))))
-        cols = int(np.ceil(np.sqrt(len(self.sims))))
+        rows, cols = self._rows_and_cols()
 
         for i in range(rows):
             for j in range(cols):
@@ -101,8 +105,7 @@ class PolyalanineSimulationSequence(object):
         self._plot_vs_time("length", args)
 
     def _plot_histogram(self, measurement, args):
-        rows = int(np.floor(np.sqrt(len(self.sims))))
-        cols = int(np.ceil(np.sqrt(len(self.sims))))
+        rows, cols = self._rows_and_cols()
 
         for i in range(rows):
             for j in range(cols):
