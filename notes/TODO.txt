@@ -1,8 +1,45 @@
+EMAIL TO ROB  / ask Michelle
+
+* UBQ/UIM:
+    * why are the temperatures for 200microM different?
+    * how is the boundary calculated?
+        * V = n/c
+        * V (in angstrom**3) = (1.66e9 / c (in microM))^(1/3)
+        * 1 amu = 1.66e-24 g
+        * apparently n = that in moles --why?
+        * never mind; V = N/N_A*c
+        * for 100microM boundary size should be 255.1
+    
+
+* polyalanine
+    * concentrations used -- are these the right ones?
+    * should we try running this with replica exchange, or is it not worth the time?
+    * send results so far
+
 --------------------------------------------------------------------------------
 MUST BE DONE FOR THESIS
 --------------------------------------------------------------------------------
 
-0) Try debugging the CUDA illegal memory access (does it recur?) -- line 654 in Replica.cpp -- is something making this pointer go away too early in a different thread? Are we not syncing the threads before tearing down CUDA for each replica? But we should only be tearing down the replicas in our own thread!
+1) Run 3 sets of diubiquitin simulations with latest code -- DONE?
+
+2) Analyse diubiquitin simulations in VMD and with plotting script -- IN PROGRESS
+
+3) re-run polyalanine with increasing boundary (on the cluster) -- MOSTLY DONE
+
+4) redo simulations of ubiquitin+uim without tail, with rigid tail and with flexible tail -- IN PROGRESS
+        * How to determine bound state when the potential is much higher because of bonded components? Subtract some kind of average?
+
+5) Write verification and validation chapter
+
+6) Write results chapter
+
+7) Write introduction, conclusions, abstract
+
+--------------------------------------------------------------------------------
+MAYBE SHOULD BE DONE FOR THESIS
+--------------------------------------------------------------------------------
+
+0) DO WE ACTUALLY CARE ABOUT THIS NOW? -- Try debugging the CUDA illegal memory access (does it recur?) -- line 654 in Replica.cpp -- is something making this pointer go away too early in a different thread? Are we not syncing the threads before tearing down CUDA for each replica? But we should only be tearing down the replicas in our own thread!
 
 * From gpu0 run: 12 x illegal memory access in line 654/655 (zeroing space after summing) -- 1 per thread sharing a core?
 * From gpu1 run: 34 x 654/655; 10 x illegal memory access / unknown error line 171/172 in CudaFunctions.cu (E_TiledKernel call)
@@ -19,26 +56,6 @@ MUST BE DONE FOR THESIS
 * Could there be a problem if different streams have different numbers of replicas? But on gethen there are two streams with 10 replicas per stream.
 
 One thread ahead of the other. Problem with executing global CUDA teardown in the threadable function? That should also be per-thread, not global.
-
-
-1) Run 3 sets of diubiquitin simulations with latest code -- IN PROGRESS
-
-2) Analyse diubiquitin simulations in VMD and with plotting script -- IN PROGRESS
-
-3) re-run polyalanine with increasing boundary (on the cluster)
-
-4) redo simulations of ubiquitin+uim without tail, with rigid tail and with flexible tail
-        * How to determine bound state when the potential is much higher because of bonded components? Subtract some kind of average?
-
-5) Write verification and validation chapter
-
-6) Write results chapter
-
-7) Write introduction, conclusions, abstract
-
---------------------------------------------------------------------------------
-MAYBE SHOULD BE DONE FOR THESIS
---------------------------------------------------------------------------------
 
 * finish fixing plotting scripts
     * move plots into group superclass
