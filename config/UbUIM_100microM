@@ -7,8 +7,8 @@ replicas 20
 samplefrequency 1000
 sampleafter 1000000
 boundary  255.1
-temperaturemax 600
-temperaturemin 300
+temperaturemax 420
+temperaturemin 240
 prefix Uim1Ub_200microM
 
 files
