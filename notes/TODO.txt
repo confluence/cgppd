@@ -1,14 +1,21 @@
 EMAIL TO ROB  / ask Michelle
 
 * UBQ/UIM:
-    * why are the temperatures for 200microM different?
-    * how is the boundary calculated?
-        * V = n/c
-        * V (in angstrom**3) = (1.66e9 / c (in microM))^(1/3)
-        * 1 amu = 1.66e-24 g
-        * apparently n = that in moles --why?
-        * never mind; V = N/N_A*c
-        * for 100microM boundary size should be 255.1
+    * why are the temperatures for 200microM different? - SOLVED; use same temp.
+    * how is the boundary calculated -- SOLVED.
+    * how to calculate fraction bound? -- SOLVED; use only non-bonded potential.
+    * TODO: implement the correct fraction bound calculation, as above. (how to do it efficiently?)
+        * we use EonDeviceNC separately from the sample function. This is only used for this calculation.
+        * this is supposed to be nonbonded only anyway (see the CPU fallback); shouldn't have added the other stuff.
+        * can we use the metadata sent for the flexible version to calculate the rigid version?
+            * should we do nonbonded but between domains? No, because flexible and rigid results should be comparable.
+            * we may need to update the metadata.
+            * as a hack, we can use chains for this specific simulation, since each molecule has one chain.
+        * also stop doing this calculation when we don't actually have multiple molecules
+        * it is noted that EonDeviceNC has no stream support -- could this be related to the threading bug?
+        * ugh, also fix the E between two molecules on CPU so that it does not include internal E! Make it non-bonded only.
+        * TESTS FOR ALL OF THIS
+        * GO FOR THE HACK
     
 
 * polyalanine
