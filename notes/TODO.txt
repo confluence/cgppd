@@ -16,6 +16,7 @@ EMAIL TO ROB  / ask Michelle
         * ugh, also fix the E between two molecules on CPU so that it does not include internal E! Make it non-bonded only.
         * TESTS FOR ALL OF THIS
         * GO FOR THE HACK
+        * actually, we don't need the resid because the existing x and y indices are fine: we only compare them when residues are in the same chain. So we can ditch the resid and replace it with the molecule id.
     
 
 * polyalanine
