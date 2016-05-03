@@ -41,10 +41,8 @@ Residue::Residue(const Residue & r)
 void Residue::pack_GPU_floats(int num_segment_bonds, int num_chains)
 {
     // pos.w = DOMAIN_UID.BOND_UID
-    // meta.w = RESIDUE_ID.CHAIN_UID
-    
-    // Because we can only compare residue IDs within the same chain, we can use meta.w for the comparison without stripping off the fractional part (which will be the same).
-    // We do have to extract both parts of pos.w
+    // // meta.w = RESIDUE_ID.CHAIN_UID
+    // meta.w = MOLECULE_ID.CHAIN_UID
 
    float bond_fraction(0);
    if (segment_bond_UID) {
@@ -56,7 +54,8 @@ void Residue::pack_GPU_floats(int num_segment_bonds, int num_chains)
    float chain_fraction = chain_UID / (pow(2.0, ceil( log2( num_chains + 1 ) )));
    
    pos_w = (float)rigid_domain_UID + bond_fraction;
-   meta_w = (float)resSeq + chain_fraction;
+   //meta_w = (float)resSeq + chain_fraction;
+   meta_w = (float)moleculeId + chain_fraction;
 }
 #endif
 

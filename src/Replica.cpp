@@ -4,7 +4,7 @@ using namespace std;
 
 Replica::Replica() : RNGs_initialised(false), nonCrowderPotential(0.0f), temperature(300.0f), label(-1), potential(0.0f), newPotential(0.0f), moleculeCount(0), moleculeArraySize(0), residueCount(0), max_residue_count(0), nonCrowderCount(0), accept(0), acceptA(0), reject(0), totalAcceptReject(0), totalAccept(0), boundSamples(0), samplesSinceLastExchange(0), totalBoundSamples(0), totalSamples(0), paircount(0), nonCrowderResidues(0), translateStep(INITIAL_TRANSLATIONAL_STEP), rotateStep(INITIAL_ROTATIONAL_STEP), contiguousResiduesSize(0),
 #if FLEXIBLE_LINKS
-    calculate_rigid_potential_only(false),
+    flexible_molecule_exists(false), calculate_rigid_potential_only(false),
 #endif
 #if USING_CUDA
     replicaIsOnDevice(false),
@@ -284,6 +284,10 @@ void Replica::loadMolecule(const moldata mol)
         nonCrowderResidues += molecules[moleculeCount].residueCount;
     }
 
+    if (molecules[moleculeCount].is_flexible) {
+        flexible_molecule_exists = true;
+    }
+
     moleculeCount++;
 }
 
@@ -489,6 +493,7 @@ Potential Replica::E()
 
 Potential Replica::E(Molecule *a, Molecule *b)
 {
+    // NONBONDED POTENTIAL BETWEEN DIFFERENT MOLECULES ONLY! This is only used for the fraction bound.
     Potential potential;
 
 #define aRes a->Residues[mi]
@@ -505,12 +510,12 @@ Potential Replica::E(Molecule *a, Molecule *b)
             potential.increment_DH(calculate_DH(aRes, bRes, r));
         }
     }
-#if FLEXIBLE_LINKS
-    if (!calculate_rigid_potential_only) {
-        potential += a->E(true);
-        potential += b->E(true);
-    }
-#endif
+//#if FLEXIBLE_LINKS
+    //if (!calculate_rigid_potential_only) {
+        //potential += a->E(true);
+        //potential += b->E(true);
+    //}
+//#endif
     return potential;
 }
 
@@ -752,7 +757,7 @@ void Replica::ReplicaDataToDevice()
             else
             {
 #if FLEXIBLE_LINKS
-                host_float4_residueMeta[arrayIndex].w = molecules[m].Residues[rc].meta_w; // RESIDUE_ID.CHAIN_UID
+                host_float4_residueMeta[arrayIndex].w = molecules[m].Residues[rc].meta_w; // MOLECULE_ID.CHAIN_UID
 #else
                 host_float4_residueMeta[arrayIndex].w = 0.0f; // we don't use this 
 #endif
@@ -900,17 +905,17 @@ double Replica::EonDevice()
 
 double Replica::EonDeviceNC()
 {
+    // NONBONDED POTENTIAL BETWEEN DIFFERENT MOLECULES ONLY! This is only used for the fraction bound.
     double result(0.0);
     int NCdataSetSize(ceil(float(nonCrowderResidues)/float(blockSize))*blockSize);
 
     CUDA_EonDeviceNC(device_float4_residuePositions, device_float4_residueMeta, device_residueCount, device_moleculeStartPositions, device_moleculeCount, device_LJPotentials, &result,blockSize,NCdataSetSize,sharedMemSize);
 
-    //TODO add new timer for this
-#if FLEXIBLE_LINKS
-    if (!calculate_rigid_potential_only) {
-        result += internal_molecule_E(false).total();
-    }
-#endif
+//#if FLEXIBLE_LINKS
+    //if (!calculate_rigid_potential_only) {
+        //result += internal_molecule_E(false).total();
+    //}
+//#endif
 
     return result;
 }
@@ -1020,8 +1025,17 @@ void Replica::sample(SimulationData * data, int current_step, float boundEnergyT
     nonCrowderPotential = 0.0f;
     samplesSinceLastExchange++;
 
-    // in the case of all molecules being of interest then just use the potential
-    if (moleculeCount != nonCrowderCount)
+    if (moleculeCount == 1) {
+        // DO NOTHING; the nonbonded potential between molecules is zero
+    }
+#if FLEXIBLE_LINKS
+    // if there are crowders OR the normal potential includes bonded components or nonbonded potential within molecules
+    // i.e. if any molecules are flexible and not being treated as rigid
+    else if (moleculeCount != nonCrowderCount || (flexible_molecule_exists && !calculate_rigid_potential_only))
+#else
+    // if there are crowders
+    else if (moleculeCount != nonCrowderCount)
+#endif
     {
 #if USING_CUDA
         nonCrowderPotential = EonDeviceNC(); // do on GPU, no stream support, can be implemented in 3mins if stream samlping is fixed.

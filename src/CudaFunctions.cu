@@ -442,7 +442,7 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
             // meta.x = aminoacid index
             // meta.y = charge
             // meta.z = vdw radius
-            // FLEXIBLE: meta.w = CROWDER_IDENTIFIER or RESIDUE_ID.CHAIN_UID
+            // FLEXIBLE: meta.w = CROWDER_IDENTIFIER or MOLECULE_ID.CHAIN_UID
             // RIGID: meta.w = CROWDER_IDENTIFIER or unused
 #if FLEXIBLE_LINKS && !ASSUME_POLYMER_FOLDING_TEST
             // padder or same rigid domain or same bond or residues close on the backbone
@@ -456,11 +456,14 @@ __global__ void E_TiledKernel(float4 * residuePositions, float4 * residueMeta, i
             float xbond = modff(pos.w, &xdomain);
             float ybond = modff(yresiduep.w, &ydomain);
             
-            float xresid(0.0f);
-            float yresid(0.0f);
+            float xmol(0.0f); // NOT USED IN THIS KERNEL; USED IN NC KERNEL
+            float ymol(0.0f); // NOT USED IN THIS KERNEL; USED IN NC KERNEL
             
-            float xchain = modff(meta.w, &xresid);
-            float ychain = modff(yresiduem.w, &yresid);
+            float xchain = modff(meta.w, &xmol);
+            float ychain = modff(yresiduem.w, &ymol);
+
+            float xresid = bx * blockDim.x + i; // TODO: IS THIS RIGHT?
+            float yresid = by * blockDim.x + tx; // TODO: IS THIS RIGHT?
             
             if (pos.w == PADDER_IDENTIFIER || (xdomain && xdomain == ydomain) || (xbond && xbond == ybond) || (xchain == ychain && fabs(xresid - yresid) < 4))
 #elif ASSUME_POLYMER_FOLDING_TEST
@@ -824,27 +827,27 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
 #endif
             
 #if FLEXIBLE_LINKS && !ASSUME_POLYMER_FOLDING_TEST
-            // padder or crowder or same rigid domain or same bond or residues close on the backbone
-            // currently ignoring case where residues are close because of a bond; subtracting this component on the CPU instead
+            // IN THIS KERNEL WE ONLY CALCULATE THE NONBONDED POTENTIAL
+            // but we have to use the same data as the other kernel
             
             // we unpack the floats
-
-            float xdomain(0.0f);
-            float ydomain(0.0f);
-
-            float xbond = modff(pos.w, &xdomain);
-            float ybond = modff(yresiduep.w, &ydomain);
             
-            float xresid(0.0f);
-            float yresid(0.0f);
+            //float xmol(0.0f);
+            //float ymol(0.0f);
             
-            float xchain = modff(meta.w, &xresid);
-            float ychain = modff(yresiduem.w, &yresid);
+            //float xchain = modff(meta.w, &xmol); // NOT USED HERE; ONLY USED IN NORMAL KERNEL
+            //float ychain = modff(yresiduem.w, &ymol); // NOT USED HERE; ONLY USED IN NORMAL KERNEL
+            
+            // Is there a more efficient function we could use to get just the integer part?
+
+            int xmol = __float2int_rz(meta.w);
+            int ymol = __float2int_rz(yresiduem.w);
                         
-            if (pos.w == PADDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER || (xdomain && xdomain == ydomain) || (xbond && xbond == ybond) || (xchain == ychain && fabs(xresid - yresid) < 4))
+            if (pos.w == PADDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER || xmol == ymol)
 #elif ASSUME_POLYMER_FOLDING_TEST
             // More efficient handling of this special case.  Assume we are folding a single polymer.
             // There's only one chain; we calculate all pairs except close neighbours on the backbone.
+            // This is actually totally irrelevant and we shouldn't be calling this kernel!
             if (fabs(meta.w - yresiduem.w) < 4)
 #else
              // same molecule or padder or crowder
