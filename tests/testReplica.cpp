@@ -84,11 +84,13 @@ TEST_CASE("Replica", "[replica]") {
         REQUIRE((replica.E() + replica.internal_molecule_E(true)).almost_equal(expected_flexible_potential));
 #if USING_CUDA
         REQUIRE((replica.EonDevice() + replica.internal_molecule_E(false).total()) == Approx(expected_flexible_potential.total()));
-        REQUIRE(replica.EonDeviceNC() == Approx(expected_flexible_potential.total())); // don't forget that this includes the molecule potential
+        REQUIRE(replica.EonDeviceNC() == Approx(expected_rigid_potential.total())); // THIS SHOULD BE RIGID!
 #if CUDA_STREAMS
         replica.EonDeviceAsync();
         REQUIRE((replica.SumGridResults() + replica.internal_molecule_E(false).total()) == Approx(expected_flexible_potential.total()));
 #endif // CUDA_STREAMS
+#else // check that the CPU-only NC potential works
+        REQUIRE(replica.E(&replica.molecules[0], &replica.molecules[1]).total() == Approx(expected_rigid_potential.total()));
 #endif // USING_CUDA
 
         replica.calculate_rigid_potential_only = true;
@@ -104,6 +106,8 @@ TEST_CASE("Replica", "[replica]") {
         replica.EonDeviceAsync();
         REQUIRE(replica.SumGridResults() == Approx(expected_rigid_potential.total()));
 #endif // CUDA_STREAMS
+#else // check that the CPU-only NC potential works
+        REQUIRE(replica.E(&replica.molecules[0], &replica.molecules[1]).total() == Approx(expected_rigid_potential.total()));
 #endif // USING_CUDA
     }
 #endif // ASSUME_POLYMER_FOLDING_TEST
