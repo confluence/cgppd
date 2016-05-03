@@ -150,7 +150,7 @@ TEST_CASE("Replica", "[replica]") {
             REQUIRE(m1.Residues[i].segment_bond_UID == 0);
 #if USING_CUDA
             REQUIRE(m1.Residues[i].pos_w == Approx(1.0f));
-            REQUIRE(m1.Residues[i].meta_w == Approx(float(i + 1) + 0.25f));
+            REQUIRE(m1.Residues[i].meta_w == Approx(0.25f));
 #endif
         }
         
@@ -160,7 +160,7 @@ TEST_CASE("Replica", "[replica]") {
             REQUIRE(m2.Residues[i].segment_bond_UID == 0);
 #if USING_CUDA
             REQUIRE(m2.Residues[i].pos_w == Approx(2.0f));
-            REQUIRE(m2.Residues[i].meta_w == Approx(float(i + 1) + 0.5f));
+            REQUIRE(m2.Residues[i].meta_w == Approx(1.5f));
 #endif
         }
         
