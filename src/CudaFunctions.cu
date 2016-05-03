@@ -840,8 +840,8 @@ __global__ void E_TiledKernelNC(float4 * residuePositions, float4 * residueMeta,
             
             // Is there a more efficient function we could use to get just the integer part?
 
-            int xmol = __float2int_rz(meta.w);
-            int ymol = __float2int_rz(yresiduem.w);
+            float xmol = truncf(meta.w);
+            float ymol = truncf(yresiduem.w);
                         
             if (pos.w == PADDER_IDENTIFIER || meta.w == CROWDER_IDENTIFIER || xmol == ymol)
 #elif ASSUME_POLYMER_FOLDING_TEST
