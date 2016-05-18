@@ -1054,8 +1054,6 @@ void *MCthreadableFunction(void *arg)
 
                 for (int rps = 0; rps < data->replicas_per_stream; rps++)
                 {
-                    LOGOG_INFO("+++ About to execute MCSearchAcceptReject in replica %d", (replica_offset + index + rps));
-                    LOGOG_INFO("+++ Current label of this replica is %d", (data->replica[replica_offset + index + rps].label));
                     data->replica[replica_offset + index + rps].MCSearchAcceptReject(mcstep);
                 }
 
@@ -1096,8 +1094,6 @@ void *MCthreadableFunction(void *arg)
     // sync all streams and free gpu memory
     for (int tx = 0; tx < data->replicas_in_this_thread; tx++)
     {
-        LOGOG_INFO("+++ About to teardown CUDA in replica %d", (tx + replica_offset));
-        LOGOG_INFO("+++ Current label of this replica is %d", (data->replica[tx + replica_offset].label));
         data->replica[tx + replica_offset].teardown_CUDA();
     }
 
