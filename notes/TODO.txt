@@ -1,3 +1,18 @@
+Prepare vmd script for clustering:
+
+* load 3 diubiquitin molecules
+* rmsd trajectory tool:
+    * align to first rigid domain -- chain A and (resid 1 to 72)
+* clustering:
+    * select ends of molecule -- (chain A and resid 1) or (chain B and resid 76)
+    * num: 2
+    * cutoff: 10
+* add representations:
+    * translucent (glass1) vdw of entire molecule, coloured by chain
+    * opaque vdw of end points, coloured by chain
+    * hp residues? resid 8 or resid 44 or resid 68 or resid 70
+    
+
 EMAIL TO ROB  / ask Michelle
 
 * UBQ/UIM:
