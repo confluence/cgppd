@@ -216,6 +216,10 @@ void Replica::copy(const Replica &r)
     boundingValue = r.boundingValue;
     nonCrowderCount = r.nonCrowderCount;
     nonCrowderResidues = r.nonCrowderResidues;
+    
+#if FLEXIBLE_LINKS
+    flexible_molecule_exists = r.flexible_molecule_exists;
+#endif
 
     if (moleculeCount != 0)
     {
@@ -283,11 +287,11 @@ void Replica::loadMolecule(const moldata mol)
         nonCrowderCount++;
         nonCrowderResidues += molecules[moleculeCount].residueCount;
     }
-
+    
     if (molecules[moleculeCount].is_flexible) {
         flexible_molecule_exists = true;
     }
-
+    
     moleculeCount++;
 }
 
