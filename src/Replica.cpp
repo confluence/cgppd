@@ -1041,11 +1041,13 @@ void Replica::sample(SimulationData * data, int current_step, float boundEnergyT
 #endif
     {
 #if USING_CUDA
+        LOGOG_DEBUG("Using EonDeviceNC to check for bound sample.");
         nonCrowderPotential = EonDeviceNC(); // do on GPU, no stream support, can be implemented in 3mins if stream samlping is fixed.
         // TODO: arrrgh, what does this *mean*?
 #else
         // if there are crowders and molecules of interest the only use the energy of the interesting ones
         // TODO: make absolutely sure all the NC molecules are at the front of the list
+        LOGOG_DEBUG("Using CPU NC potential to check for bound sample.");
         for (int i = 0; i < nonCrowderCount; i++)
         {
             for (int j = i + 1; j < nonCrowderCount; j++)
@@ -1057,6 +1059,7 @@ void Replica::sample(SimulationData * data, int current_step, float boundEnergyT
     }
     else
     {
+        LOGOG_DEBUG("Reusing full potential to check for bound sample.");
         nonCrowderPotential = potential;
     }
 
