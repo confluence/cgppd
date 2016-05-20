@@ -9,5 +9,5 @@ source scripts/hex_setup.sh
 
 for configfile in config/ubq_uim_trunc/*
 do
-    ./cgppd -f $configfile -t 20 -s 20 -g 2 -o ubq_uim_trunc/$configfile
+    ./cgppd -f $configfile -t 20 -s 20 -g 2 -o ubq_uim_trunc/`basename $configfile`
 done
