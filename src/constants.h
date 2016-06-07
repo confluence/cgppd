@@ -67,7 +67,7 @@
 
     #if LJ_REPULSIVE
         #undef e0
-        #define e0  0.0001f // k_b T
+        #define e0  -0.0001f // k_b T
     #endif
 
     #if LJ_OFF
