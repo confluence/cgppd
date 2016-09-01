@@ -9,6 +9,7 @@ fi
 
 if test -n "$(find $1/pdb -maxdepth 1 -name *${temp}K* -print -quit)"
 then
+    rm -f $1/trajectory.pdb
     cat $1/pdb/*${temp}K* >> $1/trajectory.pdb
     sed -i 's/END/ENDMDL/' $1/trajectory.pdb
 else
