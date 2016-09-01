@@ -72,6 +72,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_cluster_hist_length(self, args):
         self._plot_cluster_histogram("length", args)
         
+    # TODO: add a plot for FRET efficiency
+        
 
 PLOTS = tuple(n[5:] for n in DiubiquitinPlots.__dict__ if n.startswith("plot_"))
 
