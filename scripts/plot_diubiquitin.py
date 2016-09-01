@@ -15,7 +15,7 @@ class DiubiquitinSimulationGroup(object):
         self.sims = sims
         
     @classmethod
-    def from_dirs(cls, dirs, cutoff):
+    def from_dirs(cls, dirs):
         sims = []
         
         for d in dirs:
@@ -25,7 +25,7 @@ class DiubiquitinSimulationGroup(object):
                 sys.exit("'%s' does not look like a diubiquitin simulation." % dirname)
             res, index = name_match.groups()
             
-            sims.append(("%s-%s" % (res.upper(), index), Simulation.from_dir(d, cutoff)))
+            sims.append(("%s-%s" % (res.upper(), index), Simulation.from_dir(d)))
             
         return cls(sims)
 
@@ -74,12 +74,11 @@ PLOTS = tuple(n[5:] for n in DiubiquitinSimulationGroup.__dict__ if n.startswith
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
-    parser.add_argument("-c", "--cutoff", help="Use cluster with this cutoff")
     parser.add_argument("-p", "--plot", dest="plots", help="Type of plot", choices=PLOTS, action="append")
 
     args = parser.parse_args()
 
-    simulation_group = DiubiquitinSimulationGroup.from_dirs(args.dirs, args.cutoff)
+    simulation_group = DiubiquitinSimulationGroup.from_dirs(args.dirs)
 
     for plot in args.plots:
         plt.figure()
