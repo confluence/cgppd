@@ -18,6 +18,8 @@ if __name__ == "__main__":
     for (name, sim) in simulation_group.sims:
         print "Simulation %s:" % name
         
+        total_samples = sum(len(c.samples) for c in sim.clusters)
+        
         for i, cluster in enumerate(sim.clusters, 1):
             sample_E = []
             
@@ -28,5 +30,6 @@ if __name__ == "__main__":
                 
             average_E = sum(sample_E) / len(sample_E)
             
-            print "Cluster %d (%d samples): average E %.3f" % (i, len(sample_E), average_E)
-
+            cluster_percentage = (float(len(sample_E)) / total_samples) * 100
+            
+            print "Cluster %d (%d samples / %d%%): average E %.3f" % (i, len(sample_E), cluster_percentage, average_E)
