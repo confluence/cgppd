@@ -6,29 +6,9 @@ import os
 import re
 import argparse
 import matplotlib.pyplot as plt
-from plot_objects import Simulation
+from plot_objects import DiubiquitinSimulationGroup
 
-class DiubiquitinSimulationGroup(object):
-    NAME = re.compile("diubiquitin_(lys|met)_(\d+)_.*")
-    
-    def __init__(self, sims):
-        self.sims = sims
-        
-    @classmethod
-    def from_dirs(cls, dirs):
-        sims = []
-        
-        for d in dirs:
-            dirname = os.path.basename(d)
-            name_match = cls.NAME.match(dirname)
-            if name_match is None:
-                sys.exit("'%s' does not look like a diubiquitin simulation." % dirname)
-            res, index = name_match.groups()
-            
-            sims.append(("%s-%s" % (res.upper(), index), Simulation.from_dir(d)))
-            
-        return cls(sims)
-
+class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def _plot_vs_time(self, measurement, args):
         rows = len(self.sims)
 
@@ -67,9 +47,33 @@ class DiubiquitinSimulationGroup(object):
         self._plot_histogram("length", args)
 
     #some kind of meaningful cluster plot?
-    #build the xvg plot into this?
+    
+    def _plot_cluster_histogram(self, measurement, args):
+        rows = len(self.sims)
+        cols = max([len(s.clusters) for (n, s) in self.sims])
+        
+        for i, (name, sim) in enumerate(self.sims):
+            for j, cluster in enumerate(sim.clusters):
+                values = [getattr(s, measurement) for s in cluster.samples]
+                
+                subplot_no = i * cols + j + 1
+                plt.subplot(rows,cols,subplot_no)
+                plt.hist(values, bins=100)
+                plt.title(name)
+                plt.xlabel(u"Cluster %d %s (Å)" % (j + 1, measurement))
+                plt.ylabel("No. of samples")
+                plt.xlim([0, 80])
+                plt.ylim([0, 600])
+                plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+                
+    def plot_cluster_hist_radius(self, args):
+        self._plot_cluster_histogram("radius", args)
 
-PLOTS = tuple(n[5:] for n in DiubiquitinSimulationGroup.__dict__ if n.startswith("plot_"))
+    def plot_cluster_hist_length(self, args):
+        self._plot_cluster_histogram("length", args)
+        
+
+PLOTS = tuple(n[5:] for n in DiubiquitinPlots.__dict__ if n.startswith("plot_"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
@@ -78,7 +82,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    simulation_group = DiubiquitinSimulationGroup.from_dirs(args.dirs)
+    simulation_group = DiubiquitinPlots.from_dirs(args.dirs)
 
     for plot in args.plots:
         plt.figure()

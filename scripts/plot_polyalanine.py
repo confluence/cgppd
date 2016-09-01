@@ -9,28 +9,9 @@ import matplotlib.pyplot as plt
 from scipy import optimize
 import sys
 
-from plot_objects import Simulation
+from plot_objects import PolyalanineSimulationSequence
 
-class PolyalanineSimulationSequence(object):
-    NAME = re.compile("ala(\d+)_.*")
-    
-    def __init__(self, sims):
-        self.sims = sims
-        
-    @classmethod
-    def from_dirs(cls, dirs):
-        sims = []
-        
-        for d in dirs:
-            dirname = os.path.basename(d)
-            name_match = cls.NAME.match(dirname)
-            if name_match is None:
-                sys.exit("'%s' does not look like a polyalanine simulation." % dirname)
-            n = int(name_match.group(1))
-            
-            sims.append((n, Simulation.from_dir(d)))
-            
-        return cls(sorted(sims))
+class PolyalaninePlots(PolyalanineSimulationSequence):
 
     def _plot_vs_n(self, measurement, args):
         xvalues, sims = zip(*self.sims)
@@ -135,7 +116,7 @@ class PolyalanineSimulationSequence(object):
         self._plot_histogram("length", args)
         
     
-PLOTS = tuple(n[5:] for n in PolyalanineSimulationSequence.__dict__ if n.startswith("plot_"))
+PLOTS = tuple(n[5:] for n in PolyalaninePlots.__dict__ if n.startswith("plot_"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
@@ -147,7 +128,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    simulation_set = PolyalanineSimulationSequence.from_dirs(args.dirs)
+    simulation_set = PolyalaninePlots.from_dirs(args.dirs)
     
     for plot in args.plots:
         plt.figure()

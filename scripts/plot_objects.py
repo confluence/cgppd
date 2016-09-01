@@ -9,7 +9,6 @@ import glob
 import argparse
 from operator import attrgetter
 import numpy as np
-import matplotlib.pyplot as plt
 
 def measure(residues):
     length = np.linalg.norm(np.array(residues[-1]) - np.array(residues[0]))
@@ -46,11 +45,25 @@ class Sample(object):
         length, radius = measure(residues)
         
         return cls(None, sample_step, length, radius, potential)
+        
+
+class Cluster(object):
+    def __init__(self, sample_nos):
+        self.sample_nos = sorted(sample_nos)
+        self.samples = None
+        
+    def match_to_samples(self, samples):
+        self.samples = [samples[i] for i in self.sample_nos]
+        
+    @classmethod
+    def from_string(cls, sample_nos_string):
+        return cls([int(i) for i in sample_nos_string.split()])
 
 
 class Simulation(object):
-    def __init__(self, samples):
+    def __init__(self, samples, clusters):
         self.samples = samples # list
+        self.clusters = clusters
 
     @classmethod
     def from_dir(cls, directory):
@@ -106,5 +119,64 @@ class Simulation(object):
                 writer.writerow(header)
                 for sample in samples:
                     writer.writerow([sample.sample_no, sample.sample_step, sample.length, sample.radius, sample.potential])
+                    
+        # new cluster stuff
+        
+        clusters = []
+        
+        cluster_filename = os.path.join(directory, "clusters.txt")
+        if os.path.exists(cluster_filename):
+            with open(cluster_filename, "r") as cluster_file:
+                for line in cluster_file:
+                    cluster = Cluster.from_string(line)
+                    cluster.match_to_samples(samples)
+                    clusters.append(cluster)
+            
+        else:
+            print "No cluster information found."
 
-        return cls(samples)
+        return cls(samples, clusters)
+
+
+class PolyalanineSimulationSequence(object):
+    NAME = re.compile("ala(\d+)_.*")
+    
+    def __init__(self, sims):
+        self.sims = sims
+        
+    @classmethod
+    def from_dirs(cls, dirs):
+        sims = []
+        
+        for d in dirs:
+            dirname = os.path.basename(d)
+            name_match = cls.NAME.match(dirname)
+            if name_match is None:
+                sys.exit("'%s' does not look like a polyalanine simulation." % dirname)
+            n = int(name_match.group(1))
+            
+            sims.append((n, Simulation.from_dir(d)))
+            
+        return cls(sorted(sims))
+        
+        
+class DiubiquitinSimulationGroup(object):
+    NAME = re.compile("diubiquitin_(lys|met)_(\d+)_.*")
+    
+    def __init__(self, sims):
+        self.sims = sims
+        
+    @classmethod
+    def from_dirs(cls, dirs):
+        sims = []
+        
+        for d in dirs:
+            dirname = os.path.basename(d)
+            name_match = cls.NAME.match(dirname)
+            if name_match is None:
+                sys.exit("'%s' does not look like a diubiquitin simulation." % dirname)
+            res, index = name_match.groups()
+            
+            sims.append(("%s-%s" % (res.upper(), index), Simulation.from_dir(d)))
+            
+        return cls(sims)
