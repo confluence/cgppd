@@ -26,9 +26,9 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_length(self, args):
         self._plot_vs_time("length", args)
 
-    def _plot_histogram(self, measurement, args):
+    def _plot_histogram(self, measurement, args, xlim=80, ylim=600):
         rows = len(self.sims)
-        
+                
         for i, (name, sim) in enumerate(self.sims, 1):
             values = [getattr(s, measurement) for s in sim.samples]
             plt.subplot(rows,1,i)
@@ -36,8 +36,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             plt.title(name)
             plt.xlabel(u"%s (Å)" % measurement)
             plt.ylabel("No. of samples")
-            plt.xlim([0, 80])
-            plt.ylim([0, 600])
+            plt.xlim([0, xlim])
+            plt.ylim([0, ylim])
             plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)      
             
     def plot_hist_radius(self, args):
@@ -48,7 +48,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
 
     #some kind of meaningful cluster plot?
     
-    def _plot_cluster_histogram(self, measurement, args):
+    def _plot_cluster_histogram(self, measurement, args, xlim=80, ylim=600):
         rows = len(self.sims)
         cols = max([len(s.clusters) for (n, s) in self.sims])
         
@@ -62,8 +62,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 plt.title(name)
                 plt.xlabel(u"Cluster %d %s (Å)" % (j + 1, measurement))
                 plt.ylabel("No. of samples")
-                plt.xlim([0, 80])
-                plt.ylim([0, 600])
+                plt.xlim([0, xlim])
+                plt.ylim([0, ylim])
                 plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
                 
     def plot_cluster_hist_radius(self, args):
@@ -73,6 +73,17 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         self._plot_cluster_histogram("length", args)
         
     # TODO: add a plot for FRET efficiency
+    
+    def plot_hist_fret_efficiency(self, args):
+        R0 = args.reference_length
+        
+        # It's hacktastic
+        for (name, sim) in self.sims:
+            for s in sim.samples:
+                s.fret_efficiency = 1.0 / (1.0 + (s.length / R0))**6
+
+        self._plot_histogram("fret_efficiency", args, xlim=0.5)
+        
         
 
 PLOTS = tuple(n[5:] for n in DiubiquitinPlots.__dict__ if n.startswith("plot_"))
@@ -81,6 +92,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process simulation output from cgppd")
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
     parser.add_argument("-p", "--plot", dest="plots", help="Type of plot", choices=PLOTS, action="append")
+    parser.add_argument("-r", "--reference-length", help="Set R0 value", type=float, default=50.0)
 
     args = parser.parse_args()
 
