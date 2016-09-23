@@ -7,6 +7,7 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculate FRET efficiency from diubiquitin simulations produced by cgppd")
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
+    parser.add_argument("-f", "--cluster-file", help="Name of cluster file (same in each directory)", default="clusters.txt")
     parser.add_argument("-r", "--reference-length", help="Set R0 value", type=float, default=50.0)
     parser.add_argument("-c", "--chromatophore-length", help="Set value of length to add to simulate the presence of the chromatophores", type=float, default=0.0)
 
