@@ -26,7 +26,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_length(self, args):
         self._plot_vs_time("length", args)
 
-    def _plot_histogram(self, measurement, args, xlim=80, ylim=600):
+    def _plot_histogram(self, measurement, args, xlim=80, ylim=600, units=u"Å"):
         rows = len(self.sims)
                 
         for i, (name, sim) in enumerate(self.sims, 1):
@@ -34,7 +34,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             plt.subplot(rows,1,i)
             plt.hist(values, bins=100)
             plt.title(name)
-            plt.xlabel(u"%s (Å)" % measurement)
+            unit_str = " (%s)" % units if units else ""
+            plt.xlabel(u"%s%s" % (measurement, unit_str))
             plt.ylabel("No. of samples")
             plt.xlim([0, xlim])
             plt.ylim([0, ylim])
@@ -48,7 +49,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
 
     #some kind of meaningful cluster plot?
     
-    def _plot_cluster_histogram(self, measurement, args, xlim=80, ylim=600):
+    def _plot_cluster_histogram(self, measurement, args, xlim=80, ylim=600, units=u"Å"):
         rows = len(self.sims)
         cols = max([len(s.clusters) for (n, s) in self.sims])
         
@@ -60,7 +61,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 plt.subplot(rows,cols,subplot_no)
                 plt.hist(values, bins=100)
                 plt.title(name)
-                plt.xlabel(u"Cluster %d %s (Å)" % (j + 1, measurement))
+                unit_str = " (%s)" % units if units else ""
+                plt.xlabel(u"Cluster %d %s%s" % (j + 1, measurement, unit_str))
                 plt.ylabel("No. of samples")
                 plt.xlim([0, xlim])
                 plt.ylim([0, ylim])
@@ -72,17 +74,27 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_cluster_hist_length(self, args):
         self._plot_cluster_histogram("length", args)
         
-    # TODO: add a plot for FRET efficiency
-    
-    def plot_hist_fret_efficiency(self, args):
+    def _add_fret_efficiency(self, args):
         R0 = args.reference_length
         
         # It's hacktastic
         for (name, sim) in self.sims:
             for s in sim.samples:
-                s.fret_efficiency = 1.0 / (1.0 + (s.length / R0))**6
+                s.fret_efficiency = 1.0 / (1.0 + (s.length / R0)**6)
 
-        self._plot_histogram("fret_efficiency", args, xlim=0.5)
+    def plot_hist_fret_efficiency(self, args):
+        self._add_fret_efficiency(args)
+        
+        # TODO: automatic limits
+        self._plot_histogram("fret_efficiency", args, xlim=1, units=None)
+
+    def plot_cluster_hist_fret_efficiency(self, args):
+        self._add_fret_efficiency(args)
+        
+        # TODO: automatic limits
+        self._plot_cluster_histogram("fret_efficiency", args, xlim=1, units=None)
+        
+
         
         
 

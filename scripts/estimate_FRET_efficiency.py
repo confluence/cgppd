@@ -25,7 +25,7 @@ if __name__ == "__main__":
             
             for sample in cluster.samples:
                 R = sample.length
-                E = 1.0 / (1.0 + (R / R0))**6
+                E = 1.0 / (1.0 + (R / R0)**6)
                 sample_E.append(E)
                 
             average_E = sum(sample_E) / len(sample_E)
