@@ -92,13 +92,13 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         self._add_fret_efficiency(args)
         
         # TODO: automatic limits
-        self._plot_histogram("fret_efficiency", args, xlim=1, units=None)
+        self._plot_histogram("fret_efficiency", args, units=None)
 
     def plot_cluster_hist_fret_efficiency(self, args):
         self._add_fret_efficiency(args)
         
         # TODO: automatic limits
-        self._plot_cluster_histogram("fret_efficiency", args, xlim=1, units=None)
+        self._plot_cluster_histogram("fret_efficiency", args, units=None)
         
 
         
