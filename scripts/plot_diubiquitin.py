@@ -26,19 +26,22 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_length(self, args):
         self._plot_vs_time("length", args)
 
-    def _plot_histogram(self, measurement, args, xlim=80, ylim=600, units=u"Å"):
+    def _plot_histogram(self, measurement, args, units=u"Å"):
         rows = len(self.sims)
-                
+        
+        lastplot = None
+
         for i, (name, sim) in enumerate(self.sims, 1):
             values = [getattr(s, measurement) for s in sim.samples]
-            plt.subplot(rows,1,i)
+            if lastplot is not None:
+                lastplot = plt.subplot(rows,1,i, sharex=lastplot, sharey=lastplot)
+            else:
+                lastplot = plt.subplot(rows,1,i)
             plt.hist(values, bins=100)
             plt.title(name)
             unit_str = " (%s)" % units if units else ""
             plt.xlabel(u"%s%s" % (measurement, unit_str))
             plt.ylabel("No. of samples")
-            plt.xlim([0, xlim])
-            plt.ylim([0, ylim])
             plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)      
             
     def plot_hist_radius(self, args):
@@ -49,23 +52,26 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
 
     #some kind of meaningful cluster plot?
     
-    def _plot_cluster_histogram(self, measurement, args, xlim=80, ylim=600, units=u"Å"):
+    def _plot_cluster_histogram(self, measurement, args, units=u"Å"):
         rows = len(self.sims)
         cols = max([len(s.clusters) for (n, s) in self.sims])
+        
+        lastplot = None
         
         for i, (name, sim) in enumerate(self.sims):
             for j, cluster in enumerate(sim.clusters):
                 values = [getattr(s, measurement) for s in cluster.samples]
                 
                 subplot_no = i * cols + j + 1
-                plt.subplot(rows,cols,subplot_no)
+                if lastplot is not None:
+                    lastplot = plt.subplot(rows,cols,subplot_no)
+                else:
+                    lastplot = plt.subplot(rows,cols,subplot_no)
                 plt.hist(values, bins=100)
                 plt.title(name)
                 unit_str = " (%s)" % units if units else ""
                 plt.xlabel(u"Cluster %d %s%s" % (j + 1, measurement, unit_str))
                 plt.ylabel("No. of samples")
-                plt.xlim([0, xlim])
-                plt.ylim([0, ylim])
                 plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
                 
     def plot_cluster_hist_radius(self, args):
@@ -80,19 +86,19 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         # It's hacktastic
         for (name, sim) in self.sims:
             for s in sim.samples:
-                s.fret_efficiency = 1.0 / (1.0 + (s.length / R0)**6)
+                s.fret_efficiency = 1.0 / (1.0 + ((s.length + args.pad_length) / R0)**6)
 
     def plot_hist_fret_efficiency(self, args):
         self._add_fret_efficiency(args)
         
         # TODO: automatic limits
-        self._plot_histogram("fret_efficiency", args, xlim=1, units=None)
+        self._plot_histogram("fret_efficiency", args, units=None)
 
     def plot_cluster_hist_fret_efficiency(self, args):
         self._add_fret_efficiency(args)
         
         # TODO: automatic limits
-        self._plot_cluster_histogram("fret_efficiency", args, xlim=1, units=None)
+        self._plot_cluster_histogram("fret_efficiency", args, units=None)
         
 
         
@@ -105,6 +111,7 @@ if __name__ == "__main__":
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
     parser.add_argument("-p", "--plot", dest="plots", help="Type of plot", choices=PLOTS, action="append")
     parser.add_argument("-r", "--reference-length", help="Set R0 value", type=float, default=50.0)
+    parser.add_argument("-l", "--pad-length", help="Add padding value to molecule length to simulate presence of a chromatophore pair", type=float, default=20.0)
 
     args = parser.parse_args()
 
