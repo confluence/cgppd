@@ -26,19 +26,22 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_length(self, args):
         self._plot_vs_time("length", args)
 
-    def _plot_histogram(self, measurement, args, xlim=100, ylim=250, units=u"Å"):
+    def _plot_histogram(self, measurement, args, units=u"Å"):
         rows = len(self.sims)
+        
+        lastplot = None
 
         for i, (name, sim) in enumerate(self.sims, 1):
             values = [getattr(s, measurement) for s in sim.samples]
-            plt.subplot(rows,1,i)
+            if lastplot is not None:
+                lastplot = plt.subplot(rows,1,i, sharex=lastplot, sharey=lastplot)
+            else:
+                lastplot = plt.subplot(rows,1,i)
             plt.hist(values, bins=100)
             plt.title(name)
             unit_str = " (%s)" % units if units else ""
             plt.xlabel(u"%s%s" % (measurement, unit_str))
             plt.ylabel("No. of samples")
-            plt.xlim([0, xlim])
-            plt.ylim([0, ylim])
             plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)      
             
     def plot_hist_radius(self, args):
@@ -49,23 +52,26 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
 
     #some kind of meaningful cluster plot?
     
-    def _plot_cluster_histogram(self, measurement, args, xlim=100, ylim=1000, units=u"Å"):
+    def _plot_cluster_histogram(self, measurement, args, units=u"Å"):
         rows = len(self.sims)
         cols = max([len(s.clusters) for (n, s) in self.sims])
+        
+        lastplot = None
         
         for i, (name, sim) in enumerate(self.sims):
             for j, cluster in enumerate(sim.clusters):
                 values = [getattr(s, measurement) for s in cluster.samples]
                 
                 subplot_no = i * cols + j + 1
-                plt.subplot(rows,cols,subplot_no)
+                if lastplot is not None:
+                    lastplot = plt.subplot(rows,cols,subplot_no)
+                else:
+                    lastplot = plt.subplot(rows,cols,subplot_no)
                 plt.hist(values, bins=100)
                 plt.title(name)
                 unit_str = " (%s)" % units if units else ""
                 plt.xlabel(u"Cluster %d %s%s" % (j + 1, measurement, unit_str))
                 plt.ylabel("No. of samples")
-                plt.xlim([0, xlim])
-                plt.ylim([0, ylim])
                 plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
                 
     def plot_cluster_hist_radius(self, args):
