@@ -26,9 +26,9 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_length(self, args):
         self._plot_vs_time("length", args)
 
-    def _plot_histogram(self, measurement, args, xlim=80, ylim=600, units=u"Å"):
+    def _plot_histogram(self, measurement, args, xlim=100, ylim=250, units=u"Å"):
         rows = len(self.sims)
-                
+
         for i, (name, sim) in enumerate(self.sims, 1):
             values = [getattr(s, measurement) for s in sim.samples]
             plt.subplot(rows,1,i)
@@ -49,7 +49,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
 
     #some kind of meaningful cluster plot?
     
-    def _plot_cluster_histogram(self, measurement, args, xlim=80, ylim=600, units=u"Å"):
+    def _plot_cluster_histogram(self, measurement, args, xlim=100, ylim=1000, units=u"Å"):
         rows = len(self.sims)
         cols = max([len(s.clusters) for (n, s) in self.sims])
         
@@ -80,7 +80,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         # It's hacktastic
         for (name, sim) in self.sims:
             for s in sim.samples:
-                s.fret_efficiency = 1.0 / (1.0 + (s.length / R0)**6)
+                s.fret_efficiency = 1.0 / (1.0 + ((s.length + args.pad_length) / R0)**6)
 
     def plot_hist_fret_efficiency(self, args):
         self._add_fret_efficiency(args)
@@ -105,6 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
     parser.add_argument("-p", "--plot", dest="plots", help="Type of plot", choices=PLOTS, action="append")
     parser.add_argument("-r", "--reference-length", help="Set R0 value", type=float, default=50.0)
+    parser.add_argument("-l", "--pad-length", help="Add padding value to molecule length to simulate presence of a chromatophore pair", type=float, default=20.0)
 
     args = parser.parse_args()
 

@@ -8,12 +8,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculate FRET efficiency from diubiquitin simulations produced by cgppd")
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
     parser.add_argument("-r", "--reference-length", help="Set R0 value", type=float, default=50.0)
+    parser.add_argument("-l", "--pad-length", help="Add padding value to molecule length to simulate presence of a chromatophore pair", type=float, default=20.0)
 
 
     args = parser.parse_args()
 
     simulation_group = DiubiquitinSimulationGroup.from_dirs(args.dirs)
     R0 = args.reference_length
+    padding = args.pad_length
     
     for (name, sim) in simulation_group.sims:
         print "Simulation %s:" % name
@@ -24,7 +26,7 @@ if __name__ == "__main__":
             sample_E = []
             
             for sample in cluster.samples:
-                R = sample.length
+                R = sample.length + padding
                 E = 1.0 / (1.0 + (R / R0)**6)
                 sample_E.append(E)
                 
