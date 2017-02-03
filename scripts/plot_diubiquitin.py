@@ -25,6 +25,10 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             
     def plot_length(self, args):
         self._plot_vs_time("length", args)
+            
+    def plot_fret_efficiency(self, args):
+        self._add_fret_efficiency(args)
+        self._plot_vs_time("fret_efficiency", args)
 
     def _plot_histogram(self, measurement, args, units=u"Å"):
         rows = len(self.sims)
@@ -83,10 +87,13 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def _add_fret_efficiency(self, args):
         R0 = args.reference_length
         
-        # It's hacktastic
-        for (name, sim) in self.sims:
-            for s in sim.samples:
-                s.fret_efficiency = 1.0 / (1.0 + ((s.length + args.pad_length) / R0)**6)
+        if not "fret_efficiency" in self.extra_properties:
+			# It's hacktastic
+			for (name, sim) in self.sims:
+				for s in sim.samples:
+					s.fret_efficiency = 1.0 / (1.0 + ((s.length + args.pad_length) / R0)**6)
+					
+			self.extra_properties.add("fret_efficiency")
 
     def plot_hist_fret_efficiency(self, args):
         self._add_fret_efficiency(args)
