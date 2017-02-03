@@ -165,6 +165,7 @@ class DiubiquitinSimulationGroup(object):
     
     def __init__(self, sims):
         self.sims = sims
+        self.extra_properties = set()
         
     @classmethod
     def from_dirs(cls, dirs):

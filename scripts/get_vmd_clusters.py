@@ -28,6 +28,8 @@ for dirname, frames in clusters.iteritems():
         filename = "%s/clusters.txt" % dirname
     else:
         filename = "%s_clusters.txt" % dirname
+        
+    print filename
     
     with open(filename, "w") as cluster_file:
         for frame in frames:
