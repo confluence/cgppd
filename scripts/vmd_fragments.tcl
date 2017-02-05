@@ -9,6 +9,16 @@ mol rename top LYS-63
 mol new output/diubiquitin/diubiquitin_2016-05-18_A/diubiquitin_met_1_8154/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
 mol rename top MET-1
 
+# Add data from other runs
+
+mol addfile output/diubiquitin/diubiquitin_2016-05-18_B/diubiquitin_lys_48_6297/trajectory.pdb type pdb first 0 last -1 step 1 waitfor 1 0
+mol addfile output/diubiquitin/diubiquitin_2016-05-18_B/diubiquitin_lys_63_11908/trajectory.pdb type pdb first 0 last -1 step 1 waitfor 1 1
+mol addfile output/diubiquitin/diubiquitin_2016-05-18_B/diubiquitin_met_1_8824/trajectory.pdb type pdb first 0 last -1 step 1 waitfor 1 2
+
+mol addfile output/diubiquitin/diubiquitin_2015-12-07/diubiquitin_lys_48_21091/trajectory.pdb type pdb first 0 last -1 step 1 waitfor 1 0
+mol addfile output/diubiquitin/diubiquitin_2015-12-07/diubiquitin_lys_63_16552/trajectory.pdb type pdb first 0 last -1 step 1 waitfor 1 1
+mol addfile output/diubiquitin/diubiquitin_2015-12-07/diubiquitin_met_1_11116/trajectory.pdb type pdb first 0 last -1 step 1 waitfor 1 2
+
 # procedure for restoring default representations after clustering deletes them
 
 proc restore_reps {m} {
