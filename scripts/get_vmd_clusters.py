@@ -5,13 +5,15 @@ import re
 import sys
 import os
 
+vis_filename, output_desc = sys.argv[1:3]
+
 NEW_MOLECULE = re.compile("mol new (.*\.pdb)")
 CLUSTER = re.compile("mol drawframes top \d {(\d.*)}")
 
 clusters = {}
 current_cluster = None
 
-with open(sys.argv[1], "r") as vis_file:
+with open(vis_filename, "r") as vis_file:
     for line in vis_file:
         nm = NEW_MOLECULE.match(line)
         if nm:
@@ -25,9 +27,9 @@ with open(sys.argv[1], "r") as vis_file:
 
 for dirname, frames in clusters.iteritems():
     if os.path.isdir(dirname):
-        filename = "%s/clusters.txt" % dirname
+        filename = "%s/clusters_%s.txt" % (dirname, output_desc)
     else:
-        filename = "%s_clusters.txt" % dirname
+        filename = "%s_clusters_%s.txt" % (dirname, output_desc)
         
     print filename
     

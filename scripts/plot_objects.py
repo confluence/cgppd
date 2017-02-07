@@ -31,7 +31,11 @@ class Sample(object):
 
     @classmethod
     def from_PDB(cls, pdb_file):
+        samples = []
+        
         residues = []
+        sample_step=None
+        potential = None
         
         for line in pdb_file:
             if "sample" in line:
@@ -41,10 +45,14 @@ class Sample(object):
             elif "ATOM" in line:
                 # we can deal with overflows here which are technically illegal PDB syntax, because we know the precision is fixed
                 residues.append(tuple(float(n) for n in re.findall('(-?\d+\.\d{3})', line[30:-12])))
+            elif "END" in line:
+                length, radius = measure(residues)
+                samples.append(cls(None, sample_step, length, radius, potential))
+                residues = []
+                sample_step=None
+                potential = None
 
-        length, radius = measure(residues)
-        
-        return cls(None, sample_step, length, radius, potential)
+        return samples
         
 
 class Cluster(object):
@@ -61,9 +69,9 @@ class Cluster(object):
 
 
 class Simulation(object):
-    def __init__(self, samples, clusters):
+    def __init__(self, samples, cluster_sets):
         self.samples = samples # list
-        self.clusters = clusters
+        self.cluster_sets = cluster_sets # dict
 
     @classmethod
     def from_dir(cls, directory):
@@ -73,6 +81,10 @@ class Simulation(object):
 
         summary_filename = os.path.join(directory, "summary.csv")
         header = ("sample_no", "sample_step", "length", "radius", "potential")
+        
+        trajectory_filename = os.path.join(directory, "trajectory.pdb")
+        
+        write = False
 
         if os.path.isfile(summary_filename):
             print "Reading sample summary..."
@@ -82,6 +94,13 @@ class Simulation(object):
                 for sample_no, sample_step, length, radius, potential in reader:
                     samples.append(Sample(int(sample_no), int(sample_step), float(length), float(radius), float(potential)))
                     
+        elif os.path.isfile(trajectory_filename): # TODO
+            print "Using trajectory file..."
+            
+            with open(trajectory_filename, "r") as pdbfile:
+                samples.extend(Sample.from_PDB(pdbfile))
+                
+            write = True
         else:
             print "Detecting temperature nearest 300K..."
 
@@ -102,14 +121,17 @@ class Simulation(object):
                 temps_seen.add(temp)
 
             print "Using %.1fK." % closest_temp
-            
-            print "Writing sample summary..."
                             
             for pdb_filename in glob.iglob(os.path.join(directory, "pdb", "sample*_%.1fK_*.pdb" % closest_temp)):
                 with open(pdb_filename, "r") as pdbfile:
-                    samples.append(Sample.from_PDB(pdbfile))
-
+                    samples.extend(Sample.from_PDB(pdbfile))
+                    
             samples.sort(key=attrgetter("sample_step"))
+                    
+            write = True
+            
+        if write:
+            print "Writing sample summary..."
             
             for i, sample in enumerate(samples):
                 sample.sample_no = i
@@ -122,20 +144,28 @@ class Simulation(object):
                     
         # new cluster stuff
         
-        clusters = []
+        # TODO multiple cluster files
         
-        cluster_filename = os.path.join(directory, "clusters.txt")
-        if os.path.exists(cluster_filename):
+        cluster_sets = {}
+        
+        cluster_filenames = glob.glob(os.path.join(directory, "clusters*.txt"))
+        
+        for cluster_filename in cluster_filenames:
+            cluster_description, _ = os.path.splitext(os.path.basename(cluster_filename))
+            clusters = []
+
             with open(cluster_filename, "r") as cluster_file:
                 for line in cluster_file:
                     cluster = Cluster.from_string(line)
                     cluster.match_to_samples(samples)
                     clusters.append(cluster)
             
-        else:
+            cluster_sets[cluster_description] = clusters
+            
+        if not cluster_filenames:
             print "No cluster information found."
 
-        return cls(samples, clusters)
+        return cls(samples, cluster_sets)
 
 
 class PolyalanineSimulationSequence(object):

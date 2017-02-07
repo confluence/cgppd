@@ -17,6 +17,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             return self.sims
     
     def _plot_vs_time(self, measurement, args):
+        plt.figure()
+        
         rows = len(self.sims)
 
         for i, (name, sim) in enumerate(self._ordered_sims(args.order_by), 1):
@@ -39,6 +41,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         self._plot_vs_time("fret_efficiency", args)
         
     def _plot_aggregate_histogram(self, measurement, args, units=u"Å"):
+        plt.figure()
+        
         aggregate_values = defaultdict(list)
 
         for name, sim in self.sims:
@@ -54,7 +58,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 lastplot = plt.subplot(rows,1,i, sharex=lastplot, sharey=lastplot)
             else:
                 lastplot = plt.subplot(rows,1,i)
-            plt.hist(values, bins=1000)
+            plt.hist(values, bins=100)
             plt.title(name)
             unit_str = " (%s)" % units if units else ""
             plt.xlabel(u"%s%s" % (measurement, unit_str))
@@ -68,6 +72,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         self._plot_aggregate_histogram("radius", args, units=None)
 
     def _plot_histogram(self, measurement, args, units=u"Å"):
+        plt.figure()
+        
         rows = len(self.sims)
         
         lastplot = None
@@ -78,7 +84,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 lastplot = plt.subplot(rows,1,i, sharex=lastplot, sharey=lastplot)
             else:
                 lastplot = plt.subplot(rows,1,i)
-            plt.hist(values, bins=1000)
+            plt.hist(values, bins=100)
             plt.title(name)
             unit_str = " (%s)" % units if units else ""
             plt.xlabel(u"%s%s" % (measurement, unit_str))
@@ -90,30 +96,24 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             
     def plot_hist_length(self, args):
         self._plot_histogram("length", args)
-
-    #some kind of meaningful cluster plot?
     
     def _plot_cluster_histogram(self, measurement, args, units=u"Å"):
-        rows = len(self.sims)
-        cols = max([len(s.clusters) for (n, s) in self.sims])
-        
-        lastplot = None
-        
-        for i, (name, sim) in enumerate(self.sims):
-            for j, cluster in enumerate(sim.clusters):
-                values = [getattr(s, measurement) for s in cluster.samples]
+        for name, sim in self.sims:
+            for description, clusters in sim.cluster_sets.items():
+                plt.figure()
                 
-                subplot_no = i * cols + j + 1
-                if lastplot is not None:
-                    lastplot = plt.subplot(rows,cols,subplot_no)
-                else:
-                    lastplot = plt.subplot(rows,cols,subplot_no)
-                plt.hist(values, bins=100)
-                plt.title(name)
-                unit_str = " (%s)" % units if units else ""
-                plt.xlabel(u"Cluster %d %s%s" % (j + 1, measurement, unit_str))
-                plt.ylabel("No. of samples")
-                plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+                rows = len(clusters)
+                cols = 1
+                        
+                for i, cluster in enumerate(clusters):
+                    values = [getattr(s, measurement) for s in cluster.samples]
+                    plt.subplot(rows, cols, i + 1)
+                    plt.hist(values, bins=100)
+                    plt.title("%s: %s" % (name, description))
+                    unit_str = " (%s)" % units if units else ""
+                    plt.xlabel(u"Cluster %d (%d/%d samples) %s%s" % (i + 1, len(values), len(sim.samples), measurement, unit_str))
+                    plt.ylabel("No. of samples")
+                    plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
                 
     def plot_cluster_hist_radius(self, args):
         self._plot_cluster_histogram("radius", args)
@@ -166,6 +166,5 @@ if __name__ == "__main__":
     simulation_group = DiubiquitinPlots.from_dirs(args.dirs)
 
     for plot in args.plots:
-        plt.figure()
         getattr(simulation_group, "plot_%s" % plot)(args)
     plt.show()
