@@ -17,7 +17,7 @@ with open(vis_filename, "r") as vis_file:
     for line in vis_file:
         nm = NEW_MOLECULE.match(line)
         if nm:
-            current_cluster = nm.group(1).split('/')[-2]
+            current_cluster = os.path.dirname(nm.group(1))
             clusters[current_cluster] = []
             continue
             
@@ -26,6 +26,7 @@ with open(vis_filename, "r") as vis_file:
             clusters[current_cluster].append(cl.group(1))
 
 for dirname, frames in clusters.iteritems():
+    print dirname
     if os.path.isdir(dirname):
         filename = "%s/clusters_%s.txt" % (dirname, output_desc)
     else:

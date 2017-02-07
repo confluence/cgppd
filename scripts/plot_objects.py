@@ -92,7 +92,7 @@ class Simulation(object):
                 reader = csv.reader(summary_file)
                 reader.next() # skip header
                 for sample_no, sample_step, length, radius, potential in reader:
-                    samples.append(Sample(int(sample_no), int(sample_step), float(length), float(radius), float(potential)))
+                    samples.append(Sample(int(sample_no), int(sample_step or "0"), float(length), float(radius), float(potential or "0")))
                     
         elif os.path.isfile(trajectory_filename): # TODO
             print "Using trajectory file..."
