@@ -111,7 +111,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                     plt.hist(values, bins=100)
                     plt.title("%s: %s" % (name, description))
                     unit_str = " (%s)" % units if units else ""
-                    plt.xlabel(u"Cluster %d (%d/%d samples) %s%s" % (i + 1, len(values), len(sim.samples), measurement, unit_str))
+                    plt.xlabel(u"Cluster %d (%d/%d samples) %s%s" % (i, len(values), len(sim.samples), measurement, unit_str))
                     plt.ylabel("No. of samples")
                     plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
                 
