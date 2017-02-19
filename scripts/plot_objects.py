@@ -9,6 +9,8 @@ import glob
 import argparse
 from operator import attrgetter
 import numpy as np
+import h5py
+from collections import defaultdict
 
 def measure(residues):
     length = np.linalg.norm(np.array(residues[-1]) - np.array(residues[0]))
@@ -22,6 +24,8 @@ def measure(residues):
     return length, radius
 
 class Sample(object):
+    XYZ = re.compile('(-?\d+\.\d{3})')
+    
     def __init__(self, sample_no, sample_step, length, radius, potential):
         self.sample_no = sample_no
         self.sample_step = sample_step
@@ -44,7 +48,7 @@ class Sample(object):
                 potential = float(re.search("(-?\d+\.\d+)", line).group(1))
             elif "ATOM" in line:
                 # we can deal with overflows here which are technically illegal PDB syntax, because we know the precision is fixed
-                residues.append(tuple(float(n) for n in re.findall('(-?\d+\.\d{3})', line[30:-12])))
+                residues.append(tuple(float(n) for n in cls.XYZ.findall(line[30:-12])))
             elif "END" in line:
                 length, radius = measure(residues)
                 samples.append(cls(None, sample_step, length, radius, potential))
@@ -66,15 +70,70 @@ class Cluster(object):
     @classmethod
     def from_string(cls, sample_nos_string):
         return cls([int(i) for i in sample_nos_string.split()])
+        
+        
+class SampleContacts(object):
+    XYZ = re.compile('(-?\d+\.\d{3})')
+    
+    def __init__(self, contact_filename):
+        self.contact_filename = contact_filename
+        
+    def average_contacts(self, cutoff):
+        f = h5py.File(self.contact_filename, "r")
+        
+        contacts = []
+        
+        for sample in sorted(f.keys()):
+            distances = f["sample"]
+            within_cutoff = (-1 < distances < cutoff).sum(axis=1)
+            contacts.append(within_cutoff)
+            
+        contacts = np.array(contacts)
+        averages = contacts.mean(axis=1)
+        
+        f.close()
+        return averages
+                
+    def write_records_from_pdb(self, pdbfile, sample_no=0):
+        samples = []
+        residues = []
+        
+        for line in pdb_file:
+            if "ATOM" in line:
+                chain = line[21]
+                # we can deal with overflows here which are technically illegal PDB syntax, because we know the precision is fixed
+                pos = np.array([float(n) for n in self.XYZ.findall(line[30:-12])])
+                residues.append((chain, pos))
+            elif "END" in line:
+                distances = []
+                for (chain1, pos1) in residues:
+                    row = []
+                    for (chain2, pos2) in residues:
+                        if chain1 == chain2:
+                            row.append(-1)
+                        else:
+                            row.append(np.linalg.norm(pos1 - pos2))
+                    distances.append(row)
+                
+                samples.append(distances)
+                residues = []
+
+        f = h5py.File(self.contact_filename, "w")
+        
+        for i, distances in enumerate(samples, sample_no):
+            f.create_dataset("sample_%08d" % i, data=np.array(distances))
+                
+        f.close()
 
 
-class Simulation(object):
-    def __init__(self, samples, cluster_sets):
+class Simulation(object):    
+    def __init__(self, samples, cluster_sets, contacts):
         self.samples = samples # list
         self.cluster_sets = cluster_sets # dict
+        self.contacts = contacts
 
     @classmethod
-    def from_dir(cls, directory):
+    def from_dir(cls, directory, args, calculate_contacts=True):
         print "Processing directory %s..." % directory
         
         samples = []
@@ -85,23 +144,8 @@ class Simulation(object):
         trajectory_filename = os.path.join(directory, "trajectory.pdb")
         
         write = False
-
-        if os.path.isfile(summary_filename):
-            print "Reading sample summary..."
-            with open(summary_filename, "r") as summary_file:
-                reader = csv.reader(summary_file)
-                reader.next() # skip header
-                for sample_no, sample_step, length, radius, potential in reader:
-                    samples.append(Sample(int(sample_no), int(sample_step or "0"), float(length), float(radius), float(potential or "0")))
-                    
-        elif os.path.isfile(trajectory_filename): # TODO
-            print "Using trajectory file..."
-            
-            with open(trajectory_filename, "r") as pdbfile:
-                samples.extend(Sample.from_PDB(pdbfile))
-                
-            write = True
-        else:
+        
+        def get_closest_temp():
             print "Detecting temperature nearest 300K..."
 
             # we are being as agnostic as possible about the number of replicas, steps before first sample, etc..
@@ -119,8 +163,27 @@ class Simulation(object):
                     closest_temp = temp
 
                 temps_seen.add(temp)
-
+                
             print "Using %.1fK." % closest_temp
+            return closest_temp
+
+        if os.path.isfile(summary_filename):
+            print "Reading sample summary..."
+            with open(summary_filename, "r") as summary_file:
+                reader = csv.reader(summary_file)
+                reader.next() # skip header
+                for sample_no, sample_step, length, radius, potential in reader:
+                    samples.append(Sample(int(sample_no), int(sample_step or "0"), float(length), float(radius), float(potential or "0")))
+                    
+        elif os.path.isfile(trajectory_filename):
+            print "Using trajectory file..."
+            
+            with open(trajectory_filename, "r") as pdbfile:
+                samples.extend(Sample.from_PDB(pdbfile))
+                
+            write = True
+        else:
+            closest_temp = get_closest_temp()
                             
             for pdb_filename in glob.iglob(os.path.join(directory, "pdb", "sample*_%.1fK_*.pdb" % closest_temp)):
                 with open(pdb_filename, "r") as pdbfile:
@@ -143,9 +206,7 @@ class Simulation(object):
                     writer.writerow([sample.sample_no, sample.sample_step, sample.length, sample.radius, sample.potential])
                     
         # new cluster stuff
-        
-        # TODO multiple cluster files
-        
+                
         cluster_sets = {}
         
         cluster_filenames = glob.glob(os.path.join(directory, "clusters*.txt"))
@@ -164,8 +225,34 @@ class Simulation(object):
             
         if not cluster_filenames:
             print "No cluster information found."
+            
+        # Contact averages
+        
+        if calculate_contacts:
+            contact_filename = os.path.join(directory, "contacts.hdf5")
+            contacts = Contacts(contact_filename)
+                
+            if os.path.isfile(contact_filename):
+                print "Reading contacts from file..." # That's it; the file will be opened by the object
+            else:
+                if os.path.isfile(trajectory_filename):
+                    print "Using trajectory file for contacts..."
+                
+                    with open(trajectory_filename, "r") as pdbfile:
+                        contacts.write_records_from_pdb(pdbfile)
+                        
+                else:
+                    print "Using sample files for contacts..."
+                    closest_temp = get_closest_temp()
+                                    
+                    for sample_no, pdb_filename in enumerate(glob.iglob(os.path.join(directory, "pdb", "sample*_%.1fK_*.pdb" % closest_temp))):
+                        with open(pdb_filename, "r") as pdbfile:
+                            contacts.write_records_from_pdb(pdbfile, sample_no)
+        else:
+            contacts = None
 
-        return cls(samples, cluster_sets)
+        return cls(samples, cluster_sets, directory, contacts)
+    
 
 
 class PolyalanineSimulationSequence(object):
@@ -175,17 +262,17 @@ class PolyalanineSimulationSequence(object):
         self.sims = sims
         
     @classmethod
-    def from_dirs(cls, dirs):
+    def from_dirs(cls, args):
         sims = []
         
-        for d in dirs:
+        for d in args.dirs:
             dirname = os.path.basename(d)
             name_match = cls.NAME.match(dirname)
             if name_match is None:
                 sys.exit("'%s' does not look like a polyalanine simulation." % dirname)
             n = int(name_match.group(1))
             
-            sims.append((n, Simulation.from_dir(d)))
+            sims.append((n, Simulation.from_dir(d, args, calculate_contacts=False)))
             
         return cls(sorted(sims))
         
@@ -198,16 +285,16 @@ class DiubiquitinSimulationGroup(object):
         self.extra_properties = set()
         
     @classmethod
-    def from_dirs(cls, dirs):
+    def from_dirs(cls, args):
         sims = []
         
-        for d in dirs:
+        for d in args.dirs:
             dirname = os.path.basename(d)
             name_match = cls.NAME.match(dirname)
             if name_match is None:
                 sys.exit("'%s' does not look like a diubiquitin simulation." % dirname)
             res, index = name_match.groups()
             
-            sims.append(("%s-%s" % (res.upper(), index), Simulation.from_dir(d)))
+            sims.append(("%s-%s" % (res.upper(), index), Simulation.from_dir(d, args)))
             
         return cls(sims)
