@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    simulation_set = PolyalaninePlots.from_dirs(args.dirs)
+    simulation_set = PolyalaninePlots.from_dirs(args)
     
     for plot in args.plots:
         plt.figure()

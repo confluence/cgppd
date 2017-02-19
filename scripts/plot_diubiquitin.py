@@ -146,10 +146,17 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         self._add_fret_efficiency(args)
         
         self._plot_cluster_histogram("fret_efficiency", args, units=None)
+    
+    def plot_average_contacts(self, args):
+        plt.figure()
         
+        average_contacts = self.contacts.average_contacts(args.contact_cutoff)
 
-        
-        
+        plt.plot(values)
+        plt.title(u"Average contacts (cutoff: %g Å)" % args.contact_cutoff)
+        plt.xlabel("Residue no.")
+        plt.ylabel("Mean no. of contacts with other chains" % measurement)  
+            
 
 PLOTS = tuple(n[5:] for n in DiubiquitinPlots.__dict__ if n.startswith("plot_"))
 
@@ -159,11 +166,12 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--plot", dest="plots", help="Type of plot", choices=PLOTS, action="append")
     parser.add_argument("-r", "--reference-length", help="Set R0 value", type=float, default=50.0)
     parser.add_argument("-l", "--pad-length", help="Add padding value to molecule length to simulate presence of a chromatophore pair", type=float, default=20.0)
+    parser.add_argument("-c", "--contact-cutoff", help="Cutoff for determining whether two residues are in contact", type=float, default=7.0)
     parser.add_argument("-o", "--order-by", help="Order simulation subplots. If no ordering is specified, the order of the directory parameters will be preserved.", choices=(None, 'name'), default=None)
 
     args = parser.parse_args()
 
-    simulation_group = DiubiquitinPlots.from_dirs(args.dirs)
+    simulation_group = DiubiquitinPlots.from_dirs(args)
 
     for plot in args.plots:
         getattr(simulation_group, "plot_%s" % plot)(args)
