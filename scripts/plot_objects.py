@@ -6,11 +6,10 @@ import csv
 import sys
 import os
 import glob
-import argparse
 from operator import attrgetter
 import numpy as np
-import h5py
 from collections import defaultdict
+import gzip
 
 def measure(residues):
     length = np.linalg.norm(np.array(residues[-1]) - np.array(residues[0]))
@@ -72,58 +71,47 @@ class Cluster(object):
         return cls([int(i) for i in sample_nos_string.split()])
         
         
-class SampleContacts(object):
+class Contacts(object):
     XYZ = re.compile('(-?\d+\.\d{3})')
     
     def __init__(self, contact_filename):
         self.contact_filename = contact_filename
         
-    def average_contacts(self, cutoff):
-        f = h5py.File(self.contact_filename, "r")
+    def average_contacts(self, cutoff, num_samples):
+        within_cutoff = defaultdict(lambda : defaultdict(int))
         
-        contacts = []
-        
-        for sample in sorted(f.keys()):
-            distances = f["sample"]
-            within_cutoff = (-1 < distances < cutoff).sum(axis=1)
-            contacts.append(within_cutoff)
+        with gzip.open(self.contact_filename, "r") as f:
+            reader = csv.reader(f)
             
-        contacts = np.array(contacts)
-        averages = contacts.mean(axis=1)
-        
-        f.close()
-        return averages
+            for chain1, chain2, i, j, distance in reader:
+                if float(distance) < cutoff:
+                    within_cutoff[chain1][int(i)] += 1
+                    within_cutoff[chain2][int(j)] += 1
+                else: # we need to do this so that the keys are created
+                    within_cutoff[chain1][int(i)] += 0
+                    within_cutoff[chain2][int(j)] += 0
+                    
+        return [(chain, [within_cutoff[chain][i] / float(num_samples) for i in sorted(within_cutoff[chain].keys())]) for chain in sorted(within_cutoff.keys())]
                 
-    def write_records_from_pdb(self, pdbfile, sample_no=0):
-        samples = []
-        residues = []
-        
-        for line in pdb_file:
-            if "ATOM" in line:
-                chain = line[21]
-                # we can deal with overflows here which are technically illegal PDB syntax, because we know the precision is fixed
-                pos = np.array([float(n) for n in self.XYZ.findall(line[30:-12])])
-                residues.append((chain, pos))
-            elif "END" in line:
-                distances = []
-                for (chain1, pos1) in residues:
-                    row = []
-                    for (chain2, pos2) in residues:
-                        if chain1 == chain2:
-                            row.append(-1)
-                        else:
-                            row.append(np.linalg.norm(pos1 - pos2))
-                    distances.append(row)
-                
-                samples.append(distances)
-                residues = []
+    def write_records_from_pdb(self, pdb_file):
+        with gzip.open(self.contact_filename, "w") as f:
+            writer = csv.writer(f)
 
-        f = h5py.File(self.contact_filename, "w")
-        
-        for i, distances in enumerate(samples, sample_no):
-            f.create_dataset("sample_%08d" % i, data=np.array(distances))
+            residues = []
+            
+            for line in pdb_file:
+                if "ATOM" in line:
+                    chain = line[21]
+                    # we can deal with overflows here which are technically illegal PDB syntax, because we know the precision is fixed
+                    pos = np.array([float(n) for n in self.XYZ.findall(line[30:-12])])
+                    residues.append((chain, pos))
+                elif "END" in line:
+                    for i, (chain1, pos1) in enumerate(residues):
+                        for j, (chain2, pos2) in enumerate(residues):
+                            if i < j and chain1 != chain2:
+                                writer.writerow([chain1, chain2, i, j, np.linalg.norm(pos1 - pos2)])
                 
-        f.close()
+                    residues = []
 
 
 class Simulation(object):    
@@ -229,7 +217,7 @@ class Simulation(object):
         # Contact averages
         
         if calculate_contacts:
-            contact_filename = os.path.join(directory, "contacts.hdf5")
+            contact_filename = os.path.join(directory, "contacts.csv.gz")
             contacts = Contacts(contact_filename)
                 
             if os.path.isfile(contact_filename):
@@ -245,13 +233,13 @@ class Simulation(object):
                     print "Using sample files for contacts..."
                     closest_temp = get_closest_temp()
                                     
-                    for sample_no, pdb_filename in enumerate(glob.iglob(os.path.join(directory, "pdb", "sample*_%.1fK_*.pdb" % closest_temp))):
+                    for pdb_filename in glob.iglob(os.path.join(directory, "pdb", "sample*_%.1fK_*.pdb" % closest_temp)):
                         with open(pdb_filename, "r") as pdbfile:
-                            contacts.write_records_from_pdb(pdbfile, sample_no)
+                            contacts.write_records_from_pdb(pdbfile)
         else:
             contacts = None
 
-        return cls(samples, cluster_sets, directory, contacts)
+        return cls(samples, cluster_sets, contacts)
     
 
 

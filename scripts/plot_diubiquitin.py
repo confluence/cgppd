@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
-import os
-import re
 import argparse
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -150,13 +147,25 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_average_contacts(self, args):
         plt.figure()
         
-        average_contacts = self.contacts.average_contacts(args.contact_cutoff)
+        contact_averages_per_sim = [sim.contacts.average_contacts(args.contact_cutoff, len(sim.samples)) for (name, sim) in self.sims]
+                        
+        rows = len(contact_averages_per_sim)
+        cols = len(contact_averages_per_sim[0])
 
-        plt.plot(values)
-        plt.title(u"Average contacts (cutoff: %g Å)" % args.contact_cutoff)
-        plt.xlabel("Residue no.")
-        plt.ylabel("Mean no. of contacts with other chains" % measurement)  
+        for i, (name, sim) in enumerate(self._ordered_sims(args.order_by), 1):            
+            contact_averages = contact_averages_per_sim[i - 1]
             
+            for j, (chain, averages) in enumerate(contact_averages, 1):
+                residues = range(len(averages))
+                            
+                plt.subplot(rows,cols,(i - 1) * cols + j)
+                plt.bar(residues, averages)
+                plt.title(u"%s chain %s (cutoff: %g Å)" % (name, chain, args.contact_cutoff))
+                plt.xlabel("Residue no.")
+                plt.ylabel("Mean no. of contacts with other chains")
+                
+        plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+
 
 PLOTS = tuple(n[5:] for n in DiubiquitinPlots.__dict__ if n.startswith("plot_"))
 
