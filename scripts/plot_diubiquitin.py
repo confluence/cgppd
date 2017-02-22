@@ -147,7 +147,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_average_contacts(self, args):
         plt.figure()
         
-        contact_averages_per_sim = [sim.contacts.average_contacts(args.contact_cutoff, len(sim.samples)) for (name, sim) in self.sims]
+        contact_averages_per_sim = [sim.contacts.average_contacts(args.contact_cutoff) for (name, sim) in self.sims]
                         
         rows = len(contact_averages_per_sim)
         cols = len(contact_averages_per_sim[0])
