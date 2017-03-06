@@ -251,8 +251,9 @@ def make_diubiquitin(binding_resid, fake_sidechain=False):
     diubiquitin = Molecule([second_ubiquitin, ubiquitin])
 
     if fake_sidechain:
-        sitename += "_sidechain"
-    output_filename = "diubiquitin_%s.pdb" % sitename
+        output_filename = "diubiquitin_%s_sidechain.pdb" % sitename
+    else:
+        output_filename = "diubiquitin_%s.pdb" % sitename
 
     # output config
 
@@ -263,7 +264,9 @@ def make_diubiquitin(binding_resid, fake_sidechain=False):
         flexible_segment_1 = "73 74 75 76 %d" % (binding_resid + 76)
         flexible_segment_2 = "149 150 151 152"
 
-    output_config = """files
+    output_config = """prefix diubiquitin_%s
+
+files
 
 t(0,0,0) r(0,0,0,0) data/diubiquitin/%s diubiquitin
 
@@ -271,9 +274,11 @@ segments
 
 diubiquitin %s
 diubiquitin %s
-""" % (output_filename, flexible_segment_1, flexible_segment_2)
+""" % (sitename, output_filename, flexible_segment_1, flexible_segment_2)
 
-    return diubiquitin, output_filename, output_config
+    output_config_filename = "diubiquitin_%s" % sitename
+
+    return diubiquitin, output_filename, output_config, output_config_filename
 
 
 def test_make_diubiquitin():
@@ -321,12 +326,12 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--fake-sidechain", help="Create a fake side-chain by inserting an alanine between the bonded residues", action="store_true")
     args = parser.parse_args()
 
-    for resid in (48, 63, 1):
-        diubiquitin, output_filename, output_config = make_diubiquitin(resid, args.fake_sidechain)
+    for resid in (48, 63, 1, 11, 6, 27, 29, 33):
+        diubiquitin, output_filename, output_config, output_config_filename = make_diubiquitin(resid, args.fake_sidechain)
         with open(output_filename, 'w') as outputfile:
             outputfile.writelines(diubiquitin.to_pdb())
-
-        print "-----------------------"
-        print output_config
+            
+        with open(output_config_filename, 'w') as output_config_file:
+            output_config_file.write(output_config)
 
 # TODO multiple disconnected segments in one molecule?! Can we read that from config?
