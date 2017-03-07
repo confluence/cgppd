@@ -1,0 +1,10 @@
+prefix diubiquitin_lys_63
+
+files
+
+t(0,0,0) r(0,0,0,0) data/diubiquitin/diubiquitin_lys_63.pdb diubiquitin
+
+segments
+
+diubiquitin 73 74 75 76 139
+diubiquitin 149 150 151 152
