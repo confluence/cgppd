@@ -276,7 +276,10 @@ diubiquitin %s
 diubiquitin %s
 """ % (sitename, output_filename, flexible_segment_1, flexible_segment_2)
 
-    output_config_filename = "diubiquitin_%s" % sitename
+    if fake_sidechain:
+        output_config_filename = "diubiquitin_%s" % sitename
+    else:
+        output_config_filename = "diubiquitin_%s_no_sidechain" % sitename
 
     return diubiquitin, output_filename, output_config, output_config_filename
 
@@ -324,9 +327,12 @@ def test_make_diubiquitin_with_fake_sidechain():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate diubiquitin PDBs")
     parser.add_argument("-f", "--fake-sidechain", help="Create a fake side-chain by inserting an alanine between the bonded residues", action="store_true")
+    parser.add_argument("-r", "--residues", help="Use each of these residue linkages (comma-separated string)", default="48,63,1,11,6,27,29,33")
     args = parser.parse_args()
+    
+    resids = [int(r) for r in args.residues.split(",")]
 
-    for resid in (48, 63, 1, 11, 6, 27, 29, 33):
+    for resid in resids:
         diubiquitin, output_filename, output_config, output_config_filename = make_diubiquitin(resid, args.fake_sidechain)
         with open(output_filename, 'w') as outputfile:
             outputfile.writelines(diubiquitin.to_pdb())
