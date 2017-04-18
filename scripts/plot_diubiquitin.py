@@ -33,6 +33,9 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_length(self, args):
         self._plot_vs_time("length", args)
             
+    def plot_potential(self, args):
+        self._plot_vs_time("potential", args)
+            
     def plot_fret_efficiency(self, args):
         self._add_fret_efficiency(args)
         self._plot_vs_time("fret_efficiency", args)
@@ -93,6 +96,9 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             
     def plot_hist_length(self, args):
         self._plot_histogram("length", args)
+            
+    def plot_hist_potential(self, args):
+        self._plot_histogram("potential", args)
     
     def _plot_cluster_histogram(self, measurement, args, units=u"Å"):
         for name, sim in self.sims:
