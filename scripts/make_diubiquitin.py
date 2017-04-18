@@ -225,9 +225,19 @@ def make_diubiquitin(binding_resid, fake_sidechain=False):
 
     trans = -v_t - rot_v_s
 
-    # add padding of 3.8 A in the same direction
+    if binding_resid == 27:
+        # LYS-27 is recessed inside the domain, so we want to apply the offset directly towards the gap on the surface
+        # Get the three closest residues on the surface
+        neighbours = [ubiquitin.residues[i].pos for i in (27, 23, 37)]
+        # Find the centre
+        c = sum(neighbours)/3
+        v_offset = c - site # or other way around?
+        tail_offset = 3.8 * (v_offset/np.linalg.norm(v_offset))
+    else:
 
-    tail_offset = 3.8 * (trans/np.linalg.norm(trans))
+        # add padding of 3.8 A in the same direction
+
+        tail_offset = 3.8 * (trans/np.linalg.norm(trans))
 
     if fake_sidechain:
         tail_offset *= 2 # make room for the fake alanine
