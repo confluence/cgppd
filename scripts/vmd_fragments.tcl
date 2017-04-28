@@ -1,3 +1,7 @@
+# TODO TODO TODO redo all these trajectories with temperature 303.8K because I'm an idiot.
+# It probably won't make much difference, but we should be rigorous.
+# Open them, align them, and write them back.
+
 # load the molecules
 
 mol new output/diubiquitin/diubiquitin_2016-05-18_A/diubiquitin_lys_48_6283/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
@@ -18,6 +22,8 @@ mol rename top LYS-11
 #mol new output/diubiquitin/diubiquitin_2017_04_10/diubiquitin_lys_27_1005/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
 #mol new output/diubiquitin/diubiquitin_2017_04_10/diubiquitin_lys_27_25186/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
 #mol rename top LYS-27
+mol new output/diubiquitin/diubiquitin_2017_04_18/diubiquitin_lys_27_1256/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
+mol rename top LYS-27
 
 mol new output/diubiquitin/diubiquitin_2017_03_08/diubiquitin_lys_29_27702/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
 mol rename top LYS-29

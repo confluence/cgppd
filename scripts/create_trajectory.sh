@@ -2,7 +2,7 @@
 
 if [ -z "$2" ]
 then
-    temp=295.0
+    temp=303.8
     #temp=300.0
 else
     temp=$2
