@@ -18,10 +18,6 @@ mol rename top MET-1
 mol new output/diubiquitin/diubiquitin_2017_03_08/diubiquitin_lys_11_97240/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
 mol rename top LYS-11
 
-#mol new output/diubiquitin/diubiquitin_2017_03_08/diubiquitin_lys_27_27683/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
-#mol new output/diubiquitin/diubiquitin_2017_04_10/diubiquitin_lys_27_1005/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
-#mol new output/diubiquitin/diubiquitin_2017_04_10/diubiquitin_lys_27_25186/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
-#mol rename top LYS-27
 mol new output/diubiquitin/diubiquitin_2017_04_18/diubiquitin_lys_27_1256/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
 mol rename top LYS-27
 
@@ -34,19 +30,6 @@ mol rename top LYS-33
 mol new output/diubiquitin/diubiquitin_2017_03_08/diubiquitin_lys_6_97254/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
 mol rename top LYS-6
 
-# Add data from other runs
-
-#mol addfile output/diubiquitin/diubiquitin_2016-05-18_B/diubiquitin_lys_48_6297/trajectory.pdb type pdb first 0 last -1 step 1 waitfor all 0
-#mol addfile output/diubiquitin/diubiquitin_2016-05-18_B/diubiquitin_lys_63_11908/trajectory.pdb type pdb first 0 last -1 step 1 waitfor all 1
-#mol addfile output/diubiquitin/diubiquitin_2016-05-18_B/diubiquitin_met_1_8824/trajectory.pdb type pdb first 0 last -1 step 1 waitfor all 2
-
-#mol addfile output/diubiquitin/diubiquitin_2016-02-25/diubiquitin_met_1_30787/trajectory.pdb type pdb first 0 last -1 step 1 waitfor all 2
-
-#mol addfile output/diubiquitin/diubiquitin_2015-12-07/diubiquitin_lys_48_21091/trajectory.pdb type pdb first 0 last -1 step 1 waitfor all 0
-#mol addfile output/diubiquitin/diubiquitin_2015-12-07/diubiquitin_lys_63_16552/trajectory.pdb type pdb first 0 last -1 step 1 waitfor all 1
-#mol addfile output/diubiquitin/diubiquitin_2015-12-07/diubiquitin_met_1_11116/trajectory.pdb type pdb first 0 last -1 step 1 waitfor all 2
-
-#mol addfile output/diubiquitin/diubiquitin_2017_02_03/diubiquitin_lys_48_6870/trajectory.pdb type pdb first 0 last -1 step 1 waitfor all 0
 
 # procedure for restoring default representations after clustering deletes them
 
