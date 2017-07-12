@@ -204,7 +204,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--pad-length", help="Add padding value to molecule length to simulate presence of a chromatophore pair", type=float, default=20.0)
     parser.add_argument("-c", "--contact-cutoff", help="Cutoff for determining whether two residues are in contact", type=float, default=7.0)
     parser.add_argument("-o", "--order-by", help="Order simulation subplots. If no ordering is specified, the order of the directory parameters will be preserved.", choices=(None, 'name'), default=None)
-    parser.add_argument("-s", "--save-svg", help="Save plots as SVG", type=bool, default=False)
+    parser.add_argument("-s", "--save-svg", help="Save plots as SVG", action="store_true", default=False)
 
     args = parser.parse_args()
 
