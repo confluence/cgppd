@@ -25,7 +25,11 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             plt.title(name)
             plt.xlabel("Sample no.")
             plt.ylabel(u"%s (Å)" % measurement)  
-            plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)      
+            plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+
+        if args.save_svg:
+            fig = plt.gcf()
+            fig.savefig("%s_vs_time.svg" % measurement, format='svg')
             
     def plot_radius(self, args):
         self._plot_vs_time("radius", args)
@@ -65,6 +69,10 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             plt.ylabel("No. of samples")
             plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
 
+        if args.save_svg:
+            fig = plt.gcf()
+            fig.savefig("%s_aggregate_histogram.svg" % measurement, format='svg')
+
     def plot_agg_hist_length(self, args):        
         self._plot_aggregate_histogram("length", args, units=None)
 
@@ -89,7 +97,11 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             unit_str = " (%s)" % units if units else ""
             plt.xlabel(u"%s%s" % (measurement, unit_str))
             plt.ylabel("No. of samples")
-            plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)      
+            plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+
+        if args.save_svg:
+            fig = plt.gcf()
+            fig.savefig("%s_histogram.svg" % measurement, format='svg')
             
     def plot_hist_radius(self, args):
         self._plot_histogram("radius", args)
@@ -117,6 +129,10 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                     plt.xlabel(u"Cluster %d (%d/%d samples) %s%s" % (i, len(values), len(sim.samples), measurement, unit_str))
                     plt.ylabel("No. of samples")
                     plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+
+                if args.save_svg:
+                    fig = plt.gcf()
+                    fig.savefig("%s_cluster_histogram_%s_%s.svg" % (measurement, name, description), format='svg')
                 
     def plot_cluster_hist_radius(self, args):
         self._plot_cluster_histogram("radius", args)
@@ -153,7 +169,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_average_contacts(self, args):
         plt.figure()
         
-        contact_averages_per_sim = [sim.contacts.average_contacts(args.contact_cutoff) for (name, sim) in self.sims]
+        contact_averages_per_sim = [sim.cached_contacts for (name, sim) in self.sims]
+        #contact_averages_per_sim = [sim.contacts.average_contacts(args.contact_cutoff) for (name, sim) in self.sims]
                         
         rows = len(contact_averages_per_sim)
         cols = len(contact_averages_per_sim[0])
@@ -172,6 +189,10 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 
         plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
 
+        if args.save_svg:
+            fig = plt.gcf()
+            fig.savefig("average_contacts_%g_Å.svg" % args.contact_cutoff, format='svg')
+
 
 PLOTS = tuple(n[5:] for n in DiubiquitinPlots.__dict__ if n.startswith("plot_"))
 
@@ -183,6 +204,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--pad-length", help="Add padding value to molecule length to simulate presence of a chromatophore pair", type=float, default=20.0)
     parser.add_argument("-c", "--contact-cutoff", help="Cutoff for determining whether two residues are in contact", type=float, default=7.0)
     parser.add_argument("-o", "--order-by", help="Order simulation subplots. If no ordering is specified, the order of the directory parameters will be preserved.", choices=(None, 'name'), default=None)
+    parser.add_argument("-s", "--save-svg", help="Save plots as SVG", type=bool, default=False)
 
     args = parser.parse_args()
 

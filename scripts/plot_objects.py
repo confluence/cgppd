@@ -103,6 +103,34 @@ class Contacts(object):
         
         f.close()
         return averages_by_chain
+
+    @staticmethod
+    def cached_contacts_from_file(filename):
+        print "Reading cached contact averages..."
+        
+        averages_by_chain = {}
+        
+        with open(filename, "r") as f:
+            reader = csv.reader(f)
+            reader.next() # skip header
+            for chain, averages in reader:
+                averages = [float(a) for a in averages.split()]
+                averages_by_chain[chain] = averages
+
+        return averages_by_chain.items()
+
+    @staticmethod
+    def write_cached_contacts_to_file(filename, averages_by_chain):
+        print "Writing cached contact averages..."
+                
+        with open(filename, "w") as f:
+            writer = csv.writer(f)
+
+            writer.writerow(["chain", "resid", "within_cutoff"])
+
+            for chain, averages in averages_by_chain:
+                averages = " ".join([str(a) for a in averages])
+                writer.writerow([chain, averages])
                 
     def write_records_from_pdb(self, pdb_file, sample_no=0):
         f = h5py.File(self.contact_filename, "w")
@@ -150,13 +178,16 @@ class Contacts(object):
 
 
 class Simulation(object):    
-    def __init__(self, samples, cluster_sets, contacts):
+    def __init__(self, samples, cluster_sets, contacts=None, cached_contacts=None):
         self.samples = samples # list
         self.cluster_sets = cluster_sets # dict
+        
         self.contacts = contacts
+        self.cached_contacts = cached_contacts
+
 
     @classmethod
-    def from_dir(cls, directory, args, calculate_contacts=True):
+    def from_dir(cls, directory, args):
         print "Processing directory %s..." % directory
         
         samples = []
@@ -248,33 +279,49 @@ class Simulation(object):
             
         if not cluster_filenames:
             print "No cluster information found."
-            
-        # Contact averages
-        
-        if calculate_contacts:
-            contact_filename = os.path.join(directory, "contacts.hdf5")
-            contacts = Contacts(contact_filename, len(samples))
-                
-            if os.path.isfile(contact_filename):
-                print "Reading contacts from file..." # That's it; the file will be opened by the object
-            else:
-                if os.path.isfile(trajectory_filename):
-                    print "Using trajectory file for contacts..."
-                
-                    with open(trajectory_filename, "r") as pdbfile:
-                        contacts.write_records_from_pdb(pdbfile)
-                        
-                else:
-                    print "Using sample files for contacts..."
-                    closest_temp = get_closest_temp()
-                                    
-                    for i, pdb_filename in enumerate(glob.iglob(os.path.join(directory, "pdb", "sample*_%.1fK_*.pdb" % closest_temp))):
-                        with open(pdb_filename, "r") as pdbfile:
-                            contacts.write_records_from_pdb(pdbfile, i)
-        else:
-            contacts = None
 
-        return cls(samples, cluster_sets, contacts)
+        # Average contacts
+        
+        contacts = None
+        cached_contacts = None
+
+        if hasattr(args, "contact_cutoff"):
+            cutoff = args.contact_cutoff
+
+            # Find cached values for this cutoff
+            cached_contact_filename = os.path.join(directory, "contacts_%g.csv" % cutoff)
+
+            if os.path.isfile(cached_contact_filename):
+                cached_contacts = Contacts.cached_contacts_from_file(cached_contact_filename)
+
+            else:
+                # Otherwise load the ginormous full contacts file and calculate this
+                contact_filename = os.path.join(directory, "contacts.hdf5")
+                contacts = Contacts(contact_filename, len(samples))
+                    
+                if os.path.isfile(contact_filename):
+                    print "Reading contacts from file..." # That's it; the file will be opened by the object
+                else:
+                    if os.path.isfile(trajectory_filename):
+                        print "Using trajectory file for contacts..."
+                    
+                        with open(trajectory_filename, "r") as pdbfile:
+                            contacts.write_records_from_pdb(pdbfile)
+                            
+                    else:
+                        print "Using sample files for contacts..."
+                        closest_temp = get_closest_temp()
+                                        
+                        for i, pdb_filename in enumerate(glob.iglob(os.path.join(directory, "pdb", "sample*_%.1fK_*.pdb" % closest_temp))):
+                            with open(pdb_filename, "r") as pdbfile:
+                                contacts.write_records_from_pdb(pdbfile, i)
+
+                # cache this cutoff in a file
+
+                cached_contacts = contacts.average_contacts(cutoff)
+                Contacts.write_cached_contacts_to_file(cached_contact_filename, cached_contacts)
+            
+        return cls(samples, cluster_sets, contacts, cached_contacts)
     
 
 
@@ -295,7 +342,7 @@ class PolyalanineSimulationSequence(object):
                 sys.exit("'%s' does not look like a polyalanine simulation." % dirname)
             n = int(name_match.group(1))
             
-            sims.append((n, Simulation.from_dir(d, args, calculate_contacts=False)))
+            sims.append((n, Simulation.from_dir(d, args)))
             
         return cls(sorted(sims))
         
