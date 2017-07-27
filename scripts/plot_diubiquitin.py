@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import re
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from plot_objects import DiubiquitinSimulationGroup
@@ -9,7 +10,11 @@ from plot_objects import DiubiquitinSimulationGroup
 class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def _ordered_sims(self, ordering):
         if ordering == "name":
-            return sorted(self.sims, key=lambda s: s[0])
+            def ubq_sort(s):
+                p = re.match("(.+)-(\d+)", s[0]).groups()
+                return int(p[1])
+                
+            return sorted(self.sims, key=ubq_sort)
         else:
             return self.sims
     
@@ -144,12 +149,12 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         R0 = args.reference_length
         
         if not "fret_efficiency" in self.extra_properties:
-			# It's hacktastic
-			for (name, sim) in self.sims:
-				for s in sim.samples:
-					s.fret_efficiency = 1.0 / (1.0 + ((s.length + args.pad_length) / R0)**6)
-					
-			self.extra_properties.add("fret_efficiency")
+            # It's hacktastic
+            for (name, sim) in self.sims:
+                for s in sim.samples:
+                    s.fret_efficiency = 1.0 / (1.0 + ((s.length + args.pad_length) / R0)**6)
+                    
+            self.extra_properties.add("fret_efficiency")
 
     def plot_hist_fret_efficiency(self, args):
         self._add_fret_efficiency(args)
@@ -169,19 +174,24 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def plot_average_contacts(self, args):
         plt.figure()
         
-        contact_averages_per_sim = [sim.cached_contacts for (name, sim) in self.sims]
-        #contact_averages_per_sim = [sim.contacts.average_contacts(args.contact_cutoff) for (name, sim) in self.sims]
+        contact_averages_per_sim = [sim.cached_contacts for (name, sim) in self._ordered_sims(args.order_by)]
                         
         rows = len(contact_averages_per_sim)
         cols = len(contact_averages_per_sim[0])
 
-        for i, (name, sim) in enumerate(self._ordered_sims(args.order_by), 1):            
-            contact_averages = contact_averages_per_sim[i - 1]
+        lastplot = None
+
+        for i, (name, sim) in enumerate(self._ordered_sims(args.order_by), 1):
+            contact_averages = sim.cached_contacts
             
             for j, (chain, averages) in enumerate(contact_averages, 1):
                 residues = range(len(averages))
+                
+                if lastplot is not None:
+                    lastplot = plt.subplot(rows,cols,(i - 1) * cols + j, sharex=lastplot, sharey=lastplot)
+                else:
+                    lastplot = plt.subplot(rows,cols,(i - 1) * cols + j)
                             
-                plt.subplot(rows,cols,(i - 1) * cols + j)
                 plt.bar(residues, averages)
                 plt.title(u"%s chain %s (cutoff: %g Å)" % (name, chain, args.contact_cutoff))
                 plt.xlabel("Residue no.")
