@@ -1,0 +1,23 @@
+gpus 1
+streams 1
+threads 1
+mcsteps 10000000
+resteps 2000
+replicas 20
+samplefrequency 1000
+sampleafter 1000000
+boundary 256
+temperaturemax 420
+temperaturemin 240
+prefix tetraubiquitin_lys_48
+
+files
+
+t(0,0,0) r(0,0,0,0) data/tetraubiquitin/tetraubiquitin_lys_48_sidechain.pdb tetraubiquitin
+
+segments
+
+tetraubiquitin 73 74 75 76 77 125
+tetraubiquitin 150 151 152 153 154 202
+tetraubiquitin 227 228 229 230 231 279
+tetraubiquitin 304 305 306 307
