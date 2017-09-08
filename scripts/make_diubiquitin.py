@@ -195,7 +195,7 @@ ATOM     99  CA  GLY    75     -13.233  -6.905  -7.755  1.00  0.00      B
 ATOM    100  CA  GLY    76     -15.901  -8.793  -5.845  1.00  0.00      B"""
 
 
-def attach(ubiquitin, binding_resid, fake_sidechain=False):
+def attach(ubiquitin, binding_resid, fake_sidechain=False, chain_length=2):
     res = ubiquitin.residues[binding_resid - 1]
     site = res.pos
 
@@ -214,6 +214,13 @@ def attach(ubiquitin, binding_resid, fake_sidechain=False):
 
     sin_theta = np.linalg.norm(A) / (np.linalg.norm(v_s) * np.linalg.norm(v_t))
     theta = np.arcsin(sin_theta)
+
+    # if the polyubiquitin is long, decrease the angle to prevent the molecules from overlapping
+
+    if chain_length > 2:
+        theta = min(theta, 2 * math.pi / (chain_length + 1))
+    
+    #print "rotation angle", (180*theta/math.pi), "deg"
 
     # apply rotation to end of tail (relative to centre; i.e. v_s)
 
@@ -244,13 +251,21 @@ def attach(ubiquitin, binding_resid, fake_sidechain=False):
 
     # create translated and rotated ubiquitin
 
+    # TODO we should really keep the original diubiquitin and apply cumulative transformations
+    # But we probably don't have to care right now
+
     second_ubiquitin = Chain.copy(ubiquitin)
     second_ubiquitin.rotate(theta, axis, ubiquitin.centre)
     second_ubiquitin.translate(trans)
 
-    # add the alanine, unless the ubiquitin we copied already had one
+    # add the alanine
 
-    if fake_sidechain and len(second_ubiquitin.residues) < 77:
+    if len(second_ubiquitin.residues) == 77:
+        # remove the fake sidechain so that we can add it
+        # this is more accurate than keeping the rotated one
+        del second_ubiquitin.residues[-1]
+
+    if fake_sidechain:
         alanine = Residue("ALA", site + 0.5 * tail_offset)
         second_ubiquitin.residues.append(alanine)
     
@@ -262,7 +277,7 @@ def make_diubiquitin(binding_resid, n, fake_sidechain=False):
     ubiquitins.append(Chain.from_pdb(UBIQUITIN_PDB.split('\n')))
 
     for i in range(n - 1):
-        ubiquitins.append(attach(ubiquitins[-1], binding_resid, fake_sidechain))
+        ubiquitins.append(attach(ubiquitins[-1], binding_resid, fake_sidechain, n))
 
     # output PDB
 
@@ -375,14 +390,12 @@ def test_make_tetraubiquitin_with_fake_sidechain():
             bond_length = np.linalg.norm(one.residues[76 - 1].pos - two.residues[resid - 1].pos)
             tail_ala_length = np.linalg.norm(one.residues[76 - 1].pos - one.residues[77 - 1].pos)
             ala_site_length = np.linalg.norm(one.residues[77 - 1].pos - two.residues[resid - 1].pos)
-
-            print ala_site_length
             
             assert abs(bond_length - 3.8 * 2) < 0.00001
             assert abs(tail_ala_length - 3.8) < 0.00001
             assert abs(ala_site_length - 3.8) < 0.00001
 
-    print configs[0]
+    #print configs[0]
 
 
 if __name__ == "__main__":
@@ -403,7 +416,7 @@ if __name__ == "__main__":
     resids = [int(r) for r in args.residues.split(",")]
 
     for resid in resids:
-        diubiquitin, output_filename, output_config, output_config_filename = make_diubiquitin(resid, 2, args.fake_sidechain)
+        diubiquitin, output_filename, output_config, output_config_filename = make_diubiquitin(resid, args.chain_length, args.fake_sidechain)
         with open(output_filename, 'w') as outputfile:
             outputfile.writelines(diubiquitin.to_pdb())
             
