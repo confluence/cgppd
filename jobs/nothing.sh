@@ -1,5 +1,5 @@
 #PBS -q GPUQ
-#PBS -l nodes=srvslsgpu003:ppn=1:seriesGPUk
+#PBS -l nodes=1:ppn=1
 #PBS -N interactive
 #PBS -V
 
