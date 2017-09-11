@@ -454,8 +454,8 @@ int Molecule::get_MC_mutation_type(gsl_rng * rng)
     if (is_flexible) {
         if (!only_molecule) {
             return (int) gsl_ran_discrete(rng, MC_discrete_table);
-        } else { // this is the only molecule; no translations or rotations
-            return (int) gsl_ran_discrete(rng, MC_discrete_table) + 2; // shift by two integers to get values of flex and local mutations
+        } else { // this is the only molecule; no translations
+            return (int) gsl_ran_discrete(rng, MC_discrete_table) + 1; // shift by one integers to get values of rotations, flex and local mutations
         }
     } else {
         return (int) gsl_ran_bernoulli(rng, translate_rotate_bernoulli_bias);
