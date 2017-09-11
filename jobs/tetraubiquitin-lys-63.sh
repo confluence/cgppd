@@ -7,4 +7,4 @@ cd /home/apinska/repos/cgppd
 
 source scripts/hex_setup.sh
 
-./cgppd -f config/tetraubiquitin_lys_63 -t 4 -s 4 --gpuoffset 1
+./cgppd -f config/tetraubiquitin_lys_63 -t 4 -s 4
