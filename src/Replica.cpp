@@ -318,11 +318,12 @@ void Replica::initRNGs()
             molecules[m].MC_discrete_table = MC_discrete_table;
         }
     } else { // only one molecule; no rotations or translations
-        MC_move_weights = new double[2];
-        MC_move_weights[0] = WEIGHT_MC_FLEX;
-        MC_move_weights[1] = WEIGHT_MC_LOCAL;
+        MC_move_weights = new double[3];
+        MC_move_weights[0] = WEIGHT_MC_ROTATE;
+        MC_move_weights[1] = WEIGHT_MC_FLEX;
+        MC_move_weights[2] = WEIGHT_MC_LOCAL;
         
-        MC_discrete_table = gsl_ran_discrete_preproc(2, MC_move_weights);
+        MC_discrete_table = gsl_ran_discrete_preproc(3, MC_move_weights);
         
         molecules[0].only_molecule = true;
         molecules[0].MC_discrete_table = MC_discrete_table;
