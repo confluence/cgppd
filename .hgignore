@@ -13,3 +13,4 @@ inc/.*
 lib/.*
 tests/remctest_CPU
 tests/remctest_GPU
+figures
