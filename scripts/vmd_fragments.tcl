@@ -40,7 +40,7 @@ proc restore_reps {m} {
     # molecule bodies
 	mol addrep $m
 	mol modselect $r $m all
-	mol modstyle $r $m VDW 0.5 50.0
+	mol modstyle $r $m VDW 0.5 100.0
 	mol modcolor $r $m Chain
 	mol modmaterial $r $m Glass1
     
@@ -49,7 +49,7 @@ proc restore_reps {m} {
     # hydrophobic patch around Ile44
 	mol addrep $m
 	mol modselect $r $m resid 8 or resid 44 or resid 68 or resid 70
-	mol modstyle $r $m VDW 1.0 50.0
+	mol modstyle $r $m VDW 1.0 100.0
 	mol modcolor $r $m ColorID 0
 	mol modmaterial $r $m Opaque
 
@@ -60,7 +60,7 @@ proc restore_reps {m} {
     # hydrophobic patch around Ile44
 	mol addrep $m
 	mol modselect $r $m resid 44
-	mol modstyle $r $m VDW 1.1 50.0
+	mol modstyle $r $m VDW 1.1 100.0
 	mol modcolor $r $m ColorID 0
 	mol modmaterial $r $m Diffuse
     
@@ -69,7 +69,7 @@ proc restore_reps {m} {
     # hydrophobic patch around Ile36
 	mol addrep $m
 	mol modselect $r $m resid 36 or resid 71 or resid 73
-	mol modstyle $r $m VDW 1.0 50.0
+	mol modstyle $r $m VDW 1.0 100.0
 	mol modcolor $r $m ColorID 7
 	mol modmaterial $r $m Opaque
 
@@ -80,7 +80,7 @@ proc restore_reps {m} {
     # hydrophobic patch around Ile36
 	mol addrep $m
 	mol modselect $r $m resid 36
-	mol modstyle $r $m VDW 1.1 50.0
+	mol modstyle $r $m VDW 1.1 100.0
 	mol modcolor $r $m ColorID 7
 	mol modmaterial $r $m Diffuse
 }
