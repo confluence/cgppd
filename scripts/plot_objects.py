@@ -348,7 +348,7 @@ class PolyalanineSimulationSequence(object):
         
         
 class DiubiquitinSimulationGroup(object):
-    NAME = re.compile("diubiquitin_(lys|met)_(\d+)_.*")
+    NAME = re.compile("(di|tetra|octa)ubiquitin_(lys|met)_(\d+)_.*")
     
     def __init__(self, sims):
         self.sims = sims
@@ -363,8 +363,8 @@ class DiubiquitinSimulationGroup(object):
             name_match = cls.NAME.match(dirname)
             if name_match is None:
                 sys.exit("'%s' does not look like a diubiquitin simulation." % dirname)
-            res, index = name_match.groups()
+            num, res, index = name_match.groups()
             
-            sims.append(("%s-%s" % (res.upper(), index), Simulation.from_dir(d, args)))
+            sims.append(("%s%s-linked %subq" % (res.title(), index, num), Simulation.from_dir(d, args)))
             
         return cls(sims)
