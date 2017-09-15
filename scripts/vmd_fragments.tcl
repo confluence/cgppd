@@ -1,7 +1,3 @@
-# TODO TODO TODO redo all these trajectories with temperature 303.8K because I'm an idiot.
-# It probably won't make much difference, but we should be rigorous.
-# Open them, align them, and write them back.
-
 # diubiquitin
 
 mol new output/best_diubiquitin/diubiquitin_lys_48_6283/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
@@ -30,6 +26,12 @@ mol rename top Lys6-diubq
 
 # tetraubiquitin
 
+mol new output/tetraubiquitin/tetraubiquitin_lys_48_98513/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
+mol rename top Lys48-tetraubq
+
+mol new output/tetraubiquitin/tetraubiquitin_lys_63_104466/trajectory.pdb type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
+mol rename top Lys63-tetraubq
+
 # octaubiquitin
 
 # procedure for restoring default representations after clustering deletes them
@@ -40,7 +42,7 @@ proc restore_reps {m} {
     # molecule bodies
 	mol addrep $m
 	mol modselect $r $m all
-	mol modstyle $r $m VDW 0.5 100.0
+	mol modstyle $r $m VDW 1.0 100.0
 	mol modcolor $r $m Chain
 	mol modmaterial $r $m Glass1
     
@@ -51,7 +53,7 @@ proc restore_reps {m} {
 	mol modselect $r $m resid 8 or resid 44 or resid 68 or resid 70
 	mol modstyle $r $m VDW 1.0 100.0
 	mol modcolor $r $m ColorID 0
-	mol modmaterial $r $m Opaque
+	mol modmaterial $r $m Diffuse
 
     mol showrep $m $r 0
     
@@ -71,7 +73,7 @@ proc restore_reps {m} {
 	mol modselect $r $m resid 36 or resid 71 or resid 73
 	mol modstyle $r $m VDW 1.0 100.0
 	mol modcolor $r $m ColorID 7
-	mol modmaterial $r $m Opaque
+	mol modmaterial $r $m Diffuse
 
     mol showrep $m $r 0
     
@@ -83,5 +85,16 @@ proc restore_reps {m} {
 	mol modstyle $r $m VDW 1.1 100.0
 	mol modcolor $r $m ColorID 7
 	mol modmaterial $r $m Diffuse
+    
+    set r [expr $r + 1]
+
+    # Leu8
+	mol addrep $m
+	mol modselect $r $m resid 8
+	mol modstyle $r $m VDW 1.1 100.0
+	mol modcolor $r $m ColorID 10
+	mol modmaterial $r $m Diffuse
+
+    mol showrep $m $r 0
 }
 
