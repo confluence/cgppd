@@ -1,5 +1,5 @@
 #PBS -q GPUQ
-#PBS -l nodes=srvslsgpu004:ppn=4:seriesGPUk
+#PBS -l nodes=srvslsgpu002:ppn=4
 #PBS -N config/tetraubiquitin_met_1
 #PBS -V
 
