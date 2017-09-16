@@ -3,8 +3,8 @@
 #PBS -N 2ubq_lys_6_ll
 #PBS -V
 
-cd /home/apinska/repos/cgppd
+cd /home/apinska/repos/cgppd --gpu-offset 1
 
 source scripts/hex_setup.sh
 
-./cgppd -f config/diubiquitin_lys_6_longtail_loop -t 4 -s 4
+./cgppd -f config/diubiquitin_lys_6_longtail_loop -t 4 -s 4 --gpu-offset 1
