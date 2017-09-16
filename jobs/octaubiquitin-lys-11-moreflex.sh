@@ -7,4 +7,4 @@ cd /home/apinska/repos/cgppd
 
 source scripts/hex_setup.sh
 
-./cgppd -f config/octaubiquitin_lys_11_longtail_loop -t 4 -s 4 --gpuoffset 2 --gpus 2
+./cgppd -f config/octaubiquitin_lys_11_longtail_loop -t 4 -s 4
