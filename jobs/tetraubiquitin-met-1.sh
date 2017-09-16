@@ -1,5 +1,5 @@
 #PBS -q GPUQ
-#PBS -l nodes=srvslsgpu002:ppn=4
+#PBS -l nodes=srvslsgpu002:ppn=4:seriesGPU
 #PBS -N 4ubq_met_1
 #PBS -V
 
