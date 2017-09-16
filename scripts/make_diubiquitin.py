@@ -327,7 +327,7 @@ sampleafter 1000000
 boundary  %s
 temperaturemax 420
 temperaturemin 240
-prefix %s_%s
+prefix %s
 
 files
 
@@ -336,7 +336,7 @@ t(0,0,0) r(0,0,0,0) data/%s/%s %s
 segments
 
 %s
-""" % (boundary, ubqname, sitename, ubqname, output_filename, ubqname, segments_str)
+""" % (boundary, output_config_filename, ubqname, output_filename, ubqname, segments_str)
 
 
     return diubiquitin, output_filename, output_config, output_config_filename

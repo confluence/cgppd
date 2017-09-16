@@ -9,7 +9,7 @@ sampleafter 1000000
 boundary  202.5
 temperaturemax 420
 temperaturemin 240
-prefix tetraubiquitin_lys_6
+prefix tetraubiquitin_lys_6_longtail_loop
 
 files
 
