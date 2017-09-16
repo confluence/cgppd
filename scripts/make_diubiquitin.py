@@ -195,7 +195,7 @@ ATOM     99  CA  GLY    75     -13.233  -6.905  -7.755  1.00  0.00      B
 ATOM    100  CA  GLY    76     -15.901  -8.793  -5.845  1.00  0.00      B"""
 
 
-def attach(ubiquitin, binding_resid, fake_sidechain=False, chain_length=2):
+def attach(ubiquitin, binding_resid, chain_length, tail, fake_sidechain, loop):
     res = ubiquitin.residues[binding_resid - 1]
     site = res.pos
 
@@ -271,19 +271,20 @@ def attach(ubiquitin, binding_resid, fake_sidechain=False, chain_length=2):
     
     return second_ubiquitin
 
-def make_diubiquitin(binding_resid, n, fake_sidechain=False):
+def make_diubiquitin(binding_resid, n, tail, fake_sidechain, loop):
     ubiquitins = []
 
     ubiquitins.append(Chain.from_pdb(UBIQUITIN_PDB.split('\n')))
 
     for i in range(n - 1):
-        ubiquitins.append(attach(ubiquitins[-1], binding_resid, fake_sidechain, n))
+        ubiquitins.append(attach(ubiquitins[-1], binding_resid, n, tail, fake_sidechain, loop))
 
     # output PDB
 
     diubiquitin = Molecule(list(reversed(ubiquitins)))
 
     prefix = {2: 'di', 4: 'tetra', 8: 'octa'}.get(n, '%d-poly' % n)
+    boundary = {2: '160.7', 4: '202.5', 8: '255.1'}.get(n, '%d-poly' % n)
     ubqname = "%subiquitin" % prefix
     sitename = "%s_%d" % (ubiquitins[0].residues[binding_resid - 1].amino_acid.lower(), binding_resid)
 
@@ -298,16 +299,35 @@ def make_diubiquitin(binding_resid, n, fake_sidechain=False):
         output_config_filename = "%s_%s_no_sidechain" % (ubqname, sitename)
         seg_diff = 76
 
+    if tail < 73:
+        output_config_filename += "_longtail"
+
     segments = []
     for i in range(n-1):
-        segments.append([r + i * seg_diff for r in (range(73, seg_diff + 1) + [binding_resid + seg_diff])])
-    segments.append([r + (n - 1) * seg_diff for r in range(73, 77)])
+        segments.append([r + i * seg_diff for r in (range(tail, seg_diff + 1) + [binding_resid + seg_diff])])
+    segments.append([r + (n - 1) * seg_diff for r in range(tail, 77)])
+
+    if loop:
+        output_config_filename += "_loop"
+        for i in range(n):
+            segments.append([r + i * seg_diff for r in range(6, 12 + 1)])
 
     segments_str = "\n".join(["%s %s" % (ubqname, " ".join([str(r) for r in segment])) for segment in segments])
 
     # output config
 
-    output_config = """prefix %s_%s
+    output_config = """gpus 1
+streams 1
+threads 1
+mcsteps 10000000
+resteps 2000
+replicas 20
+samplefrequency 1000
+sampleafter 1000000
+boundary  %s
+temperaturemax 420
+temperaturemin 240
+prefix %s_%s
 
 files
 
@@ -316,7 +336,7 @@ t(0,0,0) r(0,0,0,0) data/%s/%s %s
 segments
 
 %s
-""" % (ubqname, sitename, ubqname, output_filename, ubqname, segments_str)
+""" % (boundary, ubqname, sitename, ubqname, output_filename, ubqname, segments_str)
 
 
     return diubiquitin, output_filename, output_config, output_config_filename
@@ -324,7 +344,7 @@ segments
 
 def test_make_diubiquitin():
     resids = (48, 63, 1)
-    results = [make_diubiquitin(resid, 2, False) for resid in resids]
+    results = [make_diubiquitin(resid, 2, 4, False, False) for resid in resids]
     molecules, filenames, configs, config_filenames = zip(*results)
     
     assert filenames == ("diubiquitin_lys_48.pdb", "diubiquitin_lys_63.pdb", "diubiquitin_met_1.pdb")
@@ -345,7 +365,7 @@ def test_make_diubiquitin():
 
 def test_make_diubiquitin_with_fake_sidechain():
     resids = (48, 63, 1)
-    results = [make_diubiquitin(resid, 2, True) for resid in resids]
+    results = [make_diubiquitin(resid, 2, 4, True, False) for resid in resids]
     molecules, filenames, configs, config_filenames = zip(*results)
     
     assert filenames == ("diubiquitin_lys_48_sidechain.pdb", "diubiquitin_lys_63_sidechain.pdb", "diubiquitin_met_1_sidechain.pdb")
@@ -371,7 +391,7 @@ def test_make_diubiquitin_with_fake_sidechain():
 
 def test_make_tetraubiquitin_with_fake_sidechain():
     resids = (48, 6, 63, 1)
-    results = [make_diubiquitin(resid, 4, True) for resid in resids]
+    results = [make_diubiquitin(resid, 4, 4, True, False) for resid in resids]
     molecules, filenames, configs, config_filenames = zip(*results)
     
     assert filenames == ("tetraubiquitin_lys_48_sidechain.pdb", "tetraubiquitin_lys_6_sidechain.pdb", "tetraubiquitin_lys_63_sidechain.pdb", "tetraubiquitin_met_1_sidechain.pdb")
@@ -401,6 +421,8 @@ def test_make_tetraubiquitin_with_fake_sidechain():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate diubiquitin PDBs")
     parser.add_argument("-f", "--fake-sidechain", help="Create a fake side-chain by inserting an alanine between the bonded residues", action="store_true")
+    parser.add_argument("-l", "--loop", help="Make B1/B2 loop flexible", action="store_true")
+    parser.add_argument("-s", "--tail-start", help="Number of tail residues to make flexible, excluding fake side-chain if any", type=int, default=73)
     parser.add_argument("-r", "--residues", help="Use each of these residue linkages (comma-separated string)", default="48,63,1,11,6,27,29,33")
     parser.add_argument("-n", "--chain-length", help="The length of the polyubiquitin chain", type=int, default=2)
     parser.add_argument("-t", "--test", help="Ignore other input and run the tests", action="store_true")
@@ -416,7 +438,7 @@ if __name__ == "__main__":
     resids = [int(r) for r in args.residues.split(",")]
 
     for resid in resids:
-        diubiquitin, output_filename, output_config, output_config_filename = make_diubiquitin(resid, args.chain_length, args.fake_sidechain)
+        diubiquitin, output_filename, output_config, output_config_filename = make_diubiquitin(resid, args.chain_length, args.tail_start, args.fake_sidechain, args.loop)
         with open(output_filename, 'w') as outputfile:
             outputfile.writelines(diubiquitin.to_pdb())
             

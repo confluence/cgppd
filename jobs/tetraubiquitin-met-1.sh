@@ -1,6 +1,6 @@
 #PBS -q GPUQ
 #PBS -l nodes=srvslsgpu002:ppn=4
-#PBS -N config/tetraubiquitin_met_1
+#PBS -N 4ubq_met_1
 #PBS -V
 
 cd /home/apinska/repos/cgppd

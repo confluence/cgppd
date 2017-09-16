@@ -1,0 +1,23 @@
+gpus 1
+streams 1
+threads 1
+mcsteps 10000000
+resteps 2000
+replicas 20
+samplefrequency 1000
+sampleafter 1000000
+boundary  160.7
+temperaturemax 420
+temperaturemin 240
+prefix diubiquitin_lys_6
+
+files
+
+t(0,0,0) r(0,0,0,0) data/diubiquitin/diubiquitin_lys_6_sidechain.pdb diubiquitin
+
+segments
+
+diubiquitin 71 72 73 74 75 76 77 83
+diubiquitin 148 149 150 151 152 153
+diubiquitin 6 7 8 9 10 11 12
+diubiquitin 83 84 85 86 87 88 89

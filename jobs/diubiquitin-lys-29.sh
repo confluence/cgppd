@@ -1,6 +1,6 @@
 #PBS -q GPUQ
-#PBS -l nodes=srvslsgpu003:ppn=4:seriesGPUk
-#PBS -N diubiquitin_lys_29
+#PBS -l nodes=srvslsgpu002:ppn=4
+#PBS -N 2ubq_lys_29
 #PBS -V
 
 cd /home/apinska/repos/cgppd
