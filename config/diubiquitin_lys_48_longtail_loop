@@ -9,7 +9,7 @@ sampleafter 1000000
 boundary  160.7
 temperaturemax 420
 temperaturemin 240
-prefix diubiquitin_lys_48
+prefix diubiquitin_lys_48_longtail_loop
 
 files
 

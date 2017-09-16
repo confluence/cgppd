@@ -9,7 +9,7 @@ sampleafter 1000000
 boundary  160.7
 temperaturemax 420
 temperaturemin 240
-prefix diubiquitin_met_1
+prefix diubiquitin_met_1_longtail_loop
 
 files
 
