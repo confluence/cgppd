@@ -2,21 +2,29 @@
 
 # diubiquitin
 
-set ubq(diubqLys48) "best_diubiquitin/diubiquitin_lys_48_6283"
-set ubq(diubqLys63) "best_diubiquitin/diubiquitin_lys_63_11433"
 set ubq(diubqMet1) "best_diubiquitin/diubiquitin_met_1_8154"
+set ubq(diubqLys6) "best_diubiquitin/diubiquitin_lys_6_97254"
 set ubq(diubqLys11) "best_diubiquitin/diubiquitin_lys_11_97240"
 set ubq(diubqLys27) "best_diubiquitin/diubiquitin_lys_27_1256"
 set ubq(diubqLys29) "best_diubiquitin/diubiquitin_lys_29_27702"
 set ubq(diubqLys33) "best_diubiquitin/diubiquitin_lys_33_27721"
-set ubq(diubqLys6) "best_diubiquitin/diubiquitin_lys_6_97254"
+set ubq(diubqLys48) "best_diubiquitin/diubiquitin_lys_48_6283"
+set ubq(diubqLys63) "best_diubiquitin/diubiquitin_lys_63_11433"
+
+# diubiquitin with flexible loop and longer tail
 
 # tetraubiquitin
+
+set ubq(tetraubqMet1) "tetraubiquitin/tetraubiquitin_met_1_14451"
+set ubq(tetraubqLys6) "tetraubiquitin/tetraubiquitin_lys_6_93879"
 set ubq(tetraubqLys48) "tetraubiquitin/tetraubiquitin_lys_48_98513"
 set ubq(tetraubqLys63) "tetraubiquitin/tetraubiquitin_lys_63_104466"
-set ubq(tetraubqMet1) "tetraubiquitin/tetraubiquitin_met_1_14451"
+
+# tetraubiquitin with flexible loop and longer tail
 
 # octaubiquitin
+
+# octaubiquitin with flexible loop and longer tail
 
 # procedure for restoring default representations after clustering deletes them
 
