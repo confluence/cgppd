@@ -2,25 +2,39 @@
 
 # diubiquitin
 
-set ubq(diubqMet1) "best_diubiquitin/diubiquitin_met_1_8154"
-set ubq(diubqLys6) "best_diubiquitin/diubiquitin_lys_6_97254"
-set ubq(diubqLys11) "best_diubiquitin/diubiquitin_lys_11_97240"
-set ubq(diubqLys27) "best_diubiquitin/diubiquitin_lys_27_1256"
-set ubq(diubqLys29) "best_diubiquitin/diubiquitin_lys_29_27702"
-set ubq(diubqLys33) "best_diubiquitin/diubiquitin_lys_33_27721"
-set ubq(diubqLys48) "best_diubiquitin/diubiquitin_lys_48_6283"
-set ubq(diubqLys63) "best_diubiquitin/diubiquitin_lys_63_11433"
+set ubq(diubq1) "best_diubiquitin/diubiquitin_met_1_8154"
+set ubq(diubq6) "best_diubiquitin/diubiquitin_lys_6_97254"
+set ubq(diubq11) "best_diubiquitin/diubiquitin_lys_11_97240"
+set ubq(diubq27) "best_diubiquitin/diubiquitin_lys_27_1256"
+set ubq(diubq29) "best_diubiquitin/diubiquitin_lys_29_27702"
+set ubq(diubq33) "best_diubiquitin/diubiquitin_lys_33_27721"
+set ubq(diubq48) "best_diubiquitin/diubiquitin_lys_48_6283"
+set ubq(diubq63) "best_diubiquitin/diubiquitin_lys_63_11433"
 
 # diubiquitin with flexible loop and longer tail
 
+#set ubq(diubq1ll) "diubiquitin_ll/"
+#set ubq(diubq6ll) "diubiquitin_ll/"
+set ubq(diubq11ll) "diubiquitin_ll/diubiquitin_lys_11_longtail_loop_21139"
+set ubq(diubq27ll) "diubiquitin_ll/diubiquitin_lys_27_longtail_loop_13597"
+#set ubq(diubq29ll) "diubiquitin_ll/"
+#set ubq(diubq33ll) "diubiquitin_ll/"
+#set ubq(diubq48ll) "diubiquitin_ll/"
+#set ubq(diubq63ll) "diubiquitin_ll/"
+
 # tetraubiquitin
 
-set ubq(tetraubqMet1) "tetraubiquitin/tetraubiquitin_met_1_14451"
-set ubq(tetraubqLys6) "tetraubiquitin/tetraubiquitin_lys_6_93879"
-set ubq(tetraubqLys48) "tetraubiquitin/tetraubiquitin_lys_48_98513"
-set ubq(tetraubqLys63) "tetraubiquitin/tetraubiquitin_lys_63_104466"
+set ubq(tetraubq1) "tetraubiquitin/tetraubiquitin_met_1_14451"
+set ubq(tetraubq6) "tetraubiquitin/tetraubiquitin_lys_6_93879"
+set ubq(tetraubq48) "tetraubiquitin/tetraubiquitin_lys_48_98513"
+set ubq(tetraubq63) "tetraubiquitin/tetraubiquitin_lys_63_104466"
 
 # tetraubiquitin with flexible loop and longer tail
+
+#set ubq(tetraubq1ll) "tetraubiquitin_ll/"
+#set ubq(tetraubq6ll) "tetraubiquitin_ll/"
+set ubq(tetraubq48ll) "tetraubiquitin_ll/tetraubiquitin_lys_48_longtail_loop_23137"
+#set ubq(tetraubq63ll) "tetraubiquitin_ll/"
 
 # octaubiquitin
 

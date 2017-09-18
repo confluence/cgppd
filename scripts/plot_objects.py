@@ -285,7 +285,7 @@ class Simulation(object):
         contacts = None
         cached_contacts = None
 
-        if hasattr(args, "contact_cutoff"):
+        if "plot_average_contacts" in args.plots:
             cutoff = args.contact_cutoff
 
             # Find cached values for this cutoff
@@ -348,7 +348,7 @@ class PolyalanineSimulationSequence(object):
         
         
 class DiubiquitinSimulationGroup(object):
-    NAME = re.compile("(di|tetra|octa)ubiquitin_(lys|met)_(\d+)_.*")
+    NAME = re.compile("(di|tetra|octa)ubiquitin_(lys|met)_(\d+)(_longtail)?(_loop)?_.*")
     
     def __init__(self, sims):
         self.sims = sims
@@ -363,8 +363,12 @@ class DiubiquitinSimulationGroup(object):
             name_match = cls.NAME.match(dirname)
             if name_match is None:
                 sys.exit("'%s' does not look like a diubiquitin simulation." % dirname)
-            num, res, index = name_match.groups()
+            num, res, index, longtail, loop = name_match.groups()
+
+            extra = ""
+            if longtail and loop:
+                extra = " (ll)"
             
-            sims.append(("%s%s-linked %subq" % (res.title(), index, num), Simulation.from_dir(d, args)))
+            sims.append(("%s%s %subq%s" % (res.title(), index, num, extra), Simulation.from_dir(d, args)))
             
         return cls(sims)

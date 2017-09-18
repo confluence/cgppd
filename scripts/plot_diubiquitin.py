@@ -11,7 +11,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
     def _ordered_sims(self, ordering):
         if ordering == "name":
             def ubq_sort(s):
-                p = re.match("(.+)-(\d+)", s[0]).groups()
+                p = re.match("(Lys|Met).*?(\d+)", s[0]).groups()
                 return int(p[1])
                 
             return sorted(self.sims, key=ubq_sort)
