@@ -4,6 +4,7 @@
 import argparse
 import re
 import matplotlib.pyplot as plt
+import seaborn as sns
 from collections import defaultdict
 from plot_objects import DiubiquitinSimulationGroup
 
@@ -50,6 +51,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         self._plot_vs_time("fret_efficiency", args)
         
     def _plot_aggregate_histogram(self, measurement, args, units=u"Å"):
+        unit_str = " (%s)" % units if units else ""
+        
         plt.figure()
         
         aggregate_values = defaultdict(list)
@@ -69,10 +72,10 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 lastplot = plt.subplot(rows,1,i)
             plt.hist(values, bins=100)
             plt.title(name)
-            unit_str = " (%s)" % units if units else ""
-            plt.xlabel(u"%s%s" % (measurement, unit_str))
             plt.ylabel("No. of samples")
             plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+        
+        plt.xlabel(u"%s%s" % (measurement, unit_str))
 
         if args.save_svg:
             fig = plt.gcf()
@@ -85,6 +88,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         self._plot_aggregate_histogram("radius", args, units=None)
 
     def _plot_histogram(self, measurement, args, units=u"Å"):
+        unit_str = " (%s)" % units if units else ""
+        
         plt.figure()
         
         rows = len(self.sims)
@@ -99,10 +104,10 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 lastplot = plt.subplot(rows,1,i)
             plt.hist(values, bins=100)
             plt.title(name)
-            unit_str = " (%s)" % units if units else ""
-            plt.xlabel(u"%s%s" % (measurement, unit_str))
             plt.ylabel("No. of samples")
             plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+            
+        plt.xlabel(u"%s%s" % (measurement, unit_str))
 
         if args.save_svg:
             fig = plt.gcf()
@@ -118,6 +123,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         self._plot_histogram("potential", args)
     
     def _plot_cluster_histogram(self, measurement, args, units=u"Å"):
+        unit_str = " (%s)" % units if units else ""
+        
         for name, sim in self.sims:
             for description, clusters in sim.cluster_sets.items():
                 plt.figure()
@@ -130,10 +137,10 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                     plt.subplot(rows, cols, i + 1)
                     plt.hist(values, bins=100)
                     plt.title("%s: %s" % (name, description))
-                    unit_str = " (%s)" % units if units else ""
-                    plt.xlabel(u"Cluster %d (%d/%d samples) %s%s" % (i, len(values), len(sim.samples), measurement, unit_str))
                     plt.ylabel("No. of samples")
                     plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+                
+                plt.xlabel(u"Cluster %d (%d/%d samples) %s%s" % (i, len(values), len(sim.samples), measurement, unit_str))
 
                 if args.save_svg:
                     fig = plt.gcf()
@@ -175,6 +182,11 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         plt.figure()
         
         contact_averages_per_sim = [sim.cached_contacts for (name, sim) in self._ordered_sims(args.order_by)]
+            
+        chain_names = {
+            "A": "Distal",
+            "B": "Proximal",
+        }
                         
         rows = len(contact_averages_per_sim)
         cols = len(contact_averages_per_sim[0])
@@ -183,6 +195,7 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
 
         for i, (name, sim) in enumerate(self._ordered_sims(args.order_by), 1):
             contact_averages = sim.cached_contacts
+            linkage, _ = name.split()
             
             for j, (chain, averages) in enumerate(contact_averages, 1):
                 residues = range(len(averages))
@@ -193,11 +206,23 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                     lastplot = plt.subplot(rows,cols,(i - 1) * cols + j)
                             
                 plt.bar(residues, averages)
-                plt.title(u"%s chain %s (cutoff: %g Å)" % (name, chain, args.contact_cutoff))
-                plt.xlabel("Residue no.")
-                plt.ylabel("Mean no. of contacts with other chains")
                 
-        plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+                if j == 1:
+                    lastplot.annotate(linkage, (0, 0), xytext=(-80, 10), textcoords='offset points', xycoords='axes fraction')
+                
+                if i == 1:
+                    plt.title(chain_names[chain])
+                
+                if i == 8:
+                    plt.xlabel("Residue")
+                else:
+                    plt.setp(lastplot.get_xticklabels(), visible=False)
+                
+                if i == 4 and j == 1:
+                    plt.ylabel(u"Mean no. of contacts with other chains (distance cutoff: %g Å)" % args.contact_cutoff)
+        
+        plt.subplots_adjust(wspace=0.1)
+        #plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
 
         if args.save_svg:
             fig = plt.gcf()

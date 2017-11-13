@@ -285,13 +285,14 @@ class Simulation(object):
         contacts = None
         cached_contacts = None
 
-        if "plot_average_contacts" in args.plots:
+        if "average_contacts" in args.plots:
             cutoff = args.contact_cutoff
 
             # Find cached values for this cutoff
             cached_contact_filename = os.path.join(directory, "contacts_%g.csv" % cutoff)
 
             if os.path.isfile(cached_contact_filename):
+                print "Reading cached contacts for cutoff %g..." % cutoff
                 cached_contacts = Contacts.cached_contacts_from_file(cached_contact_filename)
 
             else:
@@ -369,6 +370,6 @@ class DiubiquitinSimulationGroup(object):
             if longtail and loop:
                 extra = " (ll)"
             
-            sims.append(("%s%s %subq%s" % (res.title(), index, num, extra), Simulation.from_dir(d, args)))
+            sims.append(("%s%s %sUb%s" % (res.title(), index, num, extra), Simulation.from_dir(d, args)))
             
         return cls(sims)
