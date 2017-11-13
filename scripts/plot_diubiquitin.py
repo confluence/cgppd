@@ -3,6 +3,7 @@
 
 import argparse
 import re
+import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 from collections import defaultdict
@@ -198,14 +199,32 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             linkage, _ = name.split()
             
             for j, (chain, averages) in enumerate(contact_averages, 1):
+                if args.collapse_sidechain and j == 1:
+                    averages = averages[:-2] + [sum(averages[-2:])/2]
+                
+                outliers = []
+                if args.truncate_outliers < 100:
+                    for ai, a in enumerate(averages):
+                        if a > args.truncate_outliers:
+                            averages[ai] = args.truncate_outliers
+                            outliers.append((ai, a))
+                
                 residues = range(len(averages))
                 
                 if lastplot is not None:
-                    lastplot = plt.subplot(rows,cols,(i - 1) * cols + j, sharex=lastplot, sharey=lastplot)
+                    lastplot = plt.subplot(rows, cols, (i - 1) * cols + j, sharex=lastplot, sharey=lastplot)
                 else:
-                    lastplot = plt.subplot(rows,cols,(i - 1) * cols + j)
-                            
+                    lastplot = plt.subplot(rows, cols, (i - 1) * cols + j)
+                
                 plt.bar(residues, averages)
+                
+                if len(outliers) == 2:
+                    ai1, a1 = outliers[0]
+                    ai2, a2 = outliers[1]
+                    outliers = [(ai1 - 2, a1), (ai2 + 2, a2)]
+                
+                for ai, a in outliers:
+                    lastplot.annotate('%.1f' % a, (ai, args.truncate_outliers), size=7, ha='center')
                 
                 if j == 1:
                     lastplot.annotate(linkage, (0, 0), xytext=(-80, 10), textcoords='offset points', xycoords='axes fraction')
@@ -213,12 +232,12 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 if i == 1:
                     plt.title(chain_names[chain])
                 
-                if i == 8:
+                if i == rows:
                     plt.xlabel("Residue")
                 else:
                     plt.setp(lastplot.get_xticklabels(), visible=False)
                 
-                if i == 4 and j == 1:
+                if i == math.ceil(rows/2) and j == 1:
                     plt.ylabel(u"Mean no. of contacts with other chains (distance cutoff: %g Å)" % args.contact_cutoff)
         
         plt.subplots_adjust(wspace=0.1)
@@ -237,7 +256,9 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--plot", dest="plots", help="Type of plot", choices=PLOTS, action="append")
     parser.add_argument("-r", "--reference-length", help="Set R0 value", type=float, default=50.0)
     parser.add_argument("-l", "--pad-length", help="Add padding value to molecule length to simulate presence of a chromatophore pair", type=float, default=20.0)
-    parser.add_argument("-c", "--contact-cutoff", help="Cutoff for determining whether two residues are in contact", type=float, default=7.0)
+    parser.add_argument("-c", "--contact-cutoff", help="In the contact averages plot, cutoff for determining whether two residues are in contact", type=float, default=7.0)
+    parser.add_argument("-a", "--collapse-sidechain", help="In the contact averages plot, collapse the fake sidechain residue into the end residue of the distal tail by averaging their values", action="store_true", default=False)
+    parser.add_argument("-t", "--truncate-outliers", help="In the contact averages plot, truncate values to this maximum", type=float, default=100.0)
     parser.add_argument("-o", "--order-by", help="Order simulation subplots. If no ordering is specified, the order of the directory parameters will be preserved.", choices=(None, 'name'), default=None)
     parser.add_argument("-s", "--save-svg", help="Save plots as SVG", action="store_true", default=False)
 
