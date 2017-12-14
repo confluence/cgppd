@@ -2,43 +2,47 @@
 
 # diubiquitin
 
-set ubq(diubq1) "best_diubiquitin/diubiquitin_met_1_8154"
-set ubq(diubq6) "best_diubiquitin/diubiquitin_lys_6_97254"
-set ubq(diubq11) "best_diubiquitin/diubiquitin_lys_11_97240"
-set ubq(diubq27) "best_diubiquitin/diubiquitin_lys_27_1256"
-set ubq(diubq29) "best_diubiquitin/diubiquitin_lys_29_27702"
-set ubq(diubq33) "best_diubiquitin/diubiquitin_lys_33_27721"
-set ubq(diubq48) "best_diubiquitin/diubiquitin_lys_48_6283"
-set ubq(diubq63) "best_diubiquitin/diubiquitin_lys_63_11433"
+set ubq(diubq1) "polyubiquitin/diubiquitin_met_1_25542"
+set ubq(diubq6) "polyubiquitin/diubiquitin_lys_6_13226"
+set ubq(diubq11) "polyubiquitin/diubiquitin_lys_11_24746"
+set ubq(diubq27) "polyubiquitin/diubiquitin_lys_27_7868"
+set ubq(diubq29) "polyubiquitin/diubiquitin_lys_29_29440"
+set ubq(diubq33) "polyubiquitin/diubiquitin_lys_33_16163"
+set ubq(diubq48) "polyubiquitin/diubiquitin_lys_48_4168"
+set ubq(diubq63) "polyubiquitin/diubiquitin_lys_63_31307"
 
 # diubiquitin with flexible loop and longer tail
 
-#set ubq(diubq1ll) "diubiquitin_ll/"
-#set ubq(diubq6ll) "diubiquitin_ll/"
-set ubq(diubq11ll) "diubiquitin_ll/diubiquitin_lys_11_longtail_loop_21139"
-set ubq(diubq27ll) "diubiquitin_ll/diubiquitin_lys_27_longtail_loop_13597"
-#set ubq(diubq29ll) "diubiquitin_ll/"
-#set ubq(diubq33ll) "diubiquitin_ll/"
-#set ubq(diubq48ll) "diubiquitin_ll/"
-#set ubq(diubq63ll) "diubiquitin_ll/"
+set ubq(diubq1ll) "polyubiquitin_ll/diubiquitin_met_1_longtail_loop_31998"
+set ubq(diubq6ll) "polyubiquitin_ll/diubiquitin_lys_6_longtail_loop_1688"
+set ubq(diubq11ll) "polyubiquitin_ll/diubiquitin_lys_11_longtail_loop_21139"
+set ubq(diubq27ll) "polyubiquitin_ll/diubiquitin_lys_27_longtail_loop_13597"
+set ubq(diubq29ll) "polyubiquitin_ll/diubiquitin_lys_29_longtail_loop_2190"
+set ubq(diubq33ll) "polyubiquitin_ll/diubiquitin_lys_33_longtail_loop_9343"
+set ubq(diubq48ll) "polyubiquitin_ll/diubiquitin_lys_48_longtail_loop_32531"
+set ubq(diubq63ll) "polyubiquitin_ll/diubiquitin_lys_63_longtail_loop_32075"
 
 # tetraubiquitin
 
-set ubq(tetraubq1) "tetraubiquitin/tetraubiquitin_met_1_14451"
-set ubq(tetraubq6) "tetraubiquitin/tetraubiquitin_lys_6_93879"
-set ubq(tetraubq48) "tetraubiquitin/tetraubiquitin_lys_48_98513"
-set ubq(tetraubq63) "tetraubiquitin/tetraubiquitin_lys_63_104466"
+set ubq(tetraubq1) "polyubiquitin/tetraubiquitin_met_1_14451"
+set ubq(tetraubq6) "polyubiquitin/tetraubiquitin_lys_6_93879"
+set ubq(tetraubq48) "polyubiquitin/tetraubiquitin_lys_48_98513"
+set ubq(tetraubq63) "polyubiquitin/tetraubiquitin_lys_63_104466"
 
 # tetraubiquitin with flexible loop and longer tail
 
-#set ubq(tetraubq1ll) "tetraubiquitin_ll/"
-#set ubq(tetraubq6ll) "tetraubiquitin_ll/"
-set ubq(tetraubq48ll) "tetraubiquitin_ll/tetraubiquitin_lys_48_longtail_loop_23137"
-#set ubq(tetraubq63ll) "tetraubiquitin_ll/"
+set ubq(tetraubq1ll) "polyubiquitin_ll/tetraubiquitin_met_1_longtail_loop_31445"
+set ubq(tetraubq6ll) "polyubiquitin_ll/tetraubiquitin_lys_6_longtail_loop_16256"
+set ubq(tetraubq48ll) "polyubiquitin_ll/tetraubiquitin_lys_48_longtail_loop_23137"
+set ubq(tetraubq63ll) "polyubiquitin_ll/tetraubiquitin_lys_63_longtail_loop_24659"
 
 # octaubiquitin
 
+set ubq(octaubq11) "polyubiquitin/octaubiquitin_lys_11_14908"
+
 # octaubiquitin with flexible loop and longer tail
+
+set ubq(octaubq11ll) "polyubiquitin_ll/octaubiquitin_lys_11_longtail_loop_27299"
 
 # procedure for restoring default representations after clustering deletes them
 
@@ -104,6 +108,25 @@ proc restore_reps {m} {
     mol showrep $m $r 0
 }
 
+# Alignment
+
+proc align {m seltext} {
+    set ref [atomselect $m $seltext frame 0]
+    set sel [atomselect $m $seltext]
+    set all [atomselect $m all]
+    set n [molinfo $m get numframes]
+
+    for { set i 1 } { $i < $n } { incr i } {
+        $sel frame $i
+        $all frame $i
+        $all move [measure fit $sel $ref]
+    }
+    $ref delete
+    $all delete
+    $sel delete
+    return
+}
+
 # load a molecule
 
 proc load_ubq {name} {
@@ -112,4 +135,11 @@ proc load_ubq {name} {
     mol rename top $name
     mol delrep 0 top
     restore_reps top
+    if {[string match "diubq*" $name]} {
+        align top "chain A"
+    } elseif {[string match "tetraubq*" $name]} {
+        align top "chain B or chain C"
+    } elseif {[string match "octaubq*" $name]} {
+        align top "chain C or chain D or chain E or chain F"
+    }
 }
