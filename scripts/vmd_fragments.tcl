@@ -53,8 +53,10 @@ proc restore_reps {m} {
 	mol addrep $m
 	mol modselect $r $m all
 	mol modstyle $r $m VDW 1.0 100.0
+# 	mol modstyle $r $m QuickSurf 1.0 0.5 1.0 1.0
 	mol modcolor $r $m Chain
 	mol modmaterial $r $m Glass1
+# 	mol modmaterial $r $m Glass2
     
     set r [expr $r + 1]
 
@@ -62,6 +64,7 @@ proc restore_reps {m} {
 	mol addrep $m
 	mol modselect $r $m resid 8 or resid 44 or resid 68 or resid 70
 	mol modstyle $r $m VDW 1.0 100.0
+# 	mol modstyle $r $m QuickSurf 1.5 0.5 1.0 1.0
 	mol modcolor $r $m ColorID 0
 	mol modmaterial $r $m Diffuse
 
@@ -73,6 +76,7 @@ proc restore_reps {m} {
 	mol addrep $m
 	mol modselect $r $m resid 44
 	mol modstyle $r $m VDW 1.1 100.0
+# 	mol modstyle $r $m QuickSurf 1.5 0.5 1.0 1.0
 	mol modcolor $r $m ColorID 0
 	mol modmaterial $r $m Diffuse
     
@@ -82,6 +86,7 @@ proc restore_reps {m} {
 	mol addrep $m
 	mol modselect $r $m resid 36 or resid 71 or resid 73
 	mol modstyle $r $m VDW 1.0 100.0
+# 	mol modstyle $r $m QuickSurf 1.5 0.5 1.0 1.0
 	mol modcolor $r $m ColorID 7
 	mol modmaterial $r $m Diffuse
 
@@ -93,6 +98,7 @@ proc restore_reps {m} {
 	mol addrep $m
 	mol modselect $r $m resid 36
 	mol modstyle $r $m VDW 1.1 100.0
+# 	mol modstyle $r $m QuickSurf 1.5 0.5 1.0 1.0
 	mol modcolor $r $m ColorID 7
 	mol modmaterial $r $m Diffuse
     
@@ -143,3 +149,8 @@ proc load_ubq {name} {
         align top "chain C or chain D or chain E or chain F"
     }
 }
+
+# Set display
+
+color Display Background white
+axes location Off
