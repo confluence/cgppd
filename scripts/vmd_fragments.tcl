@@ -64,17 +64,17 @@ proc restore_reps {m} {
 	mol modstyle $r $m QuickSurf 1.5 0.5 1.0 1.0
 	mol modcolor $r $m ColorID 0
 	mol modmaterial $r $m Diffuse
-
-    mol showrep $m $r 0
     
     set r [expr $r + 1]
 
-    # hydrophobic patch around Ile44
+    # Ile44
 	mol addrep $m
 	mol modselect $r $m resid 44
 	mol modstyle $r $m QuickSurf 1.5 0.5 1.0 1.0
 	mol modcolor $r $m ColorID 0
 	mol modmaterial $r $m Diffuse
+
+    mol showrep $m $r 0
     
     set r [expr $r + 1]
 
@@ -84,17 +84,17 @@ proc restore_reps {m} {
 	mol modstyle $r $m QuickSurf 1.5 0.5 1.0 1.0
 	mol modcolor $r $m ColorID 7
 	mol modmaterial $r $m Diffuse
-
-    mol showrep $m $r 0
     
     set r [expr $r + 1]
 
-    # hydrophobic patch around Ile36
+    # Ile36
 	mol addrep $m
 	mol modselect $r $m resid 36
 	mol modstyle $r $m QuickSurf 1.5 0.5 1.0 1.0
 	mol modcolor $r $m ColorID 7
 	mol modmaterial $r $m Diffuse
+
+    mol showrep $m $r 0
     
     set r [expr $r + 1]
 
@@ -142,12 +142,21 @@ proc load_ubq {name} {
     } elseif {[string match "octaubq*" $name]} {
         align top "chain C or chain D or chain E or chain F"
     }
+    display resetview
 }
 
 # Set display
 
+display projection Orthographic
 color Display Background white
 axes location Off
 
-# TODO turn on occlusion lighting and shadows
-# TODO change chain colours to yellows and oranges
+display ambientocclusion on
+display aoambient 0.8
+display aodirect 0.3
+display shadows on
+
+color Chain A yellow
+color Chain B orange
+color Chain C orange2
+color Chain D red
