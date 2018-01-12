@@ -14,3 +14,4 @@ lib/.*
 tests/remctest_CPU
 tests/remctest_GPU
 figures
+vmd_exports
