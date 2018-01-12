@@ -166,47 +166,6 @@ display shadows on
 
 #                               
 
-# comparison structures
-
-set ubq_ref(diubq1) { "2w9n-AB.pdb" "3axc-AB.pdb" }
-set ubq_ref(diubq6) { "2xk5.pdb" }
-set ubq_ref(diubq11) { "2xew-AB.pdb" "3nob-AB.pdb" }
-set ubq_ref(diubq27) { }
-set ubq_ref(diubq29) { "4s22.pdb" "4s1z.pdb" }
-set ubq_ref(diubq33) { "5af4.pdb" "4xyz.pdb" "5af6.pdb" }
-set ubq_ref(diubq48) { "1aar.pdb" "2pe9.pdb" "3aul.pdb" }
-set ubq_ref(diubq63) { "2jf5-AB.pdb" "3a1q-AB.pdb" "3a1q-DE.pdb" }
-
-# frames for clusters
-
-# 68%
-set cluster_frame(diubq1) { 0 }
-# 53%, 12%
-set cluster_frame(diubq6) { 15 50 }
-# 49%
-set cluster_frame(diubq11) { 15 }
-set cluster_frame(diubq27) {}
-set cluster_frame(diubq29) {}
-set cluster_frame(diubq33) {}
-# 67%
-set cluster_frame(diubq48) { 5 }
-# 77%
-set cluster_frame(diubq63) { 0 }
-
-# 25%
-set cluster_frame(diubq1ll) { 20 }
-#42%, 11%, 10%
-set cluster_frame(diubq6ll) { 10 25 5 }
-# 18%, 10%, 10%
-set cluster_frame(diubq11ll) { 10 16 54 }
-set cluster_frame(diubq27ll) {}
-set cluster_frame(diubq29ll) {}
-set cluster_frame(diubq33ll) {}
-# 40%, 28%
-set cluster_frame(diubq48ll) { 5 0 }
-# 19%, 10%
-set cluster_frame(diubq63ll) { 0 20 }
-
 # representation for comparison structures
 
 proc comparison_reps {m} {
@@ -315,18 +274,21 @@ proc output_ubq {prefix} {
         mol on $i
         
         set name [molinfo $i get name]
-        regexp "^diubq\[0-9\]+" $name dirname
-        set path "$::env(HOME)/repos/cgppd/vmd_exports/$dirname"
         
-        if { ![string match "*pdb" $name] } {
-            set c 1
-            foreach f $::cluster_frame($name) {
-                animate goto $f
-                render Tachyon $path/$prefix-$name-C$c-$f.dat /usr/local/lib/vmd/tachyon_LINUXAMD64 -aasamples 12 %s -format TARGA -o %s.tga
-                set c [expr $c + 1]
+        if { $name ne "reference" } {
+            regexp "^diubq\[0-9\]+" $name dirname
+            set path "$::env(HOME)/repos/cgppd/vmd_exports/$dirname"
+            
+            if { ![string match "*pdb" $name] } {
+                set c 1
+                foreach f $::cluster_frame($name) {
+                    animate goto $f
+                    render Tachyon $path/$prefix-$name-C$c-$f.dat /usr/local/lib/vmd/tachyon_LINUXAMD64 -aasamples 12 %s -format TARGA -o %s.tga
+                    set c [expr $c + 1]
+                }
+            } else {
+                render Tachyon $path/$prefix-$name.dat /usr/local/lib/vmd/tachyon_LINUXAMD64 -aasamples 12 %s -format TARGA -o %s.tga
             }
-        } else {
-            render Tachyon $path/$prefix-$name.dat /usr/local/lib/vmd/tachyon_LINUXAMD64 -aasamples 12 %s -format TARGA -o %s.tga
         }
     }
 
@@ -334,13 +296,21 @@ proc output_ubq {prefix} {
 
 # TODO: We need to output 3 views of all molecules aligned *in the same way*. Use one dummy one-frame molecule to load always, and ignore it? Pick one which has a good view of the patches on chain A. Use chain A only?
 # TODO: We should also save this cluster data so that we don't have to keep redoing it.
+# We can already do this; save the state and parse.
 
-output_all_ubq {
+proc load_reference {} {
+    mol new "$::env(HOME)/repos/cgppd/data/ubq_alignment_reference.pdb" type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
+    mol rename top "reference"
+    mol delrep 0 top
+}
+
+proc output_all_ubq {} {
 # for each linkage
     set linkages { 1 6 11 27 29 33 48 63 }
     
     foreach l $linkages {
-        # TODO load reference
+        load_reference
+        
         load_diubq $l
         scale by 0.8
         
@@ -353,6 +323,62 @@ output_all_ubq {
         rotate y by 90
         output_ubq THREE
         
-        # TODO delete all molecules
+        set all_mols [molinfo list]
+        foreach i $all_mols {
+            mol delete $i
+        }
     }
 }
+
+# comparison structures
+
+set ubq_ref(diubq1) { "2w9n-AB.pdb" "3axc-AB.pdb" }
+set ubq_ref(diubq6) { "2xk5.pdb" }
+set ubq_ref(diubq11) { "2xew-AB.pdb" "3nob-AB.pdb" }
+set ubq_ref(diubq27) { }
+set ubq_ref(diubq29) { "4s22-AB.pdb" "4s1z-AB.pdb" }
+set ubq_ref(diubq33) { "5af4-AB.pdb" "4xyz-AB.pdb" "5af6-AB.pdb" }
+set ubq_ref(diubq48) { "1aar.pdb" "2pe9.pdb" "3aul.pdb" }
+set ubq_ref(diubq63) { "2jf5-AB.pdb" "3a1q-AB.pdb" "3a1q-DE.pdb" }
+
+# frames for clusters
+
+proc save_ubq_clusters {} {
+    set name [molinfo top get name]
+    set path "$::env(HOME)/repos/cgppd/output/$::ubq($name)/clusters.vmd"
+    save_state $path
+}
+
+#  80% 5%
+set cluster_frame(diubq1) { 6365 1931 }
+#  63% 14%
+set cluster_frame(diubq6) { 3926 957 }
+#  63% 8% 7% 5%
+set cluster_frame(diubq11) { 8904 3885 8981 2878 }
+#  41% 12% 12% 8% 8% 5%
+set cluster_frame(diubq27) { 1206 4420 535 5897 4268 6070 }
+#  72% 10%
+set cluster_frame(diubq29) { 5514 6156 }
+#  40% 28% 5%
+set cluster_frame(diubq33) { 3572 7569 3971 }
+#  77% 6%
+set cluster_frame(diubq48) { 8511 833 }
+#  85% 7%
+set cluster_frame(diubq63) { 5396 8715 }
+
+#  41% 12% 8% 8% 6% 6%
+set cluster_frame(diubq1ll) { 139 7567 2868 4810 3793 2606 }
+#  50% 13% 12% 6%
+set cluster_frame(diubq6ll) { 4842 5339 1267 5980 }
+#  30% 17% 16% 8% 5% 5%
+set cluster_frame(diubq11ll) { 188 987 1774 8121 3627 1664 }
+#  90% 5%
+set cluster_frame(diubq27ll) { 5051 8833 }
+#  33% 19% 15% 7% 7%
+set cluster_frame(diubq29ll) { 4037 6344 2978 1617 216 }
+#  40% 12% 12% 8% 6% 5%
+set cluster_frame(diubq33ll) { 3259 3228 743 7503 4739 6702 }
+#  48% 33%
+set cluster_frame(diubq48ll) { 8371 1783 }
+#  31% 16% 12% 9% 7% 6%
+set cluster_frame(diubq63ll) { 959 2092 2705 1534 3020 530 }
