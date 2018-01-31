@@ -294,9 +294,18 @@ proc output_ubq {prefix} {
 
 }
 
-# TODO: We need to output 3 views of all molecules aligned *in the same way*. Use one dummy one-frame molecule to load always, and ignore it? Pick one which has a good view of the patches on chain A. Use chain A only?
-# TODO: We should also save this cluster data so that we don't have to keep redoing it.
-# We can already do this; save the state and parse.
+proc manual_output {c} {
+    set all_mols [molinfo list]
+        
+    foreach i $all_mols {
+        if { [molinfo $i get drawn] } {
+            set name [molinfo $i get name]
+        }
+    }
+    
+    set path "$::env(HOME)/repos/cgppd/vmd_exports"
+    render Tachyon $path/$name-C$c.dat /usr/local/lib/vmd/tachyon_LINUXAMD64 -aasamples 12 %s -format TARGA -o %s.tga
+}
 
 proc load_reference {} {
     mol new "$::env(HOME)/repos/cgppd/data/ubq_alignment_reference.pdb" type pdb first 0 last -1 step 1 filebonds 1 autobonds 1 waitfor all
@@ -349,36 +358,85 @@ proc save_ubq_clusters {} {
     save_state $path
 }
 
-#  80% 5%
-set cluster_frame(diubq1) { 6365 1931 }
+# Including clusters up to 5%
+
+# #  80% 5%
+# set cluster_frame(diubq1) { 6365 1931 }
+# #  63% 14%
+# set cluster_frame(diubq6) { 3926 957 }
+# #  63% 8% 7% 5%
+# set cluster_frame(diubq11) { 8904 3885 8981 2878 }
+# #  41% 12% 12% 8% 8% 5%
+# set cluster_frame(diubq27) { 1206 4420 535 5897 4268 6070 }
+# #  72% 10%
+# set cluster_frame(diubq29) { 5514 6156 }
+# #  40% 28% 5%
+# set cluster_frame(diubq33) { 3572 7569 3971 }
+# #  77% 6%
+# set cluster_frame(diubq48) { 8511 833 }
+# #  85% 7%
+# set cluster_frame(diubq63) { 5396 8715 }
+# 
+# #  41% 12% 8% 8% 6% 6%
+# set cluster_frame(diubq1ll) { 139 7567 2868 4810 3793 2606 }
+# #  50% 13% 12% 6%
+# set cluster_frame(diubq6ll) { 4842 5339 1267 5980 }
+# #  30% 17% 16% 8% 5% 5%
+# set cluster_frame(diubq11ll) { 188 987 1774 8121 3627 1664 }
+# #  90% 5%
+# set cluster_frame(diubq27ll) { 5051 8833 }
+# #  33% 19% 15% 7% 7%
+# set cluster_frame(diubq29ll) { 4037 6344 2978 1617 216 }
+# #  40% 12% 12% 8% 6% 5%
+# set cluster_frame(diubq33ll) { 3259 3228 743 7503 4739 6702 }
+# #  48% 33%
+# set cluster_frame(diubq48ll) { 8371 1783 }
+# #  31% 16% 12% 9% 7% 6%
+# set cluster_frame(diubq63ll) { 959 2092 2705 1534 3020 530 }
+
+# Including clusters up to 10%
+
+#  80%
+set cluster_frame(diubq1) { 6365 }
 #  63% 14%
 set cluster_frame(diubq6) { 3926 957 }
-#  63% 8% 7% 5%
-set cluster_frame(diubq11) { 8904 3885 8981 2878 }
-#  41% 12% 12% 8% 8% 5%
-set cluster_frame(diubq27) { 1206 4420 535 5897 4268 6070 }
+#  63%
+set cluster_frame(diubq11) { 8904 }
+#  41% 12% 12%
+set cluster_frame(diubq27) { 1206 4420 535 }
 #  72% 10%
 set cluster_frame(diubq29) { 5514 6156 }
-#  40% 28% 5%
-set cluster_frame(diubq33) { 3572 7569 3971 }
-#  77% 6%
-set cluster_frame(diubq48) { 8511 833 }
-#  85% 7%
-set cluster_frame(diubq63) { 5396 8715 }
+#  40% 28%
+set cluster_frame(diubq33) { 3572 7569 }
+#  77%
+set cluster_frame(diubq48) { 8511 }
+#  85%
+set cluster_frame(diubq63) { 5396 }
 
-#  41% 12% 8% 8% 6% 6%
-set cluster_frame(diubq1ll) { 139 7567 2868 4810 3793 2606 }
-#  50% 13% 12% 6%
-set cluster_frame(diubq6ll) { 4842 5339 1267 5980 }
-#  30% 17% 16% 8% 5% 5%
-set cluster_frame(diubq11ll) { 188 987 1774 8121 3627 1664 }
-#  90% 5%
-set cluster_frame(diubq27ll) { 5051 8833 }
-#  33% 19% 15% 7% 7%
-set cluster_frame(diubq29ll) { 4037 6344 2978 1617 216 }
-#  40% 12% 12% 8% 6% 5%
-set cluster_frame(diubq33ll) { 3259 3228 743 7503 4739 6702 }
+#  41% 12%
+set cluster_frame(diubq1ll) { 139 7567 }
+#  50% 13% 12%
+set cluster_frame(diubq6ll) { 4842 5339 1267 }
+#  30% 17% 16%
+set cluster_frame(diubq11ll) { 188 987 1774 }
+#  90%
+set cluster_frame(diubq27ll) { 5051 }
+#  33% 19% 15%
+set cluster_frame(diubq29ll) { 4037 6344 2978 }
+#  40% 12% 12%
+set cluster_frame(diubq33ll) { 3259 3228 743 }
 #  48% 33%
 set cluster_frame(diubq48ll) { 8371 1783 }
-#  31% 16% 12% 9% 7% 6%
-set cluster_frame(diubq63ll) { 959 2092 2705 1534 3020 530 }
+#  31% 16% 12%
+set cluster_frame(diubq63ll) { 959 2092 2705 }
+
+proc show_frames {} {
+    set all_mols [molinfo list]
+    
+    foreach i $all_mols {
+        if { [molinfo $i get drawn] } {
+            set name [molinfo $i get name]
+            puts $::cluster_frame($name)
+        }
+    }
+}

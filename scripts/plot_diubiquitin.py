@@ -96,6 +96,8 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         rows = len(self.sims)
         
         lastplot = None
+        
+        roman = ('i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv','xv','xvi')
 
         for i, (name, sim) in enumerate(self._ordered_sims(args.order_by), 1):
             values = [getattr(s, measurement) for s in sim.samples]
@@ -104,14 +106,15 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
             else:
                 lastplot = plt.subplot(rows,1,i)
             plt.hist(values, bins=100)
-            plt.title(name)
+            name = re.sub(r'(Lys|Met)(\d+) diUb.*', r'\1\2-linked diubiquitin', name)
+            plt.title("(%s) %s" % (roman[i-1], name))
             plt.ylabel("No. of samples")
-            plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
-            
-        plt.xlabel(u"%s%s" % (measurement, unit_str))
+            #plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+            plt.xlabel(u"%s%s" % (measurement.replace("_", " ").replace("fret", "FRET"), unit_str))
 
         if args.save_svg:
             fig = plt.gcf()
+            fig.set_size_inches(5, 10)
             fig.savefig("%s_histogram.svg" % measurement, format='svg')
             
     def plot_hist_radius(self, args):
@@ -132,16 +135,23 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                 
                 rows = len(clusters)
                 cols = 1
+                
+                largest_clusters = [c for c in clusters if 100.0*len(c.samples)/len(sim.samples) >= args.cluster_cutoff]
                         
-                for i, cluster in enumerate(clusters):
+                for i, cluster in enumerate(largest_clusters):
                     values = [getattr(s, measurement) for s in cluster.samples]
                     plt.subplot(rows, cols, i + 1)
                     plt.hist(values, bins=100)
-                    plt.title("%s: %s" % (name, description))
                     plt.ylabel("No. of samples")
                     plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
+                    
+                    print len(values)
+                    print len(sim.samples)
+                    print 100.0*len(values)/len(sim.samples)
                 
-                plt.xlabel(u"Cluster %d (%d/%d samples) %s%s" % (i, len(values), len(sim.samples), measurement, unit_str))
+                    plt.xlabel(u"Cluster %d (%d%%) %s%s" % (i, 100.0*len(values)/len(sim.samples), measurement, unit_str))
+                
+                #plt.title(name)
 
                 if args.save_svg:
                     fig = plt.gcf()
@@ -193,10 +203,12 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         cols = len(contact_averages_per_sim[0])
 
         lastplot = None
+        
+        roman = ('i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv','xv','xvi')
 
         for i, (name, sim) in enumerate(self._ordered_sims(args.order_by), 1):
             contact_averages = sim.cached_contacts
-            linkage, _ = name.split()
+            linkage, _ = name.split()[:2]
             
             for j, (chain, averages) in enumerate(contact_averages, 1):
                 if args.collapse_sidechain and j == 1:
@@ -209,25 +221,29 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                             averages[ai] = args.truncate_outliers
                             outliers.append((ai, a))
                 
-                residues = range(len(averages))
+                residues = range(1, len(averages) + 1)
                 
                 if lastplot is not None:
                     lastplot = plt.subplot(rows, cols, (i - 1) * cols + j, sharex=lastplot, sharey=lastplot)
                 else:
-                    lastplot = plt.subplot(rows, cols, (i - 1) * cols + j)
+                    lastplot = plt.subplot(rows, cols, (i - 1) * cols + j, xticks=range(0,80,10))
                 
+                if j==2:
+                    pos = int(re.search(r'\d+', linkage).group(0))
+                    plt.vlines(pos, 0, args.truncate_outliers, colors='y', linestyles='dotted', zorder=0)
+                    
                 plt.bar(residues, averages)
                 
-                if len(outliers) == 2:
-                    ai1, a1 = outliers[0]
-                    ai2, a2 = outliers[1]
-                    outliers = [(ai1 - 2, a1), (ai2 + 2, a2)]
+                if outliers:
+                    xoffsets = [0] * len(outliers)
+                    xoffsets[0] -= 7
+                    xoffsets[-1] += 7
                 
-                for ai, a in outliers:
-                    lastplot.annotate('%.1f' % a, (ai, args.truncate_outliers), size=7, ha='center')
+                    for (ai, a), xoff in zip(outliers, xoffsets):
+                        lastplot.annotate('%.1f' % a, (ai+1, args.truncate_outliers), xytext=(0 + xoff, 4), textcoords='offset points', size=7, ha='center')
                 
-                if j == 1:
-                    lastplot.annotate(linkage, (0, 0), xytext=(-80, 10), textcoords='offset points', xycoords='axes fraction')
+                #if j == 1:
+                    #lastplot.annotate("(%s) %s" % (roman[i-1], linkage), (0, 0), xytext=(-80, 10), textcoords='offset points', xycoords='axes fraction')
                 
                 if i == 1:
                     plt.title(chain_names[chain])
@@ -238,13 +254,14 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
                     plt.setp(lastplot.get_xticklabels(), visible=False)
                 
                 if i == math.ceil(rows/2) and j == 1:
-                    plt.ylabel(u"Mean no. of contacts with other chains (distance cutoff: %g Å)" % args.contact_cutoff)
+                    plt.ylabel(u"Mean no. of contacts (cutoff: %g Å)" % args.contact_cutoff)
         
-        plt.subplots_adjust(wspace=0.1)
+        #plt.subplots_adjust(wspace=0.1)
         #plt.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.97, wspace=0.2, hspace=0.7)
 
         if args.save_svg:
             fig = plt.gcf()
+            fig.set_size_inches(6, 10)
             fig.savefig("average_contacts_%g_Å.svg" % args.contact_cutoff, format='svg')
 
 
@@ -257,6 +274,7 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--reference-length", help="Set R0 value", type=float, default=50.0)
     parser.add_argument("-l", "--pad-length", help="Add padding value to molecule length to simulate presence of a chromatophore pair", type=float, default=20.0)
     parser.add_argument("-c", "--contact-cutoff", help="In the contact averages plot, cutoff for determining whether two residues are in contact", type=float, default=7.0)
+    parser.add_argument("-u", "--cluster-cutoff", help="Cutoff cluster size", type=float, default=20.0)
     parser.add_argument("-a", "--collapse-sidechain", help="In the contact averages plot, collapse the fake sidechain residue into the end residue of the distal tail by averaging their values", action="store_true", default=False)
     parser.add_argument("-t", "--truncate-outliers", help="In the contact averages plot, truncate values to this maximum", type=float, default=100.0)
     parser.add_argument("-o", "--order-by", help="Order simulation subplots. If no ordering is specified, the order of the directory parameters will be preserved.", choices=(None, 'name'), default=None)

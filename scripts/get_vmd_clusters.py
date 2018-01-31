@@ -8,8 +8,10 @@ import os
 vis_filename, output_desc, *cmd = sys.argv[1:]
 
 NEW_MOLECULE = re.compile("mol new (.*\.pdb)")
-CLUSTER = re.compile("mol drawframes top \d {(\d.*)}")
+CLUSTER = re.compile("mol drawframes top \d+ {(\d.*)}")
 SIMNAME = re.compile("polyubiquitin(_ll)?/diubiquitin_(lys|met)_(\d+)_")
+
+MIN_PERC = 10
 
 clusters = {}
 current_cluster = None
@@ -37,10 +39,13 @@ for dirname, frames_clusters in clusters.items():
     representative_frames = []
 
     with open(filename, "w") as cluster_file:
-        for frames_string in frames_clusters:
+        for i, frames_string in enumerate(frames_clusters):
             frames = frames_string.split()
             
             total_frame_count += len(frames)
+            if i == len(frames_clusters)-1:
+                continue # last "cluster" is unclustered samples
+            
             cluster_frame_counts.append(len(frames))
             representative_frames.append(frames[0])
             
@@ -59,10 +64,10 @@ for dirname, frames_clusters in clusters.items():
     if "perc" in cmd:
         print(simname, end=" ")
         for i, (size, perc) in enumerate(zip(cluster_frame_counts, percentages)):
-            if perc >= 5:
+            if perc >= MIN_PERC:
                 print("%d: %d/%d (%d%%)" % (i, size, total_frame_count, perc), end=" ")
         print()
                 
     if "tcl" in cmd:
-        print("# ", " ".join("%d%%" % perc for perc in percentages if perc >= 5))
-        print("set cluster_frame(%s) { %s }" % (simname, " ".join([f for f, perc in zip(representative_frames, percentages) if perc >= 5])))
+        print("# ", " ".join("%d%%" % perc for perc in percentages if perc >= MIN_PERC))
+        print("set cluster_frame(%s) { %s }" % (simname, " ".join([f for f, perc in zip(representative_frames, percentages) if perc >= MIN_PERC])))
