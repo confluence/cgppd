@@ -18,5 +18,5 @@ t(50,0,0) r(0,0,0,0) data/application/ubq.pdb diubiquitin2
 
 segments
 
-diubiquitin1 73 74 75 76 77
-diubiquitin2 73 74 75 76 77
+diubiquitin1 73 74 75 76
+diubiquitin2 73 74 75 76
