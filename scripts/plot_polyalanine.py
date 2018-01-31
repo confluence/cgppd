@@ -6,6 +6,7 @@ import os
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from scipy import optimize
 import sys
 
@@ -33,16 +34,20 @@ class PolyalaninePlots(PolyalanineSimulationSequence):
 
         plt.plot(xvalues, [fitfunc(p1, x) for x in xvalues], 'b-')
         
-        if args.lj == "off":
-            plt.title("Polyalanine with LJ potentials off")
-        elif args.lj == "repulsive":
-            plt.title("Polyalanine with repulsive LJ potentials")
+        #if args.lj == "off":
+            #plt.title("Polyalanine with LJ potentials off")
+        #elif args.lj == "repulsive":
+            #plt.title("Polyalanine with repulsive LJ potentials")
 
         plt.xlabel("Number of residues")
         plt.ylabel(u"Mean %s (Å)" % measurement)
 
         plt.xscale('log', basex=2) # TODO: investigate using the loglog function instead; maybe add an option for it
         plt.yscale('log')
+        
+        if args.save_svg:
+            fig = plt.gcf()
+            fig.savefig("%s_vs_N_LJ_%s.svg" % (measurement, args.lj), format='svg')
             
     def plot_mean_radius(self, args):
         self._plot_vs_n("radius", args)
@@ -79,6 +84,10 @@ class PolyalaninePlots(PolyalanineSimulationSequence):
         elif args.lj == "repulsive":
             plt.suptitle("Polyalanine with repulsive LJ potentials")
             
+        if args.save_svg:
+            fig = plt.gcf()
+            fig.savefig("%s_vs_time_LJ_%s.svg" % (measurement, args.lj), format='svg')
+            
     def plot_radius(self, args):
         self._plot_vs_time("radius", args)
             
@@ -102,12 +111,16 @@ class PolyalaninePlots(PolyalanineSimulationSequence):
                 plt.ylabel("No. of samples") 
                 plt.xticks(rotation='vertical')
         
-        plt.subplots_adjust(left=0.06, bottom=0.08, right=0.99, top=0.94, wspace=0.3, hspace=0.4)   
+        plt.subplots_adjust(left=0.06, bottom=0.08, right=0.99, top=0.94, wspace=0.3, hspace=0.4)
                 
         if args.lj == "off":
             plt.suptitle("Polyalanine with LJ potentials off")
         elif args.lj == "repulsive":
-            plt.suptitle("Polyalanine with repulsive LJ potentials")  
+            plt.suptitle("Polyalanine with repulsive LJ potentials")
+        
+        if args.save_svg:
+            fig = plt.gcf()
+            fig.savefig("%s_histogram_LJ_%s.svg" % (measurement, args.lj), format='svg')
             
     def plot_hist_radius(self, args):
         self._plot_histogram("radius", args)
@@ -125,6 +138,7 @@ if __name__ == "__main__":
     parser.add_argument("dirs", help="Individual directories to process", nargs="+")
     
     parser.add_argument("-p", "--plot", dest="plots", help="Type of plot", choices=PLOTS, action="append")
+    parser.add_argument("-s", "--save-svg", help="Save plots as SVG", action="store_true", default=False)
 
     args = parser.parse_args()
 
