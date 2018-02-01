@@ -1,0 +1,22 @@
+gpus 1
+streams 1
+threads 1
+mcsteps 10000000
+resteps 2000
+replicas 20
+samplefrequency 1000
+sampleafter 1000000
+boundary  160.7
+temperaturemax 420
+temperaturemin 240
+prefix diubiquitin_benchmark_all
+
+files
+
+t(0,0,0) r(0,0,0,0) data/application/ubq.pdb diubiquitin1
+t(50,0,0) r(0,0,0,0) data/application/ubq.pdb diubiquitin2
+
+segments
+
+diubiquitin1 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76
+diubiquitin2 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76
