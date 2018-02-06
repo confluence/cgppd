@@ -1079,10 +1079,10 @@ void *MCthreadableFunction(void *arg)
         {
             pthread_cond_signal(data->waitingReplicaExchangeCond);
         }
-//         if (mcstep < data->MCsteps)                                           // wait if another MC loop must be done
-//         {
+        if (mcstep < data->MCsteps)                                           // wait if another MC loop must be done
+        {
             pthread_cond_wait(data->waitingThreadCond, data->waitingCounterMutex);     // wait for replica exchange to finish.
-//         }
+        }
         pthread_mutex_unlock(data->waitingCounterMutex);
 
     } // continue MC
