@@ -48,6 +48,7 @@ public:
     pthread_attr_t attr;
     pthread_mutex_t waitingCounterMutex;
     pthread_mutex_t writeFileMutex;
+    pthread_barrier_t endBarrier;
 #ifdef VERBOSE_THREAD_LOGGING
     pthread_mutex_t logMutex;
 #endif

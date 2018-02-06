@@ -43,6 +43,7 @@ struct SimulationData
 #endif
     pthread_cond_t * waitingThreadCond;
     pthread_cond_t * waitingReplicaExchangeCond;
+    pthread_barrier_t * endBarrier;
 };
 
 struct segdata
