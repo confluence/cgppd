@@ -669,6 +669,7 @@ void Simulation::init(int argc, char **argv, int pid)
 #endif
         data[i].waitingThreadCond = &waitingThreadCond;
         data[i].waitingReplicaExchangeCond = &waitingReplicaExchangeCond;
+        data[i].endBarrier = &endBarrier;
 
         // assign gpus in rotation per thread, t0 = gpu0, t1 = gpu1 etc
         // NEW: added optional offset
@@ -721,6 +722,8 @@ void Simulation::run()
     LOGOG_INFO("--- Launching threads ---");
 
     pthread_mutex_lock(&waitingCounterMutex);
+    
+    pthread_barrier_init(&endBarrier, NULL, parameters.threads);
 
     //TODO: assign streams as a function of the number of GPUs and threads
 
@@ -1088,7 +1091,7 @@ void *MCthreadableFunction(void *arg)
     } // continue MC
 #endif
 
-
+    int res = pthread_barrier_wait(data->endBarrier);
 
 #if USING_CUDA
     // sync all streams and free gpu memory
