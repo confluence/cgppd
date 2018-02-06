@@ -1,0 +1,18 @@
+gpus 1
+streams 1
+threads 1
+mcsteps 1000
+resteps 10
+replicas 20
+samplefrequency 10
+sampleafter 100
+boundary  160.7
+temperaturemax 420
+temperaturemin 240
+prefix diubiquitin_bug_test
+
+files
+
+t(0,0,0) r(0,0,0,0) data/application/ubq.pdb diubiquitin1
+t(50,0,0) r(0,0,0,0) data/application/ubq.pdb diubiquitin2
+
