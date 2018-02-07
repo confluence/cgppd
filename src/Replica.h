@@ -205,6 +205,7 @@ public:
     StopWatchInterface *replicaMoleculeUpdateTimer;
     StopWatchInterface *initGPUMemoryTimer;
     StopWatchInterface *replicaEHostTimer;
+    StopWatchInterface *replicaEInternalTimer;
     bool timersInit;
 #endif
 
