@@ -139,6 +139,7 @@ void Replica::initTimers()
     replicaECUDATimer = NULL;
     initGPUMemoryTimer = NULL;
     replicaEHostTimer = NULL;
+    replicaEInternalTimer = NULL;
 
     sdkCreateTimer(&replicaToGPUTimer);
     sdkCreateTimer(&replicaToHostTimer);
@@ -147,6 +148,7 @@ void Replica::initTimers()
     sdkCreateTimer(&replicaECUDATimer);
     sdkCreateTimer(&initGPUMemoryTimer);
     sdkCreateTimer(&replicaEHostTimer);
+    sdkCreateTimer(&replicaEInternalTimer);
 
     timersInit = true;
 }
@@ -164,6 +166,7 @@ Replica::~Replica()
         sdkDeleteTimer(&replicaECUDATimer);
         sdkDeleteTimer(&initGPUMemoryTimer);
         sdkDeleteTimer(&replicaEHostTimer);
+        sdkDeleteTimer(&replicaEInternalTimer);
     }
 #endif
 
@@ -527,6 +530,9 @@ Potential Replica::E(Molecule *a, Molecule *b)
 
 #if FLEXIBLE_LINKS
 Potential Replica::internal_molecule_E(bool include_LJ_and_DH) {
+#if INCLUDE_TIMERS
+    sdkStartTimer(&replicaEInternalTimer);
+#endif
     Potential potential;
 
     for (size_t mI = 0; mI < moleculeCount; mI++)
@@ -542,6 +548,9 @@ Potential Replica::internal_molecule_E(bool include_LJ_and_DH) {
     }
 
     last_potential_obj = potential;
+#if INCLUDE_TIMERS
+    sdkStopTimer(&replicaEInternalTimer);
+#endif
     return potential;
 }
 #endif
@@ -556,6 +565,7 @@ void Replica::printTimers()
     LOGOG_INFO("%f %f Update replica on GPU (transfer)", sdkGetTimerValue(&replicaUpdateGPUTimer), sdkGetAverageTimerValue(&replicaUpdateGPUTimer));
     LOGOG_INFO("%f %f Kernel (computation)", sdkGetTimerValue(&replicaECUDATimer), sdkGetAverageTimerValue(&replicaECUDATimer));
     LOGOG_INFO("%f %f Host (computation)", sdkGetTimerValue(&replicaEHostTimer), sdkGetAverageTimerValue(&replicaEHostTimer));
+    LOGOG_INFO("%f %f Bonded potential (computation)", sdkGetTimerValue(&replicaEInternalTimer), sdkGetAverageTimerValue(&replicaEInternalTimer));
     LOGOG_INFO("%f %f Update molecule on GPU (transfer)", sdkGetTimerValue(&replicaMoleculeUpdateTimer), sdkGetAverageTimerValue(&replicaMoleculeUpdateTimer));
     LOGOG_INFO("%f %f GPU memory initialisation (malloc)", sdkGetTimerValue(&initGPUMemoryTimer), sdkGetAverageTimerValue(&initGPUMemoryTimer));
     // TODO: this only makes sense if we run a speed test with both CPU and GPU E
