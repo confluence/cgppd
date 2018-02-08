@@ -5,7 +5,8 @@ import re
 import datetime
 from collections import defaultdict
 
-results = """
+benchmark_runs = {
+    "on GPU002; 4 CPUs each, 1 GPU each" : """
 01/31/2018 18:23:38	apinska	1744564 2ubq_bench_rigid	19:30:53	05:59:13	38	107020	1: Script or program ended with error
 01/31/2018 19:58:05	apinska	1744565 2ubq_bench_flex	27:02:44	07:33:37	41	107219	1: Script or program ended with error
 
@@ -40,7 +41,17 @@ results = """
 02/04/2018 19:12:16	apinska	1744773 2ubq_bench_half	26:22:31	07:21:55	40	107217	1: Script or program ended with error
 02/04/2018 19:28:42	apinska	1744775 2ubq_bench_flex	28:01:33	07:37:28	41	107283	1: Script or program ended with error
 02/04/2018 19:56:20	apinska	1744774 2ubq_bench_all	29:24:07	08:05:46	38	107220	1: Script or program ended with error
-"""
+""",
+    "on GPU004; 4 CPUs each, sharing 2 GPUs" : """
+02/08/2018 04:26:10	apinska	1745054 2ubq_bench_flex	68:35:50	25:15:55	174	168243	0: OK
+02/08/2018 05:44:18	apinska	1745055 2ubq_bench_longtail	72:40:48	26:34:02	174	168243	0: OK
+02/08/2018 06:24:21	apinska	1745053 2ubq_bench_rigid	69:51:38	27:14:07	171	168111	0: OK
+02/08/2018 06:34:07	apinska	1745057 2ubq_bench_all	73:17:30	27:23:49	174	168243	0: OK
+02/08/2018 06:34:54	apinska	1745056 2ubq_bench_half	71:17:35	27:24:37	174	168243	0: OK
+""",
+    "on GPU004; 20 CPUs each, 2 GPUs each" : """
+""",
+}
 
 def delta(s):
     h, m, s = (int(p) for p in s.split(':'))
@@ -48,37 +59,44 @@ def delta(s):
 
 RESULT = re.compile('.*2ubq_bench_([a-z]+)	(\d+:\d+:\d+)	(\d+:\d+:\d+)	.*')
 
-cputimes = defaultdict(list)
-walltimes = defaultdict(list)
-
-for result in results.split('\n'):
-    if not result.strip():
-        continue
+for params, results in benchmark_runs.items():
     
-    m = RESULT.search(result)
-    name, cputime, walltime = m.groups()
-    
-    cputimes[name].append(delta(cputime))
-    walltimes[name].append(delta(walltime))
-    
-averages = defaultdict(dict)
+    print()
+    print(params)
 
-print("CPUTIME")
+    cputimes = defaultdict(list)
+    walltimes = defaultdict(list)
 
-for k, v in cputimes.items():
-    avg = sum(v, datetime.timedelta())/len(v)
-    avg_hours = avg.days*24 + avg.seconds/(60*60)
-    print("%s: %g hours (average of %d)" % (k, avg_hours, len(v)))
-    averages[k]["cpu"] = avg_hours
+    for result in results.split('\n'):
+        if not result.strip():
+            continue
+        
+        m = RESULT.search(result)
+        name, cputime, walltime = m.groups()
+        
+        cputimes[name].append(delta(cputime))
+        walltimes[name].append(delta(walltime))
+        
+    averages = defaultdict(dict)
 
-print("WALLTIME")
+    print("\nCPUTIME")
 
-for k, v in walltimes.items():
-    avg = sum(v, datetime.timedelta())/len(v)
-    avg_hours = avg.days*24 + avg.seconds/(60*60)
-    print("%s: %g hours (average of %d)" % (k, avg_hours, len(v)))
-    averages[k]["wall"] = avg_hours
-    
-for sim in ('rigid', 'flex', 'longtail', 'half', 'all'):
-    print("%s: %.2f & %.2f" % (sim, averages[sim]["cpu"], averages[sim]["wall"]))
-    
+    for k, v in cputimes.items():
+        avg = sum(v, datetime.timedelta())/len(v)
+        avg_hours = avg.days*24 + avg.seconds/(60*60)
+        print("%s: %g hours (average of %d)" % (k, avg_hours, len(v)))
+        averages[k]["cpu"] = avg_hours
+
+    print("\nWALLTIME")
+
+    for k, v in walltimes.items():
+        avg = sum(v, datetime.timedelta())/len(v)
+        avg_hours = avg.days*24 + avg.seconds/(60*60)
+        print("%s: %g hours (average of %d)" % (k, avg_hours, len(v)))
+        averages[k]["wall"] = avg_hours
+
+    print("\nLATEX")
+        
+    for sim in ('rigid', 'flex', 'longtail', 'half', 'all'):
+        print("%s: %.2f & %.2f" % (sim, averages[sim]["cpu"], averages[sim]["wall"]))
+        
