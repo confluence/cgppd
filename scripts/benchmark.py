@@ -66,6 +66,8 @@ benchmark_runs = {
 02/10/2018 21:16:03	apinska	1745527 2ubq_bench_all	21:18:46	02:25:52	332	194251	0: OK
 02/10/2018 23:50:27	apinska	1745528 2ubq_bench_flex	21:53:25	02:30:18	331	194250	0: OK
 02/11/2018 02:11:15	apinska	1745529 2ubq_bench_half	18:12:45	02:16:08	331	194251	0: OK
+02/11/2018 04:36:03	apinska	1745530 2ubq_bench_longtail	20:02:59	02:20:54	331	194250	0: OK
+02/11/2018 07:17:04	apinska	1745531 2ubq_bench_rigid	18:13:07	02:36:55	328	194250	0: OK
 """,
     #"on GPU003; 12 CPUs each, 4 GPUs each" : """
 #""",
