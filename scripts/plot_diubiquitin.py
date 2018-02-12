@@ -169,10 +169,29 @@ class DiubiquitinPlots(DiubiquitinSimulationGroup):
         if not "fret_efficiency" in self.extra_properties:
             # It's hacktastic
             for (name, sim) in self.sims:
+                no_fret = 0
+                low_fret = 0
+                high_fret = 0
+                total = 0
+                
                 for s in sim.samples:
                     s.fret_efficiency = 1.0 / (1.0 + ((s.length + args.pad_length) / R0)**6)
                     
+                    total += 1
+                    if s.fret_efficiency <= 0.1:
+                        no_fret += 1
+                    elif 0.1 < s.fret_efficiency < 0.6:
+                        low_fret += 1
+                    elif s.fret_efficiency >= 0.6:
+                        high_fret += 1
+                        
+                print(name)
+                print("no-FRET:", round(100.0*no_fret/total))
+                print("low-FRET:", round(100.0*low_fret/total))
+                print("high-FRET:", round(100.0*high_fret/total))
+                    
             self.extra_properties.add("fret_efficiency")
+
 
     def plot_hist_fret_efficiency(self, args):
         self._add_fret_efficiency(args)
