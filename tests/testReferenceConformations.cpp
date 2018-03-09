@@ -110,8 +110,11 @@ TEST_CASE("Reference conformations" "[reference]") {
         // This test compares our implementation to Young Kim's original results.
         // We need these fudge factors to compensate for different conversion factors, etc..
         
-        double LJ_fudge_factor(0.6/RT_to_kcalmol); // Kim used 0.6 for the RT to kcal/mol conversion
-        double DH_fudge_factor(1.00465); // we have no idea; maybe truncated constants?
+//         double LJ_fudge_factor(0.6/RT_to_kcalmol); // Kim used 0.6 for the RT to kcal/mol conversion
+//         double DH_fudge_factor(1.00465); // we have no idea; maybe truncated constants?
+        // drop the fudge factors
+        double LJ_fudge_factor(1.0);
+        double DH_fudge_factor(1.0);
         
         vector<Potential> kim_results = {
             Potential(-0.08092694, -0.21315828),
@@ -155,7 +158,8 @@ TEST_CASE("Reference conformations" "[reference]") {
             double e_total = fabs(kim_total - total)/fabs(kim_total);
 
 #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
-            cout << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total << endl;
+//             printf("%d  & %.3f\t\t& %.3f\t\t& %.3f \\\\\n", i + 1, total, LJ, DH);
+            cout << i + 1 << ":" << "\t" << total << "\t" << LJ << "\t" << DH << endl;
 #endif
             mean_e_LJ += e_LJ/10;
             mean_e_DH += e_DH/10;
@@ -167,8 +171,11 @@ TEST_CASE("Reference conformations" "[reference]") {
         }
         
 #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
-        cout << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total << endl;
-        cout << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total << endl;
+        printf("%.5f & %.5f\n", mean_e_total, max_e_total);
+        printf("%.5f & %.5f\n", mean_e_LJ, max_e_LJ);
+        printf("%.5f & %.5f\n", mean_e_DH, max_e_DH);
+//         cout << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total << endl;
+//         cout << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total << endl;
 #endif
         
         // Apart from the LJ in conformations 1 and 6, we seem to be doing quite well. We should probably investigate that more closely.
@@ -182,81 +189,84 @@ TEST_CASE("Reference conformations" "[reference]") {
         REQUIRE(max_e_total == Approx(0.002202));
     }
 
-    SECTION("Test vs CHARMM implementation") {
-        // This test compares our implementation to R. Best's CHARMM patch.
-        
-        double LJ_fudge_factor(1.0153); // we have no idea
-        double DH_fudge_factor(1.0037); // CHARMM uses a less accurate CCELEC constant. That doesn't account for most of this, though.
-
-        vector<Potential> charmm_results = {
-            Potential(-0.081, -0.213),
-            Potential(-1.322, 0.266),
-            Potential(-9.095, -1.182),
-            Potential(-5.903, -1.678),
-            Potential(-0.000021, -0.000058),
-            Potential(-4.810, -0.752),
-            Potential(-4.213, -1.267),
-            Potential(-9.266, -1.446),
-            Potential(-7.951, -1.949),
-            Potential(-7.459, -1.069)
-        };
-        
-        double mean_e_LJ(0);
-        double mean_e_DH(0);
-        double mean_e_total(0);
-        
-        double max_e_LJ(0);
-        double max_e_DH(0);
-        double max_e_total(0);
-        
-#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
-        cout << "Comparison to CHARMM results" << endl;
-        cout << "Relative errors:" << endl;
-#endif
-        
-        for (int i = 0; i < 10; i++) {
-            const double & charmm_LJ = charmm_results[i].total_LJ();
-            const double & charmm_DH = charmm_results[i].total_DH();
-            const double & charmm_total = charmm_results[i].total();
-            
-            double LJ = cpu[i].total_LJ() * LJ_fudge_factor;
-            double DH = cpu[i].total_DH() * DH_fudge_factor;
-            double total = LJ + DH;
-            
-            // relative error, as described in Tunbridge 2011, p.113
-            
-            double e_LJ = fabs(charmm_LJ - LJ)/fabs(charmm_LJ);
-            double e_DH = fabs(charmm_DH - DH)/fabs(charmm_DH);
-            double e_total = fabs(charmm_total - total)/fabs(charmm_total);
-            
-#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
-            cout << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total << endl;
-#endif
-
-            mean_e_LJ += e_LJ/10;
-            mean_e_DH += e_DH/10;
-            mean_e_total += e_total/10;
-            
-            max_e_LJ = max(max_e_LJ, e_LJ);
-            max_e_DH = max(max_e_DH, e_DH);
-            max_e_total = max(max_e_total, e_total);
-        }
-        
-#if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
-        cout << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total << endl;
-        cout << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total << endl;
-#endif
-        
-        // This is less good, but also less important than the distance from the original results.
-            
-        REQUIRE(mean_e_LJ == Approx(0.002838));
-        REQUIRE(mean_e_DH == Approx(0.000455));
-        REQUIRE(mean_e_total == Approx(0.001722));
-        
-        REQUIRE(max_e_LJ == Approx(0.008679));
-        REQUIRE(max_e_DH == Approx(0.001795));
-        REQUIRE(max_e_total == Approx(0.005833));
-    }
+//     SECTION("Test vs CGPPDv1 implementation") {
+//         // This test compares our implementation to R. Best's CHARMM patch.
+//         // No, it doesn't; these are implementation values from Ian's thesis.
+//         
+// //         double LJ_fudge_factor(1.0153); // we have no idea
+// //         double DH_fudge_factor(1.0037); // CHARMM uses a less accurate CCELEC constant. That doesn't account for most of this, though.
+//         double LJ_fudge_factor(1.0);
+//         double DH_fudge_factor(1.0);
+// 
+//         vector<Potential> charmm_results = {
+//             Potential(-0.081, -0.213),
+//             Potential(-1.322, 0.266),
+//             Potential(-9.095, -1.182),
+//             Potential(-5.903, -1.678),
+//             Potential(-0.000021, -0.000058),
+//             Potential(-4.810, -0.752),
+//             Potential(-4.213, -1.267),
+//             Potential(-9.266, -1.446),
+//             Potential(-7.951, -1.949),
+//             Potential(-7.459, -1.069)
+//         };
+//         
+//         double mean_e_LJ(0);
+//         double mean_e_DH(0);
+//         double mean_e_total(0);
+//         
+//         double max_e_LJ(0);
+//         double max_e_DH(0);
+//         double max_e_total(0);
+//         
+// #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+//         cout << "Comparison to CGPPDv1 results" << endl;
+//         cout << "Relative errors:" << endl;
+// #endif
+//         
+//         for (int i = 0; i < 10; i++) {
+//             const double & charmm_LJ = charmm_results[i].total_LJ();
+//             const double & charmm_DH = charmm_results[i].total_DH();
+//             const double & charmm_total = charmm_results[i].total();
+//             
+//             double LJ = cpu[i].total_LJ() * LJ_fudge_factor;
+//             double DH = cpu[i].total_DH() * DH_fudge_factor;
+//             double total = LJ + DH;
+//             
+//             // relative error, as described in Tunbridge 2011, p.113
+//             
+//             double e_LJ = fabs(charmm_LJ - LJ)/fabs(charmm_LJ);
+//             double e_DH = fabs(charmm_DH - DH)/fabs(charmm_DH);
+//             double e_total = fabs(charmm_total - total)/fabs(charmm_total);
+//             
+// #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+//             cout << i + 1 << ": LJ: " << e_LJ << " DH: " << e_DH << " total: " << e_total << endl;
+// #endif
+// 
+//             mean_e_LJ += e_LJ/10;
+//             mean_e_DH += e_DH/10;
+//             mean_e_total += e_total/10;
+//             
+//             max_e_LJ = max(max_e_LJ, e_LJ);
+//             max_e_DH = max(max_e_DH, e_DH);
+//             max_e_total = max(max_e_total, e_total);
+//         }
+//         
+// #if PRINT_REFERENCE_CONFORMATIONS_FROM_TEST
+//         cout << "Mean error: LJ: " << mean_e_LJ << " DH: " << mean_e_DH << " total " << mean_e_total << endl;
+//         cout << "Max error: LJ: " << max_e_LJ << " DH: " << max_e_DH << " total " << max_e_total << endl;
+// #endif
+//         
+//         // This is less good, but also less important than the distance from the original results.
+//             
+//         REQUIRE(mean_e_LJ == Approx(0.002838));
+//         REQUIRE(mean_e_DH == Approx(0.000455));
+//         REQUIRE(mean_e_total == Approx(0.001722));
+//         
+//         REQUIRE(max_e_LJ == Approx(0.008679));
+//         REQUIRE(max_e_DH == Approx(0.001795));
+//         REQUIRE(max_e_total == Approx(0.005833));
+//     }
 
 #if USING_CUDA
     for (int i = 0; i < 10; i++)
