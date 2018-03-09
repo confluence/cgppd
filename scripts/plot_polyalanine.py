@@ -23,7 +23,8 @@ class PolyalaninePlots(PolyalanineSimulationSequence):
         if args.lj == "off":
             power = 1.0/2.0
         elif args.lj == "repulsive":
-            power = 2.0/3.0
+            #power = 2.0/3.0
+            power = 3.0/5.0
 
         fitfunc = lambda p, N: p[0] * np.array(N) ** power # Target function
         errfunc = lambda p, N, y: fitfunc(p, N) - y # Distance to the target function

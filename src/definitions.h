@@ -145,6 +145,6 @@
         void GlutDisplay();
     #endif
 
-    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 0 // TODO: yuck; configure a special log for this.
+    #define PRINT_REFERENCE_CONFORMATIONS_FROM_TEST 1 // TODO: yuck; configure a special log for this.
 
 #endif /*DEFINITIONS_H_*/
